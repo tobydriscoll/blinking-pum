@@ -1,0 +1,151 @@
+% SIAM Article Template
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{subfig}
+\usepackage{forest}
+\usepackage[section]{placeins}
+\usepackage[export]{adjustbox}
+\usepackage{amsmath}
+
+\newcommand{\lp}{\left(}
+\newcommand{\rp}{\right)}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand\supp{\mathop{\rm supp}}
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\plotwidth}{0.45}
+\newcommand{\WRP}{\par\qquad\(\hookrightarrow\)\enspace}
+
+%%%%% custom commands for this paper
+\newcommand{\nmax}{n_{\text{max}}}
+\newcommand{\child}[1]{c\textsubscript{#1}}
+\newcommand{\weight}[1]{w\textsubscript{#1}}
+%%%%%
+
+\begin{document}
+
+\section{ND PU Structure}
+
+Since we are thinking of mixing methods for our PU approximation, it seems we should think more about the modularity of the method. My first thought is to have an abstract PATCH $\nu$ with properties
+\begin{itemize}
+\item domain($\nu$):= domain of $\nu$
+\item boundaryIndex($\nu$):= boundary index of points of $\nu$
+\item length($\nu$):= length of $\nu$
+\item dim($\nu$):= dimension of the space domain($\nu$) lies in
+\end{itemize}
+with methods
+\begin{itemize}
+\item points($\nu$):=returns the points of $\nu$
+\item evalf($\nu$,x):=evaluates the approximate for $\nu$ at $x$.
+\item sample($\nu$,f(x)):= samples $f(x)$ at the leaves of $\nu$
+\end{itemize}
+
+\begin{figure}[!h]
+\centering
+     \begin{forest}
+[ PATCH
+    [ LEAFPATCH 
+    [ RBFPATCH
+    ] 
+    [ CHEBPATCH
+    ]]
+    [ PUPATCH 
+    [ PURECTPATCH ]
+    ]
+]
+\end{forest}
+\caption{Object structure for the patches.}
+\end{figure}
+Here RBFPATCH and CHEBPATCH would be used as leaves where RECTPUPATCH would be used for nonleaves. A PUPATCH has additional properties
+\begin{itemize}
+\item \child{0}($\nu$), \child{1}($\nu$):= two PATCH children
+\item \weight{0}($\nu$), \weight{1}($\nu$):= weights used for children
+\end{itemize}
+The methods would be defined, ignorant of the type of patches the children are. As an example, the evalf($\nu$,x) method would be defined similarly as before where the leaves are assumed to be type PATCH (this objects would have there own evalf method). By defining different objects for different methods (RBF,CHEB), we can use this generic method for our different cases (a box, arbitrary boundary).
+
+ The leaf patches would be defined for the specific method at the leaves. We next define a method 
+\begin{itemize}
+\item PATCH $\nu_1$ = splitleaf(LEAFPATCH $\nu$)
+\end{itemize}
+that returns a PUPATCH with two children if $\nu$ needs to be split, and $\nu$ if it does not to be split. We can then define a refine method for a tree $T$ and its nodes $\nu$.
+
+\begin{algorithm}[!h]
+\caption{v=eval($\nu$,$x$)}
+\label{alg3}
+\begin{algorithmic}
+\IF{$\nu$ is a leaf}
+\STATE $p$:=interpolant($\nu$)
+\STATE v:= $p(x)$
+\ELSE
+\STATE $v_0,v_1$:=0
+
+\STATE $w_0$:=\weight{0}($\nu$)
+\STATE $w_1$:=\weight{1}($\nu$)
+\FOR{$k=0,1$}
+\IF{$x \in$ domain(\child{k}($\nu$))}
+\STATE $v_k$:=eval(\child{k}($\nu$),$x$)
+\ENDIF
+\ENDFOR
+\STATE v := $w_0(x)v_0 + w_1(x)v_1$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}[!h]
+\caption{T = refine($f(x)$)}
+\label{alg5}
+\begin{algorithmic}
+\STATE define $T$ has a tree with single node
+\WHILE{$T$ has unrefined leaves}
+\STATE sample($T$,$f(x)$)
+\IF{root($T$) is a leaf}
+\STATE root($T$) = splitleaf(root($T$))
+\ELSE
+\STATE PUsplit(root($T$))
+\ENDIF
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[!h]
+\caption{PUsplit($\nu$)}
+\label{alg6}
+\begin{algorithmic}
+\FOR{$k=0,1$}
+\IF{\child{k}($\nu$) is a leaf and unresolved}
+\STATE \child{k}($\nu$):=splitleaf(\child{k}($\nu$))
+\ELSE
+\STATE PUsplit(\child{k}($\nu$))
+\ENDIF
+\ENDFOR
+\STATE merge($\nu$)
+\end{algorithmic}
+\end{algorithm}
+
+\section{Calculating Derivatives and Partition of Unity Weights}
+
+For the ND problem, we intend to evaluate the derivatives instead of constructing differentiation matrices. Suppose we have a method evalf($\nu$,$x$,$dim$,$j$) which evaluates the derivative of order $j$ along dimension $dim$ at $x$. We can compute this simply using the product rule as seen in Algorithm~\ref{alg7}. While this is formulation is simple, it is inefficient. In this formulation we end up repeating calculations for the derivatives of the children of the node. This can be avoided by passing up the evaluations of the approximation and its derivatives up to the desired order.
+
+\begin{algorithm}[!h]
+\caption{v = evalf($\nu$,$x$,$dim$,$j$)}
+\label{alg7}
+\begin{algorithmic}
+\STATE $w_0$:=\weight{0}($\nu$)
+\STATE $w_1$:=\weight{1}($\nu$)
+\STATE v = 0
+\FOR{$k=0,1$}
+\STATE v = v+$\sum_{i=1}^j \binom{j}{i} \partial_{dim}^{j-1} w_k(x) \text{ evalf(\child{k}($\nu$),$x$,$dim$,$j$)}$
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+For our method we intend to split only along one dimension. In this case our partition of unity weights need only to depend on the dimension that we are splitting along. Some care must be used when calculating the derivatives; if the dimension we are differentiation along is different than the splitting dimension, the derivative of the weights are zero.
+
+\end{document}
