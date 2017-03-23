@@ -21,10 +21,10 @@ classdef (Abstract) Patch < handle
     methods
         %Right now just assume the domain is just the square.
         function domain_ind = InDomain(obj,x)
-            domain_ind = ones(length(x),1);
+            domain_ind = true(length(x),1);
             for i=1:obj.dim
-                domain_ind = domain_ind && ...
-                    ( x(:,i)>= obj.domain(i,1) && x(:,i)<= obj.domain(i,2));
+                domain_ind = domain_ind & ...
+                    ( x(:,i)>= obj.domain(i,1) & x(:,i)<= obj.domain(i,2));
             end
         end
     end

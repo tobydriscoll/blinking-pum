@@ -7,9 +7,8 @@ classdef ChebPatch<LeafPatch
     end
     
     properties (Access = protected)
-        max_in %max index for the standard degrees
+        deg_in %index for the standard degrees
         split_flag %array indicating if we will split along a dimension
-        max_deg %max degree to be used
     end
     
     properties (Constant)
@@ -25,22 +24,26 @@ classdef ChebPatch<LeafPatch
         % domain: (dim x 2) array indiciating array for the hypercube.
         %   degs: (dim x 1) array indicating the degree of the polynomial
         %         along the dimensions.
-        function obj = ChebPatch(domain,degs,max_in)
+        function obj = ChebPatch(domain,deg_in,split_flag)
             
-            if nargin == 2
-                obj.max_in = 6;
-                obj.max_deg = 65;
+            obj.domain = domain;
+            [obj.dim,~] = size(obj.domain);
+            
+            if nargin < 2
+                obj.deg_in = zeros(1,obj.dim);
+                obj.deg_in(:) = 6;
+                obj.split_flag = ones(obj.dim,1);
+            elseif nargin < 3
+                obj.deg_in = deg_in;
+                obj.split_flag = ones(obj.dim,1);
             else
-                obj.max_in = max_in;
-                obj.max_deg = obj.standard_degs(max_in);
+                obj.deg_in = deg_in;
+                obj.split_flag = split_flag;
             end
             
             %To do: deal with boundary
-            obj.domain = domain;
-            [obj.dim,~] = size(obj.domain);
-            obj.degs = degs;
-            obj.cheb_length = prod(degs);
-            obj.split_flag = ones(obj.dim,1);
+            obj.degs = obj.standard_degs(obj.deg_in);
+            obj.cheb_length = prod(obj.degs);
             obj.is_leaf = true;
             obj.is_refined = false;
         end
@@ -85,30 +88,44 @@ classdef ChebPatch<LeafPatch
             
             ef = zeros(length(X),order+1);
             
+            %Assume we are dim 2 and up
+            StartG = chebfun(obj.values,obj.domain(1,:));
+            
             % This is for a list of points. If we have a grid
             % we can do this more efficiently
             for i=1:length(X)
                 for ord=0:order
-                    G = obj.values;
+                    
                     for k=1:obj.dim
+                        
+                        switch k
+                            case 1
+                                ChebG = StartG;
+                            case obj.dim
+                                ChebG = chebfun(G',obj.domain(k,:));
+                            otherwise
+                                ChebG = chebfun(G,obj.domain(k,:));
+                        end
+                        
+                        
                         switch k
                             case obj.dim
                                 if k==dim
-                                    ef(i,ord+1) = feval(diff(chebfun(G',obj.domain(k,:)),ord),X(i,k));
+                                    ef(i,ord+1) = feval(diff(ChebG,ord),X(i,k));
                                 else
-                                    ef(i,ord+1) = feval(chebfun(G',obj.domain(k,:)),X(i,k));
+                                    ef(i,ord+1) = feval(ChebG,X(i,k));
                                 end
                             case obj.dim-1
                                 if k==dim
-                                    G = feval(diff(chebfun(G,obj.domain(k,:)),ord),X(i,k));
+                                    G = feval(diff(ChebG,ord),X(i,k));
                                 else
-                                    G = feval(chebfun(G,obj.domain(k,:)),X(i,k));
+                                    G = feval(ChebG,X(i,k));
                                 end
                             otherwise
                                 if k==dim
-                                    G = reshape(feval(diff(chebfun(G,obj.domain(k,:)),ord),X(i,k)),obj.degs(k+1:end));
+                                    G = reshape(feval(diff(ChebG,ord),X(i,k)),obj.degs(k+1:end));
                                 else
-                                    G = reshape(feval(chebfun(G,obj.domain(k,:)),X(i,k)),obj.degs(k+1:end));
+                                    G = reshape(feval(ChebG,X(i,k)),obj.degs(k+1:end));
                                 end
                         end
                     end
@@ -147,7 +164,7 @@ classdef ChebPatch<LeafPatch
         %     Child: obj if no splitting is needed. If a splitting
         %            is needed, Child is the PUPatch object with
         %            the new children.
-        function Child = splitleaf(obj,overlap)
+        function Child = splitleaf(obj)
             
             G = zeros(obj.dim,1);
             
@@ -157,23 +174,27 @@ classdef ChebPatch<LeafPatch
                     perm = circshift((1:obj.dim)',-i+1);
                     Fi = permute(obj.values,perm);
                     %Figure out deg along dim i,
-                    G(i) = length(simplify(chebfun(Fi,obj.domain(i,:))));
+                    len = length(simplify(chebfun(Fi,obj.domain(i,:))));
                     
-                    obj.split_flag(i) = G(i)>=obj.max_deg-1;
+                    G(i) = len;
+                    
                 end
             end
-            
-            
-            %Figure out which dimensions are resolved.
+               
             for i=1:obj.dim
-                if ~obj.split_flag(i)
-                    k = find(G(i)<=obj.standard_degs,1);
-                    obj.degs(i) = obj.standard_degs(k);
-                    %Set the dim to the appropriate number
-                    obj.values = obj.slice(obj.values,1:2*(obj.max_in-k):obj.standard_degs(obj.max_in),i);
-                end
+                    if obj.split_flag(i) && G(i)<obj.degs(i)-1
+                        obj.split_flag(i) = false;
+                        k = find(G(i)<=obj.standard_degs,1);
+                        
+                        if k<obj.deg_in(i)
+                            obj.values = obj.slice(obj.values,1:2*(obj.deg_in(i)-k):obj.standard_degs(obj.deg_in(i)),i);
+                        end
+                        
+                        obj.deg_in(i) = k;
+                    end
             end
             
+           
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.
                 obj.is_refined = true;
@@ -183,7 +204,7 @@ classdef ChebPatch<LeafPatch
                 
                 children = cell(1,2);
                 
-                delta = 0.5*(1+overlap)*...
+                delta = 0.5*(1+PUWeights.overlap)*...
                     (obj.domain(split_dim,2)-obj.domain(split_dim,1));
                 
                 domain0 = obj.domain;
@@ -192,11 +213,12 @@ classdef ChebPatch<LeafPatch
                 domain0(split_dim,:) = [obj.domain(split_dim,1) obj.domain(split_dim,1)+delta];
                 domain1(split_dim,:) = [obj.domain(split_dim,2)-delta obj.domain(split_dim,2)];
                 
-                children{1} = ChebPatch(domain0,obj.degs);
-                children{2} = ChebPatch(domain1,obj.degs);
+                overlap_in = [obj.domain(split_dim,2)-delta obj.domain(split_dim,1)+delta];
+                children{1} = ChebPatch(domain0,obj.deg_in,obj.split_flag);
+                children{2} = ChebPatch(domain1,obj.deg_in,obj.split_flag);
                 
                 %Return the PUPatch with the new children
-                Child = PUPatch(obj.domain,length(children{1})+length(children{2}),children,overlap,split_dim);
+                Child = PUPatch(obj.domain,overlap_in,length(children{1})+length(children{2}),children,split_dim);
                 
             end
             
