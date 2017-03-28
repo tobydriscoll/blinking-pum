@@ -4,7 +4,7 @@ tol = 1e-14;
 
 %Test 2D
 
-P = ChebPatch([-1 1;-1 1],[2 2]);
+P = ChebPatch([-1 2;-1 2],[2 2]);
 X = P.points();
 
 f = @(x) x(:,1).^2+x(:,1).*x(:,2).^2;
@@ -14,10 +14,10 @@ fdy = @(x) 2*x(:,1).*x(:,2);
 
 P.sample(f(X));
 
-g = [linspace(-1,1,50)' linspace(-1,1,50)'];
+g = [linspace(-1,2,50)' linspace(-1,2,50)'];
 
 v = P.evalf(g,1,0);
-assert(norm(v(:,end)-f(g),inf)<tol
+assert(norm(v(:,end)-f(g),inf)<tol);
 % 
 v = P.evalf(g,1,1);
 assert(norm(v(:,1)-f(g),inf)<tol)

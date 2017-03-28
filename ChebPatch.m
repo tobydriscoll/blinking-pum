@@ -12,8 +12,7 @@ classdef ChebPatch<LeafPatch
     end
     
     properties (Constant)
-        standard_points = load('cheb_points_matrices.mat','chebpoints');
-        standard_matrices = load('cheb_points_matrices.mat','chebmatrices');
+        standard_variables = load('cheb_points_matrices.mat');
         standard_degs = [3 5 9 17 33 65];
     end
     
@@ -82,56 +81,49 @@ classdef ChebPatch<LeafPatch
         % Output:
         %     ef: (length(X) x order+1) array containing the derivatves
         %         along dimension dim from 0 to order.
-        function ef = evalf(obj,X,dim,order)
-            
-            
+        function ef = evalf(obj,X,diff_dim,order)
             
             ef = zeros(length(X),order+1);
             
-            %Assume we are dim 2 and up
-            StartG = chebfun(obj.values,obj.domain(1,:));
+            input{1} = obj.values;
             
-            % This is for a list of points. If we have a grid
-            % we can do this more efficiently
-            for i=1:length(X)
-                for ord=0:order
-                    
+            if order>0
+                switch obj.dim
+                    case 1
+                        diff_values = 2*(obj.domain(2)-obj.domain(1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
+                    otherwise
+                        diff_values = shiftdim(obj.values,diff_dim-1);
+                        perm_degs = size(diff_values);
+                        
+                        if obj.dim>2
+                            diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
+                        end
+                        
+                        diff_values = 2*(obj.domain(diff_dim,2)-obj.domain(diff_dim,1))^-1*...
+                            obj.standard_variables.chebmatrices{obj.deg_in(diff_dim)}*diff_values;
+                        
+                        if obj.dim>2
+                            diff_values = reshape(diff_values,perm_degs);
+                        end
+                        
+                        diff_values = shiftdim(diff_values,obj.dim-(diff_dim-1));
+                end
+               
+               input{2} = diff_values;
+           end
+            
+            for j=1:order+1
+                for i=1:size(X,1)
+                    G = input{j};
                     for k=1:obj.dim
                         
-                        switch k
-                            case 1
-                                ChebG = StartG;
-                            case obj.dim
-                                ChebG = chebfun(G',obj.domain(k,:));
-                            otherwise
-                                ChebG = chebfun(G,obj.domain(k,:));
-                        end
+                        point = 2/(obj.domain(k,2)-obj.domain(k,1))*X(i,k)-(obj.domain(k,2)+obj.domain(k,1))/(obj.domain(k,2)-obj.domain(k,1));
+                        G = bary(point,G,obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
                         
-                        
-                        switch k
-                            case obj.dim
-                                if k==dim
-                                    ef(i,ord+1) = feval(diff(ChebG,ord),X(i,k));
-                                else
-                                    ef(i,ord+1) = feval(ChebG,X(i,k));
-                                end
-                            case obj.dim-1
-                                if k==dim
-                                    G = feval(diff(ChebG,ord),X(i,k));
-                                else
-                                    G = feval(ChebG,X(i,k));
-                                end
-                            otherwise
-                                if k==dim
-                                    G = reshape(feval(diff(ChebG,ord),X(i,k)),obj.degs(k+1:end));
-                                else
-                                    G = reshape(feval(ChebG,X(i,k)),obj.degs(k+1:end));
-                                end
-                        end
                     end
+                    ef(i,j) = G;
                 end
             end
-            
         end
         
         % Sets the values to be used for interpolation
@@ -180,21 +172,21 @@ classdef ChebPatch<LeafPatch
                     
                 end
             end
-               
+            
             for i=1:obj.dim
-                    if obj.split_flag(i) && G(i)<obj.degs(i)-1
-                        obj.split_flag(i) = false;
-                        k = find(G(i)<=obj.standard_degs,1);
-                        
-                        if k<obj.deg_in(i)
-                            obj.values = obj.slice(obj.values,1:2*(obj.deg_in(i)-k):obj.standard_degs(obj.deg_in(i)),i);
-                        end
-                        
-                        obj.deg_in(i) = k;
+                if obj.split_flag(i) && G(i)<obj.degs(i)-1
+                    obj.split_flag(i) = false;
+                    k = find(G(i)<=obj.standard_degs,1);
+                    
+                    if k<obj.deg_in(i)
+                        obj.values = obj.slice(obj.values,1:2*(obj.deg_in(i)-k):obj.standard_degs(obj.deg_in(i)),i);
                     end
+                    
+                    obj.deg_in(i) = k;
+                end
             end
             
-           
+            
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.
                 obj.is_refined = true;
@@ -227,7 +219,7 @@ classdef ChebPatch<LeafPatch
     end
     
     methods (Static)
-        %This method slices an array along a certain dimension 
+        %This method slices an array along a certain dimension
         %(Matlab should have a function that does this)
         function out = slice(A, ix, dim)
             subses = repmat({':'}, [1 ndims(A)]);
@@ -235,6 +227,107 @@ classdef ChebPatch<LeafPatch
             out = A(subses{:});
         end
         
+        function fx = bary(x, fvals, deg_ind)
+            %BARY   Barycentric interpolation formula.
+            %   BARY(X, FVALS, XK, VK) uses the 2nd form barycentric formula with weights VK
+            %   to evaluate an interpolant of the data {XK, FVALS(:,k)} at the points X.
+            %   Note that XK and VK should be column vectors, and FVALS, XK, and VK should
+            %   have the same length.
+            %
+            %   BARY(X, FVALS) assumes XK are the 2nd-kind Chebyshev points and VK are the
+            %   corresponding barycentric weights.
+            %
+            %   If size(FVALS, 2) > 1 then BARY(X, FVALS) returns values in the form
+            %   [F_1(X), F_2(X), ...], where size(F_k(X)) = size(X) for each k.
+            %
+            %
+            % See also CHEBTECH.CLENSHAW.
+            
+            % Copyright 2016 by The University of Oxford and The Chebfun Developers.
+            % See http://www.chebfun.org/ for Chebfun information.
+            
+            % Parse inputs:
+            
+            lengths = size(fvals);
+            
+            n = lengths(1);
+            m = prod(lengths(2:end));
+            
+            numdims = size(lengths,2);
+            
+            fvals = reshape(fvals,[n m]);
+            
+            sizex = size(x);
+            
+            xk = ChebPatch.standard_variables.chebpoints{deg_ind};
+            vk = ChebPatch.standard_variables.chebweights{deg_ind};
+            
+            if ( ~all(sizex) )
+                fx = x;
+                return
+            end
+            
+            % Check that input is a column vector:
+            if ( (sizex(2) > 1) )
+                x = x(:);
+            end
+            
+            % % The function is a constant.
+            % if ( n == 1 )
+            %     fx = repmat(fvals, length(x), 1);
+            %     return
+            % end
+            
+            % The function is NaN.
+            if ( any(isnan(fvals)) )
+                fx = NaN(length(x), m);
+                return
+            end
+            
+            % The main loop:
+            if ( numel(x) < 4*length(xk) )  % Loop over evaluation points
+                % Note: The value "4" here was detemined experimentally.
+                
+                % Initialise return value:
+                fx = zeros(size(x, 1), m);
+                
+                % Loop:
+                for j = 1:numel(x),
+                    xx = vk ./ (x(j) - xk);
+                    fx(j,:) = (xx.'*fvals) / sum(xx);
+                end
+            else                            % Loop over barycentric nodes
+                % Initialise:
+                num = zeros(size(x, 1), m);
+                denom = num;
+                
+                % Loop:
+                for j = 1:length(xk),
+                    tmp = (vk(j) ./ (x - xk(j)));
+                    num = num + bsxfun(@times, tmp, fvals(j,:));
+                    denom = bsxfun(@plus, denom, tmp);
+                end
+                fx = num ./ denom;
+            end
+            
+            % Try to clean up NaNs:
+            for k = find(isnan(fx(:,1)))'       % (Transpose as Matlab loops over columns)
+                index = find(x(k) == xk, 1);    % Find the corresponding node
+                if ( ~isempty(index) )
+                    fx(k,:) = fvals(index,:);   % Set entry/entries to the correct value
+                end
+            end
+            
+            % Reshape the output:
+            if (numel(x)==1) && numdims>2
+                fx = reshape(fx, lengths(2:end));
+            elseif numdims>2
+                fx = reshape(fx, [numel(x) lengths(2:end)]);
+            elseif numdims==2
+                fx = transpose(fx);
+            end
+            
+        end
     end
     
 end
