@@ -176,7 +176,7 @@ by
 \item evaluating $b_{k} = \sum_j l_{y_j}(y) c_{kj}$ for points $\{z_k\}$
 \item and then evaluating $\sum_k l_{z_k}(z) b_k$.
 \end{itemize}
-To do this first step, I call \mcode{bary(x(1),reshape(F,[n1 n2*n3]))}; by reshaping \mcode{F}, I can evaluate the Chebyshev polynomials that run along the $x$-dimension. This can be generalized to higher dimensions. I rewrote the \mcode{bary} method to call accept multidimensional arrays for \mcode{F} and interpolate along the first dimension.
+To do this first step, I call \mcode{bary(x(1),reshape(F,[n1 n2*n3]))}; by reshaping \mcode{F}, I can evaluate the Chebyshev polynomials that run along the $x$-dimension. This can be generalized to higher dimensions. I rewrote the \mcode{bary} method to accept multidimensional arrays for \mcode{F} and interpolate along the first dimension.
  
 Lets suppose we want to interpolate onto a tensor product grid with points $\{\hat{x}_i\}$, $\{\hat{y}_j\}$, $\{\hat{z}_k\}$, and lets suppose for simplicity Chebyshev grid has $N$ points in each direction while the interpolating set of points has $M$ points in each direction.
 
@@ -186,7 +186,7 @@ Lets suppose we want to interpolate onto a tensor product grid with points $\{\h
  \end{equation}
 Let suppose instead that we calculate the p(x,y) along the $x$-dimension for $\{\hat{x}_i\}$, i.e. call \mcode{G=bary(x,F)}, where \mcode{x} is the vector of points $\{\hat{x}_i\}$ (with my rewritten code). Here \mcode{G} will be a multidimensional array of dimension $M \times N \times N$. In this case, \mcode{G(i,:,:)} is the set of Chebyshev interpolant evaluations for points $\{y_j\}, \{z_k\}$ calculated at $\hat{x}_i$.
 
-Let's shift the dimensions of \mcode{G} with \mcode{G = shiftdim(G,1)} i.e. now the dimensions of G are $N \times N \times M$. Since we are interpolating on a grid, for each $\hat{y}_j$ we need to evaluate $p(\hat{x}_i,y,z)$ for each $i$. This can be achieved by calling \mcode{G=bary(y,F)}, where \mcode{y} is the vector of points $\{\hat{y}_j\}$. This is repeated for the $z$-dimension. Putting it altogether, we have
+Let's shift the dimensions of \mcode{G} with \mcode{G = shiftdim(G,1)} i.e. now the dimensions of G are $N \times N \times M$. Since we are interpolating on a grid, for each $\hat{y}_j$ we need to evaluate $p(\hat{x}_i,y,z)$ for each $i$. This can be achieved by calling \mcode{G=bary(y,G)}, where \mcode{y} is the vector of points $\{\hat{y}_j\}$. This is repeated for the $z$-dimension. Putting it altogether, we have
 \begin{lstlisting}[frame=single]  % Start your code-block
 
 G=bary(x,F);
