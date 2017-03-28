@@ -92,25 +92,16 @@ classdef ChebPatch<LeafPatch
                     case 1
                         diff_values = 2*(obj.domain(2)-obj.domain(1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
                     otherwise
-                        diff_values = shiftdim(obj.values,diff_dim-1);
+                        diff_values = (shiftdim(obj.values,diff_dim-1));
                         perm_degs = size(diff_values);
-                        
-                        if obj.dim>2
-                            diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
-                        end
-                        
-                        diff_values = 2*(obj.domain(diff_dim,2)-obj.domain(diff_dim,1))^-1*...
-                            obj.standard_variables.chebmatrices{obj.deg_in(diff_dim)}*diff_values;
-                        
-                        if obj.dim>2
-                            diff_values = reshape(diff_values,perm_degs);
-                        end
-                        
-                        diff_values = shiftdim(diff_values,obj.dim-(diff_dim-1));
+                        diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
+                        diff_values = 2*(obj.domain(diff_dim,2)-obj.domain(diff_dim,1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),1}*diff_values;
+                        diff_values = reshape(diff_values,perm_degs);
+                        diff_values = shiftdim(diff_values,3-(diff_dim-1));
                 end
-               
-               input{2} = diff_values;
-           end
+                
+                input{2} = diff_values;
+            end
             
             for j=1:order+1
                 for i=1:size(X,1)
