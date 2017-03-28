@@ -7,6 +7,7 @@
 \usepackage[section]{placeins}
 \usepackage[export]{adjustbox}
 \usepackage{amsmath}
+\usepackage[framed,numbered,autolinebreaks,useliterate]{mcode}
 
 \newcommand{\lp}{\left(}
 \newcommand{\rp}{\right)}
@@ -147,5 +148,162 @@ For the ND problem, we intend to evaluate the derivatives instead of constructin
 \end{algorithm}
 
 For our method we intend to split only along one dimension. In this case our partition of unity weights need only to depend on the dimension that we are splitting along. Some care must be used when calculating the derivatives; if the dimension we are differentiation along is different than the splitting dimension, the derivative of the weights are zero.
+
+\section{Barycentric Interpolation on ND Chebyshev grids}
+
+Suppose we have a tensor product of Chebyshev grids with points $\{x_i\},\{y_j\}$. Let $\{l_{x_i}(x)\}$, $\{l_{y_i}(x)\}$ be the Lagrange polynomials for points $\{x_i\},\{y_j\}$. We then have the interpolating polynomial for a function $f(x,y)$ is
+\begin{equation}
+p(x,y) = \sum_j \sum_i l_{y_j}(y) l_{x_i}(x) f(x_i,y_j)
+\end{equation}
+which can be expressed as
+\begin{equation}
+p(x,y) = \sum_j l_{y_j}(y) \sum_i l_{x_i}(x) f(x_i,y_j).
+\end{equation}
+This implies that we can evaluate p(x,y) by:
+\begin{itemize}
+\item Evaluating $c_j = \sum_i l_{x_i}(x) f(x_i,y_j)$ for all points $\{y_j\}$,
+\item and then evaluating $\sum_j l_{y_j}(y) c_j$
+\end{itemize}
+We can thus evaluate $p(x,y)$ with interpolation methods in one dimension. This is illustrated in Figure~\ref{MULTI_INTERP}.
+
+Chebfun includes a \mcode{bary(x,F)} method which will evaluate the Chebyshev interpolants at \mcode{x} given a sampling \mcode{F}; if \mcode{F} is matrix, the method will compute the Chebyshev interpolants for each of the columns of \mcode{F}. The method can thus be used as is for 2D interpolation. But lets suppose \mcode{F} is $f(x,y,z)$ sampled on a 3D Chebyshev tensor product grid of dimension $n_1 \times n_2 \times n_3$ (i.e., $F$ is a multidimensional array). Lets now suppose we have $\{x_i\},\{y_j\}, \{z_k\}$. Let $\{l_{x_i}(x)\}$, $\{l_{y_i}(x)\},\{l_{z_k}(x)\}$ be the Lagrange polynomials for points $\{x_i\},\{y_j\},\{z_k\}$. Then in-order to evaluate
+\begin{equation}
+p(x,y,z) = \sum_k l_{z_k}(z) \sum_j l_{y_j}(y)  \sum_i  l_{x_i}(x) f(x_i,y_j,z_k)
+\end{equation}
+by
+\begin{itemize}
+\item Evaluating $c_{kj} = \sum_i  l_{x_i}(x) f(x_i,y_j,z_k)$ for points $\{y_j\}, \{z_k\}$,
+\item evaluating $b_{k} = \sum_j l_{y_j}(y) c_{kj}$ for points $\{z_k\}$
+\item and then evaluating $\sum_k l_{z_k}(z) b_k$.
+\end{itemize}
+To do this first step, I call \mcode{bary(x(1),reshape(F,[n1 n2*n3]))}; by reshaping \mcode{F}, I can evaluate the Chebyshev polynomials that run along the $x$-dimension. This can be generalized to higher dimensions. I rewrote the \mcode{bary} method to call accept multidimensional arrays for \mcode{F} and interpolate along the first dimension.
+ 
+Lets suppose we want to interpolate onto a tensor product grid with points $\{\hat{x}_i\}$, $\{\hat{y}_j\}$, $\{\hat{z}_k\}$, and lets suppose for simplicity Chebyshev grid has $N$ points in each direction while the interpolating set of points has $M$ points in each direction.
+
+ There are two ways to evaluate $p(x,y,z)$ on the grid. The first is to use method above for each of the points. This results in a cost of
+ \begin{equation}
+ \mathcal{O}(M^3 N^3 + M^3 N^2 + M^3 N).
+ \end{equation}
+Let suppose instead that we calculate the p(x,y) along the $x$-dimension for $\{\hat{x}_i\}$, i.e. call \mcode{G=bary(x,F)}, where \mcode{x} is the vector of points $\{\hat{x}_i\}$ (with my rewritten code). Here \mcode{G} will be a multidimensional array of dimension $M \times N \times N$. In this case, \mcode{G(i,:,:)} is the set of Chebyshev interpolant evaluations for points $\{y_j\}, \{z_k\}$ calculated at $\hat{x}_i$.
+
+Let's shift the dimensions of \mcode{G} with \mcode{G = shiftdim(G,1)} i.e. now the dimensions of G are $N \times N \times M$. Since we are interpolating on a grid, for each $\hat{y}_j$ we need to evaluate $p(\hat{x}_i,y,z)$ for each $i$. This can be achieved by calling \mcode{G=bary(y,F)}, where \mcode{y} is the vector of points $\{\hat{y}_j\}$. This is repeated for the $z$-dimension. Putting it altogether, we have
+\begin{lstlisting}[frame=single]  % Start your code-block
+
+G=bary(x,F);
+G = shiftdim(G,1);
+G=bary(y,G);
+G = shiftdim(G,1);
+G=bary(z,G);
+G = shiftdim(G,1);
+\end{lstlisting}
+Our final result will be a $M \times M \times M$ grid evaluated at the interpolating tensor product grid. The work required is
+ \begin{equation}
+ \mathcal{O}(M N^3 + M^2 N^2 + M N^2).
+ \end{equation}
+ Thus if $N =\mathcal{O}(M)$ we have the first method requires $\mathcal{O}(M^6)$ work, while the second required $\mathcal{O}(M^4)$. This can be seen computationally. In my experiments, I simulate a possible splitting. Assuming a max degree 65 in all dimensions, the first method requires 15 seconds to interpolate onto the grid. The second require 0.18 seconds. The code I used is below.
+ 
+\begin{lstlisting}[frame=single]  % Start your code-block
+
+clear;
+
+domain = [-1 1];
+
+standard_degs = [3 5 9 17 33 65];
+
+deg_ind = [5 5 5];
+degs = standard_degs(deg_ind);
+
+x=chebpts(degs(1),domain);
+y=chebpts(degs(2),domain);
+z=chebpts(degs(3),domain);
+
+
+M = 6;
+N=3;
+chebpoints = cell(M,1);
+
+chebmatrices = cell(M,2);
+
+chebweights = cell(M,1);
+
+
+
+for i=1:M
+    chebpoints{i} = chebpts(N);
+    chebmatrices{i,1} = diffmat(N,1);
+    chebmatrices{i,2} = diffmat(N,2);
+    chebweights{i} = chebtech2.barywts(N);
+    N = N+(N-1);
+end
+
+numb = 65;
+
+%Simulate a splitting
+xc = linspace(-1,1,65)';
+yc = linspace(-1,1,65)';
+yc = yc(yc>1-0.75); 
+zc = linspace(-1,1,65)';
+
+grid_points = {xc,yc,zc,wc};
+
+[X3C,Y3C,Z3C] = ndgrid(xc,yc,zc);
+
+
+XP3 = [X3C(:) Y3C(:) Z3C(:)];
+
+
+[X3,Y3,Z3] = ndgrid(x,y,z);
+
+tic;
+G = F3;
+
+h = @(x) 2/(domain(2)-domain(1))*x-(domain(2)+domain(1))/(domain(2)-domain(1));
+
+for k=1:ndims(X3C)
+    G = bary(h(grid_points{k}),G,chebpoints{deg_ind(k)},chebweights{deg_ind(k)});
+    G = shiftdim(G,1);
+end
+toc
+
+F3C = X3C.^2+Y3C.*X3C+Z3C.^3;
+
+max(abs(F3C(:)-G(:)))
+
+FUNS = zeros(length(XP3),1);
+
+tic;
+for i=1:size(XP3,1)
+    G = F3;
+    for k=1:size(XP3,2)
+        G = bary(XP3(i,k),G,chebpoints{deg_ind(k)},chebweights{deg_ind(k)});
+    end
+    FUNS(i) = G;
+end
+toc
+
+max(abs(FUNS(:)-F3C(:)))
+;
+\end{lstlisting}
+
+ 
+\begin{figure}[!htb]
+\centering
+\subfloat[Chebyshev tensor product grid (in blue), and point to be evaluated (in black).]{
+\includegraphics[scale = 0.5]{grid1.eps}
+   \label{MERGEB}
+ }\hfill
+\subfloat[Chebyshev polynomials evaluated along the x-axis at the red points.]{
+\includegraphics[scale = 0.5]{grid2.eps}
+   \label{MERGEA}
+ }
+ 
+ \subfloat[Chebyshev polynomial evaluated along at the desired point.]{
+\includegraphics[scale = 0.5]{grid3.eps}
+   \label{MERGEA}
+ }
+\caption{These pictures illustrate how we can computed multivariate Chebyshev interpolants using a one dimensional interpolation method.
+}
+\label{MULTI_INTERP}
+\end{figure}
 
 \end{document}

@@ -100,7 +100,7 @@ if (numel(x)==1) && numdims>2
     fx = reshape(fx, lengths(2:end));
 elseif numdims>2
     fx = reshape(fx, [numel(x) lengths(2:end)]);
-elseif numdims==2
+elseif numdims==2 && (size(fx,1)~=numel(x) || numel(x)==1)
     fx = transpose(fx);
 end
 

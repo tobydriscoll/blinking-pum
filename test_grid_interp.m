@@ -2,9 +2,16 @@ clear;
 
 domain = [-1 1];
 
-x=chebpts(17,domain);
-y=chebpts(33,domain);
-z=chebpts(65,domain);
+standard_degs = [3 5 9 17 33 65];
+
+deg_ind = [5 5 5 5];
+degs = standard_degs(deg_ind);
+
+x=chebpts(degs(1),domain);
+y=chebpts(degs(2),domain);
+z=chebpts(degs(3),domain);
+w=chebpts(degs(4),domain);
+
 
 M = 6;
 N=3;
@@ -14,8 +21,7 @@ chebmatrices = cell(M,2);
 
 chebweights = cell(M,1);
 
-deg_ind = [4 5 6];
-degs = [17 33 65];
+
 
 for i=1:M
     chebpoints{i} = chebpts(N);
@@ -28,83 +34,125 @@ end
 numb = 65;
 
 %Simulate a splitting
-xc = linspace(-1,1,numb)';
-xc = xc(xc>1-0.75); 
-yc = linspace(-1,1,numb)';
-zc = linspace(-1,1,numb)';
+xc = linspace(-1,1,65)';
+yc = linspace(-1,1,65)';
+yc = yc(yc>1-0.75); 
+zc = linspace(-1,1,65)';
+wc = linspace(-1,1,65)';
 
-grid_points = {xc,yc,zc};
+grid_points = {xc,yc,zc,wc};
 
-[XC,YC,ZC] = ndgrid(xc,yc,zc);
+[X2C,Y2C] = ndgrid(xc,yc);
+[X3C,Y3C,Z3C] = ndgrid(xc,yc,zc);
+[X4C,Y4C,Z4C,W4C] = ndgrid(xc,yc,zc,wc);
 
-XP = [XC(:) YC(:) ZC(:)];
-
-[X,Y,Z] = ndgrid(x,y,z);
-
-F = X.^2+Y.*X+Z.^3;
-
-[Y2,Z2,X2] = ndgrid(y,z,x);
-
-F2 = X2.^2+Y2.*X2+Z2.^3;
-
-Fdx = 2*X+Y;
-Fdy = X;
-Fdz = 3*Z.^2;
-
-diff_dim = 2;
-H = (shiftdim(F,diff_dim-1));
-perm_degs = size(H);
-H = reshape(H,[perm_degs(1) prod(perm_degs(2:end))]);
-H = 2*(domain(2)-domain(1))^-1*chebmatrices{deg_ind(diff_dim),1}*H;
-H = reshape(H,perm_degs);
-Gd = shiftdim(H,3-(diff_dim-1));
+XP2 = [X2C(:) Y2C(:)];
+XP3 = [X3C(:) Y3C(:) Z3C(:)];
+XP4 = [X4C(:) Y4C(:) Z4C(:) W4C(:)];
 
 
-F2dx = 2*X2+Y2;
-F2dy = X2;
-F2dz = 3*Z2.^2;
+[X2,Y2] = ndgrid(x,y);
+[X3,Y3,Z3] = ndgrid(x,y,z);
+[X4,Y4,Z4,W4] = ndgrid(x,y,z,w);
 
-diff_dim = 1;
-H = (shiftdim(F2,diff_dim-1));
-perm_degs = size(H);
-H = reshape(H,[perm_degs(1) prod(perm_degs(2:end))]);
-H = 2*(domain(2)-domain(1))^-1*chebmatrices{deg_ind(2),1}*H;
-H = reshape(H,perm_degs);
-Gd2 = shiftdim(H,3-(diff_dim-1));
+F2 = X2.^2+Y2.*X2;
+F3 = X3.^2+Y3.*X3+Z3.^3;
+F4 = X4.^2+Y4.*X4+Z4.^3+W4.^4;
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% %2D times
 % tic;
-% G = F;
+% G = F2;
 % 
 % h = @(x) 2/(domain(2)-domain(1))*x-(domain(2)+domain(1))/(domain(2)-domain(1));
 % 
-% for k=1:ndims(XC)
+% for k=1:ndims(X2C)
 %     G = bary(h(grid_points{k}),G,chebpoints{deg_ind(k)},chebweights{deg_ind(k)});
-%     G = permute(G,[2 3 1]);
+%     G = shiftdim(G,1);
 % end
 % toc
 % 
-% FC = XC.^2+YC.*XC+ZC.^3;
+% F2C = X2C.^2+Y2C.*X2C;
 % 
-% max(abs(FC(:)-G(:)))
+% max(abs(F2C(:)-G(:)))
 % 
-% FUNS = zeros(length(XP),1);
+% FUNS = zeros(length(XP2),1);
 % 
 % tic;
-% for i=1:size(XP,1)
-%     G = F;
-%     for k=1:size(XP,2)
-%         G = bary(XP(i,k),G,chebpoints{deg_ind(k)},chebweights{deg_ind(k)});
+% for i=1:size(XP2,1)
+%     G = F2;
+%     for k=1:size(XP2,2)
+%         G = bary(XP2(i,k),G,chebpoints{deg_ind(k)},chebweights{deg_ind(k)});
 %     end
 %     FUNS(i) = G;
 % end
 % toc
 % 
-% max(abs(FUNS(:)-FC(:)))
+% max(abs(FUNS(:)-F2C(:)))
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %3D times
+tic;
+G = F3;
 
+h = @(x) 2/(domain(2)-domain(1))*x-(domain(2)+domain(1))/(domain(2)-domain(1));
 
+for k=1:ndims(X3C)
+    G = bary(h(grid_points{k}),G,chebpoints{deg_ind(k)},chebweights{deg_ind(k)});
+    G = shiftdim(G,1);
+end
+toc
 
+F3C = X3C.^2+Y3C.*X3C+Z3C.^3;
 
+max(abs(F3C(:)-G(:)))
+
+FUNS = zeros(length(XP3),1);
+
+tic;
+for i=1:size(XP3,1)
+    G = F3;
+    for k=1:size(XP3,2)
+        G = bary(XP3(i,k),G,chebpoints{deg_ind(k)},chebweights{deg_ind(k)});
+    end
+    FUNS(i) = G;
+end
+toc
+
+max(abs(FUNS(:)-F3C(:)))
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%4D times
+
+% tic;
+% G = F4;
+% 
+% h = @(x) 2/(domain(2)-domain(1))*x-(domain(2)+domain(1))/(domain(2)-domain(1));
+% 
+% for k=1:ndims(X4C)
+%     G = bary(h(grid_points{k}),G,chebpoints{deg_ind(k)},chebweights{deg_ind(k)});
+%     G = shiftdim(G,1);
+% end
+% toc
+% 
+% F4C = X4C.^2+Y4C.*X4C+Z4C.^3+W4C.^4;
+% 
+% max(abs(F4C(:)-G(:)))
+% 
+% FUNS = zeros(length(XP3),1);
+% 
+% tic;
+% for i=1:size(XP4,1)
+%     G = F4;
+%     for k=1:size(XP4,2)
+%         G = bary(XP4(i,k),G,chebpoints{deg_ind(k)},chebweights{deg_ind(k)});
+%     end
+%     FUNS(i) = G;
+% end
+% toc
+% 
+% max(abs(FUNS(:)-F3C(:)))

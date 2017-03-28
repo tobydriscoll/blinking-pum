@@ -78,5 +78,6 @@ v = PU.evalf(X,2,1);
 assert(norm(v(:,2)-fy(X),inf)<diff_tol);
 
 v = PU.evalf(X,3,1);
+
 assert(norm(v(:,2)-fz(X),inf)<diff_tol);
 
