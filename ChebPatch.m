@@ -61,7 +61,9 @@ classdef ChebPatch<LeafPatch
             C = cell(obj.dim,1);
             
             for i=1:obj.dim
-                C{i} = chebpts(obj.degs(i),obj.domain(i,:));
+                %C{i} = chebpts(obj.degs(i),obj.domain(i,:));
+                 C{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
+                C{i} = 0.5*diff(obj.domain(i,:))*C{i}-0.5*sum(obj.domain(i,:));
             end
             [out{1:obj.dim}] = ndgrid(C{:});
             
@@ -110,7 +112,7 @@ classdef ChebPatch<LeafPatch
                     G = input{j};
                     for k=1:obj.dim
                         
-                        point = 2/(obj.domain(k,2)-obj.domain(k,1))*X(i,k)-(obj.domain(k,2)+obj.domain(k,1))/(obj.domain(k,2)-obj.domain(k,1));
+                        point = 2/(diff(obj.domain(k,:)))*X(i,k)-(obj.domain(k,2)+obj.domain(k,1))/(obj.domain(k,2)-obj.domain(k,1));
                         G = bary(point,G,obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
                         
                     end
@@ -174,6 +176,7 @@ classdef ChebPatch<LeafPatch
                     end
                     
                     obj.deg_in(i) = k;
+                    obj.degs(i) = obj.standard_degs(k);
                 end
             end
             
