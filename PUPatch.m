@@ -50,6 +50,7 @@ classdef PUPatch<Patch
                     end
                 end
             end
+            obj.cheb_length = obj.children{1}.cheb_length+obj.children{2}.cheb_length;
             obj.is_refined = is_refined;
         end
         

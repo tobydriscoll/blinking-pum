@@ -4,6 +4,7 @@ classdef ChebPatch<LeafPatch
     properties
         degs %array of degrees along the dimensions
         values %grid of values to be used for interpolation
+        tol %tolerence used
     end
     
     properties (Access = protected)
@@ -25,6 +26,7 @@ classdef ChebPatch<LeafPatch
         %         along the dimensions.
         function obj = ChebPatch(domain,deg_in,split_flag)
             
+            obj.tol = 2e-16;
             obj.domain = domain;
             [obj.dim,~] = size(obj.domain);
             
@@ -153,14 +155,12 @@ classdef ChebPatch<LeafPatch
             
             for i=1:obj.dim
                 if obj.split_flag(i)
-                    %Shift F so i is the diminsion we are going along.
-                    perm = circshift((1:obj.dim)',-i+1);
-                    Fi = permute(obj.values,perm);
+                    Fi = shiftdim(obj.values,i-1);
+                    sizes = size(Fi);
+                    Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
                     %Figure out deg along dim i,
-                    len = length(simplify(chebfun(Fi,obj.domain(i,:))));
-                    
+                    len = simplify(Fi,obj.tol);
                     G(i) = len;
-                    
                 end
             end
             
@@ -181,6 +181,7 @@ classdef ChebPatch<LeafPatch
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.
                 obj.is_refined = true;
+                obj.cheb_length = prod(obj.degs);
                 Child = obj;
             else
                 [~,split_dim] = max(G);
