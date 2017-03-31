@@ -28,7 +28,9 @@ classdef PUFun < handle
             ef = obj.ChebRoot.evalf(X);
         end
         
+        function disp(obj)
+            disp(obj.ChebRoot.toString());
+        end
     end
-    
 end
 

@@ -47,6 +47,7 @@ classdef ChebPatch<LeafPatch
             obj.cheb_length = prod(obj.degs);
             obj.is_leaf = true;
             obj.is_refined = false;
+
         end
         
         
@@ -161,14 +162,14 @@ classdef ChebPatch<LeafPatch
             G = zeros(obj.dim,1);
             
             for i=1:obj.dim
-                if obj.split_flag(i)
+                %if obj.split_flag(i)
                     Fi = shiftdim(obj.values,i-1);
                     sizes = size(Fi);
                     Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
                     %Figure out deg along dim i,
                     len = simplify(Fi,obj.tol);
                     G(i) = len;
-                end
+                %end
             end
             
             max_in = 0;
@@ -232,6 +233,22 @@ classdef ChebPatch<LeafPatch
             
         end
         
+        function str = toString(obj)
+            str = '';
+            for i=1:obj.dim
+                str = strcat(str,sprintf(' [%0.3f %0.3f]',obj.domain(i,1),obj.domain(i,1)));
+                if i<obj.dim
+                    str = strcat(str,' x ');
+                end
+            end
+            str = strcat(str,' degrees: ');
+            for i=1:obj.dim
+                str = strcat(str,sprintf(' %d ',obj.degs(i)));
+            end
+            
+            str = strcat(str,sprintf(' length %d', obj.length));
+        end
+        
     end
     
     methods (Static)
@@ -242,6 +259,8 @@ classdef ChebPatch<LeafPatch
             subses{dim} = ix;
             out = A(subses{:});
         end
+        
+
         
     end
     

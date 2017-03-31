@@ -106,6 +106,10 @@ classdef PUPatch<Patch
                 end
             end
         end
+        
+        function str = toString(obj)
+            str = strvcat(strcat('1',obj.children{1}.toString()),strcat('2',obj.children{2}.toString()));
+        end
     end
 end
 
