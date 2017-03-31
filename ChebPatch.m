@@ -26,7 +26,7 @@ classdef ChebPatch<LeafPatch
         %         along the dimensions.
         function obj = ChebPatch(domain,deg_in,split_flag)
             
-            obj.tol = 2e-16;
+            obj.tol = 1e-14;
             obj.domain = domain;
             [obj.dim,~] = size(obj.domain);
             
@@ -171,8 +171,21 @@ classdef ChebPatch<LeafPatch
                 end
             end
             
+            max_in = 0;
+            split_dim = 1;
             for i=1:obj.dim
-                if obj.split_flag(i) && G(i)<obj.degs(i)-1
+                
+%                 if diff(obj.domain(i,:))>max_in
+%                     max_in = diff(obj.domain(i,:));
+%                     split_dim = i;
+%                 end
+                
+                if G(i)>max(max_in,obj.degs(i)-1) && obj.split_flag(i)
+                    max_in = G(i);
+                    split_dim = i;
+                end
+                
+                if obj.split_flag(i) && G(i)<obj.degs(i)
                     obj.split_flag(i) = false;
                     k = find(G(i)<=obj.standard_degs,1);
                     
@@ -182,6 +195,7 @@ classdef ChebPatch<LeafPatch
                     
                     obj.deg_in(i) = k;
                     obj.degs(i) = obj.standard_degs(k);
+                    
                 end
             end
             
@@ -192,7 +206,9 @@ classdef ChebPatch<LeafPatch
                 obj.cheb_length = prod(obj.degs);
                 Child = obj;
             else
-                [~,split_dim] = max(G);
+                
+                %[~,split_dim] = max(G);
+                
                 
                 children = cell(1,2);
                 
