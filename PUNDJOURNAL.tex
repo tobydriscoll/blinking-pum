@@ -198,7 +198,7 @@ G = shiftdim(G,1);
 \end{lstlisting}
 Our final result will be a $M \times M \times M$ grid evaluated at the interpolating tensor product grid. The work required is
  \begin{equation}
- \mathcal{O}(M N^3 + M^2 N^2 + M N^2).
+ \mathcal{O}(M N^3 + M^2 N^2 + M^3 N).
  \end{equation}
  Thus if $N =\mathcal{O}(M)$ we have the first method requires $\mathcal{O}(M^6)$ work, while the second required $\mathcal{O}(M^4)$. This can be seen computationally. In my experiments, I simulate a possible splitting. Assuming a max degree 65 in all dimensions, the first method requires 15 seconds to interpolate onto the grid. The second require 0.18 seconds. The code I used is below.
  
@@ -306,4 +306,16 @@ max(abs(FUNS(:)-F3C(:)))
 \label{MULTI_INTERP}
 \end{figure}
 
+\section{Some Initial Results}
+I have tested the our method on a  2D box with domain $[-1,1]x[-1,1]$. For the function
+\begin{equation}
+\arctan((x+y)/0.05),
+\end{equation}
+we have that our method takes 2.135446 seconds (with a splitting tolerance of 1e-14) while Chebfun2 takes 18 seconds.
+
+For the function
+\begin{equation}
+\arctan(x/0.05)+\arctan(y/0.05),
+\end{equation}
+our method takes 1.4 seconds while Chebfun2 takes 0.1 seconds. Here is my initial though: Our method's complexity depends on how sharp the features of the function are while Chebfun2's complexity depends on the rank of the function.
 \end{document}
