@@ -55,8 +55,13 @@ classdef PUPatch<Patch
         end
         
         function sample(obj,f)
-            obj.children{1}.sample(f(1:length(obj.children{1})));
-            obj.children{2}.sample(f(length(obj.children{1})+1:end));
+            if ~isnumeric(f)
+                obj.children{1}.sample(f);
+                obj.children{2}.sample(f);
+            else
+                obj.children{1}.sample(f(1:length(obj.children{1})));
+                obj.children{2}.sample(f(length(obj.children{1})+1:end));
+            end
         end
         
         function vals = evalf(obj,X,dim,order)

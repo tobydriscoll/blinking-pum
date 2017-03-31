@@ -127,18 +127,23 @@ classdef ChebPatch<LeafPatch
         %     f: values sampled at obj.points.
         function sample(obj,f)
             %Just assume we sample f for right now.
-            switch obj.dim
-                case 1
-                    [~,n2] = size(f);
-                    if n2 == 1
-                        obj.values = f';
-                    else
-                        obj.values = f;
-                    end
-                    
-                otherwise
-                    obj.values = reshape(f,obj.degs);
+            if ~isnumeric(f)
+                obj.values = reshape(f(obj.points()),obj.degs);
+            else
+                switch obj.dim
+                    case 1
+                        [~,n2] = size(f);
+                        if n2 == 1
+                            obj.values = f';
+                        else
+                            obj.values = f;
+                        end
+                        
+                    otherwise
+                        obj.values = reshape(f,obj.degs);
+                end
             end
+            
         end
         
         % The method determines if a splitting is needed, and creates

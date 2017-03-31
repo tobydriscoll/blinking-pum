@@ -13,8 +13,7 @@ classdef PUFun < handle
             
             while ~obj.ChebRoot.is_refined
                 
-                X = obj.ChebRoot.points();
-                obj.ChebRoot.sample(f(X));
+                obj.ChebRoot.sample(f);
                 
                 if obj.ChebRoot.is_leaf
                     obj.ChebRoot = obj.ChebRoot.splitleaf();
