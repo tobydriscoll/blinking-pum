@@ -27,6 +27,7 @@
 \newcommand{\nmax}{n_{\text{max}}}
 \newcommand{\child}[1]{c\textsubscript{#1}}
 \newcommand{\weight}[1]{w\textsubscript{#1}}
+\newcommand{\bound}[1]{b\textsubscript{#1}}
 %%%%%
 
 \begin{document}
@@ -318,4 +319,61 @@ For the function
 \arctan(x/0.05)+\arctan(y/0.05),
 \end{equation}
 our method takes 1.4 seconds while Chebfun2 takes 0.1 seconds. Here is my initial though: Our method's complexity depends on how sharp the features of the function are while Chebfun2's complexity depends on the rank of the function.
+
+\section{RASPEN Solver}
+Here I lay out a plan for our to approach the Raspin Solver for a 1D BVP. Here, \bound{0}($\nu$),\bound{1}($\nu$) refer to the left and right interval points of interval($\nu$) as in our paper. The localsolve($\nu$,lbc,rbc) method solves the BVP locally on $\nu$ with the given boundary conditions; this is a method for leaves. The AlternatingSchwartz method would be called on non-leaves. This algorithm can be generalized to higher dimensions, but some care must be given to the boundaries. I will leave this for later.
+
+\begin{algorithm}[!h]
+\caption{v=AlternatingSchwartz($\nu$,lbc,rbc)}
+\label{alg8}
+\begin{algorithmic}
+\IF{\child{0}($\nu$) is not a leaf}
+\STATE $\hat{\text{rbc}}$ = evalf(\child{1}($\nu$),\bound{1}(\child{0}($\nu$)))
+\STATE v0 = AlternatingSchwartz(\child{0}($\nu$),lbc,$\hat{\text{rbc}}$)
+\ELSE
+\STATE v0 = localsolve(\child{0}($\nu$),lbc,rbc)
+\ENDIF
+
+\IF{\child{1}($\nu$) is not a leaf}
+\STATE $\hat{\text{lbc}}$ = evalf(\child{0}($\nu$),\bound{0}(\child{1}($\nu$)))
+\STATE v1 = AlternatingSchwartz(\child{1}($\nu$),$\hat{\text{lbc}}$,rbc)
+\ELSE
+\STATE v1 = localsolve(\child{1}($\nu$),lbc,rbc)
+\ENDIF
+\STATE v = [v0;v1];
+\end{algorithmic}
+\end{algorithm}
+
+For Algorithm~\ref{alg9}, the residuals of the BVP'S should be included in the nonlinear solve.
+
+\begin{algorithm}[!h]
+\caption{v=CourseSolve(T,$x_c$,$D_x$,$D_{xx}$,$u$)}
+\label{alg9}
+\begin{algorithmic}
+\STATE sample(T,$u$)
+\STATE [ubglob,udglobdx,uglobd2x] = evalf(T,points(T))
+\STATE rglob = ODE(ubglob,udglobdx,uglobd2x)
+\STATE $u_c$ = evalf(T,$x_c$)
+\STATE $r_c$ = ODE($u_c$,$D_x u_c$, $D_{xx} u_c$)
+\STATE sample(T,rglob)
+\STATE g = rc - evalf(T,$x_c$)
+\STATE v = fsolve(@(s) ODE($s$,$D_x s$,$D_{xx} s$)-g)
+\end{algorithmic}
+\end{algorithm}
+
+We finally have the RASPEN iteration in \ref{alg10}.
+\begin{algorithm}[!h]
+\caption{F=Raspen($u$,T,$x_c$,$D_x$,$D_{xx}$,lbc,rbc)}
+\label{alg10}
+\begin{algorithmic}
+\STATE $u_{\text{init}}=u$
+\STATE v=CourseSolve(T,$x_c$,$D_x$,$D_{xx}$,$u$)
+\STATE sample(T,v)
+\STATE u = evalf(T,points(T))
+\STATE Alt = AlternatingSchwartz(T,lbc,rbc)
+\STATE sample(T,Alt)
+\STATE F = evalf(T,points(T))
+\end{algorithmic}
+\end{algorithm}
+
 \end{document}
