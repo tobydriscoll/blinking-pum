@@ -347,7 +347,7 @@ Here I lay out a plan for our to approach the Raspin Solver for a 1D BVP. Here, 
 For Algorithm~\ref{alg9}, the residuals of the BVP'S should be included in the nonlinear solve.
 
 \begin{algorithm}[!h]
-\caption{v=CourseSolve(T,$x_c$,$D_x$,$D_{xx}$,$u$)}
+\caption{c=CourseSolve(T,$x_c$,$D_x$,$D_{xx}$,$u$)}
 \label{alg9}
 \begin{algorithmic}
 \STATE sample(T,$u$)
@@ -356,8 +356,8 @@ For Algorithm~\ref{alg9}, the residuals of the BVP'S should be included in the n
 \STATE $u_c$ = evalf(T,$x_c$)
 \STATE $r_c$ = ODE($u_c$,$D_x u_c$, $D_{xx} u_c$)
 \STATE sample(T,rglob)
-\STATE g = rc - evalf(T,$x_c$)
-\STATE v = fsolve(@(s) ODE($s$,$D_x s$,$D_{xx} s$)-g)
+\STATE g = rc + evalf(T,$x_c$)
+\STATE c = fsolve(@(s) ODE($s$,$D_x s$,$D_{xx} s$)-g)-$u_c$
 \end{algorithmic}
 \end{algorithm}
 
@@ -367,12 +367,11 @@ We finally have the RASPEN iteration in \ref{alg10}.
 \label{alg10}
 \begin{algorithmic}
 \STATE $u_{\text{init}}=u$
-\STATE v=CourseSolve(T,$x_c$,$D_x$,$D_{xx}$,$u$)
-\STATE sample(T,v)
-\STATE u = evalf(T,points(T))
+\STATE cf=Chebfun(CourseSolve(T,$x_c$,$D_x$,$D_{xx}$,$u$))
+\STATE sample(T,u+cf(points(T)))
 \STATE Alt = AlternatingSchwartz(T,lbc,rbc)
 \STATE sample(T,Alt)
-\STATE F = evalf(T,points(T))
+\STATE F = unit-evalf(T,points(T))
 \end{algorithmic}
 \end{algorithm}
 
