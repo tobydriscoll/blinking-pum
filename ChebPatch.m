@@ -47,7 +47,7 @@ classdef ChebPatch<LeafPatch
             obj.cheb_length = prod(obj.degs);
             obj.is_leaf = true;
             obj.is_refined = false;
-
+            
         end
         
         
@@ -63,8 +63,8 @@ classdef ChebPatch<LeafPatch
             
             for i=1:obj.dim
                 %C{i} = chebpts(obj.degs(i),obj.domain(i,:));
-                 C{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
-                C{i} = 0.5*diff(obj.domain(i,:))*C{i}-0.5*sum(obj.domain(i,:));
+                C{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
+                C{i} = 0.5*diff(obj.domain(i,:))*C{i}+0.5*sum(obj.domain(i,:));
             end
             [out{1:obj.dim}] = ndgrid(C{:});
             
@@ -102,7 +102,7 @@ classdef ChebPatch<LeafPatch
                         diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
                         diff_values = 2*(obj.domain(diff_dim,2)-obj.domain(diff_dim,1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),1}*diff_values;
                         diff_values = reshape(diff_values,perm_degs);
-                        diff_values = shiftdim(diff_values,3-(diff_dim-1));
+                        diff_values = shiftdim(diff_values,obj.dim-(diff_dim-1));
                 end
                 
                 input{2} = diff_values;
@@ -120,6 +120,53 @@ classdef ChebPatch<LeafPatch
                     ef(i,j) = G;
                 end
             end
+            
+        end
+        
+        function ef = evalfGrid(obj,X,diff_dim,order)
+            
+            grid_lengths = cellfun(@(x)length(x),X);
+            
+            ef = zeros([grid_lengths order]);
+            
+            input{1} = obj.values;
+            
+            if order>0
+                switch obj.dim
+                    case 1
+                        diff_values = 2*(obj.domain(2)-obj.domain(1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
+                    otherwise
+                        diff_values = (shiftdim(obj.values,diff_dim-1));
+                        perm_degs = size(diff_values);
+                        diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
+                        diff_values = 2*(obj.domain(diff_dim,2)-obj.domain(diff_dim,1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),1}*diff_values;
+                        diff_values = reshape(diff_values,perm_degs);
+                        diff_values = shiftdim(diff_values,obj.dim-(diff_dim-1));
+                end
+                
+                input{2} = diff_values;
+            end
+            
+            for j=1:order+1
+                G = input{j};
+                for k=1:obj.dim
+                    %Shift the points to the right domain
+                    points = 2/(diff(obj.domain(k,:)))*X{k}-sum(obj.domain(k,:))./diff(obj.domain(k,:));
+                    
+                    G = bary(points,G,obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
+                    G = shiftdim(G,1);
+                end
+                
+                if order>0
+                    subses = repmat({':'}, [1 ndims(ef)]);
+                    subses{obj.dim+1} = j;
+                    ef(subses{:}) = G;
+                else
+                    ef = G;
+                end
+            end
+            
+            
         end
         
         % Sets the values to be used for interpolation
@@ -163,12 +210,12 @@ classdef ChebPatch<LeafPatch
             
             for i=1:obj.dim
                 %if obj.split_flag(i)
-                    Fi = shiftdim(obj.values,i-1);
-                    sizes = size(Fi);
-                    Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
-                    %Figure out deg along dim i,
-                    len = simplify(Fi,obj.tol);
-                    G(i) = len;
+                Fi = shiftdim(obj.values,i-1);
+                sizes = size(Fi);
+                Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
+                %Figure out deg along dim i,
+                len = simplify(Fi,obj.tol);
+                G(i) = len;
                 %end
             end
             
@@ -176,10 +223,10 @@ classdef ChebPatch<LeafPatch
             split_dim = 1;
             for i=1:obj.dim
                 
-%                 if diff(obj.domain(i,:))>max_in
-%                     max_in = diff(obj.domain(i,:));
-%                     split_dim = i;
-%                 end
+                %                 if diff(obj.domain(i,:))>max_in
+                %                     max_in = diff(obj.domain(i,:));
+                %                     split_dim = i;
+                %                 end
                 
                 if G(i)>max(max_in,obj.degs(i)-1) && obj.split_flag(i)
                     max_in = G(i);
@@ -260,7 +307,7 @@ classdef ChebPatch<LeafPatch
             out = A(subses{:});
         end
         
-
+        
         
     end
     

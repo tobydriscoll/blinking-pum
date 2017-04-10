@@ -17,6 +17,7 @@ classdef PUPatch<Patch
         
         function obj = PUPatch(domain,overlap_in,cheb_length,children,splitting_dim)
             obj.domain = domain;
+            [obj.dim,~] = size(obj.domain);
             obj.overlap_in = overlap_in;
             obj.cheb_length = cheb_length;
             obj.children = children;
@@ -64,7 +65,97 @@ classdef PUPatch<Patch
             end
         end
         
+        function vals = evalfGrid(obj,X,dim,order)
+            
+            grid_lengths = cellfun(@(x)length(x),X);
+            
+            [n,~] = size(grid_lengths);
+            
+            if n>1
+                grid_lengths = grid_lengths';
+            end
+            
+            %Put the order at the end; this makes things
+            %easier to deal with in matlab
+            vals = zeros([grid_lengths order+1]);
+            
+            sub_grids = cell(2,1);
+            child_vals = cell(2,1);
+            
+            inds = cell(2,1);
+            
+            for k=1:2
+                [sub_grids{k},inds{k}] = obj.children{k}.InDomainGrid(X,obj.splitting_dim);
+            end
+            
+
+            %calculate values for the children
+            for k=1:2
+                if ~isempty(sub_grids{k})
+                    child_vals{k} = obj.children{k}.evalfGrid(sub_grids{k},dim,order);
+                end
+            end
+            
+            
+            %Go ahead and shift the splitting diminsion
+            %Here I ciculate the dimensions before the order
+            dim_permute = circshift(1:obj.dim,[0 -obj.splitting_dim+1]);
+            
+            if order>0
+                vals = permute(vals,[dim_permute obj.dim+1]);
+                lengths = size(vals);
+                vals = reshape(vals,lengths(1),prod(lengths(2:end-1)),order+1);
+                
+                for k=1:2
+                    child_vals{k} = permute(child_vals{k},[dim_permute obj.dim+1]);
+                    c_lengths = size(child_vals{k});
+                    child_vals{k} = reshape(child_vals{k},c_lengths(1),prod(c_lengths(2:end-1)),order+1);
+                end
+            else
+                vals = permute(vals,dim_permute);
+                lengths = size(vals);
+                vals = reshape(vals,lengths(1),prod(lengths(2:end)));
+                
+                for k=1:2
+                    child_vals{k} = permute(child_vals,[dim_permute obj.dim+1]);
+                    c_lengths = size(child_vals{k});
+                    child_vals{k} = reshape(child_vals,c_lengths(1),prod(c_lengths(2:end)));
+                end
+            end
+            
+            for j=0:order
+                
+                 
+                %Generalized product rule
+                for ord_i=0:j
+                    
+                    %Weights depend only on one variable; don't need to
+                    %calculate anything if the splitting dim does not match
+                    %the dim we are differentiating in (i.e. the derivative
+                    %in these dimensions will be zero).
+                    if (j-ord_i)==0 || obj.splitting_dim == dim
+                        for k=1:2
+                            if ~isempty(child_vals{k})
+                                weight_vals =  nchoosek(j,ord_i)*obj.weights.evalf(X{obj.splitting_dim}(inds{k}),obj.overlap_in,k,1,j-ord_i);
+                                weight_vals = repmat(weight_vals,1,length(child_vals{k}(:,:,ord_i+1)));
+                                vals(inds{k},:,j+1) = vals(inds{k},:,j+1) + weight_vals.*child_vals{k}(:,:,ord_i+1);
+                            end
+                        end
+                    end
+                end
+            end
+            
+            if order>0
+                vals = reshape(vals,lengths);
+                vals = ipermute(vals,[dim_permute obj.dim+1]);
+            else
+                vals = reshape(vals,lengths);
+                vals = ipermute(vals,dim_permute);
+            end
+        end
+        
         function vals = evalf(obj,X,dim,order)
+            
             
             vals = zeros(length(X),order+1);
             
@@ -76,7 +167,7 @@ classdef PUPatch<Patch
                 ind(:,k) = obj.children{k}.InDomain(X);
             end
             
-            child_vals{k} = cell(2,1);
+            child_vals = cell(2,1);
             
             %calculate values for the children
             for k=1:2
@@ -111,5 +202,6 @@ classdef PUPatch<Patch
             str = strvcat(strcat('1',obj.children{1}.toString()),strcat('2',obj.children{2}.toString()));
         end
     end
+   
 end
 
