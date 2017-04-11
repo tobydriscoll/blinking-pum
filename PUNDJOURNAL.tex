@@ -375,4 +375,99 @@ We finally have the RASPEN iteration in \ref{alg10}.
 \end{algorithmic}
 \end{algorithm}
 
+\section{Computing on a Gird}
+I completed the code for evaluating the approximation on the grid; this works very fast. The dominate costs for the approximation evaluation on a grid $X$ are:
+\begin{itemize}
+\item Determining the sub-grids of $X$ are in the nodes of the tree,
+\item and calculating the weights.
+\end{itemize}
+For a tree $T$ with leaves $\{\nu_i\}_{i=1}^N$, let grid($\nu_i$) be the grid of the leaf (in Matlab, this would be stored as a cell array of coordinate vectors). For a forward solver, we would need to evaluate the approximation on $\{\text{grid($\nu_i$)}\}_{i=1}^N$. From what I have seen, a single iteration in the RASPEN solve will require hundreds of evaluations. For the approximation of $tan(x+y)$, the method took 6 seconds to evaluate on the grid.
+
+Looking at the profiler though, almost \%75 to \%80 of the work is determining which points belong to which patches and calculating the weights. These can be pre-calculated. Suppose we have a cell array of the leafs as well as the tree (since I am using the handle class, changes in one data structure will change the other since Matlab uses references).
+
+First, we could use the tree to determine $\text{leafpoints($\nu$)}=\text{points($T$)}\cap\text{domain($\nu$)}$. In this case, $\text{leafpoints($\nu$)}$ could be stored as a cell array of grids. Let's look at an example of a tree in Figure~\ref{Tree_weights} to see how we might precalculate the weights. In this case, the approximate in terms of the leaves is
+\begin{equation}
+s_{[a,b]}(x) =  w_{\ell_1}(x) s_{[a_{1},b_{1}]}(x) +  w_{r_1}(x)  w_{\ell_2}(x) s_{[a_{21},b_{21}]}(x) + w_{r_1}(x) w_{r_2}(x) s_{[a_{22},b_{22}]}(x)
+\end{equation}
+In this case we would pre-calculate
+\begin{equation}
+\begin{aligned}
+w_{\ell_1}(x) &\text{ at leafpoints($\nu_1$),} \\
+w_{r_1}(x)  w_{\ell_2}(x) &\text{ at leafpoints($\nu_2$),} \\
+\text{and } w_{r_1}(x) w_{r_2}(x)  &\text{ at leafpoints($\nu_3$).}
+\end{aligned}
+\end{equation}
+
+For a general tree, we can write a recursive function to do this as seen in Algorithm~\ref{alg11}. For a node $\nu$, let $\text{weight($\nu$)}$ be the weight multiplied by the approximate for the node (i.e., in Figure~\ref{Tree_weights} $\text{weight($\nu_1$)}=w_{\ell_2}(x)$). For the root of the tree, we set the weight to the constant function 1. In my code I use a standard weight with parameters to shift and scale; this implies that we can just store the parameters for the weight used at the node of the tree. For each leaf $\nu_i$ of the tree $T$, we set
+\begin{equation}
+\text{weightvals($\nu_i$)=CalculateWeights(root($T$),domain($\nu_i$),leafpoints($\nu_i$))}.
+\end{equation}
+Let leafpointindex($\nu_i$) be the indices of the points in leafpoints(root($T$)). I describe in Algorithm~\ref{alg12} how to evaluate the approximation on the grids of the tree. This can easily be implemented using a parfor loop if needed.
+
+\begin{algorithm}[!h]
+\caption{w=CalculateWeights($\nu$,dom,$X$)}
+\label{alg11}
+\begin{algorithmic}
+\IF{$\nu$ is a leaf}
+\STATE $\text{w} \leftarrow \left . \text{weights($\nu$)} \right |_{X}$
+\ELSIF{$\text{dom}\subseteq \text{domain(\child{0}($\nu$))}$}
+\STATE $\text{w} \leftarrow \left . \text{weights($\nu$)} \right |_{X}.*\text{CalculateWeights(\child{0}($\nu$),dom,$X$)}$
+\ELSE
+\STATE $\text{w} \leftarrow \left . \text{weights($\nu$)} \right |_{X}.*\text{CalculateWeights(\child{1}($\nu$),dom,$X$)}$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{algorithm}[!h]
+\caption{F=evalfTreeGrid($T$)}
+\label{alg12}
+\begin{algorithmic}
+\FOR{ each leaf $\nu_i$ of $T$}
+\STATE $F_i = \text{zeros}(\text{length}(T),1)$
+\STATE $F_i(\text{leafpointindex($\nu_i$)}) \leftarrow \text{weightvals($\nu_i$)}.*\text{evalf}(\nu_i,\text{leafpoints($\nu_i$)})$
+\ENDFOR
+\STATE $F = \sum_{i=1}^N F_i$.
+\end{algorithmic}
+\end{algorithm}
+
+\begin{figure}
+\centering
+     \begin{forest}
+for tree={circle,draw, l sep=20pt,,scale=0.98}
+[ {$\begin{array}{c}
+[a,b] \\
+s_{[a,b]}(x)
+\end{array}$}
+    [ {$\begin{array}{c}
+ [a_1,b_1]  \\
+s_{[a_{1},b_{1}]}(x) \\
+ w_{\ell_1}(x) \\
+ \nu_1
+\end{array}$},name=left_p]
+    [ {{$\begin{array}{c}
+    [a_2,b_2] \\
+s_{[a_{2},b_{2}]}(x) \\
+ w_{r_1}(x) 
+\end{array}$}} 
+      [{$\begin{array}{c}
+ [a_{21},b_{21}] \\     
+s_{[a_{21},b_{21}]}(x) \\
+ w_{\ell_2}(x) \\
+ \nu_2
+\end{array}$},name=right_p] 
+      [{$\begin{array}{c}
+  [a_{22},b_{22}] \\    
+s_{[a_{22},b_{22}]}(x) \\
+ w_{r_2}(x) \\
+  \nu_3
+\end{array}$}] 
+  ] 
+]
+]
+\end{forest}
+\caption{An example of a simple tree with nodes ${\nu_1,\nu_2,\nu_3}$, where each node is labeled with its domain, PU approximate and weight (in that order).}
+\label{Tree_weights}
+\end{figure}
 \end{document}
