@@ -117,9 +117,9 @@ classdef PUPatch<Patch
                 vals = reshape(vals,lengths(1),prod(lengths(2:end)));
                 
                 for k=1:2
-                    child_vals{k} = permute(child_vals,[dim_permute obj.dim+1]);
+                    child_vals{k} = permute(child_vals{k},dim_permute);
                     c_lengths = size(child_vals{k});
-                    child_vals{k} = reshape(child_vals,c_lengths(1),prod(c_lengths(2:end)));
+                    child_vals{k} = reshape(child_vals{k},c_lengths(1),prod(c_lengths(2:end)));
                 end
             end
             
@@ -136,9 +136,17 @@ classdef PUPatch<Patch
                     if (j-ord_i)==0 || obj.splitting_dim == dim
                         for k=1:2
                             if ~isempty(child_vals{k})
-                                weight_vals =  nchoosek(j,ord_i)*obj.weights.evalf(X{obj.splitting_dim}(inds{k}),obj.overlap_in,k,1,j-ord_i);
-                                weight_vals = repmat(weight_vals,1,length(child_vals{k}(:,:,ord_i+1)));
-                                vals(inds{k},:,j+1) = vals(inds{k},:,j+1) + weight_vals.*child_vals{k}(:,:,ord_i+1);
+                                if order>0
+                                    weight_vals =  nchoosek(j,ord_i)*obj.weights.evalf(X{obj.splitting_dim}(inds{k}),obj.overlap_in,k,1,j-ord_i);
+                                    [~,n] = size(child_vals{k}(:,:,ord_i+1));
+                                    weight_vals = repmat(weight_vals,1,n);
+                                    vals(inds{k},:,j+1) = vals(inds{k},:,j+1) + weight_vals.*child_vals{k}(:,:,ord_i+1);
+                                else
+                                    weight_vals =  nchoosek(j,ord_i)*obj.weights.evalf(X{obj.splitting_dim}(inds{k}),obj.overlap_in,k,1,j-ord_i);
+                                    [~,n] = size(child_vals{k}(:,:,ord_i+1));
+                                    weight_vals = repmat(weight_vals,1,n);
+                                    vals(inds{k},:) = vals(inds{k},:) + weight_vals.*child_vals{k};
+                                end
                             end
                         end
                     end

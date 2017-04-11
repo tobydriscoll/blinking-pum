@@ -14,6 +14,7 @@ classdef (Abstract) Patch < handle
     methods (Abstract)
         points = points(obj)
         ef = evalf(obj,x,dim,order)
+        ef = evalfGrid(obj,x,dim,order)
         ln = length(obj)
         sample(obj,f)
     end

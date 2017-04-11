@@ -24,8 +24,11 @@ classdef PUFun < handle
             end
         end
         
-        function ef = evalf(obj,X)
-            ef = obj.ChebRoot.evalf(X);
+        function ef = evalf(obj,X,dim,order)
+            ef = obj.ChebRoot.evalf(X,dim,order);
+        end
+                function ef = evalfGrid(obj,X,dim,order)
+            ef = obj.ChebRoot.evalfGrid(X,dim,order);
         end
         
         function disp(obj)

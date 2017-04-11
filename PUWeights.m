@@ -32,7 +32,13 @@ classdef PUWeights
         end
         
         function ef = evalf(obj,X,MIDINV,k,split_dim,diff_j)
-            if nargin == 3
+            
+            if nargin == 4
+                split_dim =1;
+                diff_j =0;
+            end
+            
+            if nargin == 5
                 diff_j=0;
             end
             

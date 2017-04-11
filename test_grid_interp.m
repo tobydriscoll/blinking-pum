@@ -4,7 +4,7 @@ domain = [-1 1];
 
 standard_degs = [3 5 9 17 33 65];
 
-deg_ind = [5 5 5 5];
+deg_ind = [6 6 6 6];
 degs = standard_degs(deg_ind);
 
 x=chebpts(degs(1),domain);

@@ -27,6 +27,10 @@ end
 
 % Take the minimum of CUTOFF and LENGTH(F). This is necessary when padding was
 % required.
+if cutoff == n-1
+    cutoff = n;
+end
+
 cutoff = min(cutoff, n);
 
 end
