@@ -2,6 +2,7 @@ classdef PUFun < handle
     
     properties
         ChebRoot
+        TreeGrid
     end
     
     methods
@@ -22,14 +23,25 @@ classdef PUFun < handle
                 end
                 
             end
+            obj.TreeGrid = obj.ChebRoot.leafGrids();
         end
         
         function ef = evalf(obj,X,dim,order)
             ef = obj.ChebRoot.evalf(X,dim,order);
         end
-                function ef = evalfGrid(obj,X,dim,order)
+        
+        function ef = evalfGrid(obj,X,dim,order)
             ef = obj.ChebRoot.evalfGrid(X,dim,order);
         end
+        
+        function ef = evalfTreeGrid(obj,dim,order)
+            
+            for i=1:length(obj.TreeGrid)
+                ef = obj.ChebRoot.evalfGrid(obj.TreeGrid{i},dim,order);
+            end
+            
+        end
+        
         
         function disp(obj)
             disp(obj.ChebRoot.toString());

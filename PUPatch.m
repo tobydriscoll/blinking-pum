@@ -24,11 +24,25 @@ classdef PUPatch<Patch
             obj.splitting_dim = splitting_dim;
             obj.is_leaf = false;
             obj.is_refined = false;
-            
         end
         
         function ln = length(obj)
             ln = obj.cheb_length;
+        end
+        
+        function grids = leafGrids(obj)
+            gridsl = leafGrids(obj.children{1});
+            gridsr = leafGrids(obj.children{2});
+            if obj.children{1}.is_leaf && obj.children{2}.is_leaf
+                grids = {gridsl gridsr};
+            elseif obj.children{1}.is_leaf && ~ obj.children{2}.is_leaf
+                grids = {gridsl gridsr{:}};
+            elseif obj.children{2}.is_leaf
+                grids = {gridsl{:} gridsr};
+            else
+                grids = {gridsl{:} gridsr{:}};
+            end
+            
         end
         
         %Implement this later.
@@ -84,17 +98,21 @@ classdef PUPatch<Patch
             
             inds = cell(2,1);
             
+            not_empty_child = true(2,1);
+            
             for k=1:2
                 [sub_grids{k},inds{k}] = obj.children{k}.InDomainGrid(X,obj.splitting_dim);
+                 not_empty_child(k)= all(cellfun(@(x)~isempty(x),sub_grids{k}));
             end
             
 
             %calculate values for the children
             for k=1:2
-                if ~isempty(sub_grids{k})
+                if  not_empty_child(k)
                     child_vals{k} = obj.children{k}.evalfGrid(sub_grids{k},dim,order);
                 end
             end
+            
             
             
             %Go ahead and shift the splitting diminsion
@@ -135,7 +153,7 @@ classdef PUPatch<Patch
                     %in these dimensions will be zero).
                     if (j-ord_i)==0 || obj.splitting_dim == dim
                         for k=1:2
-                            if ~isempty(child_vals{k})
+                            if not_empty_child(k)
                                 if order>0
                                     weight_vals =  nchoosek(j,ord_i)*obj.weights.evalf(X{obj.splitting_dim}(inds{k}),obj.overlap_in,k,1,j-ord_i);
                                     [~,n] = size(child_vals{k}(:,:,ord_i+1));

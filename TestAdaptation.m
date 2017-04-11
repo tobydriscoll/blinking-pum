@@ -18,6 +18,8 @@ tic;
 v = PUf.evalfGrid({x,x},1,0);
 toc
 surf(X,Y,v);
+shading flat
+
 
 % tic;
 % fc=chebfun2(func)

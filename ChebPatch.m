@@ -76,6 +76,16 @@ classdef ChebPatch<LeafPatch
             
         end
         
+        function grid = leafGrids(obj)
+            grid = cell(1,obj.dim);
+            
+            for i=1:obj.dim
+                %C{i} = chebpts(obj.degs(i),obj.domain(i,:));
+                grid{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
+                grid{i} = 0.5*diff(obj.domain(i,:))*grid{i}+0.5*sum(obj.domain(i,:));
+            end
+        end
+        
         % Evaluates the approximant and its derivatives.
         %
         %  Input:
