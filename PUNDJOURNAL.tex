@@ -7,8 +7,9 @@
 \usepackage[section]{placeins}
 \usepackage[export]{adjustbox}
 \usepackage{amsmath}
+\usepackage{amsfonts}
 \usepackage[framed,numbered,autolinebreaks,useliterate]{mcode}
-
+\DeclareMathOperator*{\argmin}{argmin}
 \newcommand{\lp}{\left(}
 \newcommand{\rp}{\right)}
 
@@ -470,4 +471,29 @@ s_{[a_{22},b_{22}]}(x) \\
 \caption{An example of a simple tree with nodes ${\nu_1,\nu_2,\nu_3}$, where each node is labeled with its domain, PU approximate and weight (in that order).}
 \label{Tree_weights}
 \end{figure}
+
+\section{Over determined least squares method}
+Suppose we have an orthogonal set of tensor product chebyshev polynomials $\{ T_k(x,y) \}_k^{\inf}$ for $[-1,1]\times[-1,1]$ (i.e. the set of polynomials is formed from the tensor product of the polynomials in $x$ and $y$). Our goal is to approximate the function $f:\Omega \to \R$, with $\Omega \subset [-1,1]\times[-1,1]$. Let
+\begin{align}
+G_N = \text{span}\{T_k(x,y):k<N\}
+\end{align}
+and
+\begin{align}
+g_N = \argmin_{g \in G_N} \| g(x,y)-f(x,y) \|_{L^2(\Omega)}.
+\end{align}
+The first question we might answer is: Does $g_N \to f$ in the $L^2(\Omega)$ norm? I would think so. If there exists an extension $\varepsilon f(x,y):[-1,1]\times[-1,1] \to \R$ such that $\varepsilon f(x,y) \equiv f(x,y)$ on $\Omega$, then a straight forward convergence argument can be made. I would need to read more about this though.
+
+Though we might could find an exact representation for $g_N$, it will either be
+\begin{itemize}
+\item cumbersome to compute (we would likely need to compute integrals over $\Omega$),
+\item unstable to compute (as seen in the Fourier extensions).
+\end{itemize}
+
+Let $X_M \subset \Omega$ be a discrete set of $M$ points. We instead solve for
+
+\begin{align}
+\hat{g}_N = \argmin_{g \in G_N} \| \left . (g-f) \right |_{X_M} \|_2
+\end{align}
+
+The first question that comes to mind is: as $M \to \infty$, does $\hat{g}_N \to g_n$ (at least in exact arithmetic)? I would suspect so.
 \end{document}
