@@ -1,6 +1,6 @@
 clear all;
-Nx = 15;
-Ny = 15;
+Nx = 33;
+Ny = 33;
 
 Nxf = 2*Nx;
 Nyf = 2*Ny;
@@ -68,7 +68,7 @@ x0 = zeros(length(XP),1);
 options = optimoptions('lsqnonlin','SpecifyObjectiveGradient',true);
 fun = @(V) non_lin_pois_f(V,M,DX,DY,DXX,DYY,XPf,nu,grid_sq_ind_in,grid_sq_ind_b);
 tic;
-V = lsqnonlin(fun,x0);
+V = lsqnonlin(fun,x0,[],[],options);
 toc
 
 norm(fun(V))
