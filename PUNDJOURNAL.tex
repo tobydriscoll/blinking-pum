@@ -9,7 +9,12 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage[framed,numbered,autolinebreaks,useliterate]{mcode}
+\usepackage{amsthm}
 \DeclareMathOperator*{\argmin}{argmin}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
 \newcommand{\lp}{\left(}
 \newcommand{\rp}{\right)}
 
@@ -473,7 +478,7 @@ s_{[a_{22},b_{22}]}(x) \\
 \end{figure}
 
 \section{Over determined least squares method}
-Suppose we have an orthogonal set of tensor product chebyshev polynomials $\{ T_k(x,y) \}_k^{\inf}$ for $[-1,1]\times[-1,1]$ (i.e. the set of polynomials is formed from the tensor product of the polynomials in $x$ and $y$). Our goal is to approximate the function $f:\Omega \to \R$, with $\Omega \subset [-1,1]\times[-1,1]$. Let
+Suppose we have an orthogonal set of tensor product chebyshev polynomials $\{ T_k(x,y) \}_{k=1}^{\infty}$ for $[-1,1]\times[-1,1]$ (i.e. the set of polynomials is formed from the tensor product of the polynomials in $x$ and $y$). Our goal is to approximate the function $f:\Omega \to \R$, with $\Omega \subset [-1,1]\times[-1,1]$. Let
 \begin{align}
 G_N = \text{span}\{T_k(x,y):k<N\}
 \end{align}
@@ -496,4 +501,38 @@ Let $X_M \subset \Omega$ be a discrete set of $M$ points. We instead solve for
 \end{align}
 
 The first question that comes to mind is: as $M \to \infty$, does $\hat{g}_N \to g_n$ (at least in exact arithmetic)? I would suspect so.
+
+\subsection{Simple 1D projection}
+\begin{lemma}
+Suppose $f(x):[0,1]\to \C$ is analytic in an ellipse with foci points 0,1 and the semi minor and major axis lengths summing to $\rho/2$. Let $G_n = \text{span} \lp \{T_k(x)\}_{k=0}^N \rp$, $w(x) = \frac{1}{\sqrt{1-x^2}}$ and
+\begin{equation}
+g_n = \argmin_{g \in G_n} \left \| f(x) - g(x) \right \|_{L^2([0,1])w}.
+\end{equation}
+We then have
+\begin{equation}
+\left \| f(x) -g_n(x) \right \|_{L^2([0,1])w} \sim \rho^{-n}.
+\end{equation}
+\end{lemma}
+\begin{proof}
+Let $u(x)=2x-1$, the linear map that takes $[0,1]$ to $[-1,1]$. We have $u(x)$ maps the ellipse with foci points 0,1 and the semi minor and major axis lengths summing to $\rho/2$ to an ellipse $E_\rho$ with foci points -1,1 and the semi minor and major axis lengths summing to $\rho$. We thus have that $f(u(x))$ is analytic in $E_\rho$. Let
+\begin{equation}
+q_n = \argmin_{q \in G_n} \left \| f(u) - q(u) \right \|_{L^2([-1,1])w}.
+\end{equation}
+Since $f(u(x))$ is analytic in $E_\rho$, we have
+\begin{equation}
+\left \| f(u) - q_n(u) \right \|_{L^2([-1,1])w} \sim \rho^{-n}.
+\end{equation}
+
+ We have that $G_n$ is the span of $n_{th}$ dimensional polynomials. Since 
+ 
+ \begin{equation}
+ q_n(u(x))=q_n\lp 2x-1 \rp \in G_n
+ \end{equation}
+we have
+ \begin{equation}
+\left \| f(x) - g_n(x) \right \|_{L^2([0,1])w} \leq \left \| f(x) - q_n \lp 2x-1 \rp \right \|_{L^2([0,1])w} \sim \rho^{-n},
+\end{equation}
+proving the result.
+\end{proof}
+
 \end{document}
