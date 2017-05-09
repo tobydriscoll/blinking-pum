@@ -502,37 +502,85 @@ Let $X_M \subset \Omega$ be a discrete set of $M$ points. We instead solve for
 
 The first question that comes to mind is: as $M \to \infty$, does $\hat{g}_N \to g_n$ (at least in exact arithmetic)? I would suspect so.
 
-\subsection{Simple 1D projection}
-\begin{lemma}
-Suppose $f(x):[0,1]\to \C$ is analytic in an ellipse with foci points 0,1 and the semi minor and major axis lengths summing to $\rho/2$. Let $G_n = \text{span} \lp \{T_k(x)\}_{k=0}^N \rp$, $w(x) = \frac{1}{\sqrt{1-x^2}}$ and
-\begin{equation}
-g_n = \argmin_{g \in G_n} \left \| f(x) - g(x) \right \|_{L^2([0,1])w}.
-\end{equation}
-We then have
-\begin{equation}
-\left \| f(x) -g_n(x) \right \|_{L^2([0,1])w} \sim \rho^{-n}.
-\end{equation}
-\end{lemma}
-\begin{proof}
-Let $u(x)=2x-1$, the linear map that takes $[0,1]$ to $[-1,1]$. We have $u(x)$ maps the ellipse with foci points 0,1 and the semi minor and major axis lengths summing to $\rho/2$ to an ellipse $E_\rho$ with foci points -1,1 and the semi minor and major axis lengths summing to $\rho$. We thus have that $f(u(x))$ is analytic in $E_\rho$. Let
-\begin{equation}
-q_n = \argmin_{q \in G_n} \left \| f(u) - q(u) \right \|_{L^2([-1,1])w}.
-\end{equation}
-Since $f(u(x))$ is analytic in $E_\rho$, we have
-\begin{equation}
-\left \| f(u) - q_n(u) \right \|_{L^2([-1,1])w} \sim \rho^{-n}.
-\end{equation}
+\subsection{Simple 2D experiment}
 
- We have that $G_n$ is the span of $n_{th}$ dimensional polynomials. Since 
- 
- \begin{equation}
- q_n(u(x))=q_n\lp 2x-1 \rp \in G_n
- \end{equation}
-we have
- \begin{equation}
-\left \| f(x) - g_n(x) \right \|_{L^2([0,1])w} \leq \left \| f(x) - q_n \lp 2x-1 \rp \right \|_{L^2([0,1])w} \sim \rho^{-n},
-\end{equation}
-proving the result.
-\end{proof}
+As a simple experiment, I try to approximate
+\begin{align}
+f(x,y) = \cos((x-1)^2+(y-1)^2)
+\end{align}
+In the region
+\begin{align}
+\Omega = \{(x,y) \in [-1,1] \times [-1,1]: (Ax+By+C)/B \geq 0 \}
+\end{align}
+i.e. the region in $[-1,1] \times [-1,1]$ above the line $Ax+By+C=0$. As a first test, I set $A=B=1$, and look at regions for $C \in [0,2]$. For $C=0$, this gives the half the square along its diagonal and $C=2$ gives the whole square. Figure~\ref{region_c} shows the region with $C=1.2$.
+\begin{figure}[!h]
+\centering
+\includegraphics[scale = 0.5]{subset_plot.eps}
+\caption{Region with $A=B=1$, $C=1.2$.}
+\label{region_c}
+\end{figure}
+
+For this problem, I let
+\begin{align}
+G_N = \text{span}\{T_i(x) T_j(y):i,j \leq N\}
+\end{align}
+where $T_i(x)$ is the $i_{th}$ Chebyshev polynomial and
+\begin{align}
+\hat{g}_N = \argmin_{g \in G_N} \| \left . (g-f) \right |_{X} \|_2
+\end{align}
+for a discrete set $X \in \Omega$. For my test, I set $N=33$, and find $\hat{g}_N$ when
+\begin{itemize}
+\item $X$ is the subset of the $66 \times 66$ equidistant points in $\Omega$,
+\item $X$ is the subset of the $66 \times 66$ Chebyshev points (i.e. a tensor product) in $\Omega$,
+\item and $X$ is the subset of the $66 \times 66$ Chebyshev points in $\Omega$ with 66 equidistant points added to the diagonal boundary.
+\end{itemize}
+To measure the accuracy of $\hat{g}_N $ as approximation, we compute the inf norm for the $132 \times 132$ equidistant points in $\Omega$. The results can be seen in Figure~\ref{line_err_plots}. It would seem:
+\begin{itemize}
+\item If there is less empty space the error is lower,
+\item we are better off using Chebyshev points instead of equidistant points,
+\item and there is a benefit to adding points along the boundary.
+\end{itemize}
+
+
+\begin{figure}[!h]
+\centering
+\includegraphics[scale = 0.5]{line_err_plot.eps}
+\caption{Semi-log plot of inf error for $C \in [0,2]$.}
+\label{line_err_plots}
+\end{figure}
+
+
+%\subsection{Simple 1D projection}
+%\begin{lemma}
+%Suppose $f(x):[0,1]\to \C$ is analytic in an ellipse with foci points 0,1 and the semi minor and major axis lengths summing to $\rho/2$. Let $G_n = \text{span} \lp \{T_k(x)\}_{k=0}^N \rp$, $w(x) = \frac{1}{\sqrt{1-x^2}}$ and
+%\begin{equation}
+%g_n = \argmin_{g \in G_n} \left \| f(x) - g(x) \right \|_{L^2([0,1])w}.
+%\end{equation}
+%We then have
+%\begin{equation}
+%\left \| f(x) -g_n(x) \right \|_{L^2([0,1])w} \sim \rho^{-n}.
+%\end{equation}
+%\end{lemma}
+%\begin{proof}
+%Let $u(x)=2x-1$, the linear map that takes $[0,1]$ to $[-1,1]$. We have $u(x)$ maps the ellipse with foci points 0,1 and the semi minor and major axis lengths summing to $\rho/2$ to an ellipse $E_\rho$ with foci points -1,1 and the semi minor and major axis lengths summing to $\rho$. We thus have that $f(u(x))$ is analytic in $E_\rho$. Let
+%\begin{equation}
+%q_n = \argmin_{q \in G_n} \left \| f(u) - q(u) \right \|_{L^2([-1,1])w}.
+%\end{equation}
+%Since $f(u(x))$ is analytic in $E_\rho$, we have
+%\begin{equation}
+%\left \| f(u) - q_n(u) \right \|_{L^2([-1,1])w} \sim \rho^{-n}.
+%\end{equation}
+%
+% We have that $G_n$ is the span of $n_{th}$ dimensional polynomials. Since 
+% 
+% \begin{equation}
+% q_n(u(x))=q_n\lp 2x-1 \rp \in G_n
+% \end{equation}
+%we have
+% \begin{equation}
+%\left \| f(x) - g_n(x) \right \|_{L^2([0,1])w} \leq \left \| f(x) - q_n \lp 2x-1 \rp \right \|_{L^2([0,1])w} \sim \rho^{-n},
+%\end{equation}
+%proving the result.
+%\end{proof}
 
 \end{document}
