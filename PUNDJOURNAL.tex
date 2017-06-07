@@ -10,6 +10,7 @@
 \usepackage{amsfonts}
 \usepackage[framed,numbered,autolinebreaks,useliterate]{mcode}
 \usepackage{amsthm}
+\usepackage{cite}
 \DeclareMathOperator*{\argmin}{argmin}
 
 \newtheorem{theorem}{Theorem}[section]
@@ -39,7 +40,7 @@
 \begin{document}
 
 \section{ND PU Structure}
-
+\label{Structsec}
 Since we are thinking of mixing methods for our PU approximation, it seems we should think more about the modularity of the method. My first thought is to have an abstract PATCH $\nu$ with properties
 \begin{itemize}
 \item domain($\nu$):= domain of $\nu$
@@ -511,6 +512,7 @@ f(x,y) = \cos((x-1)^2+(y-1)^2)
 In the region
 \begin{align}
 \Omega = \{(x,y) \in [-1,1] \times [-1,1]: (Ax+By+C)/B \geq 0 \}
+\label{trig_region}
 \end{align}
 i.e. the region in $[-1,1] \times [-1,1]$ above the line $Ax+By+C=0$. As a first test, I set $A=B=1$, and look at regions for $C \in [0,2]$. For $C=0$, this gives the half the square along its diagonal and $C=2$ gives the whole square. Figure~\ref{region_c} shows the region with $C=1.2$.
 \begin{figure}[!h]
@@ -549,38 +551,239 @@ To measure the accuracy of $\hat{g}_N $ as approximation, we compute the inf nor
 \label{line_err_plots}
 \end{figure}
 
+For a second test, we set
+\begin{align}
+\Omega = [-1,1] \times [-1,1] \cap B_{4}([c,0])
+\label{circ_region}
+\end{align}
+for $c \in [3,4.5]$. Figure~\ref{region_circ} shows the region with $c=3.5$. We test with for similar collocation points as before, but included linearly spaced points with points added to the boundary. The results can be seen in Figure~\ref{circ_err_plots}. Here we see that Chebyshev points with the boundary gives the best results.
 
-%\subsection{Simple 1D projection}
-%\begin{lemma}
-%Suppose $f(x):[0,1]\to \C$ is analytic in an ellipse with foci points 0,1 and the semi minor and major axis lengths summing to $\rho/2$. Let $G_n = \text{span} \lp \{T_k(x)\}_{k=0}^N \rp$, $w(x) = \frac{1}{\sqrt{1-x^2}}$ and
-%\begin{equation}
-%g_n = \argmin_{g \in G_n} \left \| f(x) - g(x) \right \|_{L^2([0,1])w}.
-%\end{equation}
-%We then have
-%\begin{equation}
-%\left \| f(x) -g_n(x) \right \|_{L^2([0,1])w} \sim \rho^{-n}.
-%\end{equation}
-%\end{lemma}
-%\begin{proof}
-%Let $u(x)=2x-1$, the linear map that takes $[0,1]$ to $[-1,1]$. We have $u(x)$ maps the ellipse with foci points 0,1 and the semi minor and major axis lengths summing to $\rho/2$ to an ellipse $E_\rho$ with foci points -1,1 and the semi minor and major axis lengths summing to $\rho$. We thus have that $f(u(x))$ is analytic in $E_\rho$. Let
-%\begin{equation}
-%q_n = \argmin_{q \in G_n} \left \| f(u) - q(u) \right \|_{L^2([-1,1])w}.
-%\end{equation}
-%Since $f(u(x))$ is analytic in $E_\rho$, we have
-%\begin{equation}
-%\left \| f(u) - q_n(u) \right \|_{L^2([-1,1])w} \sim \rho^{-n}.
-%\end{equation}
-%
-% We have that $G_n$ is the span of $n_{th}$ dimensional polynomials. Since 
-% 
-% \begin{equation}
-% q_n(u(x))=q_n\lp 2x-1 \rp \in G_n
-% \end{equation}
-%we have
-% \begin{equation}
-%\left \| f(x) - g_n(x) \right \|_{L^2([0,1])w} \leq \left \| f(x) - q_n \lp 2x-1 \rp \right \|_{L^2([0,1])w} \sim \rho^{-n},
-%\end{equation}
-%proving the result.
-%\end{proof}
+\begin{figure}[!h]
+\centering
+\includegraphics[scale = 0.25]{circ_region.png}
+\caption{Region with $c=3.5$.}
+\label{region_circ}
+\end{figure}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[scale = 0.5]{circ_error.eps}
+\caption{Semi-log plot of inf error for $C \in [0,2]$.}
+\label{circ_err_plots}
+\end{figure}
+
+\section{Over determined least squares method with rank deficient matrices}
+
+When use a collocation matrix $A$ for a subset $\Omega$ on the square $[-1,1] \times [-1,1]$ we often find that $A$ is rank deficient. This is unsurprising since we are not specifying function values outside of $\Omega$. Suppose that $A$ has rank $r$. Then $A$ has a QR decomposition of the form where
+\begin{align}
+R = \begin{pmatrix}
+ R_{11} & R_{12} \\
+ 0 & 0
+ \end{pmatrix}
+ \begin{array}{l}
+ \} r \\
+ \} m-r
+ \end{array}
+\end{align}
+ with $R_{11}$ nonsingular. In this case, the least squares solution to
+ \begin{align}
+ \argmin_{x \in \C^n} \left \| Ax-b\right \|_2
+ \end{align}
+will have multiple solutions. Let
+\begin{align}
+M = \left \{ x |  \argmin_{x \in \C^n} \left \| Ax-b\right \|_2 \right \}
+\end{align}
+i.e. the set of $x$ that minimizes the least squares problem. We can find a unique solution if try to find $x$ that satisfies
+\begin{align}
+\argmin_{x \in M} \| B x \|_2
+\label{cool_prob}
+\end{align}
+where $B$ has linearly independent rows. For this problem $x$ has the form
+\begin{align}
+x = \begin{pmatrix}
+ x_1 \\
+ x_2
+ \end{pmatrix}
+\end{align}
+where $x_2$ is a free parameter and 
+\begin{align}
+x_1 = R_{11}^{-1}(Q_1^{T}b-R_{12}x_2).
+\end{align}
+Let $S$ be the matrix such that
+\begin{equation}
+R_{11} S = R_{12}.
+\end{equation}
+In order to solve (\ref{cool_prob}), we set
+\begin{equation}
+x_2 = \argmin_{\hat{x}_2}\left \| B \begin{pmatrix} S \\ -I_{n-r} \end{pmatrix} \hat{x}_2 - B \begin{pmatrix} R_{11}^{-1}Q_1^{T}b \\ 0 \end{pmatrix}
+\right \|_2.
+\end{equation}
+The solution return by $x=A\backslash b$ in Matlab is the \textbf{basic solution}, where $x_1$ is found by setting $x_2=0$.
+
+We repeat the experiments we did before on both sets of domains, where we record the errors for:
+\begin{itemize}
+\item $B=I$ (in this case we minimize the norm of the coefficients),
+\item $B=D_x+D_y$, where $D_x$, $D_y$ are the differentiation matrices for the coefficients (in this case we minimize the norm of the coefficients of the divergence)
+\item $B=D_x^2+D_y^2$ (in this case we minimize the norm of the coefficients of the laplacian),
+\item and the coefficients returned by the basic solution. 
+\end{itemize}
+
+For the region with the triangle cut off defined in (\ref{trig_region}), we record the errors for the function
+\begin{align}
+f(x,y) = \cos((x-1)^2+(y-1)^2)
+\end{align}
+and its derivative for $C \in [0,1.5]$; for $C$ higher than $1.5$ the collocation matrix has full rank, making each of the different cases the same. For this experiment we used Chebyshev points with points added at the boundary. I repeat this experiment for the circular defined in (\ref{circ_region}) for $C \in [3.3 , 4.5]$.
+
+\begin{figure}[!htb]
+\centering
+\subfloat[]{
+\includegraphics[scale = 0.3]{err_plots_rd_line_c.eps}
+   \label{lineplotda}
+ }\hfill
+\subfloat[]{
+\includegraphics[scale = 0.3]{err_plots_diff_rd_line_c.eps}
+   \label{lineplotdb}
+ }
+\label{lineplotd}
+\caption{Infinity errors for the region defined in  defined in (\ref{trig_region}) for $C \in [0,1.5]$.}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\subfloat[]{
+\includegraphics[scale = 0.3]{err_plots_rd_circ_c.eps}
+   \label{circplota}
+ }\hfill
+\subfloat[]{
+\includegraphics[scale = 0.3]{err_plots_diff_rd_circ_c.eps}
+   \label{circplotb}
+ }
+\label{circplot}
+\caption{Infinity errors for the region defined in  defined in (\ref{circ_region}) for $C \in [3.3,4.5]$.}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\subfloat[]{
+\includegraphics[scale = 0.3]{err_plots_rd_line_lin.eps}
+   \label{lineplotlda}
+ }\hfill
+\subfloat[]{
+\includegraphics[scale = 0.3]{err_plots_diff_rd_line_lin.eps}
+   \label{lineplotldb}
+ }
+\label{lineplotl}
+\caption{Infinity errors for the region defined in  defined in (\ref{trig_region}) for $C \in [0,1.5]$ using linearly spaced points.}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\subfloat[]{
+\includegraphics[scale = 0.3]{err_plots_rd_circ_lin.eps}
+   \label{circplotla}
+ }\hfill
+\subfloat[]{
+\includegraphics[scale = 0.3]{err_plots_diff_rd_circ_lin.eps}
+   \label{circplotlb}
+ }
+\label{circplotl}
+\caption{Infinity errors for the region defined in  defined in (\ref{circ_region}) for $C \in [3.3,4.5]$ using linearly spaced points.}
+\end{figure}
+
+\section{Partition of Unity geometric refinement}
+
+Suppose we have a domain $\Omega \in \R^2$ which is not a rectangle, and function $f(x):\Omega \to \R$. Our goal is to create an adaptive method by overlaying $\Omega$ with overlapping squares. We first start by finding a square $[a,b] \times [c,d]$ such that $\Omega \subseteq [a,b] \times [c,d]$. For the adaptive refinement, we use the method we have for the square. We refine by splitting the square along a certain dimension, and recursively repeat this until we have an accurate PU approximation. The PU weights have support on the squares, while the approximations are only defined in the domain itself.
+
+In this case each leaf of the tree is a rectangle. For a leaf $\nu$ if $\Omega \cap \text{domain}(\nu) \neq \text{domain}(\nu)$ (i.e. $\Omega \cap \text{domain}(\nu)$ is not square) we use the least square method; otherwise we use the standard Chebyshev method. We define a LSPATCH2D object which is a leafPatch object in Section~\ref{Structsec} with the following added properties:
+\begin{itemize}
+\item BoxDomain($\nu$):the domain of the outer box domain.
+\item MaxLengths($\nu$):array of maximum lengths of for BoxDomain($\nu$).
+\item InteriorPoints($\nu$): the set of test points as seen in Figure~\ref{Split_patch_single}.
+
+\end{itemize}
+For these leaves, $\text{domain}(\nu) = \Omega \cap \text{BoxDomain}(\nu)$. We add an additional method:
+\begin{itemize}
+\item IsGeometricallyRefined($\nu$):determines if refinement is needed based on the geometry of $\Omega$.
+\end{itemize}
+The method can be seen in Algorithm~\ref{alg12}. The goal is to have a patch structure that follows the geometry of $\Omega$.
+
+
+The first challenge for this method is to determine when to drop leaves based on the geometry of $\Omega$. For instance, suppose we split the leaf $\nu$ as seen in Figure~\ref{Split_patch_1}. In this case, the child $\nu_0$ becomes unnecessary since the domain sits entirely in $\text{BoxDomain}(\nu_1)$. For a tree $T$, we drop $\nu_0$ be replacing $\nu$ with $\nu_1$. The splitting algorithm can be seen in Algorithm~\ref{alg13}. Examples of the geometric refinement can be seen in Figure~\ref{geometric_refine}.
+
+\begin{figure}[!h]
+\centering
+\includegraphics[scale = 0.5]{single_patch_cosine.eps}
+\caption{An example of a splitting where a patch $\nu$ would be geometrically refined. Here the red circles indicate the domain $\Omega$, and the x's are the points InteriorPoints($\nu$).}
+\label{Split_patch_single}
+\end{figure}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[scale = 0.5]{split_patch_cosine.eps}
+\caption{An example of a patch $\nu$ and domain $\Omega$ where the InteriorPoints($\nu$) do not lie in $\Omega$.}
+\label{Split_patch_1}
+\end{figure}
+
+
+
+\begin{algorithm}[!h]
+\caption{T = IsGeometricallyRefined($\nu$)}
+\label{alg12}
+\begin{algorithmic}
+\IF{The lengths of BoxDomain($\nu$) are less than MaxLengths($\nu$) \textbf{and} at least one point from InteriorPoints($\nu$) lies in domain($\nu$)}
+\STATE $\nu$ is geometrically refined.
+\ELSE
+\STATE $\nu$ is not geometrically refined.
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[!h]
+\caption{Child = SplitLeaf($\nu$,$f(x)$) (method for LSPATCH2D)}
+\label{alg13}
+\begin{algorithmic}
+\IF{$\nu$ is geometrically refined \textbf{and} $\nu$ can refine $f(x)$ on domain($\nu$)}
+\STATE Child = $\nu$
+\ELSE
+\STATE{Define domain0 and domain1 as the domains of the rectangular patches split along the dimension of greatest length of BoxDomain($\nu$).}
+ \FOR{k=0,1} 
+ \IF{If $\text{domaink} \cap \Omega= \text{domaink}$}
+ \STATE $\nu_k$:= ChebPatch with domaink
+ \ELSE 
+ \STATE $\nu_k$:= LSPATCH2D with domaink
+ \ENDIF 
+ \ENDFOR
+ \IF{If domain($\nu$) $\subseteq$ domain(\child{0}($\nu$))}
+ \STATE Child = $\nu_0$
+ \ELSIF{If domain($\nu$) $\subseteq$ domain(\child{1}($\nu$))}
+  \STATE Child = $\nu_1$
+ \ELSE
+ \STATE Child = A PUPatch with children \child{0}(Child)=$\nu_0$,\child{1}(Child):=$\nu_1$
+\ENDIF
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\begin{figure}[!htb]
+\centering
+\subfloat[]{
+\includegraphics[scale = 0.3]{heart_plot.eps}
+   \label{geoma}
+ }\hfill
+\subfloat[]{
+\includegraphics[scale = 0.3]{consine_plot.eps}
+   \label{geomb}
+ }
+\caption{An example of a geometric refinement for (a) a heart and (b) a domain whose right boundary is dictated by a cosine curve.}
+\label{geometric_refine}
+\end{figure}
+
+\subsection{Some comments and questions}
+\begin{itemize}
+\item I am not attached to the way this algorithm is implemented right now, and believe it can be improved upon. I am thinking that if at least three of the interior points of $\nu$ are in $\Omega$, we mark the patch as geometrically refined regardless of the size of the outer box.
+\item We could resize the outerbox of the leaves before we split. While this does avoid the problem of dropping leaves, I don't think implementation will be less complicated than now. The only way I know how to resize the outerbox is to sample the domain and fit a box around that.
+\end{itemize}
+\bibliographystyle{plain}
+\bibliography{PU_BIB}
 
 \end{document}
