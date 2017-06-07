@@ -48,6 +48,7 @@ classdef ChebPatch<LeafPatch
             obj.cheb_length = prod(obj.degs);
             obj.is_leaf = true;
             obj.is_refined = false;
+            obj.is_geometric_refined = true;
             
         end
         

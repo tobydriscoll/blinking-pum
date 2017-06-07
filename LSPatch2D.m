@@ -45,24 +45,25 @@ classdef LSPatch2D<LeafPatch
         
         
         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
-            outer_points_s = [0.5 0.5;-0.5 0.5;0.5 -0.5;-0.5 -0.5];
-            center_point = 0.5*[sum(obj.Out_Domain(1,:)) sum(obj.Out_Domain(2,:))];
+            %outer_points_s = [0.5 0.5;-0.5 0.5;0.5 -0.5;-0.5 -0.5];
+            %outer_points_s = [0.75 0.75;-0.75 0.75;0.75 -0.75;-0.75 -0.75];
+            %center_point = 0.5*[sum(obj.Out_Domain(1,:)) sum(obj.Out_Domain(2,:))];
             
-            outer_points(:,1) = 0.5*(diff(obj.Out_Domain(1,:))*outer_points_s(:,1)+sum(obj.Out_Domain(1,:)));
-            outer_points(:,2) = 0.5*(diff(obj.Out_Domain(2,:))*outer_points_s(:,2)+sum(obj.Out_Domain(2,:)));
+            %outer_points(:,1) = 0.5*(diff(obj.Out_Domain(1,:))*outer_points_s(:,1)+sum(obj.Out_Domain(1,:)));
+            %outer_points(:,2) = 0.5*(diff(obj.Out_Domain(2,:))*outer_points_s(:,2)+sum(obj.Out_Domain(2,:)));
             
             lengths = [diff(obj.Out_Domain(1,:));diff(obj.Out_Domain(2,:))];
             
             is_less_max = lengths<=obj.max_lengths;
             
-            IsGeometricallyRefined = all(is_less_max) & sum(obj.domain.Interior([outer_points;center_point]))>0;
+            IsGeometricallyRefined = all(is_less_max);
             
             obj.is_geometric_refined = IsGeometricallyRefined;
         end
         
         %TODO. Factor in refinement of the function.
         function Child = splitleaf(obj)
-            if IsGeometricallyRefined(obj)
+            if obj.is_geometric_refined || IsGeometricallyRefined(obj)
                 Child = obj;
             else
                 %we need to split.
@@ -70,6 +71,8 @@ classdef LSPatch2D<LeafPatch
                 
                 is_less_max = lengths<=obj.max_lengths;
                 %We split along the max length of the outer box.
+                
+                
                 if all(is_less_max)
                     [~,split_dim] = max(lengths);
                 else
@@ -102,7 +105,8 @@ classdef LSPatch2D<LeafPatch
                 XP2 = [X2(:),Y2(:)];
                 
                 
-                if all(obj.domain.Interior(XP1))
+                
+                if all(obj.domain.Interior(XP1)) 
                     %The square is in the domain. Set the child to a
                     %standard Chebpatch
                     children{1} = ChebPatch(domain1,obj.degs);
@@ -136,10 +140,31 @@ classdef LSPatch2D<LeafPatch
                 
                 ind22 = XP(:,split_dim)>=domain2(split_dim,1);
                 
-                if all(ind11)
-                    %The domain sits entirely in the first child
+                
+                outer_points_s = [0.75 0.75;-0.75 0.75;0.75 -0.75;-0.75 -0.75];
+                center_point1 = 0.5*[sum(domain1(1,:)) sum(domain1(2,:))];
+                
+                outer_points1(:,1) = 0.5*(diff(domain1(1,:))*outer_points_s(:,1)+sum(domain1(1,:)));
+                outer_points1(:,2) = 0.5*(diff(domain1(2,:))*outer_points_s(:,2)+sum(domain1(2,:)));
+                points1 = [outer_points1;center_point1];
+                
+                lengths1 = [diff(domain1(1,:));diff(domain1(2,:))];
+                
+                center_point2 = 0.5*[sum(domain2(1,:)) sum(domain2(2,:))];
+                
+                outer_points2(:,1) = 0.5*(diff(domain2(1,:))*outer_points_s(:,1)+sum(domain2(1,:)));
+                outer_points2(:,2) = 0.5*(diff(domain2(2,:))*outer_points_s(:,2)+sum(domain2(2,:)));
+                points2 = [outer_points2;center_point2];
+                
+                lengths2 = [diff(domain2(1,:));diff(domain2(2,:))];
+                
+                
+                if all(ind11) || (all(lengths2<=obj.max_lengths) && any(ind11) && sum(obj.domain.Interior(points2))<2)
+                    
                     Child = children{1};
-                elseif all(ind22)
+                    
+                elseif all(ind22) || (all(lengths1<=obj.max_lengths) && any(ind22) && sum(obj.domain.Interior(points1))<2)
+                    
                     %The domain sits entirely in the second child
                     Child = children{2};
                 else
