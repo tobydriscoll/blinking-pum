@@ -7,7 +7,8 @@ classdef (Abstract) Patch < handle
         boundaryIndex
         cheb_length
         is_leaf
-        is_refined
+        is_refined = false
+        is_geometric_refined = false
         dim
     end
     
@@ -17,6 +18,7 @@ classdef (Abstract) Patch < handle
         ef = evalfGrid(obj,x,dim,order)
         ln = length(obj)
         sample(obj,f)
+        plotdomain(obj)
     end
     
     methods

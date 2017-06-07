@@ -28,6 +28,7 @@ classdef ChebPatch<LeafPatch
             
             obj.tol = 1e-14;
             obj.domain = domain;
+            obj.is_geometric_refined = true; %square is always geometrically refined
             [obj.dim,~] = size(obj.domain);
             
             if nargin < 2
@@ -304,6 +305,12 @@ classdef ChebPatch<LeafPatch
             end
             
             str = strcat(str,sprintf(' length %d', obj.length));
+        end
+        
+        function plotdomain(obj)
+            hold on;
+            lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
+            rectangle('position',[obj.domain(:,1)' lengths'],'LineWidth',2);
         end
         
     end

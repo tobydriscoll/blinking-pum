@@ -53,6 +53,7 @@ classdef PUPatch<Patch
         function is_refined = PUsplit(obj)
             
             is_refined = true;
+            is_geometric_refined = true;
             
             for k=1:2
                 
@@ -60,13 +61,17 @@ classdef PUPatch<Patch
                     if obj.children{k}.is_leaf
                         obj.children{k} = obj.children{k}.splitleaf();
                         is_refined = is_refined && obj.children{k}.is_refined;
+                        is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
                     else
-                        is_refined = is_refined && obj.children{k}.PUsplit();
+                        temp = obj.children{k}.PUsplit();
+                        is_refined = is_refined && temp;
+                        is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
                     end
                 end
             end
             obj.cheb_length = obj.children{1}.cheb_length+obj.children{2}.cheb_length;
             obj.is_refined = is_refined;
+            obj.is_geometric_refined = is_geometric_refined;
         end
         
         function sample(obj,f)
@@ -222,6 +227,11 @@ classdef PUPatch<Patch
                     end
                 end
             end
+        end
+        
+        function plotdomain(obj)
+            obj.children{1}.plotdomain();
+            obj.children{2}.plotdomain();
         end
         
         function str = toString(obj)
