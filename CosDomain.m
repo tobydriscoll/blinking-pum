@@ -26,8 +26,8 @@ classdef CosDomain
         
         function plot(obj)
             
-            Nxf = 66;
-            Nyf = 66;
+            Nxf = 128;
+            Nyf = 128;
             
             x_f = chebpts(Nxf,[0,obj.MaxSpaceLength])';
             y_f = chebpts(Nyf,[0,obj.TimeLength])';

@@ -141,7 +141,7 @@ classdef LSPatch2D<LeafPatch
                 ind22 = XP(:,split_dim)>=domain2(split_dim,1);
                 
                 
-                outer_points_s = [0.75 0.75;-0.75 0.75;0.75 -0.75;-0.75 -0.75];
+                outer_points_s = 0.5*[1 1;-1 1;1 -1;-1 -1];
                 center_point1 = 0.5*[sum(domain1(1,:)) sum(domain1(2,:))];
                 
                 outer_points1(:,1) = 0.5*(diff(domain1(1,:))*outer_points_s(:,1)+sum(domain1(1,:)));
@@ -159,11 +159,11 @@ classdef LSPatch2D<LeafPatch
                 lengths2 = [diff(domain2(1,:));diff(domain2(2,:))];
                 
                 
-                if all(ind11) || (all(lengths2<=obj.max_lengths) && any(ind11) && sum(obj.domain.Interior(points2))<2)
+                if all(ind11)
                     
                     Child = children{1};
                     
-                elseif all(ind22) || (all(lengths1<=obj.max_lengths) && any(ind22) && sum(obj.domain.Interior(points1))<2)
+                elseif all(ind22)
                     
                     %The domain sits entirely in the second child
                     Child = children{2};
