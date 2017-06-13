@@ -235,11 +235,6 @@ classdef ChebPatch<LeafPatch
             split_dim = 1;
             for i=1:obj.dim
                 
-                %                 if diff(obj.domain(i,:))>max_in
-                %                     max_in = diff(obj.domain(i,:));
-                %                     split_dim = i;
-                %                 end
-                
                 if G(i)>max(max_in,obj.degs(i)-1) && obj.split_flag(i)
                     max_in = G(i);
                     split_dim = i;
@@ -250,7 +245,7 @@ classdef ChebPatch<LeafPatch
                     k = find(G(i)<=obj.standard_degs,1);
                     
                     if k<obj.deg_in(i)
-                        obj.values = obj.slice(obj.values,1:2*(obj.deg_in(i)-k):obj.standard_degs(obj.deg_in(i)),i);
+                        obj.values = obj.slice(obj.values,1:2^(obj.deg_in(i)-k):obj.standard_degs(obj.deg_in(i)),i);
                     end
                     
                     obj.deg_in(i) = k;
@@ -259,6 +254,11 @@ classdef ChebPatch<LeafPatch
                 end
             end
             
+            lengths = diff(obj.domain');
+            
+            lengths(~obj.split_flag) = 0;
+            
+            [~,split_dim] = max(lengths);
             
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.
@@ -312,6 +312,7 @@ classdef ChebPatch<LeafPatch
             hold on;
             lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
             rectangle('position',[obj.domain(:,1)' lengths'],'LineWidth',2);
+            hold off;
         end
         
     end
