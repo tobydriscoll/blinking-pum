@@ -4,7 +4,6 @@ classdef ChebPatch<LeafPatch
     properties
         degs %array of degrees along the dimensions
         values %grid of values to be used for interpolation
-        tol %tolerence used
     end
     
     properties (Access = protected)
@@ -14,7 +13,7 @@ classdef ChebPatch<LeafPatch
     
     properties (Constant)
         standard_variables = load('cheb_points_matrices.mat');
-        standard_degs = [3 5 9 17 33 65];
+        standard_degs = [3 5 9 17 33 65 129];
     end
     
     methods
@@ -24,23 +23,29 @@ classdef ChebPatch<LeafPatch
         % domain: (dim x 2) array indiciating array for the hypercube.
         %   degs: (dim x 1) array indicating the degree of the polynomial
         %         along the dimensions.
-        function obj = ChebPatch(domain,deg_in,split_flag)
+        function obj = ChebPatch(domain,deg_in,split_flag,tol)
             
-            obj.tol = 1e-14;
             obj.domain = domain;
             obj.is_geometric_refined = true; %square is always geometrically refined
             [obj.dim,~] = size(obj.domain);
             
             if nargin < 2
                 obj.deg_in = zeros(1,obj.dim);
-                obj.deg_in(:) = 6;
+                obj.deg_in(:) = 7;
                 obj.split_flag = ones(obj.dim,1);
+                obj.tol = 1e-12;
             elseif nargin < 3
                 obj.deg_in = deg_in;
                 obj.split_flag = ones(obj.dim,1);
+                obj.tol = 1e-12;
+            elseif nargin < 4
+                obj.deg_in = deg_in;
+                obj.split_flag = split_flag;
+                obj.tol = 1e-12;
             else
                 obj.deg_in = deg_in;
                 obj.split_flag = split_flag;
+                obj.tol = tol;
             end
             
             %To do: deal with boundary
@@ -57,6 +62,7 @@ classdef ChebPatch<LeafPatch
         function ln=length(obj)
             ln = obj.cheb_length;
         end
+        
         
         % Returns the points of the function
         function pts = points(obj)
@@ -165,8 +171,21 @@ classdef ChebPatch<LeafPatch
                     %Shift the points to the right domain
                     points = 2/(diff(obj.domain(k,:)))*X{k}-sum(obj.domain(k,:))./diff(obj.domain(k,:));
                     
-                    G = bary(points,G,obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
-                    G = shiftdim(G,1);
+                    f = bary(points,eye(obj.degs(k)),obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
+                    %G = bary(points,G,obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
+                    
+                    lengths = size(G);
+                    
+                    %G = reshape(G,lengths(1),prod(lengths(2:end)));
+                    
+                    G = chebfun3t.txm(G, f, k);
+                    
+                   % numdims = size(lengths,2);
+                    
+                    %G = reshape(G, [numel(points) lengths(2:end)]);
+
+                    %G = shiftdim(G,1);
+                    
                 end
                 
                 if order>0
@@ -218,32 +237,65 @@ classdef ChebPatch<LeafPatch
         %            the new children.
         function Child = splitleaf(obj)
             
-            G = zeros(obj.dim,1);
+            lens = zeros(obj.dim,1);
             
-            for i=1:obj.dim
-                %if obj.split_flag(i)
-                Fi = shiftdim(obj.values,i-1);
-                sizes = size(Fi);
-                Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
-                %Figure out deg along dim i,
-                len = simplify(Fi,obj.tol);
-                G(i) = len;
-                %end
+            if obj.dim==2
+                %coeffs = chebtech2.vals2coeffs(chebtech2.vals2coeffs(obj.values).').';
+%                 pref = chebfunpref();
+%                 pref.chebfuneps = obj.tol;
+%                 
+%                 frow = chebtech2({[], obj.values});
+%                 [isHappyX, cutoffX2] = happinessCheck(frow, [], [], [], pref);
+%                 
+%                 fcol = chebtech2({[], obj.values.'});
+%                 [isHappyY, cutoffY2] = happinessCheck(fcol, [], [], [], pref);
+%                 
+%                 lens(1)  = cutoffX2 + ~isHappyX;
+%                 lens(2)  = cutoffY2 + ~isHappyY;
+                
+                for i=1:obj.dim
+                    %if obj.split_flag(i)
+                    Fi = shiftdim(obj.values,i-1);
+                    sizes = size(Fi);
+                    Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
+                    %Figure out deg along dim i,
+                    lens(i) = simplify(Fi,obj.tol);
+                end
+            else
+                pref = chebfunpref();
+                pref.chebfuneps = obj.tol;
+                simple_3D_coeffs = chebfun3t.vals2coeffs(obj.values);
+                
+                colChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 1), 2);
+                fCol = chebtech2({[], colChebtech});
+                [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
+                lens(1) = cutoffX2+~isHappyX;
+                
+                rowChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 2), 2);
+                fRow = chebtech2({[], rowChebtech});
+                [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
+                lens(2) = cutoffY2+~isHappyY;
+                
+                
+                tubeChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 3), 2);
+                fTube = chebtech2({[], tubeChebtech});
+                [isHappyZ, cutoffZ2] = happinessCheck(fTube, [], [], [], pref);
+                lens(3) = cutoffZ2+~isHappyZ;
+                
             end
             
-            max_in = 0;
-            split_dim = 1;
+            
             for i=1:obj.dim
                 
-                if G(i)>max(max_in,obj.degs(i)-1) && obj.split_flag(i)
-                    max_in = G(i);
-                    split_dim = i;
-                end
-                
-                if obj.split_flag(i) && G(i)<obj.degs(i)
+                %We first see if the interpolant is refined along dimension
+                %i
+                if obj.split_flag(i) && lens(i)<obj.degs(i)
                     obj.split_flag(i) = false;
-                    k = find(G(i)<=obj.standard_degs,1);
                     
+                    %If it is, find the smallest degree we can use.
+                    k = find(lens(i)<=obj.standard_degs,1);
+                    
+                    %Slice the values for the new dimension k along i
                     if k<obj.deg_in(i)
                         obj.values = obj.slice(obj.values,1:2^(obj.deg_in(i)-k):obj.standard_degs(obj.deg_in(i)),i);
                     end
@@ -254,10 +306,10 @@ classdef ChebPatch<LeafPatch
                 end
             end
             
+            %We find the longest length of the box, and split along that
+            %dimension
             lengths = diff(obj.domain');
-            
             lengths(~obj.split_flag) = 0;
-            
             [~,split_dim] = max(lengths);
             
             if ~any(obj.split_flag)
@@ -267,11 +319,9 @@ classdef ChebPatch<LeafPatch
                 Child = obj;
             else
                 
-                %[~,split_dim] = max(G);
-                
-                
                 children = cell(1,2);
                 
+                %The width of the overlap
                 delta = 0.5*(1+PUWeights.overlap)*...
                     (obj.domain(split_dim,2)-obj.domain(split_dim,1));
                 
@@ -282,8 +332,8 @@ classdef ChebPatch<LeafPatch
                 domain1(split_dim,:) = [obj.domain(split_dim,2)-delta obj.domain(split_dim,2)];
                 
                 overlap_in = [obj.domain(split_dim,2)-delta obj.domain(split_dim,1)+delta];
-                children{1} = ChebPatch(domain0,obj.deg_in,obj.split_flag);
-                children{2} = ChebPatch(domain1,obj.deg_in,obj.split_flag);
+                children{1} = ChebPatch(domain0,obj.deg_in,obj.split_flag,obj.tol);
+                children{2} = ChebPatch(domain1,obj.deg_in,obj.split_flag,obj.tol);
                 
                 %Return the PUPatch with the new children
                 Child = PUPatch(obj.domain,overlap_in,length(children{1})+length(children{2}),children,split_dim);
@@ -295,7 +345,7 @@ classdef ChebPatch<LeafPatch
         function str = toString(obj)
             str = '';
             for i=1:obj.dim
-                str = strcat(str,sprintf(' [%0.3f %0.3f]',obj.domain(i,1),obj.domain(i,1)));
+                str = strcat(str,sprintf(' [%0.3f %0.3f]',obj.domain(i,1),obj.domain(i,2)));
                 if i<obj.dim
                     str = strcat(str,' x ');
                 end
@@ -308,18 +358,36 @@ classdef ChebPatch<LeafPatch
             str = strcat(str,sprintf(' length %d', obj.length));
         end
         
+        
         function plotdomain(obj)
-            hold on;
-            lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
-            rectangle('position',[obj.domain(:,1)' lengths'],'LineWidth',2);
-            hold off;
+            
+            if obj.dim==2
+                hold on;
+                lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
+                rectangle('position',[obj.domain(:,1)' lengths'],'LineWidth',2);
+                hold off;
+            elseif obj.dim==3
+                hold on;
+                lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:));diff(obj.domain(3,:))];
+                center = sum(obj.domain,2)/2;
+                %Vertices for Line Cube. Order matters
+                X = [-1 -1 1 1 -1 -1 1 1 1 1 1 1 -1 -1 -1 -1 -1]';
+                Y = [-1 1 1 -1 -1 -1 -1 -1 -1 1 1 1 1 1 1 -1 -1]';
+                Z = [-1 -1 -1 -1 -1 1 1 -1 1 1 -1 1 1 -1 1 1 -1]';
+                %Example two cube matrix. Unit cube and one scaled/translated cube
+                X1 = X*lengths(1)/2+center(1);
+                Y1 = Y*lengths(2)/2+center(2);
+                Z1 = Z*lengths(3)/2+center(3);
+                %Single plot command for all 'cube lines'
+                plot3(X1,Y1,Z1,'color','black');
+                hold off;
+            end
         end
         
     end
     
     methods (Static)
         %This method slices an array along a certain dimension
-        %(Matlab should have a function that does this)
         function out = slice(A, ix, dim)
             subses = repmat({':'}, [1 ndims(A)]);
             subses{dim} = ix;

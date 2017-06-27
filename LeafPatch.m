@@ -7,6 +7,10 @@ classdef LeafPatch<Patch
         values
     end
     
+    properties
+        index = [];
+    end
+    
     methods (Abstract)
         %This method will split the child, creating a new PUPatch. If the
         %obj does not need to split, the method returns obj.

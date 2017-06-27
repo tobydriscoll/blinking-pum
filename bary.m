@@ -19,6 +19,13 @@ function fx = bary(x, fvals, xk, vk)
 
 % Parse inputs:
 
+sizef = size(fvals);
+
+if(sizef(1)==1)
+    fvals = fvals(:);
+end
+
+
 lengths = size(fvals);
 
 n = lengths(1);
@@ -27,6 +34,7 @@ m = prod(lengths(2:end));
 numdims = size(lengths,2);
 
 fvals = reshape(fvals,[n m]);
+
 
 sizex = size(x);
 
@@ -69,7 +77,7 @@ if ( numel(x) < 4*length(xk) )  % Loop over evaluation points
     fx = zeros(size(x, 1), m);
 
     % Loop:
-    for j = 1:numel(x),
+    for j = 1:numel(x)
         xx = vk ./ (x(j) - xk);
         fx(j,:) = (xx.'*fvals) / sum(xx);
     end
@@ -79,10 +87,10 @@ else                            % Loop over barycentric nodes
     denom = num;
 
     % Loop:
-    for j = 1:length(xk),
+    for j = 1:length(xk)
         tmp = (vk(j) ./ (x - xk(j)));
-        num = num + bsxfun(@times, tmp, fvals(j,:));
-        denom = bsxfun(@plus, denom, tmp);
+        num = num + tmp.*fvals(j,:);
+        denom = denom+tmp;
     end
     fx = num ./ denom;
 end

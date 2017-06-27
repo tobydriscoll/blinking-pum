@@ -27,7 +27,7 @@ classdef PUPatch<Patch
         end
         
         function ln = length(obj)
-            ln = obj.cheb_length;
+            ln = length(obj.children{1})+length(obj.children{2});
         end
         
         function grids = leafGrids(obj)
@@ -84,6 +84,68 @@ classdef PUPatch<Patch
             end
         end
         
+        
+        %  [WEIGHTSVALS]= evalweights(obj,index,X,dim,order)
+        %Input:
+        %   index    : the index for the leaf of the weight to be evaluated
+        %   x        : the set of points in each dimension.
+        %   dim      : the dimension the derivative will be taken in
+        %   order    : order of the derivative
+        %Output:
+        %   WEIGHTSVALS :  cell array of the weightvalues in each
+        %                  dimension, including the dimension
+        function [WEIGHTSVALS]= evalweights(obj,index,X,dim,order)
+        %Our weights are seperable, so we compute the weights
+        %for the functions in each dimension seperately.
+            if obj.children{index(1)}.is_leaf
+                
+                %as a base case, we set the weight to one.
+                for i=1:obj.dim
+                    WEIGHTSVALS{i} = zeros(length(X{i}),order+1);
+                    WEIGHTSVALS{i}(:,1) = ones(length(X{i}),1);
+                end
+                
+                WEIGHTSVALS{obj.splitting_dim}(:,1) = obj.weights.evalf(X{obj.splitting_dim},obj.overlap_in,index(1),1,0);
+            else
+                CHILDWEIGHT = obj.children{index(1)}.evalweights(index(2:end),X,dim,order);
+                WEIGHTSVALS = CHILDWEIGHT;
+                
+                WEIGHTSVALS{obj.splitting_dim} = zeros(length(X{obj.splitting_dim}),order+1);
+                
+                %Use the product role to compute the derivative of the
+                %weight.
+                for k=0:order
+                    for j=0:k
+                        if (k-j)==0 || obj.splitting_dim == dim
+                        WEIGHTSVALS{obj.splitting_dim}(:,k+1) =  WEIGHTSVALS{obj.splitting_dim}(:,k+1) + ...
+                            nchoosek(k,j).*obj.weights.evalf(X{obj.splitting_dim},obj.overlap_in,index(1),1,k-j).*CHILDWEIGHT{obj.splitting_dim}(:,j+1);
+                        end
+                    end
+                end
+            end
+        end
+        
+        %  findIndex(obj,index)
+        %  This function finds the index (i.e. the path from the root to
+        %  the patch recursively for all the leaves of this patch.
+        %
+        %Input:
+        %   index    : the index from the root to this patch
+        %Output:
+        function findIndex(obj,index)
+            
+            for k=1:2
+                index_c = [index k];
+                if obj.children{k}.is_leaf
+                    obj.children{k}.index = index_c;
+                else
+                    obj.children{k}.findIndex(index_c);
+                end
+            end
+            
+        end
+        
+        
         function vals = evalfGrid(obj,X,dim,order)
             
             grid_lengths = cellfun(@(x)length(x),X);
@@ -121,7 +183,7 @@ classdef PUPatch<Patch
             
             
             %Go ahead and shift the splitting diminsion
-            %Here I ciculate the dimensions before the order
+            %Here I ciculate the dimensions before the order.
             dim_permute = circshift(1:obj.dim,[0 -obj.splitting_dim+1]);
             
             if order>0
@@ -167,7 +229,7 @@ classdef PUPatch<Patch
                                 else
                                     weight_vals =  nchoosek(j,ord_i)*obj.weights.evalf(X{obj.splitting_dim}(inds{k}),obj.overlap_in,k,1,j-ord_i);
                                     [~,n] = size(child_vals{k}(:,:,ord_i+1));
-                                    weight_vals = repmat(weight_vals,1,n);
+                                    %weight_vals = repmat(weight_vals,1,n);
                                     vals(inds{k},:) = vals(inds{k},:) + weight_vals.*child_vals{k};
                                 end
                             end
@@ -228,6 +290,18 @@ classdef PUPatch<Patch
                 end
             end
         end
+        
+        function [LEAVES]= collectLeaves(obj,leaves)
+            for k=1:2
+                if obj.children{k}.is_leaf
+                    leaves{length(leaves)+1} = obj.children{k};
+                else
+                    leaves = obj.children{k}.collectLeaves(leaves);
+                end
+            end
+            LEAVES = leaves;
+        end
+
         
         function plotdomain(obj)
             obj.children{1}.plotdomain();

@@ -1,6 +1,6 @@
 N=3;
 
-M=6;
+M=7;
 
 chebpoints = cell(M,1);
 

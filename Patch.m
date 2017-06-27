@@ -10,6 +10,7 @@ classdef (Abstract) Patch < handle
         is_refined = false
         is_geometric_refined = false
         dim
+        tol
     end
     
     methods (Abstract)
