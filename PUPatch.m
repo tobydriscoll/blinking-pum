@@ -15,7 +15,7 @@ classdef PUPatch<Patch
     
     methods
         
-        function obj = PUPatch(domain,overlap_in,cheb_length,children,splitting_dim)
+        function obj = PUPatch(domain,overlap_in,cheb_length,children,splitting_dim,index)
             obj.domain = domain;
             [obj.dim,~] = size(obj.domain);
             obj.overlap_in = overlap_in;
@@ -24,6 +24,8 @@ classdef PUPatch<Patch
             obj.splitting_dim = splitting_dim;
             obj.is_leaf = false;
             obj.is_refined = false;
+            obj.children{1}.index = [index 1];
+            obj.children{2}.index = [index 2];
         end
         
         function ln = length(obj)

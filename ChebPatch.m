@@ -332,11 +332,14 @@ classdef ChebPatch<LeafPatch
                 domain1(split_dim,:) = [obj.domain(split_dim,2)-delta obj.domain(split_dim,2)];
                 
                 overlap_in = [obj.domain(split_dim,2)-delta obj.domain(split_dim,1)+delta];
+                
                 children{1} = ChebPatch(domain0,obj.deg_in,obj.split_flag,obj.tol);
+                
                 children{2} = ChebPatch(domain1,obj.deg_in,obj.split_flag,obj.tol);
                 
                 %Return the PUPatch with the new children
-                Child = PUPatch(obj.domain,overlap_in,length(children{1})+length(children{2}),children,split_dim);
+                Child = PUPatch(obj.domain,overlap_in,length(children{1})+length(children{2}),children,split_dim,obj.index);
+                
                 
             end
             
