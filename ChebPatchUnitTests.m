@@ -4,7 +4,7 @@ tol = 1e-14;
 diff_tol = 1e-13;
 %Test 2D
 
-P = ChebPatch([-1 2;-1 2],[2 2]);
+P = ChebPatch([-1 2;-1 2],[2 2],tol);
 X = P.points();
 
 f = @(x) x(:,1).^2+x(:,1).*x(:,2).^2;
@@ -206,10 +206,10 @@ PU = P.splitleaf();
 assert(isa(PU,'PUPatch'));
 assert(PU.splitting_dim==2);
 
-P = ChebPatch([-1 1;-1 1;-1 1;-1 1],[5 5 5 5]);
-X = P.points();
-f = @(x) cos(pi*x(:,1))+sin(pi*x(:,2))+cos(pi*x(:,3))+cos(pi*x(:,4));
-P.sample(f(X));
-
-PU = P.splitleaf();
-assert(isa(PU,'ChebPatch'));
+% P = ChebPatch([-1 1;-1 1;-1 1;-1 1],[5 5 5 5]);
+% X = P.points();
+% f = @(x) cos(pi*x(:,1))+sin(pi*x(:,2))+cos(pi*x(:,3))+cos(pi*x(:,4));
+% P.sample(f(X));
+% 
+% PU = P.splitleaf();
+% assert(isa(PU,'ChebPatch'));

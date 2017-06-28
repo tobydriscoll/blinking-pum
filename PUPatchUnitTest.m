@@ -8,7 +8,7 @@ diff_tol = 1e-11;
 % Test 2D Split
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-P = ChebPatch([-1 1;-1 1]);
+P = ChebPatch([-1 1;-1 1],[6 6],[true true],tol);
 X = P.points();
 b = 0.5;
 f = @(x) x(:,1).*atan(x(:,2)./b);
@@ -63,7 +63,7 @@ assert(max(abs(E(:)))<diff_tol);
 % Test 3D Split
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-P = ChebPatch([-1 1;-1 1;-1 1]);
+P = ChebPatch([-1 1;-1 1;-1 1],[6 6 6],[true true true],tol);
 X = P.points();
 b = 0.5;
 f = @(x) x(:,1).*atan(x(:,2)./b)+x(:,3).^6;
