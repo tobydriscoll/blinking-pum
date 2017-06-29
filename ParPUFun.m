@@ -38,6 +38,10 @@ classdef ParPUFun < handle
                 
                 index = 1;
                 
+                % The patches in PreviousGen are linked to ChebRoot. We
+                % need to loop through and link the new children
+                % to the tree rooted at ChebRoot (hence the names
+                % new and previous generation).
                 if length(NewGen)==1
                     obj.ChebRoot = NewGen{1};
                 else
@@ -126,15 +130,18 @@ classdef ParPUFun < handle
                 
                 WEIGHTSVALS = obj.ChebRoot.evalweights(obj.leafArray{i}.index,X,1,0);
                 
-                WEIGHTSG = cell(1,obj.ChebRoot.dim);
-                [WEIGHTSG{:}] = ndgrid(WEIGHTSVALS{:});
-                
-                WEIGHTS = ones(size(WEIGHTSG{1}));
-                
-                for j=1:obj.ChebRoot.dim
-                    WEIGHTS = WEIGHTS.*WEIGHTSG{j};
-                end
+%                 WEIGHTSG = cell(1,obj.ChebRoot.dim);
+%                 [WEIGHTSG{:}] = ndgrid(WEIGHTSVALS{:});
+%                 
+%                 WEIGHTS = ones(size(WEIGHTSG{1}));
+%                 
+%                 for j=1:obj.ChebRoot.dim
+%                     WEIGHTS = WEIGHTS.*WEIGHTSG{j};
+%                 end
 
+                WEIGHTS = chebfun3.txm(chebfun3.txm(chebfun3.txm(ones([N,N,N]), WEIGHTSVALS{1}.', 1), ...
+                    WEIGHTSVALS{2}.', 2), WEIGHTSVALS{3}.', 3);
+                
                 vals = WEIGHTS.*(obj.leafArray{i}.evalfGrid(X,1,0));
                 
                 if obj.ChebRoot.dim==3
