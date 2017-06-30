@@ -80,24 +80,20 @@ classdef PUFun < handle
                 end
                 
                 WEIGHTSVALS = obj.ChebRoot.evalweights(obj.leafArray{i}.index,X,1,0);
-                
-                WEIGHTSG = cell(1,obj.ChebRoot.dim);
-                [WEIGHTSG{:}] = ndgrid(WEIGHTSVALS{:});
-                
-                WEIGHTS = ones(size(WEIGHTSG{1}));
-                
-                for j=1:obj.ChebRoot.dim
-                    WEIGHTS = WEIGHTS.*WEIGHTSG{j};
-                end
 
-                vals = WEIGHTS.*(obj.leafArray{i}.evalfGrid(X,1,0));
+                vals = obj.leafArray{i}.evalfGrid(X,1,0);
                 
-                if obj.ChebRoot.dim==3
-                    vals = chebfun3t.unfold(vals,3);
-                    vals = reshape(W{3}*vals,length(X{1}),length(X{2}));
+                
+                if obj.ChebRoot.dim==2
+                    vals = WEIGHTSVALS{1}.*vals.*WEIGHTSVALS{2}.';
+                    int = int + W{2}*(W{1}*vals).';
+                else
+                    vals = (WEIGHTSVALS{1}.*vals.*WEIGHTSVALS{2}.').*shiftdim(WEIGHTSVALS{3},-2);
+                    int = int + W{2}*(W{1}*chebfun3.txm(vals,W{3},3))';
                 end
                 
-                int = int + W{2}*(W{1}*vals).';
+                
+
                 
             end
         end
