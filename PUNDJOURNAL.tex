@@ -27,6 +27,7 @@
 \newcommand\supp{\mathop{\rm supp}}
 
 \newcommand{\vect}[1]{\mathbf{#1}}
+\DeclareMathOperator{\vecm}{vec}
 \newcommand{\plotwidth}{0.45}
 \newcommand{\WRP}{\par\qquad\(\hookrightarrow\)\enspace}
 
@@ -783,6 +784,101 @@ The first challenge for this method is to determine when to drop leaves based on
 \item I am not attached to the way this algorithm is implemented right now, and believe it can be improved upon. I am thinking that if at least three of the interior points of $\nu$ are in $\Omega$, we mark the patch as geometrically refined regardless of the size of the outer box.
 \item We could resize the outerbox of the leaves before we split. While this does avoid the problem of dropping leaves, I don't think implementation will be less complicated than now. The only way I know how to resize the outerbox is to sample the domain and fit a box around that.
 \end{itemize}
+
+\section{Kronecker products and vec in 3D}
+For two dimensional arrays, we have the well known result
+\begin{equation}
+\vecm(ACB) = (B^T \otimes A) \vecm (C).
+\label{kronvec}
+\end{equation}
+This can be useful for forming matrices for 2D tensor product approximations. For instance, suppose that we have a Chebyshev tensor product approximation
+\begin{equation}
+s(x,y) = \sum_{i=1}^{N_x} \sum_{j=1}^{N_y} c_{ij} T_i(x)T_j(y),
+\end{equation}
+along with points $\{x_n\}_{n=1}^{S_x}$, $\{y_n\}_{n=1}^{S_y}$ that we wish to approximate $s(x,y)$ given any set of coefficients $(c_{i,j})$. Define a matrix $M^x$ such that
+\begin{equation}
+\begin{aligned}
+	M_{i,j}^x &= T_j(x_i).
+\end{aligned}
+\end{equation}
+Given a vector of coefficients $d = [d_1,\dots,d_{N_x}]^T \in \C^{N_x}$ we have
+\begin{equation}
+(M^x d)_n = \sum_{i=1}^{N_x} d_n T_j(x_n),
+\end{equation}
+i.e. $M^x$ will evaluate a Chebyshev approximation at $\{x_n\}_{n=1}^{S_x}$ given a vector of coefficients. We can similarly define a matrix $M^y$ for points $\{y_n\}_{n=1}^{S_y}$. Define $A \in \C^{S_x S_y}$ such that
+\begin{equation}
+A_{nm} = \sum_{i=1}^{N_x} \sum_{j=1}^{N_y} c_{ij} T_i(x_n)T_j(y_m).
+\end{equation}
+Using our matrices $M^x$ and $M^y$ we can deduce that
+\begin{equation}
+\begin{aligned}
+A_{nm} &= \sum_{i=1}^{N_x} \sum_{j=1}^{N_y} M_{ni}^x c_{ij} M_{mj}^y \\
+       &= \sum_{i=1}^{N_x} M_{ni}^x \sum_{j=1}^{N_y} c_{ij} (M^y)_{jm}^T \\
+       &= \sum_{i=1}^{N_x} M_{ni}^x ((c_{ij}) (M^y)^T)_{im} \\
+       &=  (M^x(c_{ij}) (M^y)^T)_{nm}.
+\end{aligned}
+\end{equation}
+We thus have from (\ref{kronvec}) that
+\begin{equation}
+	\vecm(A) = (M^y \otimes M^x) \vecm((c_{ij})).
+	\label{2DKron}
+\end{equation}
+Suppose now we want to do the same but for the approximation 
+\begin{equation}
+s(x,y,z) = \sum_{i=1}^{N_x} \sum_{j=1}^{N_y} \sum_{k=1}^{N_z} c_{ijk} T_i(x)T_j(y)T_k(z),
+\end{equation}
+where we also have points $\{z_n\}_{n=1}^{S_z}$ and interpolation matrix $M^{z}$. Suppose we have a set of coefficients $C \in \C^{N_x N_y N_z}$. In MATLAB,
+\begin{equation}
+\vecm(C) = 
+\begin{bmatrix}
+\vecm(C(:,:,1))	\\
+\vecm(C(:,:,2))	\\
+\vdots \\
+\vecm(C(:,:,N_z))
+\end{bmatrix}.
+\end{equation}
+Now define $A \in \C^{S_x S_y S_z}$ such that
+\begin{equation}
+A_{nmp} = \sum_{i=1}^{N_x} \sum_{j=1}^{N_y}  \sum_{k=1}^{N_z}  C_{ijk} T_i(x_n)T_j(y_m)T_k(y_p).
+\end{equation}
+We first have
+\begin{equation}
+	\begin{aligned}
+		A(:,:,p)_{nm} &= \sum_{i=1}^{N_x} \sum_{j=1}^{N_y}  \sum_{k=1}^{N_z} C_{ijk} M_{ni}^x M_{mj}^y M_{pk}^z \\
+		 		 &= \sum_{k=1}^{N_z} M_{pk}^z  \sum_{i=1}^{N_x} \sum_{j=1}^{N_y} C_{ijk} M_{ni}^x M_{mj}^y \\
+		 		 &= \sum_{k=1}^{N_z} M_{pk}^z (M^x C(:,:,k) (M^y)^T)_{nm}.
+	\end{aligned}
+\end{equation}
+Thus from (\ref{2DKron}) we can infer that
+\begin{equation}
+\vecm(A(:,:,p)) = \sum_{k=1}^{N_z} M_{pk}^z (M^y \otimes M^x) \vecm(C(:,:,k))
+\end{equation}
+and can further argure that
+\begin{equation}
+	\begin{aligned}
+		& \sum_{k=1}^{N_z} M_{pk}^z (M^y \otimes M^x) \vecm(C(:,:,k)) \\
+		&= [M_{p1}^z (M^y \otimes M^x) \dots M_{p N_z}^z (M^y \otimes M^x)] \begin{bmatrix}
+			\vecm(C(:,:,1)) \\
+			\vdots \\
+			\vecm(C(:,:,N_z))
+		\end{bmatrix} \\
+		&= (M^z(p,:) \otimes (M^y \otimes M^x)) \vecm(C)	,
+	\end{aligned}
+\end{equation}
+given how MATLAB vectorizes multidimensional arrays. We thus have
+\begin{equation}
+\begin{aligned}
+	\vecm(A) = \begin{bmatrix}
+		M^z(1,:) \otimes (M^y \otimes M^x) \\
+		\vdots \\
+		M^z(N_z,:) \otimes ( M^y \otimes M^x) 
+	\end{bmatrix} \vecm(C)
+\end{aligned}
+\end{equation}
+giving us
+\begin{equation}
+	\vecm(A) = (M^z \otimes M^y \otimes M^x) \vecm(C).
+\end{equation}
 \bibliographystyle{plain}
 \bibliography{PU_BIB}
 
