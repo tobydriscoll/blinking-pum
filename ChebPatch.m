@@ -14,6 +14,8 @@ classdef ChebPatch<LeafPatch
     properties (Constant)
         standard_variables = load('cheb_points_matrices.mat');
         standard_degs = [3 5 9 17 33 65 129];
+        invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
+        forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
     end
     
     methods
@@ -70,9 +72,8 @@ classdef ChebPatch<LeafPatch
             C = cell(obj.dim,1);
             
             for i=1:obj.dim
-                %C{i} = chebpts(obj.degs(i),obj.domain(i,:));
                 C{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
-                C{i} = 0.5*diff(obj.domain(i,:))*C{i}+0.5*sum(obj.domain(i,:));
+                C{i} = obj.forf(C{i},obj.domain(i,:));
             end
             [out{1:obj.dim}] = ndgrid(C{:});
             
@@ -88,9 +89,8 @@ classdef ChebPatch<LeafPatch
             grid = cell(1,obj.dim);
             
             for i=1:obj.dim
-                %C{i} = chebpts(obj.degs(i),obj.domain(i,:));
                 grid{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
-                grid{i} = 0.5*diff(obj.domain(i,:))*grid{i}+0.5*sum(obj.domain(i,:));
+                grid{i} = obj.forf(grid{i},obj.domain(i,:));
             end
         end
         
@@ -113,16 +113,15 @@ classdef ChebPatch<LeafPatch
             if order>0
                 switch obj.dim
                     case 1
-                        diff_values = 2*(obj.domain(2)-obj.domain(1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
+                        diff_values = 2/diff(obj.domain)*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
                     otherwise
                         diff_values = (shiftdim(obj.values,diff_dim-1));
                         perm_degs = size(diff_values);
                         diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
-                        diff_values = 2*(obj.domain(diff_dim,2)-obj.domain(diff_dim,1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),1}*diff_values;
+                        diff_values = 2/diff(pbj.domain(diff_dim,:))*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),1}*diff_values;
                         diff_values = reshape(diff_values,perm_degs);
                         diff_values = shiftdim(diff_values,obj.dim-(diff_dim-1));
                 end
-                
                 input{2} = diff_values;
             end
             
@@ -130,10 +129,8 @@ classdef ChebPatch<LeafPatch
                 for i=1:size(X,1)
                     G = input{j};
                     for k=1:obj.dim
-                        
-                        point = 2/(diff(obj.domain(k,:)))*X(i,k)-(obj.domain(k,2)+obj.domain(k,1))/(obj.domain(k,2)-obj.domain(k,1));
+                        point = obj.invf(X(i,k),obj.domain(k,:));
                         G = bary(point,G,obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
-                        
                     end
                     ef(i,j) = G;
                 end
@@ -152,12 +149,13 @@ classdef ChebPatch<LeafPatch
             if order>0
                 switch obj.dim
                     case 1
-                        diff_values = 2*(obj.domain(2)-obj.domain(1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
+                        diff_values = 2/diff(obj.domain)*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
                     otherwise
+                        %TODO: Replace this with the TXM function
                         diff_values = (shiftdim(obj.values,diff_dim-1));
                         perm_degs = size(diff_values);
                         diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
-                        diff_values = 2*(obj.domain(diff_dim,2)-obj.domain(diff_dim,1))^-1*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),1}*diff_values;
+                        diff_values = 2/diff(obj.domain(diff_dim,2))*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),1}*diff_values;
                         diff_values = reshape(diff_values,perm_degs);
                         diff_values = shiftdim(diff_values,obj.dim-(diff_dim-1));
                 end
@@ -169,22 +167,11 @@ classdef ChebPatch<LeafPatch
                 G = input{j};
                 for k=1:obj.dim
                     %Shift the points to the right domain
-                    points = 2/(diff(obj.domain(k,:)))*X{k}-sum(obj.domain(k,:))./diff(obj.domain(k,:));
+                    points = obj.invf(X{k},obj.domain(k,:));
                     
                     f = bary(points,eye(obj.degs(k)),obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
-                    %G = bary(points,G,obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
-                    
-                    lengths = size(G);
-                    
-                    %G = reshape(G,lengths(1),prod(lengths(2:end)));
                     
                     G = chebfun3t.txm(G, f, k);
-                    
-                   % numdims = size(lengths,2);
-                    
-                    %G = reshape(G, [numel(points) lengths(2:end)]);
-
-                    %G = shiftdim(G,1);
                     
                 end
                 
@@ -240,18 +227,6 @@ classdef ChebPatch<LeafPatch
             lens = zeros(obj.dim,1);
             
             if obj.dim==2
-                %coeffs = chebtech2.vals2coeffs(chebtech2.vals2coeffs(obj.values).').';
-%                 pref = chebfunpref();
-%                 pref.chebfuneps = obj.tol;
-%                 
-%                 frow = chebtech2({[], obj.values});
-%                 [isHappyX, cutoffX2] = happinessCheck(frow, [], [], [], pref);
-%                 
-%                 fcol = chebtech2({[], obj.values.'});
-%                 [isHappyY, cutoffY2] = happinessCheck(fcol, [], [], [], pref);
-%                 
-%                 lens(1)  = cutoffX2 + ~isHappyX;
-%                 lens(2)  = cutoffY2 + ~isHappyY;
                 
                 for i=1:obj.dim
                     %if obj.split_flag(i)

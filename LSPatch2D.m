@@ -9,6 +9,14 @@ classdef LSPatch2D<LeafPatch
         Out_Domain %Domain of outer square
         max_lengths %Max lengths of patch
         values
+        pinvM %Store the pseudoInverse
+        mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
+        cheblength = 32;
+    end
+    
+    properties (Constant)
+        invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
+        forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
     end
     
     methods
@@ -38,34 +46,55 @@ classdef LSPatch2D<LeafPatch
             ef = [];
         end
         
-        % TODO. Figure out what to do here!
-        function ef = evalfGrid(obj,x,dim,order)
-            ef = [];
+        function ef = evalfGrid(obj,X,diff_dim,order)
+            
+            G = obj.coeff;
+            
+            for k=1:2
+                %Shift the points to the domain [-1 1]x[-1 1]
+                X{k} = obj.invf(X{k},obj.Out_Domain(:,k));
+                
+                %Evaluate the points at the Chebyshev polynomials
+                F = clenshaw(X{k},eye(obj.degs(k)));
+                
+                %Multiply the coefficients with F
+                G = chebfun3t.txm(G, F, k);
+            end
+            
+            ef  = G;
+            
         end
         
         
         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
-            %outer_points_s = [0.5 0.5;-0.5 0.5;0.5 -0.5;-0.5 -0.5];
-            %outer_points_s = [0.75 0.75;-0.75 0.75;0.75 -0.75;-0.75 -0.75];
-            %center_point = 0.5*[sum(obj.Out_Domain(1,:)) sum(obj.Out_Domain(2,:))];
+            outer_points_s = [1 1;-1 1;1 -1;-1 -1];
             
-            %outer_points(:,1) = 0.5*(diff(obj.Out_Domain(1,:))*outer_points_s(:,1)+sum(obj.Out_Domain(1,:)));
-            %outer_points(:,2) = 0.5*(diff(obj.Out_Domain(2,:))*outer_points_s(:,2)+sum(obj.Out_Domain(2,:)));
+            outer_points(:,1) = obj.forf(outer_points_s(:,1),obj.Out_Domain(1,:));
+            outer_points(:,2) = obj.forf(outer_points_s(:,2),obj.Out_Domain(2,:));
             
             lengths = [diff(obj.Out_Domain(1,:));diff(obj.Out_Domain(2,:))];
             
             is_less_max = lengths<=obj.max_lengths;
             
-            IsGeometricallyRefined = all(is_less_max);
+            IsGeometricallyRefined = all(is_less_max) && any(obj.domain.Interior(outer_points));
             
             obj.is_geometric_refined = IsGeometricallyRefined;
         end
         
-        %TODO. Factor in refinement of the function.
         function Child = splitleaf(obj)
-            if obj.is_geometric_refined || IsGeometricallyRefined(obj)
+            
+            if ~obj.is_geometric_refind
+                obj.IsGeometricallyRefined();
+            end
+            
+            obj.is_refined = obj.mid_values_err<= obj.tol;
+            
+            if obj.is_geometric_refined && obj.is_refined
+                
                 Child = obj;
+                
             else
+                
                 %we need to split.
                 lengths = [diff(obj.Out_Domain(1,:));diff(obj.Out_Domain(2,:))];
                 
@@ -128,6 +157,7 @@ classdef LSPatch2D<LeafPatch
                 
                 x = chebpts(16,obj.Out_Domain(1,:))';
                 y = chebpts(16,obj.Out_Domain(2,:))';
+                
                 [X,Y] = ndgrid(x,y);
                 
                 XP = [X(:),Y(:)];
@@ -137,26 +167,7 @@ classdef LSPatch2D<LeafPatch
                 XP = XP(ind,:);
                 
                 ind11 = XP(:,split_dim)<=domain1(split_dim,2);
-                
                 ind22 = XP(:,split_dim)>=domain2(split_dim,1);
-                
-                
-                outer_points_s = 0.5*[1 1;-1 1;1 -1;-1 -1];
-                center_point1 = 0.5*[sum(domain1(1,:)) sum(domain1(2,:))];
-                
-                outer_points1(:,1) = 0.5*(diff(domain1(1,:))*outer_points_s(:,1)+sum(domain1(1,:)));
-                outer_points1(:,2) = 0.5*(diff(domain1(2,:))*outer_points_s(:,2)+sum(domain1(2,:)));
-                points1 = [outer_points1;center_point1];
-                
-                lengths1 = [diff(domain1(1,:));diff(domain1(2,:))];
-                
-                center_point2 = 0.5*[sum(domain2(1,:)) sum(domain2(2,:))];
-                
-                outer_points2(:,1) = 0.5*(diff(domain2(1,:))*outer_points_s(:,1)+sum(domain2(1,:)));
-                outer_points2(:,2) = 0.5*(diff(domain2(2,:))*outer_points_s(:,2)+sum(domain2(2,:)));
-                points2 = [outer_points2;center_point2];
-                
-                lengths2 = [diff(domain2(1,:));diff(domain2(2,:))];
                 
                 
                 if all(ind11)
@@ -176,7 +187,41 @@ classdef LSPatch2D<LeafPatch
         
         %TODO. Figure out what to do here!
         function sample(obj,f)
-            
+            if obj.is_geometric_refined
+                
+                x = chebpts(obj.cheblength*2,obj.Out_Domain(1,:));
+                y = chebpts(obj.cheblength*2,obj.Out_Domain(2,:));
+                
+                x1 = chebpts(obj.cheblength*2,obj.Out_Domain(1,:),1);
+                y2 = chebpts(obj.cheblength*2,obj.Out_Domain(2,:),1);
+                
+                [X,Y] = ndgrid(x,y);
+                
+                [X1,Y1] = ndgrid(x1,y1);
+                
+                XP = [X(:) Y(:)];
+                
+                XP1 = [X1(:) Y1(:)];
+                
+                ind = obj.domain.Interior(XP);
+                ind1 = obj.domain.Interior(XP1);
+                
+                XP = XP(ind,:);
+                
+                if ~obj.is_refined   
+                    Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
+                    M = kron(Mx,Mx);
+                    obj.pinvM = pinv(M(ind,:));
+                end
+                
+                obj.coeffs = obj.pinvM*f(XP);
+                
+                E = evalfGrid({X1,Y1},1,0)-f(XP1);
+                E = E(ind1);
+                
+                %This is used to determin
+                obj.mid_values_err = max(E);
+            end
         end
         
         
@@ -184,6 +229,7 @@ classdef LSPatch2D<LeafPatch
             hold on;
             lengths = [diff(obj.Out_Domain(1,:));diff(obj.Out_Domain(2,:))];
             rectangle('position',[obj.Out_Domain(:,1)' lengths'],'LineWidth',2);
+            hold off;
         end
         
         
