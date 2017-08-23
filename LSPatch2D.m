@@ -5,7 +5,6 @@ classdef LSPatch2D<LeafPatch
     properties
         degs %array of degrees along the dimensions
         coeffs %grid of values to be used for interpolation
-        tol %tolerence used for refinement
         Out_Domain %Domain of outer square
         max_lengths %Max lengths of patch
         values
@@ -26,8 +25,8 @@ classdef LSPatch2D<LeafPatch
             obj.degs = degs;
             obj.cheb_length = prod(obj.degs);
             obj.is_leaf = true;
-            obj.is_refined = false;
             obj.max_lengths = max_lengths;
+            obj.tol = 1e-12;
             obj.values = [];
         end
         
@@ -48,14 +47,14 @@ classdef LSPatch2D<LeafPatch
         
         function ef = evalfGrid(obj,X,diff_dim,order)
             
-            G = obj.coeff;
+            G = obj.coeffs;
             
             for k=1:2
                 %Shift the points to the domain [-1 1]x[-1 1]
                 X{k} = obj.invf(X{k},obj.Out_Domain(:,k));
                 
                 %Evaluate the points at the Chebyshev polynomials
-                F = clenshaw(X{k},eye(obj.degs(k)));
+                F = clenshaw(X{k},eye(obj.cheblength));
                 
                 %Multiply the coefficients with F
                 G = chebfun3t.txm(G, F, k);
@@ -76,18 +75,25 @@ classdef LSPatch2D<LeafPatch
             
             is_less_max = lengths<=obj.max_lengths;
             
-            IsGeometricallyRefined = all(is_less_max) && any(obj.domain.Interior(outer_points));
-            
+            %IsGeometricallyRefined = all(is_less_max) && any(obj.domain.Interior(outer_points));
+            IsGeometricallyRefined = all(is_less_max);
             obj.is_geometric_refined = IsGeometricallyRefined;
         end
         
         function Child = splitleaf(obj)
             
-            if ~obj.is_geometric_refind
+            if ~obj.is_geometric_refined
                 obj.IsGeometricallyRefined();
             end
             
+            
             obj.is_refined = obj.mid_values_err<= obj.tol;
+            %obj.is_refined = true;
+            
+            if obj.is_geometric_refined
+                a=1;
+            end
+            
             
             if obj.is_geometric_refined && obj.is_refined
                 
@@ -171,7 +177,7 @@ classdef LSPatch2D<LeafPatch
                 
                 
                 if all(ind11)
-                    
+                     %The domain sits entirely in the first child
                     Child = children{1};
                     
                 elseif all(ind22)
@@ -180,12 +186,11 @@ classdef LSPatch2D<LeafPatch
                     Child = children{2};
                 else
                     %Return the PUPatch with the new children
-                    Child = PUPatch(obj.Out_Domain,overlap_in,length(children{1})+length(children{2}),children,split_dim);
+                    Child = PUPatch(obj.Out_Domain,overlap_in,length(children{1})+length(children{2}),children,split_dim,obj.index);
                 end
             end
         end
         
-        %TODO. Figure out what to do here!
         function sample(obj,f)
             if obj.is_geometric_refined
                 
@@ -193,7 +198,7 @@ classdef LSPatch2D<LeafPatch
                 y = chebpts(obj.cheblength*2,obj.Out_Domain(2,:));
                 
                 x1 = chebpts(obj.cheblength*2,obj.Out_Domain(1,:),1);
-                y2 = chebpts(obj.cheblength*2,obj.Out_Domain(2,:),1);
+                y1 = chebpts(obj.cheblength*2,obj.Out_Domain(2,:),1);
                 
                 [X,Y] = ndgrid(x,y);
                 
@@ -214,13 +219,14 @@ classdef LSPatch2D<LeafPatch
                     obj.pinvM = pinv(M(ind,:));
                 end
                 
-                obj.coeffs = obj.pinvM*f(XP);
+                obj.coeffs = reshape(obj.pinvM*f(XP),[obj.cheblength obj.cheblength]);
                 
-                E = evalfGrid({X1,Y1},1,0)-f(XP1);
+                E = obj.evalfGrid({x1,y1},1,0);
+                E = E(:) - f(XP1);
                 E = E(ind1);
                 
                 %This is used to determin
-                obj.mid_values_err = max(E);
+                obj.mid_values_err = max(abs(E(:)));
             end
         end
         

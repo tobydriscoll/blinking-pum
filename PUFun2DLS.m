@@ -12,6 +12,9 @@ classdef PUFun2DLS < handle
             
             while ~obj.ChebRoot.is_geometric_refined
                 
+                obj.ChebRoot.IsGeometricallyRefined();
+                obj.ChebRoot.sample(@(x)zeros([length(x) 1]));
+                
                 if obj.ChebRoot.is_leaf
                     obj.ChebRoot = obj.ChebRoot.splitleaf();
                 else

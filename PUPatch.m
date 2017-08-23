@@ -303,11 +303,39 @@ classdef PUPatch<Patch
             end
             LEAVES = leaves;
         end
-
+        
+        function IsGeometricallyRefined = IsGeometricallyRefined(obj)
+            G1 = obj.children{1}.IsGeometricallyRefined();
+            G2 = obj.children{2}.IsGeometricallyRefined();
+            IsGeometricallyRefined = G1 & G2;
+        end
         
         function plotdomain(obj)
             obj.children{1}.plotdomain();
             obj.children{2}.plotdomain();
+        end
+        
+        function ResolveChebWeights(obj,weights)
+            
+            w = weights{obj.splitting_dim};
+            
+            for k=1:2
+                    
+                    domain = obj.domain(obj.splitting_dim,:);
+                    subdomain = obj.children{k}.domain(obj.splitting_dim,:);
+                    h = @(x) 2/diff(domain)*x-sum(domain)/diff(domain);
+                    
+                    wk = obj.weights.chebweights(:,k);
+                    wk = wk(chebfun(h,domain));
+                    
+                    weights{obj.splitting_dim} = chebfun(@(x)w(x).*wk(x),subdomain);
+                    
+                    if obj.children{k}.is_leaf
+                        obj.children{k}.chebweights = weights;
+                    else
+                        obj.children{k}.ResolveChebWeights(weights);
+                    end
+            end
         end
         
         function str = toString(obj)
