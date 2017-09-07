@@ -110,7 +110,7 @@ classdef ChebPatch<LeafPatch
             
             input{1} = obj.values;
             
-            if order>0
+             for j=2:order+1
                 switch obj.dim
                     case 1
                         diff_values = 2/diff(obj.domain)*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
@@ -118,11 +118,11 @@ classdef ChebPatch<LeafPatch
                         diff_values = (shiftdim(obj.values,diff_dim-1));
                         perm_degs = size(diff_values);
                         diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
-                        diff_values = 2/diff(pbj.domain(diff_dim,:))*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),1}*diff_values;
+                        diff_values = (2/diff(obj.domain(diff_dim,:)))^(j-1)*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),j-1}*diff_values;
                         diff_values = reshape(diff_values,perm_degs);
                         diff_values = shiftdim(diff_values,obj.dim-(diff_dim-1));
                 end
-                input{2} = diff_values;
+                input{j} = diff_values;
             end
             
             for j=1:order+1
@@ -146,21 +146,15 @@ classdef ChebPatch<LeafPatch
             
             input{1} = obj.values;
             
-            if order>0
+            for j=2:order+1
                 switch obj.dim
                     case 1
-                        diff_values = 2/diff(obj.domain)*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
+                        diff_values = 2/diff(obj.domain)*obj.standard_variables.chebmatrices{obj.deg_in(1),j-1}*obj.values;
                     otherwise
-                        %TODO: Replace this with the TXM function
-                        diff_values = (shiftdim(obj.values,diff_dim-1));
-                        perm_degs = size(diff_values);
-                        diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
-                        diff_values = 2/diff(obj.domain(diff_dim,2))*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),1}*diff_values;
-                        diff_values = reshape(diff_values,perm_degs);
-                        diff_values = shiftdim(diff_values,obj.dim-(diff_dim-1));
+                       D = (2/diff(obj.domain(diff_dim,:)))^(j-1)*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),j-1};
+                       diff_values = chebfun3t.txm(obj.values,D,diff_dim);     
                 end
-                
-                input{2} = diff_values;
+                input{j} = diff_values;
             end
             
             for j=1:order+1
@@ -172,7 +166,6 @@ classdef ChebPatch<LeafPatch
                     f = bary(points,eye(obj.degs(k)),obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
                     
                     G = chebfun3t.txm(G, f, k);
-                    
                 end
                 
                 if order>0
@@ -228,14 +221,30 @@ classdef ChebPatch<LeafPatch
             
             if obj.dim==2
                 
-                for i=1:obj.dim
-                    %if obj.split_flag(i)
-                    Fi = shiftdim(obj.values,i-1);
-                    sizes = size(Fi);
-                    Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
-                    %Figure out deg along dim i,
-                    lens(i) = simplify(Fi,obj.tol);
-                end
+%                 for i=1:obj.dim
+%                     %if obj.split_flag(i)
+%                     Fi = shiftdim(obj.values,i-1);
+%                     sizes = size(Fi);
+%                     Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
+%                     %Figure out deg along dim i,
+%                     lens(i) = simplify(Fi,obj.tol);
+%                 end
+
+                pref = chebfunpref();
+                pref.chebfuneps = obj.tol;
+                
+                simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
+                
+                colChebtech = sum(abs(simple_2D_coeffs), 2);
+                fCol = chebtech2({[], colChebtech});
+                [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
+                lens(1) = cutoffX2+~isHappyX;
+                
+                rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
+                fRow = chebtech2({[], rowChebtech});
+                [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
+                lens(2) = cutoffY2+~isHappyY;
+                
             else
                 pref = chebfunpref();
                 pref.chebfuneps = obj.tol;
@@ -360,6 +369,10 @@ classdef ChebPatch<LeafPatch
                 plot3(X1,Y1,Z1,'color','black');
                 hold off;
             end
+        end
+        
+        function IsGeometricallyRefined = IsGeometricallyRefined(obj)
+            IsGeometricallyRefined = true;
         end
         
     end

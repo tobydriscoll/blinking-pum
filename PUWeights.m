@@ -10,7 +10,7 @@ classdef PUWeights
     end
     
     properties (Constant)
-        overlap = 0.1;
+        overlap = 0.08;
     end
     
     methods
@@ -25,9 +25,11 @@ classdef PUWeights
             br = @(x) bump((x-1)/R);
             
             %These could be precalculated. This is what I will do.
-            weight = chebfun(@(x) bl(x)./(bl(x)+br(x)),'vectorize');
+           weight1 = chebfun({@(x) bl(x)./(bl(x)+br(x)),0},[-1 obj.overlap 1],'vectorize');
             
-            obj.chebweights = [weight 1-weight];
+           % weight1 = chebfun({1,@(x)-0.5/t*x+0.5,0},[-1 -t t 1]);
+            
+            obj.chebweights = [weight1 1-weight1];
             
             obj.weights = {@(x) 1./(1+exp(4*(1+t)^2*x./((t-x).*(2+t-x).*(t+x).*(2+t+x)))), ...
                            @(x) 1./(1+exp(-4*(1+t)^2*x./((t-x).*(2+t-x).*(t+x).*(2+t+x))))};
@@ -71,18 +73,17 @@ classdef PUWeights
             
             X_CENTER = h(x(x>=MIDINV(1) & x<=MIDINV(2)));
             
-            switch diff_j
-                case 0
+            if diff_j==0
                     ef(x<MIDINV(1)) = (k==1);
                     
                     ef(x>=MIDINV(1) & x<=MIDINV(2)) = obj.weights{k}(X_CENTER);
                     
                     ef(x>MIDINV(2)) = (k==2);
-                case 1
+            elseif diff_j==1
                     ef(x>=MIDINV(1) & x<=MIDINV(2)) = SCALE*feval(obj.diffweights(:,k),X_CENTER);
-                case 2
-                    ef(x>=MIDINV(1) & x<=MIDINV(2)) = SCALE^2*feval(obj.diffweights2(:,k),X_CENTER);
-                otherwise
+            elseif diff_j==2
+                    ef(x>=MIDINV(1) & x<=MIDINV(2)) = SCALE^2*feval(obj.diff2weights(:,k),X_CENTER);
+            else
                     ef(x>=MIDINV(1) & x<=MIDINV(2)) = SCALE^diff_j*feval(diff(obj.weights(:,k),diff_j),X_CENTER);
             end
         end
