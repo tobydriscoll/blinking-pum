@@ -106,6 +106,7 @@ f = @(x,y,z) x.*atan(y./b)+z.^6;
 fx = @(x,y,z) atan(y./b);
 fy = @(x,y,z) b*x./(b^2+y.^2);
 fz = @(x,y,z) 6*z.^5;
+fzz = @(x,y,z) 30*z.^4;
 
 [X1,X2,X3] = ndgrid(g{:});
 
@@ -125,5 +126,7 @@ v = PU.evalfGrid(g,3,1);
 E=v(:,:,:,2)-fz(X1,X2,X3);
 assert(max(abs(E(:)))<diff_tol);
 
-
+v = PU.evalfGrid(g,3,2);
+E=v(:,:,:,3)-fzz(X1,X2,X3);
+assert(max(abs(E(:)))<diff_tol);
 
