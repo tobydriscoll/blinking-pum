@@ -107,6 +107,8 @@ classdef PUFun < handle
             disp(obj.ChebRoot.toString());
         end
         
+        
+        
     end
 end
 

@@ -213,13 +213,20 @@ classdef LSPatch2D<LeafPatch
                 
                 XP = XP(ind,:);
                 
-                if ~obj.is_refined   
-                    Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
-                    M = kron(Mx,Mx);
-                    obj.pinvM = pinv(M(ind,:));
-                end
+%                 if ~obj.is_refined   
+%                     Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
+%                     M = kron(Mx,Mx);
+%                     obj.pinvM = pinv(M(ind,:));
+%                 end
+
+                Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
+                M = kron(Mx,Mx);
+                M = M(ind,:);
                 
-                obj.coeffs = reshape(obj.pinvM*f(XP),[obj.cheblength obj.cheblength]);
+                P = M*M'-eye(length(XP));
+                y = pinv(P*M)*P*f(XP);
+                z = M'*(f(XP)-M*y);
+                obj.coeffs = reshape(y+z,[obj.cheblength obj.cheblength]);
                 
                 E = obj.evalfGrid({x1,y1},1,0);
                 E = E(:) - f(XP1);
