@@ -1,4 +1,4 @@
-function [ output ] = RASPreconditioner(PUApprox,domain,force,border,sol)
+function [ output ] = RASStep(PUApprox,domain,force,border,sol)
 
 PUApprox.sample(sol);
 
@@ -30,6 +30,17 @@ for k=1:length(LEAVES)
     
     output = [output;(A1\b1)];
 end
+
+
+% PUApprox.sample(output);
+% 
+% new_output = [];
+% for k=1:length(LEAVES)
+%     sol = PUApprox.evalfGrid(LEAVES{k}.leafGrids(),1,0);
+%     new_output = [new_output;sol(:)];
+% end
+% 
+% output = new_output;
 
 end
 

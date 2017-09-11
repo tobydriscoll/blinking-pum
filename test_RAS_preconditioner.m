@@ -4,8 +4,8 @@ domain = [-1 1;-1 1];
 
 deg_in = [5 5];
 split_flag = [1 1];
-tol = 1e-8;
-maxit = 500;
+tol = 1e-7;
+maxit = 1200;
 cheb_length  = 33;
 dim = [33 33];
 domain1 = [-1 overlap;-1 1];
@@ -43,11 +43,13 @@ F2 = border(points2);
 A = @(sol) LaplacianForward(Tree,dim,domain,sol);
 
 
-M = @(sol) RASStep(Tree,domain,force,border,sol);
+M = @(rhs) RASPreconditioner(Tree,domain,rhs);
 G = @(sol) M(A(sol));
+tic
 %sol = gmres(A,b,[],tol,maxit);
 %sol = gmres(G,M(b),[],tol,maxit);
 sol = gmres(A,b,[],tol,maxit,M);
+toc
 
 x = linspace(-1,1,100)';
 [X,Y] = ndgrid(x);
