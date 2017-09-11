@@ -30,15 +30,24 @@ sol2 = zeros(length(points2),1);
 sol = [sol1;sol2];
 
 Tree.sample(sol);
-%We will solve lap u = 1 with zero boundary conditions
+%We will solve lap u = 1 with zero boundary condition
 
-newsol = RASSolve(Tree,domain,force,border,sol);
+is_converged = false;
+tol = 1e-5;
+while ~is_converged
+    new_sol = RASStep(Tree,domain,force,border,sol);
+    is_converged = norm(new_sol-sol,inf)/norm(sol,inf)<tol;
+    sol = new_sol;
+    Tree.sample(sol);
+    surf(X,Y,Tree.evalfGrid({x x},1,0));
+    pause(0.5);
+end
 
 Tree.sample(newsol);
 
 F = Tree.evalfGrid({x x},1,0);
 
 surf(X,Y,F);
-E = abs(F-TRUE);
-E = max(E(:));
-title(sprintf('The error is: %g',E));
+%E = abs(F-TRUE);
+%E = max(E(:));
+%title(sprintf('The error is: %g',E));

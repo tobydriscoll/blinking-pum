@@ -4,7 +4,7 @@ domain = [-1 1;-1 1];
 
 deg_in = [5 5];
 split_flag = [1 1];
-tol = 1e-6;
+tol = 1e-8;
 maxit = 500;
 cheb_length  = 33;
 dim = [33 33];
@@ -37,20 +37,18 @@ sol2(out_border2) =  border(points2(out_border2,:));
 b = [sol1;sol2];
 
 LaplacianForward(Tree,dim,domain,[sol1;sol2]);
-RASPreconditioner(Tree,domain,force,border,b);
-
 F1 = border(points1);
 F2 = border(points2);
 
 A = @(sol) LaplacianForward(Tree,dim,domain,sol);
 
 
-M = @(sol) RASPreconditioner(Tree,domain,force,border,sol);
-MM = @(sol) RASSolve(Tree,domain,force,border,sol);
+M = @(sol) RASStep(Tree,domain,force,border,sol);
 G = @(sol) M(A(sol));
-sol = gmres(A,b,[],tol,maxit);
+%sol = gmres(A,b,[],tol,maxit);
 %sol = gmres(G,M(b),[],tol,maxit);
-%x1 = gmres(A,b,[],tol,maxit,M);
+sol = gmres(A,b,[],tol,maxit,M);
+
 x = linspace(-1,1,100)';
 [X,Y] = ndgrid(x);
 
