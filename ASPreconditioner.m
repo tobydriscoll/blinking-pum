@@ -1,4 +1,4 @@
-function [ output ] = RASPreconditioner(PUApprox,domain,rhs)
+function [ output ] = ASPreconditioner(PUApprox,domain,rhs)
 
 LEAVES = PUApprox.collectLeaves({});
 
@@ -22,12 +22,14 @@ for k=1:length(LEAVES)
     
     lap = scalex^2*Dxx+scaley^2*Dyy;
     E1 = eye(prod(dim));
+    
     A1 = [lap(~(in_border | out_border),:);E1(in_border,:);E1(out_border,:)];
-    b1 = [rhs_k(~in_border & ~out_border);zeros(sum(in_border),1);rhs_k(out_border)];
+    b1 = [rhs_k(~in_border & ~out_border);rhs_k(in_border);rhs_k(out_border)];
     
     step_n = step_n + prod(dim);
     
     output = [output;(A1\b1)];
 end
+
 
 end

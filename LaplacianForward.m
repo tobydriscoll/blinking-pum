@@ -1,29 +1,44 @@
-function [ output ] = LaplacianForward(Tree,dim,domain,sol)
+function [ output ] = LaplacianForward(Tree,domain,sol)
 
 Tree.sample(sol);
 
-points1 = Tree.children{1}.leafGrids();
-points2 = Tree.children{2}.leafGrids();
+LEAVES = Tree.collectLeaves({});
 
-vx1 = Tree.evalfGrid(points1,1,2);
-vy1 = Tree.evalfGrid(points1,2,2);
+output = [];
 
-vx2 = Tree.evalfGrid(points2,1,2);
-vy2 = Tree.evalfGrid(points2,2,2);
+step_n = 0;
 
-lap1 = vx1(:,:,3)+vy1(:,:,3);
-lap2 = vx2(:,:,3)+vy2(:,:,3);
+for k=1:length(LEAVES)
+    
+    points = LEAVES{k}.leafGrids();
+    
+    pointsl = LEAVES{k}.points();
+    
+    dim = LEAVES{k}.degs;
+    
+    sol_k = sol(step_n+(1:prod(dim)));
+        
+    [out_border, in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
+    
+    vx = LEAVES{k}.evalfGrid(points,1,2);
+    vy = LEAVES{k}.evalfGrid(points,2,2);
+    
+    lap = vx(:,:,3)+vy(:,:,3);
+    
+    approx = Tree.evalf(pointsl(in_border,:),1,0);
+    
+    lap = lap(:);
+    
+    lap(out_border) = sol_k(out_border);
+    
+    lap(in_border) = sol_k(in_border)-approx;
+    
+    output = [output;lap];
+    
+    step_n = step_n + prod(dim);
+    
+end
 
-lap1 = lap1(:);
-lap2 = lap2(:);
-
-out_border1 = FindBoundaryIndex2D(dim,Tree.children{1}.domain(),domain);
-lap1(out_border1) = sol(out_border1);
-
-out_border2 = FindBoundaryIndex2D(dim,Tree.children{2}.domain(),domain);
-sol2 = sol(prod(dim)+1:end);
-lap2(out_border2) = sol2(out_border2);
-output = [lap1;lap2];
 end
 
 
