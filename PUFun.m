@@ -67,32 +67,29 @@ classdef PUFun < handle
         %   PU         : vector of approximation at X
         %   DX         : vector of derivative values at X
         %   DXX        : vector of second derivative values at X
-        function int = sum(obj,N)
+        function int = sum(obj)
             
             int = 0;
             for i=1:length(obj.leafArray)
                 
-                X = cell(1,obj.ChebRoot.dim);
-                W = cell(1,obj.ChebRoot.dim);
-                
-                for j=1:obj.ChebRoot.dim
-                    [X{j},W{j}] = chebpts(N,obj.leafArray{i}.domain(j,:));
+                if ~isempty(obj.leafArray{i}.zone)
+                    X = cell(1,obj.ChebRoot.dim);
+                    
+                    for j=1:obj.ChebRoot.dim
+                        [X{j},W{j}] = chebpts(obj.leafArray{i}.degs(j),obj.leafArray{i}.zone(j,:));
+                    end
+                    
+                    
+                    vals = obj.leafArray{i}.evalfGrid(X,1,0);
+                    
+                    
+                    if obj.ChebRoot.dim==2
+                        int = int + W{2}*(W{1}*vals).';
+                    else
+                        int = int + W{2}*(W{1}*chebfun3.txm(vals,W{3},3))';
+                    end
+                    
                 end
-                
-                WEIGHTSVALS = obj.ChebRoot.evalweights(obj.leafArray{i}.index,X,1,0);
-
-                vals = obj.leafArray{i}.evalfGrid(X,1,0);
-                
-                
-                if obj.ChebRoot.dim==2
-                    vals = WEIGHTSVALS{1}.*vals.*WEIGHTSVALS{2}.';
-                    int = int + W{2}*(W{1}*vals).';
-                else
-                    vals = (WEIGHTSVALS{1}.*vals.*WEIGHTSVALS{2}.').*shiftdim(WEIGHTSVALS{3},-2);
-                    int = int + W{2}*(W{1}*chebfun3.txm(vals,W{3},3))';
-                end
-                
-                
 
                 
             end
