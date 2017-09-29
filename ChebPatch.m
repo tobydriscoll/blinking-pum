@@ -509,7 +509,6 @@ classdef ChebPatch<LeafPatch
             end
         end
         
-        
         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
             IsGeometricallyRefined = true;
         end
