@@ -397,6 +397,31 @@ classdef ChebPatch<LeafPatch
             end
         end
         
+        function plotzone(obj)
+            
+            if obj.dim==2
+                hold on;
+                lengths = [diff(obj.zone(1,:));diff(obj.zone(2,:))];
+                rectangle('position',[obj.zone(:,1)' lengths'],'LineWidth',2);
+                hold off;
+            elseif obj.dim==3
+                hold on;
+                lengths = [diff(obj.zone(1,:));diff(obj.zone(2,:));diff(obj.zone(3,:))];
+                center = sum(obj.zone,2)/2;
+                %Vertices for Line Cube. Order matters
+                X = [-1 -1 1 1 -1 -1 1 1 1 1 1 1 -1 -1 -1 -1 -1]';
+                Y = [-1 1 1 -1 -1 -1 -1 -1 -1 1 1 1 1 1 1 -1 -1]';
+                Z = [-1 -1 -1 -1 -1 1 1 -1 1 1 -1 1 1 -1 1 1 -1]';
+                %Example two cube matrix. Unit cube and one scaled/translated cube
+                X1 = X*lengths(1)/2+center(1);
+                Y1 = Y*lengths(2)/2+center(2);
+                Z1 = Z*lengths(3)/2+center(3);
+                %Single plot command for all 'cube lines'
+                plot3(X1,Y1,Z1,'color','black');
+                hold off;
+            end
+        end
+        
         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
             IsGeometricallyRefined = true;
         end
