@@ -325,6 +325,16 @@ classdef PUPatch<Patch
             obj.children{2}.plotdomain();
         end
         
+        function plotzone(obj)
+            if(~isempty(obj.children{1}.zone))
+                obj.children{1}.plotzone();
+            end
+            
+            if(~isempty(obj.children{2}.zone))
+                obj.children{2}.plotzone();
+            end
+        end
+        
         function ResolveChebWeights(obj,weights)
             
             w = weights{obj.splitting_dim};
