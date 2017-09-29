@@ -25,7 +25,7 @@ classdef ChebPatch<LeafPatch
         % domain: (dim x 2) array indiciating array for the hypercube.
         %   degs: (dim x 1) array indicating the degree of the polynomial
         %         along the dimensions.
-        function obj = ChebPatch(domain,deg_in,split_flag,tol)
+        function obj = ChebPatch(domain,deg_in,split_flag,tol,zone)
             
             obj.domain = domain;
             obj.is_geometric_refined = true; %square is always geometrically refined
@@ -36,18 +36,27 @@ classdef ChebPatch<LeafPatch
                 obj.deg_in(:) = 7;
                 obj.split_flag = ones(obj.dim,1);
                 obj.tol = 1e-12;
+                obj.zone = obj.domain;
             elseif nargin < 3
                 obj.deg_in = deg_in;
                 obj.split_flag = ones(obj.dim,1);
                 obj.tol = 1e-12;
+                obj.zone = obj.domain;
             elseif nargin < 4
                 obj.deg_in = deg_in;
                 obj.split_flag = split_flag;
                 obj.tol = 1e-12;
+                obj.zone = obj.domain;
+            elseif nargin < 5
+                obj.deg_in = deg_in;
+                obj.split_flag = split_flag;
+                obj.tol = tol;
+                obj.zone = obj.domain;
             else
                 obj.deg_in = deg_in;
                 obj.split_flag = split_flag;
                 obj.tol = tol;
+                obj.zone = zone;
             end
             
             %To do: deal with boundary
@@ -221,29 +230,29 @@ classdef ChebPatch<LeafPatch
             
             if obj.dim==2
                 
-%                 for i=1:obj.dim
-%                     %if obj.split_flag(i)
-%                     Fi = shiftdim(obj.values,i-1);
-%                     sizes = size(Fi);
-%                     Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
-%                     %Figure out deg along dim i,
-%                     lens(i) = simplify(Fi,obj.tol);
-%                 end
+                for i=1:obj.dim
+                    %if obj.split_flag(i)
+                    Fi = shiftdim(obj.values,i-1);
+                    sizes = size(Fi);
+                    Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
+                    %Figure out deg along dim i,
+                    lens(i) = simplify(Fi,obj.tol);
+                end
 
-                pref = chebfunpref();
-                pref.chebfuneps = obj.tol;
-                
-                simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
-                
-                colChebtech = sum(abs(simple_2D_coeffs), 2);
-                fCol = chebtech2({[], colChebtech});
-                [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
-                lens(1) = cutoffX2+~isHappyX;
-                
-                rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
-                fRow = chebtech2({[], rowChebtech});
-                [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
-                lens(2) = cutoffY2+~isHappyY;
+%                 pref = chebfunpref();
+%                 pref.chebfuneps = obj.tol;
+%                 
+%                 simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
+%                 
+%                 colChebtech = sum(abs(simple_2D_coeffs), 2);
+%                 fCol = chebtech2({[], colChebtech});
+%                 [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
+%                 lens(1) = cutoffX2+~isHappyX;
+%                 
+%                 rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
+%                 fRow = chebtech2({[], rowChebtech});
+%                 [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
+%                 lens(2) = cutoffY2+~isHappyY;
                 
             else
                 pref = chebfunpref();
@@ -309,17 +318,34 @@ classdef ChebPatch<LeafPatch
                 delta = 0.5*(1+PUWeights.overlap)*...
                     (obj.domain(split_dim,2)-obj.domain(split_dim,1));
                 
+                m = sum(obj.zone(split_dim,:))/2;
+                
                 domain0 = obj.domain;
                 domain1 = obj.domain;
                 
                 domain0(split_dim,:) = [obj.domain(split_dim,1) obj.domain(split_dim,1)+delta];
                 domain1(split_dim,:) = [obj.domain(split_dim,2)-delta obj.domain(split_dim,2)];
                 
+                zone0 = obj.zone;
+                zone1 = obj.zone;
+                
+                zone0(split_dim,2) = min(obj.zone(split_dim,2),m);
+                
+                if zone0(split_dim,1)>=zone0(split_dim,2)
+                    zone0 = [];
+                end
+                
+                zone1(split_dim,1) = max(obj.zone(split_dim,1),m);
+                
+                if zone1(split_dim,1)>=zone1(split_dim,2)
+                    zone1 = [];
+                end
+                
                 overlap_in = [obj.domain(split_dim,2)-delta obj.domain(split_dim,1)+delta];
                 
-                children{1} = ChebPatch(domain0,obj.deg_in,obj.split_flag,obj.tol);
+                children{1} = ChebPatch(domain0,obj.deg_in,obj.split_flag,obj.tol,zone0);
                 
-                children{2} = ChebPatch(domain1,obj.deg_in,obj.split_flag,obj.tol);
+                children{2} = ChebPatch(domain1,obj.deg_in,obj.split_flag,obj.tol,zone1);
                 
                 %Return the PUPatch with the new children
                 Child = PUPatch(obj.domain,overlap_in,length(children{1})+length(children{2}),children,split_dim,obj.index);
@@ -370,6 +396,32 @@ classdef ChebPatch<LeafPatch
                 hold off;
             end
         end
+        
+        function plotzone(obj)
+            
+            if obj.dim==2
+                hold on;
+                lengths = [diff(obj.zone(1,:));diff(obj.zone(2,:))];
+                rectangle('position',[obj.zone(:,1)' lengths'],'LineWidth',2);
+                hold off;
+            elseif obj.dim==3
+                hold on;
+                lengths = [diff(obj.zone(1,:));diff(obj.zone(2,:));diff(obj.zone(3,:))];
+                center = sum(obj.zone,2)/2;
+                %Vertices for Line Cube. Order matters
+                X = [-1 -1 1 1 -1 -1 1 1 1 1 1 1 -1 -1 -1 -1 -1]';
+                Y = [-1 1 1 -1 -1 -1 -1 -1 -1 1 1 1 1 1 1 -1 -1]';
+                Z = [-1 -1 -1 -1 -1 1 1 -1 1 1 -1 1 1 -1 1 1 -1]';
+                %Example two cube matrix. Unit cube and one scaled/translated cube
+                X1 = X*lengths(1)/2+center(1);
+                Y1 = Y*lengths(2)/2+center(2);
+                Z1 = Z*lengths(3)/2+center(3);
+                %Single plot command for all 'cube lines'
+                plot3(X1,Y1,Z1,'color','black');
+                hold off;
+            end
+        end
+        
         
         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
             IsGeometricallyRefined = true;

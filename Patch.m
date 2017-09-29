@@ -11,6 +11,7 @@ classdef (Abstract) Patch < handle
         is_geometric_refined = false
         dim
         tol
+        zone
     end
     
     methods (Abstract)

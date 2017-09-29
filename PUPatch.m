@@ -15,7 +15,14 @@ classdef PUPatch<Patch
     
     methods
         
-        function obj = PUPatch(domain,overlap_in,cheb_length,children,splitting_dim,index)
+        function obj = PUPatch(domain,overlap_in,cheb_length,children,splitting_dim,index,zone)
+            
+            if nargin<7
+                obj.zone = domain;
+            else
+                obj.zone = zone;
+            end
+
             obj.domain = domain;
             [obj.dim,~] = size(obj.domain);
             obj.overlap_in = overlap_in;
@@ -313,6 +320,16 @@ classdef PUPatch<Patch
         function plotdomain(obj)
             obj.children{1}.plotdomain();
             obj.children{2}.plotdomain();
+        end
+        
+        function plotzone(obj)
+            if(~isempty(obj.children{1}.zone))
+                obj.children{1}.plotzone();
+            end
+            
+            if(~isempty(obj.children{2}.zone))
+                obj.children{2}.plotzone();
+            end
         end
         
         function ResolveChebWeights(obj,weights)
