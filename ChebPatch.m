@@ -31,9 +31,11 @@ classdef ChebPatch<LeafPatch
         % domain: (dim x 2) array indiciating array for the hypercube.
         %   degs: (dim x 1) array indicating the degree of the polynomial
         %         along the dimensions.
-        function obj = ChebPatch(domain,deg_in,split_flag,tol,zone,cdeg_in)
-            
-            obj.domain = domain;
+        function obj = ChebPatch(region,zone,deg_in,split_flag,tol,outerbox)
+            obj.outerbox = outerbox;
+            obj.region = region;
+            obj.zone = zone;
+            obj.domain = region;
             obj.is_geometric_refined = true; %square is always geometrically refined
             [obj.dim,~] = size(obj.domain);
             
@@ -328,12 +330,12 @@ classdef ChebPatch<LeafPatch
 %                 fCol = chebtech2({[], colChebtech});
 %                 [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
 %                 lens(1) = cutoffX2+~isHappyX;
-%
+%                 
 %                 rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
 %                 fRow = chebtech2({[], rowChebtech});
 %                 [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
 %                 lens(2) = cutoffY2+~isHappyY;
-
+                
             else
                 pref = chebfunpref();
                 pref.chebfuneps = obj.tol;
@@ -356,7 +358,6 @@ classdef ChebPatch<LeafPatch
                 lens(3) = cutoffZ2+~isHappyZ;
                 
             end
-            
             
             for i=1:obj.dim
                 
@@ -391,54 +392,55 @@ classdef ChebPatch<LeafPatch
                 obj.cheb_length = prod(obj.degs);
                 Child = obj;
             else
-                
-                %Return the PUPatch with the new children
                 Child = split(obj,PUWeights.overlap,split_dim);
             end
             
         end
         
-        
-        function Child = split(obj,overlap,split_dim)
-            
-             children = cell(1,2);
+        % The method determines if a splitting is needed, and creates
+        % the new children if splitting is required.
+        %
+        %     Input:
+        %   overlap: overlap intended to be used for the splitting
+        %
+        %    Output:
+        %     Child: obj if no splitting is needed. If a splitting
+        %            is needed, Child is the PUPatch object with
+        %            the new children.
+        function Child = split(obj,split_dim)
+                children = cell(1,2);
                 
                 %The width of the overlap
-                delta = 0.5*(1+overlap)*...
-                    (obj.domain(split_dim,2)-obj.domain(split_dim,1));
-                
-                m = sum(obj.zone(split_dim,:))/2;
-                
-                domain0 = obj.domain;
-                domain1 = obj.domain;
-                
-                domain0(split_dim,:) = [obj.domain(split_dim,1) obj.domain(split_dim,1)+delta];
-                domain1(split_dim,:) = [obj.domain(split_dim,2)-delta obj.domain(split_dim,2)];
+                delta = 0.5*obj.overlap*diff(obj.zone(split_dim,:));
                 
                 zone0 = obj.zone;
                 zone1 = obj.zone;
                 
-                zone0(split_dim,2) = min(obj.zone(split_dim,2),m);
+                region0 = obj.region;
+                region1 = obj.region;
                 
-                if zone0(split_dim,1)>=zone0(split_dim,2)
-                    zone0 = [];
-                end
+                m = sum(obj.zone(split_dim,:))/2;
                 
-                zone1(split_dim,1) = max(obj.zone(split_dim,1),m);
+                zone0(split_dim,:) = [obj.domain(split_dim,1) m];
+                zone1(split_dim,:) = [m obj.domain(split_dim,2)];
                 
-                if zone1(split_dim,1)>=zone1(split_dim,2)
-                    zone1 = [];
-                end
+                region0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
+                region1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
                 
-                overlap_in = [obj.domain(split_dim,2)-delta obj.domain(split_dim,1)+delta];
+                overlap_in = [m-delta,m+delta];
                 
-                children{1} = ChebPatch(domain0,obj.deg_in,obj.split_flag,obj.tol,zone0);
+                children{1} = ChebPatch(region0,zone0,obj.deg_in,obj.split_flag,obj.tol,obj.outerbox);
                 
-                children{2} = ChebPatch(domain1,obj.deg_in,obj.split_flag,obj.tol,zone1);
+                children{2} = ChebPatch(region1,zone1,obj.deg_in,obj.split_flag,obj.tol,obj.outerbox);
+                
+                region = obj.region;
+                
+                region(split_dim,:) = [region0(split_dim,1) region1(split_dim,2)];
                 
                 %Return the PUPatch with the new children
-                Child = PUPatch(obj.domain,overlap_in,length(children{1})+length(children{2}),children,split_dim,obj.index,obj.zone);
+                Child = PUPatch(region,obj.zone,overlap_in,length(children{1})+length(children{2}),children,split_dim,obj.index);
         end
+        
         
         function str = toString(obj)
             str = '';

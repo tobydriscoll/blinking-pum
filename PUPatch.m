@@ -7,7 +7,7 @@ classdef PUPatch<Patch
         children
         splitting_dim
         overlap_in
-        index
+        index = [];
     end
     
     properties (Constant)
@@ -16,15 +16,12 @@ classdef PUPatch<Patch
     
     methods
         
-        function obj = PUPatch(domain,overlap_in,cheb_length,children,splitting_dim,index,zone)
-            
-            if nargin<7
-                obj.zone = domain;
-            else
-                obj.zone = zone;
-            end
-            
-            obj.domain = domain;
+
+        function obj = PUPatch(region,zone,overlap_in,cheb_length,children,splitting_dim,index)
+            obj.outerbox = children{1}.outerbox;
+            obj.region = region;
+            obj.zone = zone;
+            obj.domain = region;
             [obj.dim,~] = size(obj.domain);
             obj.overlap_in = overlap_in;
             obj.cheb_length = cheb_length;
@@ -78,7 +75,13 @@ classdef PUPatch<Patch
                     end
                 end
             end
+            
+            obj.region = [obj.children{1}.region(:,1) obj.children{2}.region(:,2)];
+            obj.domain = obj.region;
+            
             obj.cheb_length = obj.children{1}.cheb_length+obj.children{2}.cheb_length;
+            obj.overlap_in = [obj.children{2}.region(obj.splitting_dim,1), obj.children{1}.region(obj.splitting_dim,2)];
+            
             obj.is_refined = is_refined;
             obj.is_geometric_refined = is_geometric_refined;
         end
