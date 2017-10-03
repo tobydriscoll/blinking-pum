@@ -52,7 +52,6 @@ classdef PUPatch<Patch
             else
                 grids = {gridsl{:} gridsr{:}};
             end
-            
         end
         
         %Implement this later.
@@ -301,6 +300,38 @@ classdef PUPatch<Patch
             end
         end
         
+        function vals = evalfZone(obj,X)
+            
+            vals = zeros(length(X),1);
+            
+            ind = false(length(X),2);
+            
+            %Figure out indicies of the points in the left and right
+            %domains
+            for k=1:2
+                ind(:,k) = obj.children{k}.InZone(X);
+            end
+            
+            child_vals = cell(2,1);
+            
+            %calculate values for the children
+            for k=1:2
+                if any(ind(:,k))
+                    if obj.children{k}.is_leaf
+                        child_vals{k} = obj.children{k}.evalf(X(ind(:,k),:),1,0);
+                    else
+                        child_vals{k} = obj.children{k}.evalfZone(X(ind(:,k),:));
+                    end
+                else
+                    child_vals{k} = [];
+                end
+            end
+            
+            vals(ind(:,1)) = child_vals{1};
+            vals(ind(:,2)) = child_vals{2};
+        end
+        
+        
         function [LEAVES]= collectLeaves(obj,leaves)
             for k=1:2
                 if obj.children{k}.is_leaf
@@ -370,6 +401,18 @@ classdef PUPatch<Patch
         
         function vals = Getvalues(obj)
             vals = [obj.children{1}.Getvalues();obj.children{2}.Getvalues()];
+        end
+        
+        function split(obj,overlap)
+            for k=1:2
+                if obj.children{k}.is_leaf
+                    lengths = diff(obj.children{k}.domain');
+                    [~,split_dim] = max(lengths);
+                    obj.children{k} = obj.children{k}.split(overlap,split_dim);
+                else
+                    obj.children{k}.split(overlap);
+                end
+            end
         end
         
         function str = toString(obj)

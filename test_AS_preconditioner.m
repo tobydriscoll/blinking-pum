@@ -22,23 +22,15 @@ force = @(x) ones(length(x),1);
 
 border = @(x) zeros(length(x),1);
 
-overlap_in = [-overlap overlap];
+Tree = ChebPatch(domain,deg_in,split_flag,tol);
 
-childrenl{1} = ChebPatch(domain11,deg_in,split_flag,tol);
-childrenl{2} = ChebPatch(domain12,deg_in,split_flag,tol);
+Tree = Tree.split(0.1/2^2,1);
+Tree.split(0.1/2^2);
 
-childrenr{1} = ChebPatch(domain21,deg_in,split_flag,tol);
-childrenr{2} = ChebPatch(domain22,deg_in,split_flag,tol);
+Tree.split(0.1/2);
+Tree.split(0.1/2);
 
-children{1} = PUPatch(domain1,overlap_in,2*cheb_length,childrenl,2,[]);
-children{2} = PUPatch(domain2,overlap_in,2*cheb_length,childrenr,2,[]);
-
-Tree = PUPatch(domain,overlap_in,4*cheb_length,children,1,[]);
-
-%children{1} = ChebPatch(domain1,deg_in,split_flag,tol);
-%children{2} = ChebPatch(domain2,deg_in,split_flag,tol);
-
-%Tree = PUPatch(domain,overlap_in,2*cheb_length,children,1,[]);
+Tree.split(0.1);
 
 LEAVES = Tree.collectLeaves({});
 
@@ -70,8 +62,8 @@ LaplacianForward(Tree,domain,zeros(Tree.length(),1));
 A = @(sol) LaplacianForward(Tree,domain,sol);
 
 
-%M = @(rhs) ASPreconditioner(Tree,domain,rhs);
-M = @(rhs) CourseCorrection(rhs,Tree,domain);
+M = @(rhs) ASPreconditioner(Tree,domain,rhs);
+%M = @(rhs) CourseCorrection(rhs,Tree,domain);
 
 G = @(sol) M(A(sol));
 MM = @(rhs) M(A(M(rhs)));
