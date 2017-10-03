@@ -58,6 +58,10 @@ classdef PUFun < handle
             
         end
         
+        function Coarsen(obj)
+            obj.ChebRoot.Coarsen
+        end
+        
         
         % [PUF,DX,DXX]=evalf(obj,X)
         % This method evalutes the PUM approximation at X.

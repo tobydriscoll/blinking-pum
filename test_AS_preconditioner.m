@@ -70,7 +70,9 @@ LaplacianForward(Tree,domain,zeros(Tree.length(),1));
 A = @(sol) LaplacianForward(Tree,domain,sol);
 
 
-M = @(rhs) ASPreconditioner(Tree,domain,rhs);
+%M = @(rhs) ASPreconditioner(Tree,domain,rhs);
+M = @(rhs) CourseCorrection(rhs,Tree,domain);
+
 G = @(sol) M(A(sol));
 MM = @(rhs) M(A(M(rhs)));
 

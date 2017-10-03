@@ -7,6 +7,7 @@ classdef PUPatch<Patch
         children
         splitting_dim
         overlap_in
+        index
     end
     
     properties (Constant)
@@ -22,7 +23,7 @@ classdef PUPatch<Patch
             else
                 obj.zone = zone;
             end
-
+            
             obj.domain = domain;
             [obj.dim,~] = size(obj.domain);
             obj.overlap_in = overlap_in;
@@ -104,8 +105,8 @@ classdef PUPatch<Patch
         %   WEIGHTSVALS :  cell array of the weightvalues in each
         %                  dimension, including the dimension
         function [WEIGHTSVALS]= evalweights(obj,index,X,dim,order)
-        %Our weights are seperable, so we compute the weights
-        %for the functions in each dimension seperately.
+            %Our weights are seperable, so we compute the weights
+            %for the functions in each dimension seperately.
             if obj.children{index(1)}.is_leaf
                 
                 %as a base case, we set the weight to one.
@@ -126,8 +127,8 @@ classdef PUPatch<Patch
                 for k=0:order
                     for j=0:k
                         if (k-j)==0 || obj.splitting_dim == dim
-                        WEIGHTSVALS{obj.splitting_dim}(:,k+1) =  WEIGHTSVALS{obj.splitting_dim}(:,k+1) + ...
-                            nchoosek(k,j).*obj.weights.evalf(X{obj.splitting_dim},obj.overlap_in,index(1),1,k-j).*CHILDWEIGHT{obj.splitting_dim}(:,j+1);
+                            WEIGHTSVALS{obj.splitting_dim}(:,k+1) =  WEIGHTSVALS{obj.splitting_dim}(:,k+1) + ...
+                                nchoosek(k,j).*obj.weights.evalf(X{obj.splitting_dim},obj.overlap_in,index(1),1,k-j).*CHILDWEIGHT{obj.splitting_dim}(:,j+1);
                         end
                     end
                 end
@@ -178,10 +179,10 @@ classdef PUPatch<Patch
             
             for k=1:2
                 [sub_grids{k},inds{k}] = obj.children{k}.InDomainGrid(X,obj.splitting_dim);
-                 not_empty_child(k)= all(cellfun(@(x)~isempty(x),sub_grids{k}));
+                not_empty_child(k)= all(cellfun(@(x)~isempty(x),sub_grids{k}));
             end
             
-
+            
             %calculate values for the children
             for k=1:2
                 if  not_empty_child(k)
@@ -219,7 +220,7 @@ classdef PUPatch<Patch
             
             for j=0:order
                 
-                 
+                
                 %Generalized product rule
                 for ord_i=0:j
                     
@@ -337,28 +338,44 @@ classdef PUPatch<Patch
             w = weights{obj.splitting_dim};
             
             for k=1:2
-                    
-                    domain = obj.domain(obj.splitting_dim,:);
-                    subdomain = obj.children{k}.domain(obj.splitting_dim,:);
-                    h = @(x) 2/diff(domain)*x-sum(domain)/diff(domain);
-                    
-                    wk = obj.weights.chebweights(:,k);
-                    wk = wk(chebfun(h,domain));
-                    
-                    weights{obj.splitting_dim} = chebfun(@(x)w(x).*wk(x),subdomain);
-                    
-                    if obj.children{k}.is_leaf
-                        obj.children{k}.chebweights = weights;
-                    else
-                        obj.children{k}.ResolveChebWeights(weights);
-                    end
+                
+                domain = obj.domain(obj.splitting_dim,:);
+                subdomain = obj.children{k}.domain(obj.splitting_dim,:);
+                h = @(x) 2/diff(domain)*x-sum(domain)/diff(domain);
+                
+                wk = obj.weights.chebweights(:,k);
+                wk = wk(chebfun(h,domain));
+                
+                weights{obj.splitting_dim} = chebfun(@(x)w(x).*wk(x),subdomain);
+                
+                if obj.children{k}.is_leaf
+                    obj.children{k}.chebweights = weights;
+                else
+                    obj.children{k}.ResolveChebWeights(weights);
+                end
             end
+        end
+        
+        function Coarsen(obj)
+            for k=1:2
+                obj.children{k}.Coarsen();
+            end
+        end
+        
+        function Refine(obj)
+            for k=1:2
+                obj.children{k}.Refine();
+            end
+        end
+        
+        function vals = Getvalues(obj)
+            vals = [obj.children{1}.Getvalues();obj.children{2}.Getvalues()];
         end
         
         function str = toString(obj)
             str = strvcat(strcat('1',obj.children{1}.toString()),strcat('2',obj.children{2}.toString()));
         end
     end
-   
+    
 end
 

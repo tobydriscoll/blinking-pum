@@ -4,10 +4,15 @@ classdef ChebPatch<LeafPatch
     properties
         degs %array of degrees along the dimensions
         values %grid of values to be used for interpolation
+        cdegs %array of coarse degrees along the dimensions
+        swap_degs %temp holder for degs
+        iscoarse = false;
     end
     
     properties (Access = protected)
         deg_in %index for the standard degrees
+        cdeg_in %index for the course degrees
+        swap_deg_in
         split_flag %array indicating if we will split along a dimension
     end
     
@@ -25,7 +30,7 @@ classdef ChebPatch<LeafPatch
         % domain: (dim x 2) array indiciating array for the hypercube.
         %   degs: (dim x 1) array indicating the degree of the polynomial
         %         along the dimensions.
-        function obj = ChebPatch(domain,deg_in,split_flag,tol,zone)
+        function obj = ChebPatch(domain,deg_in,split_flag,tol,zone,cdeg_in)
             
             obj.domain = domain;
             obj.is_geometric_refined = true; %square is always geometrically refined
@@ -33,34 +38,50 @@ classdef ChebPatch<LeafPatch
             
             if nargin < 2
                 obj.deg_in = zeros(1,obj.dim);
+                obj.cdeg_in = zeros(1,obj.dim);
                 obj.deg_in(:) = 7;
                 obj.split_flag = ones(obj.dim,1);
                 obj.tol = 1e-12;
                 obj.zone = obj.domain;
+                obj.cdeg_in(:) = 3;
             elseif nargin < 3
                 obj.deg_in = deg_in;
+                obj.cdeg_in = zeros(1,obj.dim);
                 obj.split_flag = ones(obj.dim,1);
                 obj.tol = 1e-12;
                 obj.zone = obj.domain;
+                obj.cdeg_in(:) = 3;
             elseif nargin < 4
+                obj.cdeg_in = zeros(1,obj.dim);
                 obj.deg_in = deg_in;
                 obj.split_flag = split_flag;
                 obj.tol = 1e-12;
                 obj.zone = obj.domain;
+                obj.cdeg_in(:) = 3;
             elseif nargin < 5
+                obj.cdeg_in = zeros(1,obj.dim);
                 obj.deg_in = deg_in;
                 obj.split_flag = split_flag;
                 obj.tol = tol;
                 obj.zone = obj.domain;
+                obj.cdeg_in(:) = 3;
+            elseif nargin < 6
+                obj.cdeg_in = zeros(1,obj.dim);
+                obj.deg_in = deg_in;
+                obj.split_flag = split_flag;
+                obj.tol = tol;
+                obj.zone = zone;
+                obj.cdeg_in(:) = 3;
             else
                 obj.deg_in = deg_in;
                 obj.split_flag = split_flag;
                 obj.tol = tol;
                 obj.zone = zone;
+                obj.cdeg_in = cdeg_in;
             end
             
-            %To do: deal with boundary
             obj.degs = obj.standard_degs(obj.deg_in);
+            obj.cdegs = obj.standard_degs(obj.cdeg_in);
             obj.cheb_length = prod(obj.degs);
             obj.is_leaf = true;
             obj.is_refined = false;
@@ -70,8 +91,61 @@ classdef ChebPatch<LeafPatch
         
         
         % Returns the length of the object
+        function Coarsen(obj)
+            if ~obj.iscoarse
+                
+                obj.iscoarse = true;
+                
+                obj.swap_degs = obj.degs;
+                obj.swap_deg_in = obj.deg_in;
+                
+                obj.degs = obj.cdegs;
+                obj.deg_in = obj.cdeg_in;
+                
+                grid = obj.leafGrids();
+                
+                obj.degs = obj.swap_degs;
+                obj.deg_in = obj.swap_deg_in;
+                
+                obj.values = obj.evalfGrid(grid,1,0);
+                
+                obj.degs = obj.cdegs;
+                obj.deg_in = obj.cdeg_in;
+                
+                obj.cheb_length = prod(obj.cdegs);
+            end
+        end
+        
+                % Returns the length of the object
+        function Refine(obj)
+            if obj.iscoarse
+                
+                obj.iscoarse = false;
+                
+                obj.degs = obj.swap_degs;
+                obj.deg_in = obj.swap_deg_in;
+                
+                grid = obj.leafGrids();
+                
+                obj.degs = obj.cdegs;
+                obj.deg_in = obj.cdeg_in;
+                
+                obj.values = obj.evalfGrid(grid,1,0);
+                
+                obj.degs = obj.swap_degs;
+                obj.deg_in = obj.swap_deg_in;
+                
+                obj.cheb_length = prod(obj.degs);
+            end
+        end
+        
+        % Returns the length of the object
         function ln=length(obj)
             ln = obj.cheb_length;
+        end
+        
+        function vals = Getvalues(obj)
+            vals = obj.values(:);
         end
         
         
