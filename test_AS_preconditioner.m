@@ -9,15 +9,6 @@ maxit = 1200;
 cheb_length  = 33;
 dim = [33 33];
 
-domain1 = [-1 overlap;-1 1];
-domain2 = [-overlap 1;-1 1];
-
-domain11 = [-1 overlap;-1 overlap];
-domain12 = [-1 overlap;-overlap 1];
-
-domain21 = [-overlap 1;-1 overlap];
-domain22 = [-overlap 1;-overlap 1];
-
 force = @(x) ones(length(x),1);
 
 border = @(x) zeros(length(x),1);
@@ -31,6 +22,14 @@ Tree.split(0.1/2);
 Tree.split(0.1/2);
 
 Tree.split(0.1);
+
+% Tree = Tree.split(0.1,1);
+% Tree.split(0.1);
+% 
+% Tree.split(0.1);
+% Tree.split(0.1);
+% 
+% Tree.split(0.1);
 
 LEAVES = Tree.collectLeaves({});
 

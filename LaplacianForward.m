@@ -25,7 +25,8 @@ for k=1:length(LEAVES)
     
     lap = vx(:,:,3)+vy(:,:,3);
     
-    approx = Tree.evalf(pointsl(in_border,:),1,0);
+    %approx = Tree.evalf(pointsl(in_border,:),1,0);
+    approx = Tree.evalfZone(pointsl(in_border,:));
     
     lap = lap(:);
     

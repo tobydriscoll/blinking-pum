@@ -322,12 +322,12 @@ classdef ChebPatch<LeafPatch
 %                 fCol = chebtech2({[], colChebtech});
 %                 [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
 %                 lens(1) = cutoffX2+~isHappyX;
-%                 
+%
 %                 rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
 %                 fRow = chebtech2({[], rowChebtech});
 %                 [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
 %                 lens(2) = cutoffY2+~isHappyY;
-                
+
             else
                 pref = chebfunpref();
                 pref.chebfuneps = obj.tol;
@@ -386,10 +386,19 @@ classdef ChebPatch<LeafPatch
                 Child = obj;
             else
                 
-                children = cell(1,2);
+                %Return the PUPatch with the new children
+                Child = split(obj,PUWeights.overlap,split_dim);
+            end
+            
+        end
+        
+        
+        function Child = split(obj,overlap,split_dim)
+            
+             children = cell(1,2);
                 
                 %The width of the overlap
-                delta = 0.5*(1+PUWeights.overlap)*...
+                delta = 0.5*(1+overlap)*...
                     (obj.domain(split_dim,2)-obj.domain(split_dim,1));
                 
                 m = sum(obj.zone(split_dim,:))/2;
@@ -422,11 +431,7 @@ classdef ChebPatch<LeafPatch
                 children{2} = ChebPatch(domain1,obj.deg_in,obj.split_flag,obj.tol,zone1);
                 
                 %Return the PUPatch with the new children
-                Child = PUPatch(obj.domain,overlap_in,length(children{1})+length(children{2}),children,split_dim,obj.index);
-                
-                
-            end
-            
+                Child = PUPatch(obj.domain,overlap_in,length(children{1})+length(children{2}),children,split_dim,obj.index,obj.zone);
         end
         
         function str = toString(obj)
