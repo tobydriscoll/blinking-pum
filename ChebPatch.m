@@ -7,6 +7,7 @@ classdef ChebPatch<LeafPatch
         cdegs %array of coarse degrees along the dimensions
         swap_degs %temp holder for degs
         iscoarse = false;
+        linOp
     end
     
     properties (Access = protected)

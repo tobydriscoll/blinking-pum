@@ -20,19 +20,17 @@ for k=1:length(LEAVES)
         
     [out_border, in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
     
-    vx = LEAVES{k}.evalfGrid(points,1,2);
-    vy = LEAVES{k}.evalfGrid(points,2,2);
+    %vx = LEAVES{k}.evalfGrid(points,1,2);
+    %vy = LEAVES{k}.evalfGrid(points,2,2);
     
-    lap = vx(:,:,3)+vy(:,:,3);
+    %lap = vx(:,:,3)+vy(:,:,3);
+    
+    lap = LEAVES{k}.linOp*sol_k;
     
     %approx = Tree.evalf(pointsl(in_border,:),1,0);
     approx = Tree.evalfZone(pointsl(in_border,:));
     
-    lap = lap(:);
-    
-    lap(out_border) = sol_k(out_border);
-    
-    lap(in_border) = sol_k(in_border)-approx;
+    lap(in_border) = lap(in_border)-approx;
     
     output = [output;lap];
     

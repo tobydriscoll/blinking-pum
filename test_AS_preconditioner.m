@@ -15,21 +15,21 @@ border = @(x) zeros(length(x),1);
 
 Tree = ChebPatch(domain,deg_in,split_flag,tol);
 
-Tree = Tree.split(0.1/2^2,1);
-Tree.split(0.1/2^2);
+% Tree = Tree.split(0.1/4,1);
+% Tree.split(0.1/4);
+% 
+% Tree.split(0.1/2);
+%Tree.split(0.1/2);
+% 
+%Tree.split(0.1);
 
-Tree.split(0.1/2);
-Tree.split(0.1/2);
-
+Tree = Tree.split(0.1,1);
 Tree.split(0.1);
-
-% Tree = Tree.split(0.1,1);
-% Tree.split(0.1);
 % 
-% Tree.split(0.1);
-% Tree.split(0.1);
+Tree.split(0.1);
+Tree.split(0.1);
 % 
-% Tree.split(0.1);
+Tree.split(0.1);
 
 LEAVES = Tree.collectLeaves({});
 
@@ -39,20 +39,24 @@ for k=1:length(LEAVES)
     points = LEAVES{k}.points;
     sol = force(points);
     dim = LEAVES{k}.degs;
-        
-    Dxx = kron(eye(dim(2)),diffmat(dim(1),2));
-    Dyy = kron(diffmat(dim(2),2),eye(dim(1)));
-    
-    scalex = 2/diff(LEAVES{k}.domain(1,:));
-    scaley = 2/diff(LEAVES{k}.domain(2,:));
-    
-    lap = scalex^2*Dxx+scaley^2*Dyy;
     
     [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
     interior = ~out_border & ~ in_border;
     sol(out_border) = border(points(out_border,:));
     sol(in_border) = 0;
     rhs = [rhs;sol];
+    
+    Dxx = kron(eye(dim(2)),diffmat(dim(1),2,LEAVES{k}.domain(1,:)));
+    Dyy = kron(diffmat(dim(2),2,LEAVES{k}.domain(2,:)),eye(dim(1)));
+    
+    E = eye(prod(dim));
+    
+    Lap = Dxx+Dyy;
+    
+    Lap(in_border,:) = E(in_border,:);
+    Lap(out_border,:) = E(out_border,:);
+    
+    LEAVES{k}.linOp = Lap;
 end
 
 
@@ -80,8 +84,9 @@ Fxx = Tree.evalfGrid({x x},1,2);
 Fyy = Tree.evalfGrid({x x},2,2);
 
 RESIDUAL = Fxx(:,:,3)+Fyy(:,:,3) - ones(100,100);
-RESIDUAL([1 end],:)=0;
-RESIDUAL(:,[1 end])=0;
+RESIDUAL([1 end],:)=Fxx([1 end],:,1);
+RESIDUAL(:,[1 end])=Fxx(:,[1 end],1);
 surf(X,Y,RESIDUAL);
 figure();
 surf(X,Y,Fxx(:,:,1));
+

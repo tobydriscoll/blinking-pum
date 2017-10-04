@@ -34,6 +34,15 @@ classdef (Abstract) Patch < handle
         end
         
                 %Right now just assume the domain is just the square.
+        function domain_ind = InZone(obj,x)
+            domain_ind = true(length(x),1);
+            for i=1:obj.dim
+                domain_ind = domain_ind & ...
+                    ( x(:,i)>= obj.zone(i,1) & x(:,i)<= obj.zone(i,2));
+            end
+        end
+        
+                %Right now just assume the domain is just the square.
         function [sub_grid,split_ind] = InDomainGrid(obj,x,split_dim)
             sub_grid = cell(1,obj.dim);
             for i=1:obj.dim
