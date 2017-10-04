@@ -190,7 +190,9 @@ classdef ChebPatch<LeafPatch
         %         along dimension dim from 0 to order.
         function ef = evalf(obj,X,diff_dim,order)
             
-            ef = zeros(length(X),order+1);
+            [num_pts,~] = size(X);
+            
+            ef = zeros(num_pts,order+1);
             
             input{1} = obj.values;
             

@@ -26,7 +26,8 @@ classdef (Abstract) Patch < handle
     methods
         %Right now just assume the domain is just the square.
         function domain_ind = InDomain(obj,x)
-            domain_ind = true(length(x),1);
+            [num_pts,~] = size(x);
+            domain_ind = true(num_pts,1);
             for i=1:obj.dim
                 domain_ind = domain_ind & ...
                     ( x(:,i)>= obj.domain(i,1) & x(:,i)<= obj.domain(i,2));

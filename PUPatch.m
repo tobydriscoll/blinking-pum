@@ -258,10 +258,11 @@ classdef PUPatch<Patch
         
         function vals = evalf(obj,X,dim,order)
             
+            [num_pts,~] = size(X);
             
-            vals = zeros(length(X),order+1);
+            vals = zeros(num_pts,order+1);
             
-            ind = false(length(X),2);
+            ind = false(num_pts,2);
             
             %Figure out indicies of the points in the left and right
             %domains
@@ -278,21 +279,29 @@ classdef PUPatch<Patch
                 end
             end
             
-            for j=0:order
-                
-                %Generalized product rule
-                for ord_i=0:j
+            if order==0
+                for k=1:2
+                    if any(ind(:,k))
+                        vals(ind(:,k)) = obj.weights.evalf(X(ind(:,k),:),obj.overlap_in,k,obj.splitting_dim).*child_vals{k};
+                    end
+                end
+            else
+                for j=0:order
                     
-                    %Weights depend only on one variable; don't need to
-                    %calculate anything if the splitting dim does not match
-                    %the dim we are differentiating in (i.e. the derivative
-                    %in these dimensions will be zero).
-                    if (j-ord_i)==0 || obj.splitting_dim == dim
-                        for k=1:2
-                            if any(ind(:,k))
-                                vals(ind(:,k),j+1) = vals(ind(:,k),j+1) + ...
-                                    nchoosek(j,ord_i)*obj.weights.evalf(X(ind(:,k),:),obj.overlap_in,k,obj.splitting_dim,j-ord_i).*...
-                                    child_vals{k}(:,ord_i+1);
+                    %Generalized product rule
+                    for ord_i=0:j
+                        
+                        %Weights depend only on one variable; don't need to
+                        %calculate anything if the splitting dim does not match
+                        %the dim we are differentiating in (i.e. the derivative
+                        %in these dimensions will be zero).
+                        if (j-ord_i)==0 || obj.splitting_dim == dim
+                            for k=1:2
+                                if any(ind(:,k))
+                                    vals(ind(:,k),j+1) = vals(ind(:,k),j+1) + ...
+                                        nchoosek(j,ord_i)*obj.weights.evalf(X(ind(:,k),:),obj.overlap_in,k,obj.splitting_dim,j-ord_i).*...
+                                        child_vals{k}(:,ord_i+1);
+                                end
                             end
                         end
                     end
