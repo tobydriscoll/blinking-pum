@@ -282,7 +282,7 @@ classdef PUPatch<Patch
             if order==0
                 for k=1:2
                     if any(ind(:,k))
-                        vals(ind(:,k)) = obj.weights.evalf(X(ind(:,k),:),obj.overlap_in,k,obj.splitting_dim).*child_vals{k};
+                        vals(ind(:,k)) = vals(ind(:,k))+obj.weights.evalf(X(ind(:,k),:),obj.overlap_in,k,obj.splitting_dim).*child_vals{k};
                     end
                 end
             else
