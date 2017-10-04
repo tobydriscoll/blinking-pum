@@ -30,5 +30,9 @@ if domain(2,2)==out_domain(2,2)
 end
 
 in_border(border) = ~out_border(border);
+
+out_border = out_border(:);
+
+in_border = in_border(:);
 end
 
