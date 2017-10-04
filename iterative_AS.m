@@ -19,6 +19,7 @@ Tree = ChebPatch(domain,deg_in,split_flag,tol);
 % 
 % Tree.split(0.1);
 
+%Here split will split every leaf of the tree.
 Tree = Tree.split(0.1/4,1);
 Tree.split(0.1/4);
 
@@ -35,8 +36,11 @@ boundry = @(x) zeros(length(x),1);
 
 for k=1:length(LEAVES)
     
+    dim = LEAVES{k}.degs;
+    
     [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
     
+    X = LEAVES{k}.points();
     
     Dxx = kron(eye(dim(2)),diffmat(dim(1),2,LEAVES{k}.domain(1,:)));
     Dyy = kron(diffmat(dim(2),2,LEAVES{k}.domain(2,:)),eye(dim(1)));
@@ -63,7 +67,7 @@ while true
     F = Tree.evalfGrid({x x},1,0);
     
     surf(X,Y,F);
-    
+    Tree.plotdomain;
     pause(0.1);
     
     for k=1:length(LEAVES)
