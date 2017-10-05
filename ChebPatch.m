@@ -391,8 +391,9 @@ classdef ChebPatch<LeafPatch
                 obj.is_refined = true;
                 obj.cheb_length = prod(obj.degs);
                 Child = obj;
-            else
-                Child = split(obj,PUWeights.overlap,split_dim);
+            else        
+                %Return the PUPatch with the new children
+                Child = obj.split(split_dim);
             end
             
         end

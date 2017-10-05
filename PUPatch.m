@@ -16,7 +16,6 @@ classdef PUPatch<Patch
     
     methods
         
-
         function obj = PUPatch(region,zone,overlap_in,cheb_length,children,splitting_dim,index)
             obj.outerbox = children{1}.outerbox;
             obj.region = region;
