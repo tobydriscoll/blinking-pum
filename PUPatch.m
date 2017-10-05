@@ -505,7 +505,7 @@ classdef PUPatch<Patch
                 if obj.children{k}.is_leaf
                     lengths = diff(obj.children{k}.domain');
                     [~,split_dim] = max(lengths);
-                    obj.children{k} = obj.children{k}.split(overlap,split_dim);
+                    obj.children{k} = obj.children{k}.split(split_dim);
                 else
                     obj.children{k}.split(overlap);
                 end

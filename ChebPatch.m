@@ -280,7 +280,7 @@ classdef ChebPatch<LeafPatch
             
         end
         
-        % The method determines if a splitting is needed, and creates
+ % The method determines if a splitting is needed, and creates
         % the new children if splitting is required.
         %
         %     Input:
@@ -375,14 +375,15 @@ classdef ChebPatch<LeafPatch
                 obj.is_refined = true;
                 obj.cheb_length = prod(obj.degs);
                 Child = obj;
-            else        
+            else
+                
                 %Return the PUPatch with the new children
                 Child = obj.split(split_dim);
             end
             
         end
         
-        % The method determines if a splitting is needed, and creates
+                % The method determines if a splitting is needed, and creates
         % the new children if splitting is required.
         %
         %     Input:
@@ -406,8 +407,8 @@ classdef ChebPatch<LeafPatch
                 
                 m = sum(obj.zone(split_dim,:))/2;
                 
-                zone0(split_dim,:) = [obj.domain(split_dim,1) m];
-                zone1(split_dim,:) = [m obj.domain(split_dim,2)];
+                zone0(split_dim,:) = [obj.zone(split_dim,1) m];
+                zone1(split_dim,:) = [m obj.zone(split_dim,2)];
                 
                 region0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
                 region1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
