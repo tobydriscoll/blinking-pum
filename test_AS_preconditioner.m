@@ -15,21 +15,21 @@ border = @(x) zeros(length(x),1);
 
 Tree = ChebPatch(domain,deg_in,split_flag,tol);
 
-%Tree = Tree.split(0.1/4,1);
-%Tree.split(0.1/4);
+Tree = Tree.split(0.1/4,1);
+Tree.split(0.1/4);
 
-%Tree.split(0.1/2);
-%Tree.split(0.1/2);
+Tree.split(0.1/2);
+Tree.split(0.1/2);
 
-%Tree.split(0.1);
+Tree.split(0.1);
 
-Tree = Tree.split(0.1,1);
-Tree.split(0.1);
-% 
-Tree.split(0.1);
-Tree.split(0.1);
-% 
-Tree.split(0.1);
+% Tree = Tree.split(0.1,1);
+% Tree.split(0.1);
+% % 
+% Tree.split(0.1);
+% Tree.split(0.1);
+% % 
+% Tree.split(0.1);
 
 LEAVES = Tree.collectLeaves({});
 

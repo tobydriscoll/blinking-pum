@@ -1,4 +1,4 @@
-c = 0.02;
+c = 0.01;
 
 NT = 1;
 
@@ -49,7 +49,9 @@ mean(TIMESEV)
 defaultOpts = {'facecolor', 'flat', 'edgealpha', .5, 'edgecolor', 'none'};
 
 surf(X,Y,ef,defaultOpts{:});
-
+efz = TREE.ChebRoot.evalfZoneGrid(G);
+figure();
+surf(X,Y,efz,defaultOpts{:});
 figure();
 TREE.ChebRoot.plotdomain();
 

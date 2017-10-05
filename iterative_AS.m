@@ -89,13 +89,13 @@ while true
     
     for k=1:length(LEAVES)
         [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
-        F = Tree.evalfGrid(LEAVES{k}.leafGrids,1,0);
+        %F = Tree.evalfGrid(LEAVES{k}.leafGrids,1,0);
         rhs_k = zeros(length(LEAVES{k}),1);
         X_k = LEAVES{k}.points;
         rhs_k(~out_border & ~in_border) = force(X_k(~out_border & ~in_border,:));
-        rhs_k(out_border) = boundry(X_k(out_border,:));
-        rhs_k(in_border) = F(in_border);
-        %rhs_k(in_border)  = Tree.evalf(X_k(in_border,:),1,0);
+        %rhs_k(out_border) = boundry(X_k(out_border,:));
+        %rhs_k(in_border) = F(in_border);
+        rhs_k(in_border)  = Tree.evalf(X_k(in_border,:),1,0);
         %rhs_k(in_border)  = Tree.evalfZone(X_k(in_border,:));
         u_next = [u_next;LEAVES{k}.linOp\rhs_k];
     end
