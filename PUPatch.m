@@ -176,11 +176,22 @@ classdef PUPatch<Patch
             
             not_empty_child = true(2,1);
             
-            for k=1:2
-                [sub_grids{k},inds{k}] = obj.children{k}.InDomainGrid(X,obj.splitting_dim);
-                not_empty_child(k)= all(cellfun(@(x)~isempty(x),sub_grids{k}));
-            end
+%             for k=1:2
+%                 [sub_grids{k},inds{k}] = obj.children{k}.InDomainGrid(X,obj.splitting_dim);
+%                 not_empty_child(k)= all(cellfun(@(x)~isempty(x),sub_grids{k}));
+%             end
             
+             sub_grids{1} = X;
+             sub_grids{2} = X;
+             
+             inds{1} = X{obj.splitting_dim}<obj.overlap_in(2);
+             inds{2} = X{obj.splitting_dim}>obj.overlap_in(1);
+             
+             for k=1:2
+                 sub_grids{k}{obj.splitting_dim} = sub_grids{k}{obj.splitting_dim}(inds{k});
+                 not_empty_child(k) = all(cellfun(@(x)~isempty(x),sub_grids{k}));
+             end
+             
             
             %calculate values for the children
             for k=1:2
@@ -266,9 +277,12 @@ classdef PUPatch<Patch
             
             %Figure out indicies of the points in the left and right
             %domains
-            for k=1:2
-                ind(:,k) = obj.children{k}.InDomain(X);
-            end
+%             for k=1:2
+%                 ind(:,k) = obj.children{k}.InDomain(X);
+%             end
+            
+            ind(:,1) = X(:,obj.splitting_dim)<obj.overlap_in(2);
+            ind(:,2) = X(:,obj.splitting_dim)>obj.overlap_in(1);
             
             child_vals = cell(2,1);
             
@@ -311,9 +325,11 @@ classdef PUPatch<Patch
         
         function vals = evalfZone(obj,X)
             
-            vals = zeros(length(X),1);
+            [numpts,~] = size(X);
             
-            ind = false(length(X),2);
+            vals = zeros(numpts,1);
+            
+            ind = false(numpts,2);
             
             %Figure out indicies of the points in the left and right
             %domains
