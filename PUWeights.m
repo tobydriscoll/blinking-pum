@@ -86,11 +86,11 @@ classdef PUWeights
                     ef(x>=MIDINV(2)) = k==2;
                     
             elseif diff_j==1
-                    ef(x>=MIDINV(1) & x<=MIDINV(2)) = SCALE*feval(obj.diffweights(:,k),X_CENTER);
+                    ef(x>MIDINV(1) & x<MIDINV(2)) = SCALE*feval(obj.diffweights(:,k),X_CENTER);
             elseif diff_j==2
-                    ef(x>=MIDINV(1) & x<=MIDINV(2)) = SCALE^2*feval(obj.diff2weights(:,k),X_CENTER);
+                    ef(x>MIDINV(1) & x<MIDINV(2)) = SCALE^2*feval(obj.diff2weights(:,k),X_CENTER);
             else
-                    ef(x>=MIDINV(1) & x<=MIDINV(2)) = SCALE^diff_j*feval(diff(obj.weights(:,k),diff_j),X_CENTER);
+                    ef(x>MIDINV(1) & x<MIDINV(2)) = SCALE^diff_j*feval(diff(obj.weights(:,k),diff_j),X_CENTER);
             end
         end
     end
