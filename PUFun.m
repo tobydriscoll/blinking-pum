@@ -15,7 +15,7 @@ classdef PUFun < handle
             end
                 
             [dim,~] = size(domain);
-            obj.ChebRoot = ChebPatch(domain,domain,deg_in,ones(1,dim),tol,domain);
+            obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,ones(1,dim),tol);
             
             %Refine on f(x)
             

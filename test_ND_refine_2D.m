@@ -38,7 +38,7 @@ TIMESEV = zeros(NT,1);
 
 for i=1:NT
 tic;
-ef = TREE.evalfGrid(G,1,0);
+ef = TREE.ChebRoot.evalfZoneGrid(G);
 TIMESEV(i) = toc;
 end
 
@@ -48,12 +48,8 @@ mean(TIMESEV)
 
 defaultOpts = {'facecolor', 'flat', 'edgealpha', .5, 'edgecolor', 'none'};
 
+
 surf(X,Y,ef,defaultOpts{:});
-efz = TREE.ChebRoot.evalfZoneGrid(G);
-figure();
-surf(X,Y,efz,defaultOpts{:});
-figure();
-TREE.ChebRoot.plotdomain();
 
 E = abs(ef-f2(X,Y));
 

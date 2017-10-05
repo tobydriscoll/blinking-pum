@@ -31,7 +31,7 @@ classdef ChebPatch<LeafPatch
         % domain: (dim x 2) array indiciating array for the hypercube.
         %   degs: (dim x 1) array indicating the degree of the polynomial
         %         along the dimensions.
-        function obj = ChebPatch(region,zone,deg_in,split_flag,tol,outerbox)
+        function obj = ChebPatch(region,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
             obj.outerbox = outerbox;
             obj.region = region;
             obj.zone = zone;
@@ -39,48 +39,32 @@ classdef ChebPatch<LeafPatch
             obj.is_geometric_refined = true; %square is always geometrically refined
             [obj.dim,~] = size(obj.domain);
             
-            if nargin < 2
+           if nargin < 4
                 obj.deg_in = zeros(1,obj.dim);
-                obj.cdeg_in = zeros(1,obj.dim);
                 obj.deg_in(:) = 7;
+                obj.cdeg_in(:) = 3;
                 obj.split_flag = ones(obj.dim,1);
                 obj.tol = 1e-12;
-                obj.zone = obj.domain;
-                obj.cdeg_in(:) = 3;
-            elseif nargin < 3
-                obj.deg_in = deg_in;
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.split_flag = ones(obj.dim,1);
-                obj.tol = 1e-12;
-                obj.zone = obj.domain;
-                obj.cdeg_in(:) = 3;
-            elseif nargin < 4
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.deg_in = deg_in;
-                obj.split_flag = split_flag;
-                obj.tol = 1e-12;
-                obj.zone = obj.domain;
-                obj.cdeg_in(:) = 3;
             elseif nargin < 5
-                obj.cdeg_in = zeros(1,obj.dim);
                 obj.deg_in = deg_in;
-                obj.split_flag = split_flag;
-                obj.tol = tol;
-                obj.zone = obj.domain;
-                obj.cdeg_in(:) = 3;
+                 obj.cdeg_in(:) = 3;
+                obj.split_flag = ones(obj.dim,1);
+                obj.tol = 1e-12;
             elseif nargin < 6
-                obj.cdeg_in = zeros(1,obj.dim);
                 obj.deg_in = deg_in;
+                 obj.cdeg_in(:) = 3;
                 obj.split_flag = split_flag;
-                obj.tol = tol;
-                obj.zone = zone;
+                obj.tol = 1e-12;
+           elseif nargin < 7
+                obj.deg_in = deg_in;
                 obj.cdeg_in(:) = 3;
-            else
-                obj.deg_in = deg_in;
                 obj.split_flag = split_flag;
                 obj.tol = tol;
-                obj.zone = zone;
-                obj.cdeg_in = cdeg_in;
+            elseif nargin < 8
+                obj.deg_in = deg_in;
+                obj.cdeg_in(:) = cdeg_in;
+                obj.split_flag = split_flag;
+                obj.tol = tol;
             end
             
             obj.degs = obj.standard_degs(obj.deg_in);
@@ -430,9 +414,9 @@ classdef ChebPatch<LeafPatch
                 
                 overlap_in = [m-delta,m+delta];
                 
-                children{1} = ChebPatch(region0,zone0,obj.deg_in,obj.split_flag,obj.tol,obj.outerbox);
+                children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol);
                 
-                children{2} = ChebPatch(region1,zone1,obj.deg_in,obj.split_flag,obj.tol,obj.outerbox);
+                children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol);
                 
                 region = obj.region;
                 
