@@ -126,6 +126,79 @@ v = P.evalfGrid(g,3,1);
 E = v(:,:,:,end)-fdz(X1,X2,X3);
 assert(max(abs(E(:)))<tol);
 
+%Now test for a grid with one point in a dimension
+
+g = {-1,linspace(-1,1,3)',linspace(-1,1,3)'};
+
+[X1,X2,X3] = ndgrid(g{:});
+
+v = P.evalfGrid(g,1,0);
+E = v-f(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,1,1);
+E = v(:,:,:,end)-fdx(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,1,2);
+E = v(:,:,:,end)-fdxx(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,2,1);
+E = v(:,:,:,end)-fdy(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,3,1);
+E = v(:,:,:,end)-fdz(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+g = {linspace(-1,1,3)',-1,linspace(-1,1,3)'};
+
+[X1,X2,X3] = ndgrid(g{:});
+
+v = P.evalfGrid(g,1,0);
+E = v-f(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,1,1);
+E = v(:,:,:,end)-fdx(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,1,2);
+E = v(:,:,:,end)-fdxx(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,2,1);
+E = v(:,:,:,end)-fdy(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,3,1);
+E = v(:,:,:,end)-fdz(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+g = {linspace(-1,1,3)',linspace(-1,1,3)',-1};
+
+[X1,X2,X3] = ndgrid(g{:});
+
+v = P.evalfGrid(g,1,0);
+E = v-f(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,1,1);
+E = v(:,:,:,end)-fdx(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,1,2);
+E = v(:,:,:,end)-fdxx(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,2,1);
+E = v(:,:,:,end)-fdy(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
+
+v = P.evalfGrid(g,3,1);
+E = v(:,:,:,end)-fdz(X1,X2,X3);
+assert(max(abs(E(:)))<tol);
 
 % 
 % %Test 4D

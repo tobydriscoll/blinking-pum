@@ -228,7 +228,7 @@ classdef ChebPatch<LeafPatch
             
             grid_lengths = cellfun(@(x)length(x),X);
             
-            ef = zeros([grid_lengths order]);
+            ef = zeros([grid_lengths order+1]);
             
             input{1} = obj.values;
             
@@ -251,6 +251,9 @@ classdef ChebPatch<LeafPatch
                     
                     f = bary(points,eye(obj.degs(k)),obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
                     
+                    if length(X{k})==1
+                        f = f.';
+                    end
                     G = chebfun3t.txm(G, f, k);
                 end
                 
