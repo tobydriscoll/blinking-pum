@@ -29,7 +29,7 @@ classdef PUWeights
             
            % weight1 = chebfun({1,@(x)-0.5/t*x+0.5,0},[-1 -t t 1]);
             
-            obj.chebweights = [weight1 1-weight1];
+            obj.chebweights = {weight1 1-weight1};
             
             obj.weights = {@(x) 1./(1+exp(4*(1+t)^2*x./((t-x).*(2+t-x).*(t+x).*(2+t+x)))), ...
                            @(x) 1./(1+exp(-4*(1+t)^2*x./((t-x).*(2+t-x).*(t+x).*(2+t+x))))};
@@ -40,7 +40,7 @@ classdef PUWeights
             %                        sech(2.*(1+t).^2.*(t+(-1).*x).^(-1).*(2+t+(-1).*x).^(-1).*x.*(t+x).^(-1).*(2+t+x).^(-1)).^2;
             
             obj.diffweights = diff(obj.chebweights);
-            obj.diff2weights = diff(obj.chebweights,2);
+           obj.diff2weights = diff(obj.chebweights,2);
             
             %obj.diff2weights = @(x) (1+t).^2.*(t+(-1).*x).^(-3).*(2+t+(-1).*x).^(-3).*(t+x).^(-3).*(2+t+x).^(-3).*...
             %                        sech(2.*(1+t).^2.*(t+(-1).*x).^(-1).*(2+t+(-1).*x).^(-1).*x.*(t+x).^(-1).*(2+t+x).^(-1)).^2.*...
@@ -62,23 +62,29 @@ classdef PUWeights
                 diff_j=0;
             end
             
-           % h = @(x) 2/(MIDINV(2)-MIDINV(1))*x-(MIDINV(2)+MIDINV(1))/(MIDINV(2)-MIDINV(1));
-           % SCALE = 2/(MIDINV(2)-MIDINV(1));
-            h = @(x) 2*t/(MIDINV(2)-MIDINV(1))*x-t*(MIDINV(2)+MIDINV(1))/(MIDINV(2)-MIDINV(1));
-            SCALE = 2*t/(MIDINV(2)-MIDINV(1));
+           %h = @(x) 2/(MIDINV(2)-MIDINV(1))*x-(MIDINV(2)+MIDINV(1))/(MIDINV(2)-MIDINV(1));
+           %SCALE = 2/(MIDINV(2)-MIDINV(1));
+           % h = @(x) 2*t/(MIDINV(2)-MIDINV(1))*x-t*(MIDINV(2)+MIDINV(1))/(MIDINV(2)-MIDINV(1));
+           % SCALE = 2*t/(MIDINV(2)-MIDINV(1));
+           h = @(x) 2/diff(MIDINV)*obj.overlap*x-sum(MIDINV)/diff(MIDINV)*obj.overlap;
+           SCALE = sum(MIDINV)/diff(MIDINV)*obj.overlap;
+           
             %collect points along the splitting dimension.
             x = X(:,split_dim);
             
-            ef = zeros(length(X),1);
+            [num_pts,~] = size(X);
             
-            X_CENTER = h(x(x>=MIDINV(1) & x<=MIDINV(2)));
+            ef = zeros(num_pts,1);
+            
+            X_CENTER = h(x(x>MIDINV(1) & x<MIDINV(2)));
             
             if diff_j==0
-                    ef(x<MIDINV(1)) = (k==1);
+                    ef(x<=MIDINV(1)) = k==1;
                     
-                    ef(x>=MIDINV(1) & x<=MIDINV(2)) = obj.weights{k}(X_CENTER);
+                    ef(x>MIDINV(1) & x<MIDINV(2)) = feval(obj.chebweights(:,k),X_CENTER);
                     
-                    ef(x>MIDINV(2)) = (k==2);
+                    ef(x>=MIDINV(2)) = k==2;
+                    
             elseif diff_j==1
                     ef(x>=MIDINV(1) & x<=MIDINV(2)) = SCALE*feval(obj.diffweights(:,k),X_CENTER);
             elseif diff_j==2
