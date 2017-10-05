@@ -29,7 +29,7 @@ classdef PUWeights
             
            % weight1 = chebfun({1,@(x)-0.5/t*x+0.5,0},[-1 -t t 1]);
             
-            obj.chebweights = {weight1 1-weight1};
+            obj.chebweights = [weight1 1-weight1];
             
             obj.weights = {@(x) 1./(1+exp(4*(1+t)^2*x./((t-x).*(2+t-x).*(t+x).*(2+t+x)))), ...
                            @(x) 1./(1+exp(-4*(1+t)^2*x./((t-x).*(2+t-x).*(t+x).*(2+t+x))))};
