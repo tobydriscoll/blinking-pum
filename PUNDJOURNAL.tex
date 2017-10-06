@@ -879,6 +879,64 @@ giving us
 \begin{equation}
 	\vecm(A) = (M^z \otimes M^y \otimes M^x) \vecm(C).
 \end{equation}
+
+\section{PU derivatives again}
+Suppose we have intervals $[0,t]$, $[-t,0]$ and we approximate the function $f(x)$ with
+\begin{equation}
+s(x) = w_{\ell}(x)s_{\ell}(x) +w_{r}(x)s_{r}(x)	
+\end{equation}
+where $\{w_{\ell}(x),w_{r}(x)\}$ forms a PU with $\{[0,t],[-t,0]\}$ and $s_{\ell}(x),s_{r}(x)$ approximate $f(x)$ on the respective intervals. 
+In our first PU paper in (15) we found
+\begin{equation}
+\begin{aligned}
+\left | f'(x)-s'(x) \right | &\leq \left | w_{\ell}(x) \lp f'(x)-s_{\ell}'(x) \rp \right |+\left | w_{r}(x) \lp f'(x)-s_{r}'(x) \rp \right | \\
+&+\left | w_{\ell
+}'(x) \lp f(x)-s_{\ell}(x) \rp \right | +\left | w_{r}'(x) \lp f(x)-s_{r}(x) \rp \right |,
+\end{aligned}
+\end{equation}
+implying
+\begin{equation}
+\begin{aligned}
+\left \| f'(x)-s'(x) \right \|_{L_{\infty}[-1,1]} \leq \max \lp \left \| f'(x)-s_{\ell}'(x) \right \|_{L_{\infty}[-1,t]} , \left \| f'(x)-s_{r}'(x) \right \|_{L_{\infty}[-t,1]} \rp & \\
++\left \| w_{\ell}'(x) \right \|_{L_{\infty}[-t,t]} \max \lp \left \| f(x)-s_{\ell}(x)\right \|_{L_{\infty}[-t,t]}
+, \left \| f(x)-s_{r}(x)\right \|_{L_{\infty}[-t,t]} \rp. &
+\end{aligned}
+\label{diff_error_2}
+\end{equation}
+and chose the overlap by balancing the two terms in (\ref{diff_error_2}). While examining the Shepard's weights, I found that the derivatives can get quite complicated. My hypothesis is that if we have sufficient overlap that
+\begin{equation}
+w_{\ell}(x)s_{\ell}'(x)+w_{r}(x)s_{r}'(x)	
+\end{equation}
+can sufficiently approximate $f'(x)$.
+
+ We have
+\begin{equation}
+s'(x) = w_{\ell}(x)s_{\ell}'(x) + w_{r}(x)s_{r}'(x) + w_{\ell}'(x)s_{\ell}(x) + w_{r}(x)s_{r}(x).
+\end{equation}
+Since $w_{\ell}+w_{r}=1$, we have $w_{\ell}'+w_{r}'=0$. Thus
+\begin{equation}
+s'(x) = w_{\ell}(x)s_{\ell}'(x) + w_{r}(x)s_{r}'(x) + w_{\ell}'(x)(s_{\ell}(x)-f(x)) + w_{r}(x)(s_{r}(x)-f(x)).
+\end{equation}
+We can thus infer
+\begin{equation}
+\begin{aligned}
+& s'(x) - f'(x)  \\
+& - w_{\ell}'(x)(s_{\ell}(x)-f(x)) - w_{r}(x)(s_{r}(x)-f(x))   \\ &=w_{\ell}(x)s_{\ell}'(x) + w_{r}(x)s_{r}'(x) - f'(x).	
+\end{aligned}
+\end{equation}
+Letting
+\begin{equation}
+\hat{s}(x) = w_{\ell}(x)s_{\ell}'(x) + w_{r}(x)s_{r}'(x),
+\end{equation}
+we get
+\begin{equation}
+\begin{aligned}
+\| \hat{s}(x) - f(x) \| \leq &\|s'(x)-f'(x) \| + \\ & \left \| w_{\ell}'(x) \right \|_{L_{\infty}[-t,t]} \max \lp \left \| f(x)-s_{\ell}(x)\right \|_{L_{\infty}[-t,t]}
+, \left \| f(x)-s_{r}(x)\right \|_{L_{\infty}[-t,t]} \rp.	
+\end{aligned}
+\end{equation}
+We can infer from here that $\hat{s}(x)$ can approximate $f'(x)$.
+
 \bibliographystyle{plain}
 \bibliography{PU_BIB}
 

@@ -158,168 +158,70 @@ classdef PUPatch<Patch
         
         
         function vals = evalfGrid(obj,X,dim,order)
-            
-            grid_lengths = cellfun(@(x)length(x),X);
-            
-            [n,~] = size(grid_lengths);
-            
-            if n>1
-                grid_lengths = grid_lengths';
-            end
-            
-            %Put the order at the end; this makes things
-            %easier to deal with in matlab
-            vals = zeros([grid_lengths order+1]);
-            
-            sub_grids = cell(2,1);
-            child_vals = cell(2,1);
-            
-            inds = cell(2,1);
-            
-            not_empty_child = true(2,1);
-            
-%             for k=1:2
-%                 [sub_grids{k},inds{k}] = obj.children{k}.InDomainGrid(X,obj.splitting_dim);
-%                 not_empty_child(k)= all(cellfun(@(x)~isempty(x),sub_grids{k}));
-%             end
-            
-             sub_grids{1} = X;
-             sub_grids{2} = X;
-             
-             inds{1} = X{obj.splitting_dim}<obj.overlap_in(2);
-             inds{2} = X{obj.splitting_dim}>obj.overlap_in(1);
-             
-             for k=1:2
-                 sub_grids{k}{obj.splitting_dim} = sub_grids{k}{obj.splitting_dim}(inds{k});
-                 not_empty_child(k) = all(cellfun(@(x)~isempty(x),sub_grids{k}));
-             end
-             
-            
-            %calculate values for the children
-            for k=1:2
-                if  not_empty_child(k)
-                    child_vals{k} = obj.children{k}.evalfGrid(sub_grids{k},dim,order);
-                end
-            end
-            
-            
-            
-            %Go ahead and shift the splitting diminsion
-            %Here I ciculate the dimensions before the order.
-            dim_permute = circshift(1:obj.dim,[0 -obj.splitting_dim+1]);
-            
-            if order>0
-                vals = permute(vals,[dim_permute obj.dim+1]);
-                lengths = size(vals);
-                vals = reshape(vals,lengths(1),prod(lengths(2:end-1)),order+1);
-                
-                for k=1:2
-                    child_vals{k} = permute(child_vals{k},[dim_permute obj.dim+1]);
-                    c_lengths = size(child_vals{k});
-                    child_vals{k} = reshape(child_vals{k},c_lengths(1),prod(c_lengths(2:end-1)),order+1);
-                end
-            else
-                vals = permute(vals,dim_permute);
-                lengths = size(vals);
-                vals = reshape(vals,lengths(1),prod(lengths(2:end)));
-                
-                for k=1:2
-                    child_vals{k} = permute(child_vals{k},dim_permute);
-                    c_lengths = size(child_vals{k});
-                    child_vals{k} = reshape(child_vals{k},c_lengths(1),prod(c_lengths(2:end)));
-                end
-            end
-            
-            for j=0:order
-                
-                
-                %Generalized product rule
-                for ord_i=0:j
-                    
-                    %Weights depend only on one variable; don't need to
-                    %calculate anything if the splitting dim does not match
-                    %the dim we are differentiating in (i.e. the derivative
-                    %in these dimensions will be zero).
-                    if (j-ord_i)==0 || obj.splitting_dim == dim
-                        for k=1:2
-                            if not_empty_child(k)
-                                if order>0
-                                    weight_vals =  nchoosek(j,ord_i)*obj.weights.evalf(X{obj.splitting_dim}(inds{k}),obj.overlap_in,k,1,j-ord_i);
-                                    [~,n] = size(child_vals{k}(:,:,ord_i+1));
-                                    weight_vals = repmat(weight_vals,1,n);
-                                    vals(inds{k},:,j+1) = vals(inds{k},:,j+1) + weight_vals.*child_vals{k}(:,:,ord_i+1);
-                                else
-                                    weight_vals =  nchoosek(j,ord_i)*obj.weights.evalf(X{obj.splitting_dim}(inds{k}),obj.overlap_in,k,1,j-ord_i);
-                                    [~,n] = size(child_vals{k}(:,:,ord_i+1));
-                                    %weight_vals = repmat(weight_vals,1,n);
-                                    vals(inds{k},:) = vals(inds{k},:) + weight_vals.*child_vals{k};
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            
-            if order>0
-                vals = reshape(vals,lengths);
-                vals = ipermute(vals,[dim_permute obj.dim+1]);
-            else
-                vals = reshape(vals,lengths);
-                vals = ipermute(vals,dim_permute);
-            end
+            [sum,dotprod] = obj.evalfGrid_recurse(X);
+            vals = dotprod./sum;
         end
         
         function vals = evalf(obj,X,dim,order)
+            [sum,dotprod] = obj.evalf_recurse(X);
+            vals = dotprod./sum;
+        end
+        
+        function [sum,dotprod] = evalf_recurse(obj,X)
             
             [num_pts,~] = size(X);
             
-            vals = zeros(num_pts,order+1);
+            dotprod = zeros(num_pts,1);
             
-            ind = false(num_pts,2);
-            
-            %Figure out indicies of the points in the left and right
-            %domains
-%             for k=1:2
-%                 ind(:,k) = obj.children{k}.InDomain(X);
-%             end
-            
-            ind(:,1) = X(:,obj.splitting_dim)<obj.overlap_in(2);
-            ind(:,2) = X(:,obj.splitting_dim)>obj.overlap_in(1);
-            
-            child_vals = cell(2,1);
+            sum = zeros(num_pts,1);
             
             %calculate values for the children
             for k=1:2
-                if any(ind(:,k))
-                    child_vals{k} = obj.children{k}.evalf(X(ind(:,k),:),dim,order);
+                ind = obj.children{k}.InDomain(X);
+                
+                
+                if any(ind)
+                    if ~obj.children{k}.is_leaf
+                        [sumk,dotprodk] = obj.children{k}.evalf(X(ind,:),dim,order);
+                    else
+                        sumk = obj.children{k}.evalfBump(X(ind,:));
+                        dotprodk = sumk.*obj.children{k}.evalf(X(ind,:),1,0);
+                    end
+                        sum(ind) = sum(ind) + sumk;
+                        dotprod(ind) = dotprod(ind) + dotprodk;
                 end
             end
+        end
+        
+        
+        
+        function [sum,dotprod] = evalfGrid_recurse(obj,X)
+
+            grid_lengths = cellfun(@(x)length(x),X);
             
-            if order==0
-                for k=1:2
-                    if any(ind(:,k))
-                        vals(ind(:,k)) = vals(ind(:,k))+obj.weights.evalf(X(ind(:,k),:),obj.overlap_in,k,obj.splitting_dim).*child_vals{k};
+            sum = zeros(grid_lengths);
+            
+            dotprod = zeros(grid_lengths);
+            
+            %calculate values for the children
+            for k=1:2
+                
+                [sub_grid,sub_ind] = obj.children{k}.IndDomainGrid(X);
+                
+                if all(cellfun(@any,sub_ind))
+                    if ~obj.children{k}.is_leaf
+                            [sumk,dotprodk] = obj.children{k}.evalfGrid_recurse(sub_grid);
+                    else
+                        sumk = obj.children{k}.evalfGridBump(sub_grid);
+                        dotprodk = sumk.*obj.children{k}.evalfGrid(sub_grid,1,0);
                     end
-                end
-            else
-                for j=0:order
                     
-                    %Generalized product rule
-                    for ord_i=0:j
-                        
-                        %Weights depend only on one variable; don't need to
-                        %calculate anything if the splitting dim does not match
-                        %the dim we are differentiating in (i.e. the derivative
-                        %in these dimensions will be zero).
-                        if (j-ord_i)==0 || obj.splitting_dim == dim
-                            for k=1:2
-                                if any(ind(:,k))
-                                    vals(ind(:,k),j+1) = vals(ind(:,k),j+1) + ...
-                                        nchoosek(j,ord_i)*obj.weights.evalf(X(ind(:,k),:),obj.overlap_in,k,obj.splitting_dim,j-ord_i).*...
-                                        child_vals{k}(:,ord_i+1);
-                                end
-                            end
-                        end
+                    if obj.dim ==2
+                            sum(sub_ind{1},sub_ind{2}) = sum(sub_ind{1},sub_ind{2}) + sumk;
+                            dotprod(sub_ind{1},sub_ind{2}) = dotprod(sub_ind{1},sub_ind{2}) + dotprodk;
+                    else
+                            sum(sub_ind{1},sub_ind{2},sub_ind{3}) = sum(sub_ind{1},sub_ind{2},sub_ind{3}) + sumk;
+                            dotprod(sub_ind{1},sub_ind{2},sub_ind{3}) = dotprod(sub_ind{1},sub_ind{2},sub_ind{3}) + dotprodk;
                     end
                 end
             end
@@ -511,6 +413,7 @@ classdef PUPatch<Patch
                 end
             end
         end
+        
         
         function str = toString(obj)
             str = strvcat(strcat('1',obj.children{1}.toString()),strcat('2',obj.children{2}.toString()));

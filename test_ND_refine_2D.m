@@ -38,7 +38,7 @@ TIMESEV = zeros(NT,1);
 
 for i=1:NT
 tic;
-ef = TREE.ChebRoot.evalfZoneGrid(G);
+ef = TREE.ChebRoot.evalfGrid(G);
 TIMESEV(i) = toc;
 end
 

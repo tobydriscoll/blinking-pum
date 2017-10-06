@@ -11,22 +11,22 @@ dim = [33 33];
 
 Tree = ChebPatch(domain,deg_in,split_flag,tol);
 
-% Tree = Tree.split(0.1,1);
-% Tree.split(0.1);
-% 
-% Tree.split(0.1);
-% Tree.split(0.1);
-% 
-% Tree.split(0.1);
-
-%Here split will split every leaf of the tree.
-Tree = Tree.split(0.1/4,1);
-Tree.split(0.1/4);
-
-Tree.split(0.1/2);
-Tree.split(0.1/2);
+Tree = Tree.split(0.1,1);
+Tree.split(0.1);
 
 Tree.split(0.1);
+Tree.split(0.1);
+
+Tree.split(0.1);
+
+%Here split will split every leaf of the tree.
+% Tree = Tree.split(0.1/4,1);
+% Tree.split(0.1/4);
+% 
+% Tree.split(0.1/2);
+% Tree.split(0.1/2);
+% 
+% Tree.split(0.1);
 
 LEAVES = Tree.collectLeaves({});
 

@@ -8,6 +8,7 @@ classdef ChebPatch<LeafPatch
         swap_degs %temp holder for degs
         iscoarse = false;
         linOp
+        bump
     end
     
     properties (Access = protected)
@@ -22,6 +23,7 @@ classdef ChebPatch<LeafPatch
         standard_degs = [3 5 9 17 33 65 129];
         invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
         forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
+        cheb_bump = chebfun( {0,@(x) exp(1-1./(1-x.^2)),0},[-20 -1 1 20]);
     end
     
     methods
@@ -74,6 +76,18 @@ classdef ChebPatch<LeafPatch
             obj.is_refined = false;
             obj.is_geometric_refined = true;
             
+            obj.bump = cell(3,1);
+            
+            for k=1:obj.dim
+                if obj.domain(k,1) == obj.outerbox(k,1)
+                    w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
+                elseif obj.domain(k,2) == obj.outerbox(k,2)
+                    w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))-1)/2);
+                else
+                    w = @(x) obj.cheb_bump(obj.invf(x,obj.domain(k,:)));
+                end
+                obj.bump{k} = w;
+            end
         end
         
         
@@ -209,6 +223,33 @@ classdef ChebPatch<LeafPatch
             end
             
         end
+        
+        
+        function ef = evalfBump(obj,X)
+            
+            ef = ones(size(X,1),1);
+            for k=1:obj.dim
+                ef = ef.*obj.bump{k}(X(:,k));
+            end
+            
+        end
+        
+        function ef = evalfGridBump(obj,X)
+            
+            W = cell(3,1);
+            
+            for i=1:obj.dim
+                W{i} = obj.bump{i}(X{i});
+            end
+            
+            if obj.dim==2
+                ef = W{1}*W{2}.';
+            else
+                ef = W{1}*(chebfun3.txm(W{2},W{3},3))';
+            end
+            
+        end
+        
         
         function ef = evalfGrid(obj,X,diff_dim,order)
             

@@ -49,6 +49,8 @@ classdef (Abstract) Patch < handle
                 %Right now just assume the domain is just the square.
         function [sub_grid,split_ind] = InDomainGrid(obj,x,split_dim)
             sub_grid = cell(1,obj.dim);
+            split_grid = cell(1,obj.dim);
+            
             for i=1:obj.dim
                 ind = x{i}>=obj.domain(i,1) & x{i}<=obj.domain(i,2);
                 
@@ -58,7 +60,21 @@ classdef (Abstract) Patch < handle
                 
                 sub_grid{i} = x{i}(ind);
             end
-        end 
+        end
+        
+        function [sub_grid,split_ind] = IndDomainGrid(obj,x)
+            sub_grid = cell(1,obj.dim);
+            split_ind = cell(1,obj.dim);
+            
+            for i=1:obj.dim
+                ind = x{i}>=obj.domain(i,1) & x{i}<=obj.domain(i,2);
+                
+                split_ind{i} = ind;
+                
+                sub_grid{i} = x{i}(ind);
+            end
+        end
+        
     end
 end
 
