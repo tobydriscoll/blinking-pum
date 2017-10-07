@@ -15,7 +15,7 @@ classdef ParPUFun < handle
             end
                 
             [dim,~] = size(domain);
-            obj.ChebRoot = ChebPatch(domain,deg_in,ones(1,dim),tol);
+            obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,ones(1,dim),tol);
             
            NewGen = {obj.ChebRoot};
             %Refine on f(x)

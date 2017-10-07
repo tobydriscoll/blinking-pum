@@ -245,7 +245,7 @@ classdef ChebPatch<LeafPatch
             if obj.dim==2
                 ef = W{1}*W{2}.';
             else
-                ef = W{1}*(chebfun3.txm(W{2},W{3},3))';
+                ef = reshape(W{3},1,1,length(W{3})).*(W{2}'.*W{1});
             end
             
         end
