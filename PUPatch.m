@@ -182,7 +182,7 @@ classdef PUPatch<Patch
                 
                 if any(ind)
                     if ~obj.children{k}.is_leaf
-                        [sumk,dotprodk] = obj.children{k}.evalf(X(ind,:),dim,order);
+                        [sumk,dotprodk] = obj.children{k}.evalf_recurse(X(ind,:));
                     else
                         sumk = obj.children{k}.evalfBump(X(ind,:));
                         dotprodk = sumk.*obj.children{k}.evalf(X(ind,:),1,0);
@@ -402,14 +402,14 @@ classdef PUPatch<Patch
             vals = [obj.children{1}.Getvalues();obj.children{2}.Getvalues()];
         end
         
-        function split(obj,overlap)
+        function split(obj)
             for k=1:2
                 if obj.children{k}.is_leaf
-                    lengths = diff(obj.children{k}.domain');
+                    lengths = diff(obj.children{k}.zone');
                     [~,split_dim] = max(lengths);
                     obj.children{k} = obj.children{k}.split(split_dim);
                 else
-                    obj.children{k}.split(overlap);
+                    obj.children{k}.split();
                 end
             end
         end

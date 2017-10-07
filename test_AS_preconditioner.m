@@ -13,23 +13,15 @@ force = @(x) ones(length(x),1);
 
 border = @(x) zeros(length(x),1);
 
-Tree = ChebPatch(domain,deg_in,split_flag,tol);
+Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol);
 
-% Tree = Tree.split(0.1/4,1);
-% Tree.split(0.1/4);
-% 
-% Tree.split(0.1/2);
-% Tree.split(0.1/2);
-% 
-% Tree.split(0.1);
+Tree = Tree.split(1);
+Tree.split();
 
-Tree = Tree.split(0.1,1);
-Tree.split(0.1);
-% 
-Tree.split(0.1);
-Tree.split(0.1);
-% 
-Tree.split(0.1);
+Tree.split();
+Tree.split();
+ 
+Tree.split();
 
 LEAVES = Tree.collectLeaves({});
 
@@ -80,13 +72,8 @@ x = linspace(-1,1,100)';
 
 Tree.sample(sol);
 
-Fxx = Tree.evalfGrid({x x},1,2);
-Fyy = Tree.evalfGrid({x x},2,2);
+G = Tree.evalfGrid({x x});
 
-RESIDUAL = Fxx(:,:,3)+Fyy(:,:,3) - ones(100,100);
-RESIDUAL([1 end],:)=Fxx([1 end],:,1);
-RESIDUAL(:,[1 end])=Fxx(:,[1 end],1);
-surf(X,Y,RESIDUAL);
-figure();
-surf(X,Y,Fxx(:,:,1));
+surf(X,Y,G);
+
 
