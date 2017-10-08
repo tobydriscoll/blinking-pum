@@ -9,15 +9,15 @@ maxit = 1200;
 cheb_length  = 33;
 dim = [33 33];
 
-Tree = ChebPatch(domain,deg_in,split_flag,tol);
+Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol);
 
-Tree = Tree.split(0.1,1);
-Tree.split(0.1);
+Tree = Tree.split(1);
+Tree.split();
 
-Tree.split(0.1);
-Tree.split(0.1);
+Tree.split();
+%Tree.split();
 
-Tree.split(0.1);
+%Tree.split();
 
 %Here split will split every leaf of the tree.
 % Tree = Tree.split(0.1/4,1);
