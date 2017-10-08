@@ -463,6 +463,7 @@ classdef ChebPatch<LeafPatch
                 hold on;
                 lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
                 rectangle('position',[obj.domain(:,1)' lengths'],'LineWidth',2);
+                plot(mean(obj.domain(1,:)),mean(obj.domain(2,:)),'.','MarkerSize',10,'Color','black');
                 hold off;
             elseif obj.dim==3
                 hold on;
