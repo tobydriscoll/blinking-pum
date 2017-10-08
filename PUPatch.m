@@ -420,6 +420,21 @@ classdef PUPatch<Patch
         function str = toString(obj)
             str = strvcat(strcat('1',obj.children{1}.toString()),strcat('2',obj.children{2}.toString()));
         end
+        
+        function plotDomains3D(obj,h0,h1)
+            LEAVES = obj.collectLeaves({});
+            num_p = length(LEAVES);
+            step = (h1-h0)/(num_p-1);
+            hold on;
+            for k=1:length(LEAVES)
+                ch = h1 - step*(k-1);
+                x = [LEAVES{k}.domain(1,1) LEAVES{k}.domain(1,2) LEAVES{k}.domain(1,2) LEAVES{k}.domain(1,1)];
+                y = [LEAVES{k}.domain(2,1) LEAVES{k}.domain(2,1) LEAVES{k}.domain(2,2) LEAVES{k}.domain(2,2)];
+                z = [ch ch ch ch];
+                patch(x,y,z,'red');
+            end
+            hold off;
+        end
     end
     
 end
