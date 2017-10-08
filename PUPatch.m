@@ -412,6 +412,8 @@ classdef PUPatch<Patch
                     obj.children{k}.split();
                 end
             end
+            obj.region = [obj.children{1}.region(:,1) obj.children{2}.region(:,2)];
+            obj.domain = obj.region;
         end
         
         
