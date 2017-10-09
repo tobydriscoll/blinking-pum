@@ -8,7 +8,9 @@ classdef ChebPatch<LeafPatch
         swap_degs %temp holder for degs
         iscoarse = false;
         linOp
+        ClinOp
         bump
+        ind_start
     end
     
     properties (Access = protected)
@@ -43,28 +45,32 @@ classdef ChebPatch<LeafPatch
             
            if nargin < 4
                 obj.deg_in = zeros(1,obj.dim);
+                obj.cdeg_in = zeros(1,obj.dim);
                 obj.deg_in(:) = 7;
                 obj.cdeg_in(:) = 3;
                 obj.split_flag = ones(obj.dim,1);
                 obj.tol = 1e-12;
             elseif nargin < 5
                 obj.deg_in = deg_in;
+                obj.cdeg_in = zeros(1,obj.dim);
                  obj.cdeg_in(:) = 3;
                 obj.split_flag = ones(obj.dim,1);
                 obj.tol = 1e-12;
             elseif nargin < 6
                 obj.deg_in = deg_in;
+                obj.cdeg_in = zeros(1,obj.dim);
                  obj.cdeg_in(:) = 3;
                 obj.split_flag = split_flag;
                 obj.tol = 1e-12;
            elseif nargin < 7
                 obj.deg_in = deg_in;
+                obj.cdeg_in = zeros(1,obj.dim);
                 obj.cdeg_in(:) = 3;
                 obj.split_flag = split_flag;
                 obj.tol = tol;
             elseif nargin < 8
                 obj.deg_in = deg_in;
-                obj.cdeg_in(:) = cdeg_in;
+                obj.cdeg_in = cdeg_in;
                 obj.split_flag = split_flag;
                 obj.tol = tol;
             end
@@ -456,9 +462,9 @@ classdef ChebPatch<LeafPatch
                 
                 overlap_in = [m-delta,m+delta];
                 
-                children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol);
+                children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
                 
-                children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol);
+                children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
                 
                 region = obj.region;
                 
