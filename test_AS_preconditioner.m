@@ -19,7 +19,7 @@ Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 Tree = Tree.split(1);
 Tree.split();
 
-Tree.split();
+%Tree.split();
 %Tree.split();
  
 %Tree.split();
@@ -76,7 +76,7 @@ A = @(sol) LaplacianForward(Tree,domain,sol);
 
 
 %M = @(rhs) ASPreconditioner(Tree,domain,rhs);
-M = @(rhs) CourseCorrection(rhs,Tree,domain);
+M = @(rhs) CoarseCorrection(rhs,Tree,domain);
 
 tic
 sol = gmres(A,rhs,[],tol,maxit,M);

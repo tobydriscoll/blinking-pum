@@ -1,4 +1,4 @@
-function [ output ] = ASCoursePreconditioner(PUApprox,domain,rhs)
+function [ output ] = ASCoarsePreconditioner(PUApprox,domain,rhs)
 
 LEAVES = PUApprox.collectLeaves({});
 
