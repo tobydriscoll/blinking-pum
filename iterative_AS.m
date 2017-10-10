@@ -2,12 +2,12 @@ overlap = 0.1;
 
 domain = [-1 1;-1 1];
 
-deg_in = [5 5];
+deg_in = [3 3];
 split_flag = [1 1];
 tol = 1e-6;
 maxit = 1200;
-cheb_length  = 33;
-dim = [33 33];
+cheb_length  = 9;
+dim = [9 9];
 
 Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol);
 
@@ -15,18 +15,9 @@ Tree = Tree.split(1);
 Tree.split();
 
 Tree.split();
-%Tree.split();
+Tree.split();
 
-%Tree.split();
-
-%Here split will split every leaf of the tree.
-% Tree = Tree.split(0.1/4,1);
-% Tree.split(0.1/4);
-% 
-% Tree.split(0.1/2);
-% Tree.split(0.1/2);
-% 
-% Tree.split(0.1);
+Tree.split();
 
 LEAVES = Tree.collectLeaves({});
 
@@ -63,18 +54,18 @@ y1 = chebpts(33,LEAVES{1}.domain(2,:));
 [X1,Y1] = ndgrid(x1,y1);
 
 [out_border1,in_border1] = FindBoundaryIndex2D(dim,LEAVES{1}.domain(),domain);
+Tree.sample(u_0);
 
 while true
-    u_next = [];
-    Tree.sample(u_0);
+    %Tree.sample(u_0);
     
     F = Tree.evalfGrid({x x},1,0);
     
     surf(X,Y,F);
     
-    BVALS = Tree.evalf([X1(in_border1) Y1(in_border1)],1,0);
+   % BVALS = Tree.evalf([X1(in_border1) Y1(in_border1)],1,0);
     
-    norm(F(in_border) - LEAVES{1}.values(in_border))
+   % norm(F(in_border) - LEAVES{1}.values(in_border))
     
     
     %subplot(121)
@@ -89,16 +80,24 @@ while true
     
     for k=1:length(LEAVES)
         [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
-        %F = Tree.evalfGrid(LEAVES{k}.leafGrids,1,0);
         rhs_k = zeros(length(LEAVES{k}),1);
         X_k = LEAVES{k}.points;
         rhs_k(~out_border & ~in_border) = force(X_k(~out_border & ~in_border,:));
-        %rhs_k(out_border) = boundry(X_k(out_border,:));
-        %rhs_k(in_border) = F(in_border);
-        rhs_k(in_border)  = Tree.evalf(X_k(in_border,:),1,0);
-        %rhs_k(in_border)  = Tree.evalfZone(X_k(in_border,:));
-        u_next = [u_next;LEAVES{k}.linOp\rhs_k];
+        rhs_k(in_border)  = Tree.evalfZone(X_k(in_border,:));
+        LEAVES{k}.sample(LEAVES{k}.linOp\rhs_k);
     end
+    
+    for k=length(LEAVES)-1:-1:1
+        [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
+        rhs_k = zeros(length(LEAVES{k}),1);
+        X_k = LEAVES{k}.points;
+        rhs_k(~out_border & ~in_border) = force(X_k(~out_border & ~in_border,:));
+        rhs_k(in_border)  = Tree.evalfZone(X_k(in_border,:));
+        LEAVES{k}.sample(LEAVES{k}.linOp\rhs_k);
+    end
+    
+    u_next = Tree.Getvalues();
+    
     norm(u_0-u_next)
     
     if norm(u_0-u_next)<1e-6

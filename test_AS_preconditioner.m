@@ -3,7 +3,7 @@ overlap = 0.1;
 domain = [-1 1;-1 1];
 
 deg_in = [5 5];
-cdeg_in = [4 4];
+cdeg_in = [3 3];
 split_flag = [1 1];
 tol = 1e-6;
 maxit = 1200;
@@ -19,10 +19,10 @@ Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 Tree = Tree.split(1);
 Tree.split();
 
-%Tree.split();
-%Tree.split();
+Tree.split();
+Tree.split();
  
-%Tree.split();
+Tree.split();
 
 LEAVES = Tree.collectLeaves({});
 

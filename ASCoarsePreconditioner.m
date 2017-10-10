@@ -14,6 +14,8 @@ PUApprox.sample(@(x)zeros(length(x),1));
 output = [];
 
 step_n = 0;
+
+for j=1:2
     
 for k=1:length(LEAVES)
     
@@ -25,9 +27,13 @@ for k=1:length(LEAVES)
     
     [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
     
-    approx = PUApprox.evalf(pointsl(in_border,:),1,0);
+    approx = PUApprox.evalfZone(pointsl(in_border,:));
     
-    bk = [rhs_k(~in_border & ~out_border);approx;rhs_k(out_border)];
+    bk = zeros(length(LEAVES{k}),1);
+    
+    bk(~in_border) = rhs_k(~in_border);
+    
+    bk(in_border) = approx;
     
     step_n = step_n + prod(dim);
     
@@ -46,13 +52,19 @@ for k=length(LEAVES)-1:-1:1
     
     [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
     
-    approx = PUApprox.evalf(pointsl(in_border,:),1,0);
+    approx = PUApprox.evalfZone(pointsl(in_border,:));
     
-    bk = [rhs_k(~in_border & ~out_border);approx;rhs_k(out_border)];
+    bk = zeros(length(LEAVES{k}),1);
+    
+    bk(~in_border) = rhs_k(~in_border);
+    
+    bk(in_border) = approx;
     
     step_n = step_n - prod(dim);
     
     LEAVES{k}.sample((LEAVES{k}.ClinOp\bk));
+end
+
 end
 
 PUApprox.Refine();

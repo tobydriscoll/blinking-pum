@@ -27,8 +27,8 @@ for k=1:length(LEAVES)
     
     lap = LEAVES{k}.linOp*sol_k;
     
-    approx = Tree.evalf(pointsl(in_border,:),1,0);
-   % approx = Tree.evalfZone(pointsl(in_border,:));
+    %approx = Tree.evalf(pointsl(in_border,:),1,0);
+    approx = Tree.evalfZone(pointsl(in_border,:));
     
     lap(in_border) = lap(in_border)-approx;
     
