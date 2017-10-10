@@ -22,7 +22,7 @@ Tree.split();
 Tree.split();
 Tree.split();
  
-Tree.split();
+%Tree.split();
 
 LEAVES = Tree.collectLeaves({});
 
@@ -76,7 +76,8 @@ A = @(sol) LaplacianForward(Tree,domain,sol);
 
 
 %M = @(rhs) ASPreconditioner(Tree,domain,rhs);
-M = @(rhs) CoarseCorrection(rhs,Tree,domain);
+%M = @(rhs) CoarseCorrection(rhs,Tree,domain);
+M = @(rhs) CoarseGlobalCorrection(rhs,Tree,domain);
 
 tic
 sol = gmres(A,rhs,[],tol,maxit,M);
