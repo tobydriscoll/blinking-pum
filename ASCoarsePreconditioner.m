@@ -15,7 +15,7 @@ output = [];
 
 
 
-for j=1:1
+for j=1:4*length(LEAVES)
     
     step_n = 0;
     
@@ -41,7 +41,6 @@ for j=1:1
         
         LEAVES{k}.sample((LEAVES{k}.ClinOp\bk));
     end
-    
 end
 
 PUApprox.Refine();
