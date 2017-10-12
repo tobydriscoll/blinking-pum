@@ -9,10 +9,6 @@ PUApprox.Coarsen();
 
 rhsc = PUApprox.Getvalues();
 
-PUApprox.sample(@(x)zeros(length(x),1));
-
-output = [];
-
 solc = Mat\rhsc;
 
 PUApprox.sample(solc);

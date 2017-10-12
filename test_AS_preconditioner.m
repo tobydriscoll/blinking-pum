@@ -23,7 +23,7 @@ Tree.split();
 Tree.split();
 %  
 Tree.split();
-Tree.split();
+%Tree.split();
 
 LEAVES = Tree.collectLeaves({});
 
@@ -92,7 +92,7 @@ for k=1:length(LEAVES)
         [iib,jjb,zzb] = Tree.interpMatrixZone_vecs({G{1}(in_borderG{j,1}) G{2}(in_borderG{j,2})});
         ii = [ii;iib+step];
         jj = [jj;jjb];
-        zz = [zz;zzb];
+        zz = [zz;-zzb];
     end
     
     Dxx = kron(eye(cdim(2)),diffmat(cdim(1),2,LEAVES{k}.domain(1,:)));
@@ -126,7 +126,7 @@ M = @(rhs) CoarseCorrection(rhs,Tree,domain,Mat);
 %M = @(rhs) CoarseGlobalCorrection(rhs,Tree,domain);
 
 tic
-sol = gmres(A,rhs,[],tol,maxit,M);
+[sol,~,~,~,rvec] = gmres(A,rhs,[],tol,maxit,M);
 toc
 
 x = linspace(-1,1,100)';
