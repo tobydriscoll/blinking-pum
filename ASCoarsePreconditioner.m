@@ -25,21 +25,29 @@ for j=1:4*length(LEAVES)
         
         rhs_k = rhsc(step_n+(1:prod(dim)));
         
-        pointsl = LEAVES{k}.points();
+
         
-        [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
         
-        approx = PUApprox.evalfZone(pointsl(in_border,:));
+       [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
+       pointsl = LEAVES{k}.points();
+       approx = PUApprox.evalfZone(pointsl(in_border,:));
+       rhs_k(in_border) = approx;
         
-        bk = zeros(length(LEAVES{k}),1);
-        
-        bk(~in_border) = rhs_k(~in_border);
-        
-        bk(in_border) = approx;
+%         [out_border, in_border] = FindBoundaryGridIndex2D(dim,LEAVES{k}.domain(),domain);
+%         grids = LEAVES{k}.leafGrids();
+%         for i=1:4
+%             if any(in_border{i,1}) && any(in_border{i,2})
+%                 approx = PUApprox.evalfZoneGrid({grids{1}(in_border{i,1}) grids{2}(in_border{i,2})});
+%                 [X_in,Y_in] = ndgrid(in_border{i,1},in_border{i,2});
+%                 IND = X_in & Y_in;
+%                 IND = IND(:);
+%                 rhs_k(IND) = approx(:);
+%             end
+%         end
         
         step_n = step_n + prod(dim);
         
-        LEAVES{k}.sample((LEAVES{k}.ClinOp\bk));
+        LEAVES{k}.sample((LEAVES{k}.ClinOp\rhs_k));
     end
 end
 
