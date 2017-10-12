@@ -1,6 +1,6 @@
-function [ output ] = CoarseCorrection(rhs,tree,domain)
+function [ output ] = CoarseCorrection(rhs,tree,domain,Mat)
 
-cs = ASCoarsePreconditioner(tree,domain,rhs);
+cs = ASCoarsePreconditioner(tree,domain,rhs,Mat);
 
 z = rhs - LaplacianForward(tree,domain,cs);
 

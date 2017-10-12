@@ -227,8 +227,12 @@ classdef PUPatch<Patch
             end
         end
         
-        
-        function [ii,jj,zz] = interpMatrixZone(obj,grid)
+        function M = interpSparseMatrixZone(obj,grid)
+            [ii,jj,zz] = obj.interpMatrixZone_vecs(grid);
+            M = sparse(ii,jj,zz);
+        end
+            
+        function [ii,jj,zz] = interpMatrixZone_vecs(obj,grid)
             
             ii = []; jj = []; zz = [];
             grid_lengths = cellfun(@(x)length(x),grid);
@@ -266,8 +270,20 @@ classdef PUPatch<Patch
                 if not_empty_child(k)
                     if obj.children{k}.is_leaf
                         [ii_k,jj_k,zz_k] = find(obj.children{k}.interpMatrixGrid(sub_grids{k}));
+                        
+                        if size(ii_k,2)~=1
+                            ii_k = ii_k';
+                        end
+                        
+                        if size(jj_k,2)~=1
+                            jj_k = jj_k';
+                        end
+                        
+                        if size(zz_k,2)~=1
+                            zz_k = zz_k';
+                        end
                     else
-                        [ii_k,jj_k,zz_k] = obj.children{k}.interpMatrixZone(sub_grids{k});
+                        [ii_k,jj_k,zz_k] = obj.children{k}.interpMatrixZone_vecs(sub_grids{k});
                     end
                     
                     if obj.dim==2
