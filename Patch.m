@@ -75,6 +75,24 @@ classdef (Abstract) Patch < handle
             end
         end
         
+        function show(obj,level)
+            % Make a pretty graph showing the domains (2D)
+            assert(obj.dim==2,'Must be 2-D')
+            if nargin==1  % user call
+                level = 0; 
+                newplot
+            end
+            if obj.is_leaf
+                x = obj.domain(1,[1 1 2 2]);
+                y = obj.domain(2,[1 2 2 1]);
+                z = level*ones(1,4);
+                patch(x,y,z,rand(1,3),'facealpha',0.2,'edgecolor','none')
+            else
+                show(obj.children{1},level+1);
+                show(obj.children{2},level+1);
+            end
+        end
+        
     end
 end
 

@@ -107,6 +107,9 @@ classdef PUFun < handle
             disp(obj.ChebRoot.toString());
         end
         
+        function show(obj)
+            show(obj.ChebRoot)
+        end
         
         
     end
