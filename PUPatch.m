@@ -227,6 +227,80 @@ classdef PUPatch<Patch
             end
         end
         
+        
+        function [ii,jj,zz] = interpMatrixZone(obj,grid)
+            
+            ii = []; jj = []; zz = [];
+            grid_lengths = cellfun(@(x)length(x),grid);
+            
+            [n,~] = size(grid_lengths);
+            
+            if n>1
+                grid_lengths = grid_lengths';
+            end
+            
+            sub_grids = cell(2,1);
+            
+            inds = cell(2,1);
+            
+            not_empty_child = true(2,1);
+            
+            sub_grids{1} = grid;
+            sub_grids{2} = grid;
+            
+            midpoint = mean(obj.zone(obj.splitting_dim,:));
+            
+            inds{1} = grid{obj.splitting_dim} < midpoint;
+            inds{2} = grid{obj.splitting_dim} >= midpoint;
+            
+            for k=1:2
+                sub_grids{k}{obj.splitting_dim} = sub_grids{k}{obj.splitting_dim}(inds{k});
+                not_empty_child(k) = all(cellfun(@(x)~isempty(x),sub_grids{k}));
+            end
+            
+            in_index = (1:prod(grid_lengths))';
+            
+            step = 0;
+            
+            for k=1:2
+                if not_empty_child(k)
+                    if obj.children{k}.is_leaf
+                        [ii_k,jj_k,zz_k] = find(obj.children{k}.interpMatrixGrid(sub_grids{k}));
+                    else
+                        [ii_k,jj_k,zz_k] = obj.children{k}.interpMatrixZone(sub_grids{k});
+                    end
+                    
+                    if obj.dim==2
+                        ind_k = false(grid_lengths(1),grid_lengths(2));
+                        if obj.splitting_dim==1
+                            ind_k(inds{k},:) = true;
+                        else
+                            ind_k(:,inds{k}) = true;
+                        end
+                    elseif obj.dim==3
+                        ind_k = false(grid_lengths(1),grid_lengths(2),grid_lengths(3));
+                    end
+                    if obj.splitting_dim==1
+                        ind_k(inds{k},:,:) = true;
+                    elseif obj.splitting_dim==2
+                        ind_k(:,inds{k},:) = true;
+                    else
+                        ind_k(:,:,inds{k}) = true;
+                    end
+                    
+                    ind_k = ind_k(:);
+                    
+                    ind_k = in_index(ind_k);
+                    
+                    ii = [ii;ind_k(ii_k)];
+                    jj = [jj;jj_k+step];
+                    zz = [zz;zz_k];
+                    step = step + obj.children{k}.length();
+                end
+                
+            end
+        end
+        
         function vals = evalfZoneGrid(obj,X)
             grid_lengths = cellfun(@(x)length(x),X);
             
@@ -363,28 +437,7 @@ classdef PUPatch<Patch
             end
         end
         
-        function ResolveChebWeights(obj,weights)
-            
-            w = weights{obj.splitting_dim};
-            
-            for k=1:2
-                
-                domain = obj.domain(obj.splitting_dim,:);
-                subdomain = obj.children{k}.domain(obj.splitting_dim,:);
-                h = @(x) 2/diff(domain)*x-sum(domain)/diff(domain);
-                
-                wk = obj.weights.chebweights(:,k);
-                wk = wk(chebfun(h,domain));
-                
-                weights{obj.splitting_dim} = chebfun(@(x)w(x).*wk(x),subdomain);
-                
-                if obj.children{k}.is_leaf
-                    obj.children{k}.chebweights = weights;
-                else
-                    obj.children{k}.ResolveChebWeights(weights);
-                end
-            end
-        end
+
         
         function Coarsen(obj)
             for k=1:2
