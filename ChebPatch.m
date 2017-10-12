@@ -257,6 +257,32 @@ classdef ChebPatch<LeafPatch
         end
         
         
+        function M = interpMatrixPoints(obj,X)
+            
+            M = zeros(size(X,1),length(obj));
+            
+            for i=1:size(X,1)
+                M(i,:) = obj.interpMatrixGrid(num2cell(X(i,:)));
+            end
+            
+        end
+        
+        
+        function M = interpMatrixGrid(obj,grid)
+            G = obj.leafGrids();
+            if obj.dim==1
+                if iscell(grid)
+                    M = barymat(grid{1},G{1});
+                else
+                    M = barymat(grid,G{1});
+                end
+            elseif obj.dim==2
+                M = kron(barymat(grid{2},G{2}),barymat(grid{1},G{1}));
+            elseif obj.dim==3
+                M = kron(barymat(grid{3},G{3}),kron(barymat(grid{2},G{2}),barymat(grid{1},G{1})));
+            end
+        end
+        
         function ef = evalfGrid(obj,X,diff_dim,order)
             
             grid_lengths = cellfun(@(x)length(x),X);
