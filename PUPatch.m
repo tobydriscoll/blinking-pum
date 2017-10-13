@@ -232,7 +232,7 @@ classdef PUPatch<Patch
             M = sparse(ii,jj,zz);
         end
             
-        function [ii,jj,zz] = interpMatrixZone_vecs(obj,grid)
+        function [ii,jj,zz] = interpMatrixZoneGrid_vecs(obj,grid)
             
             ii = []; jj = []; zz = [];
             grid_lengths = cellfun(@(x)length(x),grid);
@@ -283,7 +283,7 @@ classdef PUPatch<Patch
                             zz_k = zz_k';
                         end
                     else
-                        [ii_k,jj_k,zz_k] = obj.children{k}.interpMatrixZone_vecs(sub_grids{k});
+                        [ii_k,jj_k,zz_k] = obj.children{k}.interpMatrixZoneGrid_vecs(sub_grids{k});
                     end
                     
                     if obj.dim==2
@@ -385,6 +385,50 @@ classdef PUPatch<Patch
             
             vals = reshape(vals,lengths);
             vals = ipermute(vals,dim_permute);
+        end
+        
+        function [ii,jj,zz] = interpMatrixZone_vecs(obj,X)
+            
+            [numpts,~] = size(X);
+            
+            vals = zeros(numpts,1);
+            
+            ind = false(numpts,2);
+            
+            ii = [];
+            jj = [];
+            zz = [];
+            
+            %Figure out indicies of the points in the left and right
+            %domains
+            for k=1:2
+                ind(:,k) = obj.children{k}.InZone(X);
+            end
+            
+            child_vals = cell(2,1);
+            
+            step = 0;
+            
+            %calculate values for the children
+            for k=1:2
+                if any(ind(:,k))
+                    
+                in_index = (1:numpts)';
+                in_index = in_index(ind(:,k));
+                
+                    if obj.children{k}.is_leaf
+                        M = obj.children{k}.interpMatrixPoints(X(ind(:,k),:));
+                        [iik,jjk,zzk] = find(M);
+                    else
+                        [iik,jjk,zzk] = obj.children{k}.interpMatrixZone_vecs(X(ind(:,k),:));
+                    end
+                    
+                    ii = [ii;in_index(iik)];
+                    jj = [jj;jjk+step];
+                    zz = [zz;zzk];
+                end
+                step = step+length(obj.children{k});
+            end
         end
         
         function vals = evalfZone(obj,X)

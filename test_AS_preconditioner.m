@@ -19,10 +19,10 @@ Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 Tree = Tree.split(1);
 Tree.split();
 
-Tree.split();
-Tree.split();
+%Tree.split();
+%Tree.split();
 %  
-Tree.split();
+%Tree.split();
 %Tree.split();
 
 LEAVES = Tree.collectLeaves({});
@@ -89,27 +89,29 @@ for k=1:length(LEAVES)
     G = LEAVES{k}.leafGrids();
     
     for j=1:4
-        [iib,jjb,zzb] = Tree.interpMatrixZone_vecs({G{1}(in_borderG{j,1}) G{2}(in_borderG{j,2})});
-        ii = [ii;iib+step];
-        jj = [jj;jjb];
-        zz = [zz;-zzb];
+        if any(in_borderG{j,1}) && any(in_borderG{j,2})
+            [iib,jjb,zzb] = Tree.interpMatrixZone_vecs({G{1}(in_borderG{j,1}) G{2}(in_borderG{j,2})});
+            ii = [ii;iib+step];
+            jj = [jj;jjb];
+            zz = [zz;-zzb];
+        end
     end
     
     Dxx = kron(eye(cdim(2)),diffmat(cdim(1),2,LEAVES{k}.domain(1,:)));
     Dyy = kron(diffmat(cdim(2),2,LEAVES{k}.domain(2,:)),eye(cdim(1)));
     
-    E = eye(prod(cdim));
-    
-    CLap = Dxx+Dyy;
-    
-    CLap(in_border,:) = E(in_border,:);
-    CLap(out_border,:) = E(out_border,:);
-    
-    [iid,jjd,zzd] = find(CLap);
-    
-    ii = [ii;iid+step];
-    jj = [jj;jjd+step];
-    zz = [zz;zzd];
+%     E = eye(prod(cdim));
+%     
+%     CLap = Dxx+Dyy;
+%     
+%     CLap(in_border,:) = E(in_border,:);
+%     CLap(out_border,:) = E(out_border,:);
+%     
+%     [iid,jjd,zzd] = find(CLap);
+%     
+%     ii = [ii;iid+step];
+%     jj = [jj;jjd+step];
+%     zz = [zz;zzd];
     
     step = step+prod(cdim);
 end
