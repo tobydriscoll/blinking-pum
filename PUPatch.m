@@ -282,6 +282,7 @@ classdef PUPatch<Patch
                         if size(zz_k,2)~=1
                             zz_k = zz_k';
                         end
+                        
                     else
                         [ii_k,jj_k,zz_k] = obj.children{k}.interpMatrixZoneGrid_vecs(sub_grids{k});
                     end
