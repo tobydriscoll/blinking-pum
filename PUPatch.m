@@ -190,9 +190,9 @@ classdef PUPatch<Patch
             end
         end
         
-        function M = interpSparseMatrixZone(obj,grid)
-            [ii,jj,zz] = obj.interpMatrixZone_vecs(grid);
-            M = sparse(ii,jj,zz);
+        function M = interpSparseMatrixZone(obj,X)
+            [ii,jj,zz] = obj.interpMatrixZone_vecs(X);
+            M = sparse(ii,jj,zz,size(X,1),length(obj));
         end
             
         function [ii,jj,zz] = interpMatrixZoneGrid_vecs(obj,grid)

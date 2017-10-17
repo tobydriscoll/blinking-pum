@@ -42,6 +42,10 @@ for k=1:length(LEAVES)
     OP(in_border,:) = E(in_border,:);
     
     LEAVES{k}.linOp = OP;
+    
+    if ~Tree.is_leaf
+        LEAVES{k}.Binterp = Tree.interpSparseMatrixZone(points(in_border,:));
+    end
 end
 
 end
