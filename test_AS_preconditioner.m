@@ -5,14 +5,14 @@ domain = [-1 1;-1 1];
 deg_in = [5 5];
 cdeg_in = [3 3];
 split_flag = [1 1];
-tol = 1e-2;
+tol = 1e-6;
 maxit = 1200;
 cheb_length  = 65;
 dim = [65 65];
 
-c = 0.001;
+c = 0.5;
 
-L = @(u,x,y,dx,dy,dxx,dyy) c*(dxx+dyy)+(dx*x+dy*y^2);
+L = @(u,x,y,dx,dy,dxx,dyy) dxx+dyy;
 
 %East West South North
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u};
@@ -45,7 +45,7 @@ while ~is_refined
         A = @(sol) LaplacianForward(Tree,domain,sol);
         M = @(rhs) CoarseCorrection(rhs,Tree,domain,Mat);
         
-        [sol,~,~,~,rvec] = gmres(A,rhs,[],1e-8,maxit,M,[],Tree.Getvalues);
+        [sol,~,~,~,rvec] = gmres(A,rhs,[],tol,maxit,M,[],Tree.Getvalues);
         
         Tree.sample(sol);
         
@@ -54,11 +54,10 @@ while ~is_refined
     
     x = linspace(-1,1,50)';
     [X,Y] = ndgrid(x);
-    
+    clf();
     G = Tree.evalfGrid({x x},1,0);
-    
     surf(X,Y,G);
-    
+    Tree.plotdomain;
     pause(0.1);
     
     is_refined = Tree.is_refined;
