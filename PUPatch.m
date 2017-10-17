@@ -55,7 +55,11 @@ classdef PUPatch<Patch
             pts = [obj.children{1}.points();obj.children{2}.points()];
         end
         
-        function is_refined = PUsplit(obj)
+        function is_refined = PUsplit(obj,set_vals)
+            
+            if nargin ==1
+                set_vals = false;
+            end
             
             is_refined = true;
             is_geometric_refined = true;
@@ -64,11 +68,11 @@ classdef PUPatch<Patch
                 
                 if ~obj.children{k}.is_refined
                     if obj.children{k}.is_leaf
-                        obj.children{k} = obj.children{k}.splitleaf();
+                        obj.children{k} = obj.children{k}.splitleaf(set_vals);
                         is_refined = is_refined && obj.children{k}.is_refined;
                         is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
                     else
-                        temp = obj.children{k}.PUsplit();
+                        temp = obj.children{k}.PUsplit(set_vals);
                         is_refined = is_refined && temp;
                         is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
                     end
@@ -92,47 +96,6 @@ classdef PUPatch<Patch
             else
                 obj.children{1}.sample(f(1:length(obj.children{1})));
                 obj.children{2}.sample(f(length(obj.children{1})+1:end));
-            end
-        end
-        
-        
-        %  [WEIGHTSVALS]= evalweights(obj,index,X,dim,order)
-        %Input:
-        %   index    : the index for the leaf of the weight to be evaluated
-        %   x        : the set of points in each dimension.
-        %   dim      : the dimension the derivative will be taken in
-        %   order    : order of the derivative
-        %Output:
-        %   WEIGHTSVALS :  cell array of the weightvalues in each
-        %                  dimension, including the dimension
-        function [WEIGHTSVALS]= evalweights(obj,index,X,dim,order)
-            %Our weights are seperable, so we compute the weights
-            %for the functions in each dimension seperately.
-            if obj.children{index(1)}.is_leaf
-                
-                %as a base case, we set the weight to one.
-                for i=1:obj.dim
-                    WEIGHTSVALS{i} = zeros(length(X{i}),order+1);
-                    WEIGHTSVALS{i}(:,1) = ones(length(X{i}),1);
-                end
-                
-                WEIGHTSVALS{obj.splitting_dim}(:,1) = obj.weights.evalf(X{obj.splitting_dim},obj.overlap_in,index(1),1,0);
-            else
-                CHILDWEIGHT = obj.children{index(1)}.evalweights(index(2:end),X,dim,order);
-                WEIGHTSVALS = CHILDWEIGHT;
-                
-                WEIGHTSVALS{obj.splitting_dim} = zeros(length(X{obj.splitting_dim}),order+1);
-                
-                %Use the product role to compute the derivative of the
-                %weight.
-                for k=0:order
-                    for j=0:k
-                        if (k-j)==0 || obj.splitting_dim == dim
-                            WEIGHTSVALS{obj.splitting_dim}(:,k+1) =  WEIGHTSVALS{obj.splitting_dim}(:,k+1) + ...
-                                nchoosek(k,j).*obj.weights.evalf(X{obj.splitting_dim},obj.overlap_in,index(1),1,k-j).*CHILDWEIGHT{obj.splitting_dim}(:,j+1);
-                        end
-                    end
-                end
             end
         end
         
@@ -400,6 +363,7 @@ classdef PUPatch<Patch
             jj = [];
             zz = [];
             
+            
             %Figure out indicies of the points in the left and right
             %domains
             for k=1:2
@@ -420,6 +384,13 @@ classdef PUPatch<Patch
                     if obj.children{k}.is_leaf
                         M = obj.children{k}.interpMatrixPoints(X(ind(:,k),:));
                         [iik,jjk,zzk] = find(M);
+                        
+                        if(size(iik,2)~=1)
+                            iik = iik.';
+                            jjk = jjk.';
+                            zzk = zzk.';
+                        end
+                        
                     else
                         [iik,jjk,zzk] = obj.children{k}.interpMatrixZone_vecs(X(ind(:,k),:));
                     end

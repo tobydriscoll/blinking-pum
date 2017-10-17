@@ -363,35 +363,39 @@ classdef ChebPatch<LeafPatch
         %     Child: obj if no splitting is needed. If a splitting
         %            is needed, Child is the PUPatch object with
         %            the new children.
-        function Child = splitleaf(obj)
+        function Child = splitleaf(obj,set_vals)
+            
+            if nargin==1
+                set_vals = false;
+            end
             
             lens = zeros(obj.dim,1);
             
             if obj.dim==2
                 
-                for i=1:obj.dim
-                    %if obj.split_flag(i)
-                    Fi = shiftdim(obj.values,i-1);
-                    sizes = size(Fi);
-                    Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
-                    %Figure out deg along dim i,
-                    lens(i) = simplify(Fi,obj.tol);
-                end
+%                 for i=1:obj.dim
+%                     %if obj.split_flag(i)
+%                     Fi = shiftdim(obj.values,i-1);
+%                     sizes = size(Fi);
+%                     Fi = reshape(Fi,[sizes(1) prod(sizes(2:end))]);
+%                     %Figure out deg along dim i,
+%                     lens(i) = simplify(Fi,obj.tol);
+%                 end
 
-%                 pref = chebfunpref();
-%                 pref.chebfuneps = obj.tol;
-%                 
-%                 simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
-%                 
-%                 colChebtech = sum(abs(simple_2D_coeffs), 2);
-%                 fCol = chebtech2({[], colChebtech});
-%                 [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
-%                 lens(1) = cutoffX2+~isHappyX;
-%                 
-%                 rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
-%                 fRow = chebtech2({[], rowChebtech});
-%                 [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
-%                 lens(2) = cutoffY2+~isHappyY;
+                pref = chebfunpref();
+                pref.chebfuneps = obj.tol;
+                
+                simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
+                
+                colChebtech = sum(abs(simple_2D_coeffs), 2);
+                fCol = chebtech2({[], colChebtech});
+                [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
+                lens(1) = cutoffX2+~isHappyX;
+                
+                rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
+                fRow = chebtech2({[], rowChebtech});
+                [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
+                lens(2) = cutoffY2+~isHappyY;
                 
             else
                 pref = chebfunpref();
@@ -451,7 +455,7 @@ classdef ChebPatch<LeafPatch
             else
                 
                 %Return the PUPatch with the new children
-                Child = obj.split(split_dim);
+                Child = obj.split(split_dim,set_vals);
             end
             
         end
@@ -466,8 +470,13 @@ classdef ChebPatch<LeafPatch
         %     Child: obj if no splitting is needed. If a splitting
         %            is needed, Child is the PUPatch object with
         %            the new children.
-        function Child = split(obj,split_dim)
-                children = cell(1,2);
+        function Child = split(obj,split_dim,set_vals)
+            
+                if nargin == 2
+                    set_vals = false;
+                end
+                
+                Children = cell(1,2);
                 
                 %The width of the overlap
                 delta = 0.5*obj.overlap*diff(obj.zone(split_dim,:));
@@ -488,16 +497,22 @@ classdef ChebPatch<LeafPatch
                 
                 overlap_in = [m-delta,m+delta];
                 
-                children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+                Children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
                 
-                children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+                Children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
                 
                 region = obj.region;
                 
                 region(split_dim,:) = [region0(split_dim,1) region1(split_dim,2)];
                 
                 %Return the PUPatch with the new children
-                Child = PUPatch(region,obj.zone,overlap_in,length(children{1})+length(children{2}),children,split_dim,obj.index);
+                Child = PUPatch(region,obj.zone,overlap_in,length(Children{1})+length(Children{2}),Children,split_dim,obj.index);
+                
+                if set_vals
+                    for k=1:2
+                        Child.children{k}.sample(obj.evalfGrid(Child.children{k}.leafGrids(),1,0));
+                    end
+                end
         end
         
         

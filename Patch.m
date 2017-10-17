@@ -39,7 +39,7 @@ classdef (Abstract) Patch < handle
         
                 %Right now just assume the domain is just the square.
         function domain_ind = InZone(obj,x)
-            domain_ind = true(length(x),1);
+            domain_ind = true(size(x,1),1);
             for i=1:obj.dim
                 domain_ind = domain_ind & ...
                     ( x(:,i)>= obj.zone(i,1) & x(:,i)<= obj.zone(i,2));

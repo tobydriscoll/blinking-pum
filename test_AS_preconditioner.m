@@ -5,10 +5,17 @@ domain = [-1 1;-1 1];
 deg_in = [5 5];
 cdeg_in = [3 3];
 split_flag = [1 1];
-tol = 1e-6;
+tol = 1e-2;
 maxit = 1200;
-cheb_length  = 33;
-dim = [33 33];
+cheb_length  = 65;
+dim = [65 65];
+
+c = 0.001;
+
+L = @(u,x,y,dx,dy,dxx,dyy) c*(dxx+dyy)+(dx*x+dy*y^2);
+
+%East West South North
+B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u};
 
 force = @(x) ones(length(x),1);
 
@@ -16,127 +23,47 @@ border = @(x) zeros(length(x),1);
 
 Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 
-Tree = Tree.split(1);
-Tree.split();
+is_refined = false;
 
-Tree.split();
-Tree.split();
-%  
-Tree.split();
-%Tree.split();
-
-LEAVES = Tree.collectLeaves({});
-
-rhs = [];
-
-for k=1:length(LEAVES)
-    points = LEAVES{k}.points;
-    sol = force(points);
-    dim = LEAVES{k}.degs;
+while ~is_refined
     
-    [out_border,in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
+    if Tree.is_leaf
+        
+        [rhs] = setLinOps(Tree,L,B,force,border);
+        
+        sol = Tree.linOp\rhs;
+        
+        Tree.sample(sol);
+        
+        
+        Tree = Tree.splitleaf(true);
+    else
+        
+        [rhs] = setLinOps(Tree,L,B,force,border);
+        Mat = CoarseASMat( Tree,L,B );
+        
+        A = @(sol) LaplacianForward(Tree,domain,sol);
+        M = @(rhs) CoarseCorrection(rhs,Tree,domain,Mat);
+        
+        [sol,~,~,~,rvec] = gmres(A,rhs,[],1e-8,maxit,M,[],Tree.Getvalues);
+        
+        Tree.sample(sol);
+        
+        Tree.PUsplit(true);
+    end
     
-    interior = ~out_border & ~ in_border;
+    x = linspace(-1,1,50)';
+    [X,Y] = ndgrid(x);
     
-    sol(out_border) = border(points(out_border,:));
-    sol(in_border) = 0;
-    rhs = [rhs;sol];
+    G = Tree.evalfGrid({x x},1,0);
     
-    Dxx = kron(eye(dim(2)),diffmat(dim(1),2,LEAVES{k}.domain(1,:)));
-    Dyy = kron(diffmat(dim(2),2,LEAVES{k}.domain(2,:)),eye(dim(1)));
+    surf(X,Y,G);
     
-    E = eye(prod(dim));
+    pause(0.1);
     
-    Lap = Dxx+Dyy;
-    
-    Lap(in_border,:) = E(in_border,:);
-    Lap(out_border,:) = E(out_border,:);
-    
-    LEAVES{k}.linOp = Lap;
-    
-    cdim = LEAVES{k}.cdegs;
-    [out_border,in_border] = FindBoundaryIndex2D(cdim,LEAVES{k}.domain(),domain);
-    
-    Dxx = kron(eye(cdim(2)),diffmat(cdim(1),2,LEAVES{k}.domain(1,:)));
-    Dyy = kron(diffmat(cdim(2),2,LEAVES{k}.domain(2,:)),eye(cdim(1)));
-    
-    E = eye(prod(cdim));
-    
-    CLap = Dxx+Dyy;
-    
-    CLap(in_border,:) = E(in_border,:);
-    CLap(out_border,:) = E(out_border,:);
-    
-    LEAVES{k}.ClinOp = CLap;
+    is_refined = Tree.is_refined;
 end
 
-step = 0;
 
-ii = [];
-jj = [];
-zz = [];
-
-Tree.sample(@(x)zeros(length(x),1));
-Tree.Coarsen();
-
-for k=1:length(LEAVES)
-    cdim = LEAVES{k}.cdegs;
-
-    [out_border,in_border] = FindBoundaryIndex2D(cdim,LEAVES{k}.domain(),domain);    
-    
-    pointsl = LEAVES{k}.points();
-    
-    index_n = (1:length(LEAVES{k}))';
-    index_n = index_n(in_border);
-    
-    [iib,jjb,zzb] = Tree.interpMatrixZone_vecs(pointsl(in_border,:));
-    
-    ii = [ii;index_n(iib)+step];
-    jj = [jj;jjb];
-    zz = [zz;-zzb];
-    
-    
-    Dxx = kron(eye(cdim(2)),diffmat(cdim(1),2,LEAVES{k}.domain(1,:)));
-    Dyy = kron(diffmat(cdim(2),2,LEAVES{k}.domain(2,:)),eye(cdim(1)));
-    
-    E = eye(prod(cdim));
-    
-    CLap = Dxx+Dyy;
-    
-    CLap(in_border,:) = E(in_border,:);
-    CLap(out_border,:) = E(out_border,:);
-    
-    [iid,jjd,zzd] = find(CLap);
-    
-    ii = [ii;iid+step];
-    jj = [jj;jjd+step];
-    zz = [zz;zzd];
-    
-    step = step+prod(cdim);
-end
-
-Mat = sparse(ii,jj,zz,length(Tree),length(Tree));
-
-Tree.Refine();
-
-A = @(sol) LaplacianForward(Tree,domain,sol);
-
-
-%M = @(rhs) ASPreconditioner(Tree,domain,rhs);
-M = @(rhs) CoarseCorrection(rhs,Tree,domain,Mat);
-%M = @(rhs) CoarseGlobalCorrection(rhs,Tree,domain);
-
-tic
-[sol,~,~,~,rvec] = gmres(A,rhs,[],tol,maxit,M);
-toc
-
-x = linspace(-1,1,100)';
-[X,Y] = ndgrid(x);
-
-Tree.sample(sol);
-
-G = Tree.evalfGrid({x x});
-
-surf(X,Y,G);
 
 
