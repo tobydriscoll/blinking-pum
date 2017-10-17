@@ -14,14 +14,14 @@ c = 0.05;
 a=1;
 b=0;
 
-L = @(u,x,y,dx,dy,dxx,dyy) c*(dxx+dyy)+a*dx+b*dy+u;
+L = @(u,x,y,dx,dy,dxx,dyy) c*(dxx+dyy)+dy;
 
 %East West South North
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u};
 
-force = @(x) ones(length(x),1);
+force = @(x) 2*ones(length(x),1);
 
-border = @(x) zeros(length(x),1);
+border = @(x) x(:,1)+x(:,2);
 
 Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 
@@ -55,16 +55,16 @@ while ~is_refined
         Tree.PUsplit(true);
     end
     
-%     x = linspace(-1,1,100)';
-%     [X,Y] = ndgrid(x);
-%     clf();
-%     
-%     G = Tree.evalfGrid({x x},1,0);
-%     subplot(1,2,1);
-%     surf(X,Y,G);
-%     subplot(1,2,2);
-%     Tree.plotdomain;
-%     pause(0.1);
+    x = linspace(-1,1,100)';
+    [X,Y] = ndgrid(x);
+    clf();
+    
+    G = Tree.evalfGrid({x x},1,0);
+    subplot(1,2,1);
+    surf(X,Y,G);
+    subplot(1,2,2);
+    Tree.plotdomain;
+    pause(0.1);
     
     is_refined = Tree.is_refined;
 end
