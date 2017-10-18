@@ -14,14 +14,14 @@ c = 0.05;
 a=1;
 b=0;
 
-L = @(u,x,y,dx,dy,dxx,dyy) c*(dxx+dyy)+dy;
+L = @(u,x,y,dx,dy,dxx,dyy) (dxx+dyy);
 
 %East West South North
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u};
 
-force = @(x) 2*ones(length(x),1);
+force = @(x) ones(length(x),1);
 
-border = @(x) x(:,1)+x(:,2);
+border = @(x) zeros(length(x),1);
 
 Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 
