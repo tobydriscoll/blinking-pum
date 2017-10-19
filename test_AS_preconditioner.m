@@ -6,11 +6,12 @@ deg_in = [5 5];
 cdeg_in = [3 3];
 split_flag = [1 1];
 tol = 1e-7;
+gmres_tol = 1e-6;
 maxit = 1200;
 cheb_length  = 65;
 dim = [65 65];
 
-c = 0.05;
+c = 1e-2;
 a=1;
 b=0;
 
@@ -19,9 +20,9 @@ L = @(u,x,y,dx,dy,dxx,dyy) (dxx+dyy);
 %East West South North
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u};
 
-force = @(x) ones(length(x),1);
+force = @(x) 4*c./(c+x(:,1).^2+x(:,2).^2).^2;
 
-border = @(x) zeros(length(x),1);
+border = @(x) log((x(:,1).^2+x(:,2).^2)/c+1);
 
 Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 
@@ -46,9 +47,10 @@ while ~is_refined
         Mat = CoarseASMat( Tree,L,B );
         
         A = @(sol) LaplacianForward(Tree,domain,sol);
+        %M = @(rhs) ASPreconditioner(Tree,domain,rhs);
         M = @(rhs) CoarseCorrection(rhs,Tree,domain,Mat);
         
-        [sol,~,~,~,rvec] = gmres(A,rhs,[],tol,maxit,M,[],Tree.Getvalues);
+        [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],Tree.Getvalues);
         
         Tree.sample(sol);
         

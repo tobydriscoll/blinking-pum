@@ -397,17 +397,13 @@ classdef ChebPatch<LeafPatch
                 
 
 %                 if obj.split_flag(1)
-%                     Nvals = obj.values./(max(abs(obj.values),[],1));
-%                     Nvals(isnan(Nvals)) = 0;
-%                     fCol = chebtech2(Nvals);
+%                     fCol = chebtech2(obj.values+max(abs(obj.values),[],1));
 %                     [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
 %                     lens(1) = cutoffX2+~isHappyX;
 %                 end
 %                 
 %                 if obj.split_flag(2)
-%                     Nvals = (obj.values.')./(max(abs(obj.values.'),[],1));
-%                     Nvals(isnan(Nvals)) = 0;
-%                     fRow = chebtech2(Nvals);
+%                     fRow = chebtech2(obj.values.'+max(abs(obj.values.'),[],1));
 %                     [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
 %                     lens(2) = cutoffY2+~isHappyY;
 %                 end

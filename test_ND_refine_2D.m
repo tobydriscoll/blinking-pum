@@ -1,15 +1,17 @@
-c = 1e-5;
+c = 1e-2;
 
 NT = 1;
 
 NT2 = 0;
 
-%f = @(x) log((x(:,1).^2+x(:,2).^2)/c+1);
-%f2 = @(x,y) log((x.^2+y.^2)/c+1);
+f = @(x) log((x(:,1).^2+x(:,2).^2)/c+1);
+f2 = @(x,y) log((x.^2+y.^2)/c+1);
 
 %f = @(x) atan((x(:,1)+x(:,2).^2)/c);
 %f2 = @(x,y) atan((x+y.^2)/c);
 
+%f = @(x) exp(x(:,1)).*sin(x(:,2));
+%f2 = @(x,y) exp(x).*sin(y);
 
 %f = @(x) atan((x(:,1))/c);
 %f2 = @(x,y) atan((x)/c);
@@ -24,7 +26,7 @@ TIMES = zeros(NT,1);
 
 for i=1:NT
 tic;
-TREE = PUFun([-1 1;-1 1],[7 7],f,1e-12);
+TREE = PUFun([-1 1;-1 1],[5 5],f,1e-6);
 TIMES(i)=toc;
 end
 
