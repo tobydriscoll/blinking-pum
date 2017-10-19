@@ -44,7 +44,7 @@ classdef ChebPatch<LeafPatch
             obj.is_geometric_refined = true; %square is always geometrically refined
             [obj.dim,~] = size(obj.domain);
             
-           if nargin < 4
+            if nargin < 4
                 obj.deg_in = zeros(1,obj.dim);
                 obj.cdeg_in = zeros(1,obj.dim);
                 obj.deg_in(:) = 7;
@@ -54,16 +54,16 @@ classdef ChebPatch<LeafPatch
             elseif nargin < 5
                 obj.deg_in = deg_in;
                 obj.cdeg_in = zeros(1,obj.dim);
-                 obj.cdeg_in(:) = 3;
+                obj.cdeg_in(:) = 3;
                 obj.split_flag = ones(obj.dim,1);
                 obj.tol = 1e-12;
             elseif nargin < 6
                 obj.deg_in = deg_in;
                 obj.cdeg_in = zeros(1,obj.dim);
-                 obj.cdeg_in(:) = 3;
+                obj.cdeg_in(:) = 3;
                 obj.split_flag = split_flag;
                 obj.tol = 1e-12;
-           elseif nargin < 7
+            elseif nargin < 7
                 obj.deg_in = deg_in;
                 obj.cdeg_in = zeros(1,obj.dim);
                 obj.cdeg_in(:) = 3;
@@ -115,7 +115,7 @@ classdef ChebPatch<LeafPatch
                 obj.degs = obj.swap_degs;
                 obj.deg_in = obj.swap_deg_in;
                 
-                obj.values = obj.evalfGrid(grid,1,0);
+                obj.values = obj.evalfGrid(grid);
                 
                 obj.degs = obj.cdegs;
                 obj.deg_in = obj.cdeg_in;
@@ -124,7 +124,7 @@ classdef ChebPatch<LeafPatch
             end
         end
         
-                % Returns the length of the object
+        % Returns the length of the object
         function Refine(obj)
             if obj.iscoarse
                 
@@ -138,7 +138,7 @@ classdef ChebPatch<LeafPatch
                 obj.degs = obj.cdegs;
                 obj.deg_in = obj.cdeg_in;
                 
-                obj.values = obj.evalfGrid(grid,1,0);
+                obj.values = obj.evalfGrid(grid);
                 
                 obj.degs = obj.swap_degs;
                 obj.deg_in = obj.swap_deg_in;
@@ -195,42 +195,36 @@ classdef ChebPatch<LeafPatch
         % Output:
         %     ef: (length(X) x order+1) array containing the derivatves
         %         along dimension dim from 0 to order.
-        function ef = evalf(obj,X,diff_dim,order)
+        function ef = evalf(obj,X)
             
             [num_pts,~] = size(X);
             
-            ef = zeros(num_pts,order+1);
+            ef = zeros(num_pts,1);
             
-            input{1} = obj.values;
-            
-             for j=2:order+1
-                switch obj.dim
-                    case 1
-                        diff_values = 2/diff(obj.domain)*obj.standard_variables.chebmatrices{obj.deg_in(1)}*obj.values;
-                    otherwise
-                        diff_values = (shiftdim(obj.values,diff_dim-1));
-                        perm_degs = size(diff_values);
-                        diff_values = reshape(diff_values,[perm_degs(1) prod(perm_degs(2:end))]);
-                        diff_values = (2/diff(obj.domain(diff_dim,:)))^(j-1)*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),j-1}*diff_values;
-                        diff_values = reshape(diff_values,perm_degs);
-                        diff_values = shiftdim(diff_values,obj.dim-(diff_dim-1));
-                end
-                input{j} = diff_values;
-            end
-            
-            for j=1:order+1
-                for i=1:size(X,1)
-                    G = input{j};
-                    for k=1:obj.dim
-                        point = obj.invf(X(i,k),obj.domain(k,:));
-                        G = bary(point,G,obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
-                    end
-                    ef(i,j) = G;
-                end
+            for i=1:num_pts
+                ef(i) = evalfGrid(obj,mat2cell(X(i,:)));
             end
             
         end
         
+        function ef = evalfGrid(obj,X)
+                        
+            G = obj.values;
+            
+            for k=1:obj.dim
+                %Shift the points to the right domain
+                points = obj.invf(X{k},obj.domain(k,:));
+                
+                f = bary(points,eye(obj.degs(k)),obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
+                
+                if length(X{k})==1
+                    f = f.';
+                end
+                
+                G = chebfun3t.txm(G, f, k);
+            end
+            ef = G;
+        end
         
         function ef = evalfBump(obj,X)
             
@@ -284,51 +278,6 @@ classdef ChebPatch<LeafPatch
             end
         end
         
-        function ef = evalfGrid(obj,X,diff_dim,order)
-            
-            grid_lengths = cellfun(@(x)length(x),X);
-            
-            ef = zeros([grid_lengths order+1]);
-            
-            input{1} = obj.values;
-            
-            for j=2:order+1
-                switch obj.dim
-                    case 1
-                        diff_values = 2/diff(obj.domain)*obj.standard_variables.chebmatrices{obj.deg_in(1),j-1}*obj.values;
-                    otherwise
-                       D = (2/diff(obj.domain(diff_dim,:)))^(j-1)*obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),j-1};
-                       diff_values = chebfun3t.txm(obj.values,D,diff_dim);     
-                end
-                input{j} = diff_values;
-            end
-            
-            for j=1:order+1
-                G = input{j};
-                for k=1:obj.dim
-                    %Shift the points to the right domain
-                    points = obj.invf(X{k},obj.domain(k,:));
-                    
-                    f = bary(points,eye(obj.degs(k)),obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
-                    
-                    if length(X{k})==1
-                        f = f.';
-                    end
-                    G = chebfun3t.txm(G, f, k);
-                end
-                
-                if order>0
-                    subses = repmat({':'}, [1 ndims(ef)]);
-                    subses{obj.dim+1} = j;
-                    ef(subses{:}) = G;
-                else
-                    ef = G;
-                end
-            end
-            
-            
-        end
-        
         % Sets the values to be used for interpolation
         %
         % Input:
@@ -354,7 +303,7 @@ classdef ChebPatch<LeafPatch
             
         end
         
- % The method determines if a splitting is needed, and creates
+        % The method determines if a splitting is needed, and creates
         % the new children if splitting is required.
         %
         %     Input:
@@ -374,26 +323,26 @@ classdef ChebPatch<LeafPatch
             
             if obj.dim==2
                 
-
+                
                 pref = chebfunpref();
                 pref.chebfuneps = obj.tol;
                 
-%                 simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);             
-%                 if obj.split_flag(1)
-%                     colChebtech = sum(abs(simple_2D_coeffs), 2);
-%                     fCol = chebtech2({[], colChebtech});
-%                     [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
-%                     lens(1) = cutoffX2+~isHappyX;
-%                 end
-%                 
-%                 if obj.split_flag(2)
-%                     rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
-%                     fRow = chebtech2({[], rowChebtech});
-%                     [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
-%                     lens(2) = cutoffY2+~isHappyY;
-%                 end
+                %                 simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
+                %                 if obj.split_flag(1)
+                %                     colChebtech = sum(abs(simple_2D_coeffs), 2);
+                %                     fCol = chebtech2({[], colChebtech});
+                %                     [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
+                %                     lens(1) = cutoffX2+~isHappyX;
+                %                 end
+                %
+                %                 if obj.split_flag(2)
+                %                     rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
+                %                     fRow = chebtech2({[], rowChebtech});
+                %                     [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
+                %                     lens(2) = cutoffY2+~isHappyY;
+                %                 end
                 
-
+                
                 if obj.split_flag(1)
                     fCol = chebtech2(obj.values+max(abs(obj.values(:))));
                     [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
@@ -470,7 +419,7 @@ classdef ChebPatch<LeafPatch
             
         end
         
-                % The method determines if a splitting is needed, and creates
+        % The method determines if a splitting is needed, and creates
         % the new children if splitting is required.
         %
         %     Input:
@@ -482,47 +431,47 @@ classdef ChebPatch<LeafPatch
         %            the new children.
         function Child = split(obj,split_dim,set_vals)
             
-                if nargin == 2
-                    set_vals = false;
+            if nargin == 2
+                set_vals = false;
+            end
+            
+            Children = cell(1,2);
+            
+            %The width of the overlap
+            delta = 0.5*obj.overlap*diff(obj.zone(split_dim,:));
+            
+            zone0 = obj.zone;
+            zone1 = obj.zone;
+            
+            region0 = obj.region;
+            region1 = obj.region;
+            
+            m = sum(obj.zone(split_dim,:))/2;
+            
+            zone0(split_dim,:) = [obj.zone(split_dim,1) m];
+            zone1(split_dim,:) = [m obj.zone(split_dim,2)];
+            
+            region0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
+            region1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
+            
+            overlap_in = [m-delta,m+delta];
+            
+            Children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+            
+            Children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+            
+            region = obj.region;
+            
+            region(split_dim,:) = [region0(split_dim,1) region1(split_dim,2)];
+            
+            %Return the PUPatch with the new children
+            Child = PUPatch(region,obj.zone,overlap_in,length(Children{1})+length(Children{2}),Children,split_dim,obj.index);
+            
+            if set_vals
+                for k=1:2
+                    Child.children{k}.sample(obj.evalfGrid(Child.children{k}.leafGrids()));
                 end
-                
-                Children = cell(1,2);
-                
-                %The width of the overlap
-                delta = 0.5*obj.overlap*diff(obj.zone(split_dim,:));
-                
-                zone0 = obj.zone;
-                zone1 = obj.zone;
-                
-                region0 = obj.region;
-                region1 = obj.region;
-                
-                m = sum(obj.zone(split_dim,:))/2;
-                
-                zone0(split_dim,:) = [obj.zone(split_dim,1) m];
-                zone1(split_dim,:) = [m obj.zone(split_dim,2)];
-                
-                region0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
-                region1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
-                
-                overlap_in = [m-delta,m+delta];
-                
-                Children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
-                
-                Children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
-                
-                region = obj.region;
-                
-                region(split_dim,:) = [region0(split_dim,1) region1(split_dim,2)];
-                
-                %Return the PUPatch with the new children
-                Child = PUPatch(region,obj.zone,overlap_in,length(Children{1})+length(Children{2}),Children,split_dim,obj.index);
-                
-                if set_vals
-                    for k=1:2
-                        Child.children{k}.sample(obj.evalfGrid(Child.children{k}.leafGrids(),1,0));
-                    end
-                end
+            end
         end
         
         

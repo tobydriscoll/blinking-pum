@@ -176,10 +176,10 @@ classdef PUPatch<Patch
                             [sumk,dotprodk] = obj.children{k}.evalfGrid_recurse(sub_grid);
                     else
                         sumk = obj.children{k}.evalfGridBump(sub_grid);
-                        dotprodk = sumk.*obj.children{k}.evalfGrid(sub_grid,1,0);
+                        dotprodk = sumk.*obj.children{k}.evalfGrid(sub_grid);
                     end
                     
-                    if obj.dim ==2
+                    if obj.dim == 2
                             sum(sub_ind{1},sub_ind{2}) = sum(sub_ind{1},sub_ind{2}) + sumk;
                             dotprod(sub_ind{1},sub_ind{2}) = dotprod(sub_ind{1},sub_ind{2}) + dotprodk;
                     else
@@ -218,7 +218,7 @@ classdef PUPatch<Patch
             midpoint = mean(obj.zone(obj.splitting_dim,:));
             
             inds{1} = grid{obj.splitting_dim} < midpoint;
-            inds{2} = grid{obj.splitting_dim} >= midpoint;
+            inds{2} = ~inds{1};
             
             for k=1:2
                 sub_grids{k}{obj.splitting_dim} = sub_grids{k}{obj.splitting_dim}(inds{k});
@@ -252,6 +252,7 @@ classdef PUPatch<Patch
                     
                     if obj.dim==2
                         ind_k = false(grid_lengths(1),grid_lengths(2));
+                        
                         if obj.splitting_dim==1
                             ind_k(inds{k},:) = true;
                         else
@@ -259,13 +260,14 @@ classdef PUPatch<Patch
                         end
                     elseif obj.dim==3
                         ind_k = false(grid_lengths(1),grid_lengths(2),grid_lengths(3));
-                    end
-                    if obj.splitting_dim==1
-                        ind_k(inds{k},:,:) = true;
-                    elseif obj.splitting_dim==2
-                        ind_k(:,inds{k},:) = true;
-                    else
-                        ind_k(:,:,inds{k}) = true;
+                        
+                        if obj.splitting_dim==1
+                            ind_k(inds{k},:,:) = true;
+                        elseif obj.splitting_dim==2
+                            ind_k(:,inds{k},:) = true;
+                        else
+                            ind_k(:,:,inds{k}) = true;
+                        end
                     end
                     
                     ind_k = ind_k(:);
@@ -293,10 +295,8 @@ classdef PUPatch<Patch
             %Put the order at the end; this makes things
             %easier to deal with in matlab
             vals = zeros(grid_lengths);
-            lengths = size(vals);
             
             sub_grids = cell(2,1);
-            child_vals = cell(2,1);
             
             inds = cell(2,1);
             
@@ -308,7 +308,7 @@ classdef PUPatch<Patch
             midpoint = mean(obj.zone(obj.splitting_dim,:));
             
             inds{1} = X{obj.splitting_dim} < midpoint;
-            inds{2} = X{obj.splitting_dim} >= midpoint;
+            inds{2} = ~inds{1};
             
             for k=1:2
                 sub_grids{k}{obj.splitting_dim} = sub_grids{k}{obj.splitting_dim}(inds{k});
@@ -320,42 +320,33 @@ classdef PUPatch<Patch
             for k=1:2
                 if  not_empty_child(k)
                     if ~obj.children{k}.is_leaf
-                        child_vals{k} = obj.children{k}.evalfZoneGrid(sub_grids{k});
+                        child_vals = obj.children{k}.evalfZoneGrid(sub_grids{k});
                     else
-                        child_vals{k} = obj.children{k}.evalfGrid(sub_grids{k},1,0);
+                        child_vals = obj.children{k}.evalfGrid(sub_grids{k});
+                    end
+                    
+                    if obj.dim== 2
+                        if obj.splitting_dim == 1
+                            vals(inds{k},:) = child_vals;
+                        else
+                            vals(:,inds{k}) = child_vals;
+                        end
+                    elseif obj.dim == 3
+                        if obj.splitting_dim == 1
+                            vals(inds{k},:,:) = child_vals;
+                        elseif obj.splitting_dim == 2
+                            vals(:,inds{k},:) = child_vals;
+                        else
+                            vals(:,:,inds{k}) = child_vals;
+                        end
                     end
                 end
             end
-            
-            %Go ahead and shift the splitting diminsion
-            %Here I ciculate the dimensions before the order.
-            dim_permute = circshift(1:obj.dim,[0 -obj.splitting_dim+1]);
-            
-            vals = permute(vals,dim_permute);
-            lengths = size(vals);
-            vals = reshape(vals,lengths(1),prod(lengths(2:end)));
-            
-            for k=1:2
-                child_vals{k} = permute(child_vals{k},[dim_permute obj.dim+1]);
-                c_lengths = size(child_vals{k});
-                child_vals{k} = reshape(child_vals{k},c_lengths(1),prod(c_lengths(2:end)));
-            end            
-            
-            for k=1:2
-                if not_empty_child(k)
-                    vals(inds{k},:) = child_vals{k};
-                end
-            end
-            
-            vals = reshape(vals,lengths);
-            vals = ipermute(vals,dim_permute);
         end
         
         function [ii,jj,zz] = interpMatrixZone_vecs(obj,X)
             
             [numpts,~] = size(X);
-            
-            vals = zeros(numpts,1);
             
             ind = false(numpts,2);
             
@@ -407,11 +398,8 @@ classdef PUPatch<Patch
             
             ind = false(numpts,2);
             
-            %Figure out indicies of the points in the left and right
-            %domains
-            for k=1:2
-                ind(:,k) = obj.children{k}.InZone(X);
-            end
+            ind(:,1) = X(:,obj.splitting_dim)<mid_point;
+            ind(:,2) = ~ind(:,1);
             
             child_vals = cell(2,1);
             
@@ -419,7 +407,7 @@ classdef PUPatch<Patch
             for k=1:2
                 if any(ind(:,k))
                     if obj.children{k}.is_leaf
-                        child_vals{k} = obj.children{k}.evalf(X(ind(:,k),:),1,0);
+                        child_vals{k} = obj.children{k}.evalf(X(ind(:,k),:));
                     else
                         child_vals{k} = obj.children{k}.evalfZone(X(ind(:,k),:));
                     end
@@ -502,20 +490,6 @@ classdef PUPatch<Patch
             str = strvcat(strcat('1',obj.children{1}.toString()),strcat('2',obj.children{2}.toString()));
         end
         
-        function plotDomains3D(obj,h0,h1)
-            LEAVES = obj.collectLeaves({});
-            num_p = length(LEAVES);
-            step = (h1-h0)/(num_p-1);
-            hold on;
-            for k=1:length(LEAVES)
-                ch = h1 - step*(k-1);
-                x = [LEAVES{k}.domain(1,1) LEAVES{k}.domain(1,2) LEAVES{k}.domain(1,2) LEAVES{k}.domain(1,1)];
-                y = [LEAVES{k}.domain(2,1) LEAVES{k}.domain(2,1) LEAVES{k}.domain(2,2) LEAVES{k}.domain(2,2)];
-                z = [ch ch ch ch];
-                patch(x,y,z,'red');
-            end
-            hold off;
-        end
     end
     
 end
