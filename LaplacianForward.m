@@ -31,10 +31,11 @@ for k=1:length(LEAVES)
 %     end
     
     [out_border, in_border] = FindBoundaryIndex2D(dim,LEAVES{k}.domain(),domain);
-    %lap(in_border) = lap(in_border)-LEAVES{k}.Binterp*sol;
-    points = LEAVES{k}.points();
+    lap(in_border) = lap(in_border)-LEAVES{k}.Binterp*sol;
+    %points = LEAVES{k}.points();
     %lap(in_border) = lap(in_border)-Tree.evalf(points(in_border,:));
-    lap(in_border) = lap(in_border)-Tree.evalfZone(points(in_border,:));
+    %lap(in_border) = lap(in_border)-Tree.evalfZone(points(in_border,:));
+    
     output = [output;lap];
     
     step_n = step_n + prod(dim);

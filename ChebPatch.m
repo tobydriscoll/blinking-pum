@@ -378,35 +378,33 @@ classdef ChebPatch<LeafPatch
                 pref = chebfunpref();
                 pref.chebfuneps = obj.tol;
                 
-                simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);             
-                if obj.split_flag(1)
-                    colChebtech = sum(abs(simple_2D_coeffs), 2);
-                    fCol = chebtech2({[], colChebtech});
-                    %lens(1) = length(simplify(fCol))+1;
-                    [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
-                    lens(1) = cutoffX2+~isHappyX;
-                end
-                
-                if obj.split_flag(2)
-                    rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
-                    fRow = chebtech2({[], rowChebtech});
-                    %lens(2) = length(simplify(fRow))+1;
-                    [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
-                    lens(2) = cutoffY2+~isHappyY;
-                end
-                
-
+%                 simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);             
 %                 if obj.split_flag(1)
-%                     fCol = chebtech2(obj.values+max(abs(obj.values),[],1));
+%                     colChebtech = sum(abs(simple_2D_coeffs), 2);
+%                     fCol = chebtech2({[], colChebtech});
 %                     [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
 %                     lens(1) = cutoffX2+~isHappyX;
 %                 end
 %                 
 %                 if obj.split_flag(2)
-%                     fRow = chebtech2(obj.values.'+max(abs(obj.values.'),[],1));
+%                     rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
+%                     fRow = chebtech2({[], rowChebtech});
 %                     [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
 %                     lens(2) = cutoffY2+~isHappyY;
 %                 end
+                
+
+                if obj.split_flag(1)
+                    fCol = chebtech2(obj.values+max(abs(obj.values(:))));
+                    [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
+                    lens(1) = cutoffX2+~isHappyX;
+                end
+                
+                if obj.split_flag(2)
+                    fRow = chebtech2(obj.values.'+max(abs(obj.values(:))));
+                    [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
+                    lens(2) = cutoffY2+~isHappyY;
+                end
                 
                 
             else

@@ -363,14 +363,10 @@ classdef PUPatch<Patch
             jj = [];
             zz = [];
             
+            mid_point = mean(obj.zone(obj.splitting_dim,:));
             
-            %Figure out indicies of the points in the left and right
-            %domains
-            for k=1:2
-                ind(:,k) = obj.children{k}.InZone(X);
-            end
-            
-            child_vals = cell(2,1);
+            ind(:,1) = X(:,obj.splitting_dim)<mid_point;
+            ind(:,2) = ~ind(:,1);
             
             step = 0;
             

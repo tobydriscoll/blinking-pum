@@ -1,14 +1,14 @@
-c = 1e-2;
+c = 0.01;
 
 NT = 1;
 
 NT2 = 0;
 
-f = @(x) log((x(:,1).^2+x(:,2).^2)/c+1);
-f2 = @(x,y) log((x.^2+y.^2)/c+1);
+%f = @(x) log((x(:,1).^2+x(:,2).^2)/c+1);
+%f2 = @(x,y) log((x.^2+y.^2)/c+1);
 
-%f = @(x) atan((x(:,1)+x(:,2).^2)/c);
-%f2 = @(x,y) atan((x+y.^2)/c);
+f = @(x) atan((x(:,1)+x(:,2).^2)/c);
+f2 = @(x,y) atan((x+y.^2)/c);
 
 %f = @(x) exp(x(:,1)).*sin(x(:,2));
 %f2 = @(x,y) exp(x).*sin(y);
@@ -26,7 +26,7 @@ TIMES = zeros(NT,1);
 
 for i=1:NT
 tic;
-TREE = PUFun([-1 1;-1 1],[5 5],f,1e-6);
+TREE = PUFun([-1 1;-1 1],[5 5],f,1e-10);
 TIMES(i)=toc;
 end
 
@@ -58,7 +58,9 @@ E = abs(ef-f2(X,Y));
 
 max(E(:))
 
+length(TREE)
 
+length(TREE.leafArray)
 
 % TIMES = zeros(NT2,1);
 % 

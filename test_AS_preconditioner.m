@@ -6,7 +6,7 @@ deg_in = [5 5];
 cdeg_in = [3 3];
 split_flag = [1 1];
 tol = 1e-7;
-gmres_tol = 1e-6;
+gmres_tol = 1e-7;
 maxit = 1200;
 cheb_length  = 65;
 dim = [65 65];
@@ -21,8 +21,10 @@ L = @(u,x,y,dx,dy,dxx,dyy) (dxx+dyy);
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u};
 
 force = @(x) 4*c./(c+x(:,1).^2+x(:,2).^2).^2;
-
 border = @(x) log((x(:,1).^2+x(:,2).^2)/c+1);
+
+%force = @(x) ones(length(x),1);
+%border = @(x) zeros(length(x),1);
 
 Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 
