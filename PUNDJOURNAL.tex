@@ -11,11 +11,14 @@
 \usepackage[framed,numbered,autolinebreaks,useliterate]{mcode}
 \usepackage{amsthm}
 \usepackage{cite}
+\usepackage[margin=1in]{geometry}
 \DeclareMathOperator*{\argmin}{argmin}
 
 \newtheorem{theorem}{Theorem}[section]
+\newtheorem{roughtheorem}{Rough Theorem}[section]
 \newtheorem{corollary}{Corollary}[theorem]
 \newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{assumption}{Assumption}
 \newcommand{\lp}{\left(}
 \newcommand{\rp}{\right)}
 
@@ -36,6 +39,8 @@
 \newcommand{\child}[1]{c\textsubscript{#1}}
 \newcommand{\weight}[1]{w\textsubscript{#1}}
 \newcommand{\bound}[1]{b\textsubscript{#1}}
+
+\newcommand{\dm}{d_{\text{max}}}
 %%%%%
 
 \begin{document}
@@ -937,6 +942,108 @@ we get
 \end{equation}
 We can infer from here that $\hat{s}(x)$ can approximate $f'(x)$.
 
+\section{Chebyshev tensor product approximation}
+
+\subsection{Chebyshev interpolation}
+\label{sec_cheb}
+We use Chebyshev interpolants for our partition of unity method because they enjoy spectral convergence. Suppose that $f(x)$ is analytic inside a  Bernstein ellipse $E_\rho$ (an ellipse with foci $\pm 1$ and semi-major axis $\rho>1$). We then have Theorem 6 from \cite{trefethen2000spectral}:
+\begin{theorem} Suppose $f(z)$ is analytic on and inside the Bernstein ellipse $E_\rho$. Let $p_n$ be the polynomial that interpolates $f(z)$ at $n+1$ Chebyshev points of the second kind. Then there exists a constant $C>0$ such that for all $n>0$,
+$$ \left \| f(x)-p_n(x) \right \|_{\infty} \leq C  \rho^{-n}.$$
+ \end{theorem}
+If $f(x)$ is Lipschitz continuous on $[-1,1]$ then
+\begin{equation}
+f(x) = \sum_{k=0}^\infty a_k T_k(x), \quad a_k = \frac{2}{\pi} \int_{-1}^1 \frac{f(x) T_k(x)}{\sqrt{1-x^2}} dx,
+\end{equation}
+where $T_k$ denotes the degree $k$ Chebyshev polynomial (and for $a_0$, we multiply by $\frac{1}{\pi}$ instead of $\frac{2}{\pi}$). Furthermore if $p_n(x)$ is the $n$th degree Chebyshev interpolant then
+\begin{equation}
+f(x)-p_n(x) = \sum_{k=n+1}^{\infty} a_k \lp T_k(x)-T_m(x)\rp,
+\end{equation}
+where
+\begin{equation}
+m = \left [ (k+n-1)(\text{mod }2n) - (n-1)\right ],
+\end{equation}
+implying we can determine the accuracy of the interpolant $p_n(x)$ by inspecting the Chebyshev coefficients \cite{Trefethen2013}. Chebfun's standardChop method determines the minimum required degree by searching for a plateau of low magnitude coefficients \cite{Aurentz:2017:CCS:3034774.2998442}.  For example, Figure~\ref{Coeff_example} shows the first 128 coefficients of $f(x)=\exp \lp \sin \lp \pi x \rp \rp$. We see that all coefficients after the first 46 have magnitude less than $10^{-15}$. In this case, Chebfun determines the ideal degree to be 50.
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale = 0.5]{../tear-films-numerical-pde/1dPOU/PU_PAPER/coeff_plot.eps}
+\caption{Chebyshev coefficients for $f(x)=\exp \lp \sin \lp \pi x \rp \rp$.}
+\label{Coeff_example}
+\end{figure}
+
+Suppose now we are approximation $f(\vect{x}) \in [-1,1]^n \to \C$. For a multivariate monomial $m = x_1^{k_1} x_2^{k_2} \dots x_n^{k_n}$ we define the $\dm(m) = \max\{ k_ i\}_{i=1}^n$. Then for a polynomial $p$ the max degree is the max degree of its monomials. We can then similarly argue spectral convergence, as seen in theorem from \cite{2016arXiv160802216T}:
+\begin{theorem} Let $N_{n,h^2}$ be the open region of the complex plain bounded by the ellipse with foci $0$ and $n$ and leftmost point $-h^2$. Then if $f(\vect{x})$ is analytic for all $\vec{x}$ with $x_1^2+x_2^2+\dots+x_n^n \in N_{n,h^2}$, then for Chebyshev series $p$ we have
+$$
+\inf_{\dm(p) \leq s} \|f - p\|_{[-1,1]^n}= O_{\varepsilon}(\rho^{-s})
+$$
+where $\rho = h + \sqrt{1+h^2}$.
+\end{theorem}
+
+\subsection{Refinement with hypercubes}
+Here we will present an argument for how to determine if a multidimensional Chebyshev approximation is refined. For simplicity we will present the argument in 2D. Suppose for $f(\vect{x}) \in [-1,1]^2 \to \C$, we have a Chebyshev tensor product projection
+\begin{equation}
+p(x,y) = \sum_{i=1}^{N_x} \sum_{j=1}^{N_y} T_i(x) T_j(y) a_{ij}.	
+\end{equation}
+Our goal is to see how we can use Chebfun's {\tt happinessCheck} to determine if $p(x,y)$ can approximate $f(x,y)$. The {\tt happinessCheck} method uses the coefficients of a polynomial to search for a tail end below some tolerance. Throughout the rest of this section, I will assume Assumption~\ref{happy_as}.
+\begin{assumption}
+\label{happy_as}
+If $p(x)$ is the Chebyshev projection of $f(x)$ and $p(x)$ is determined to be happy with tolerance $\varepsilon$ using  Chebfun's {\tt happinessCheck}, then it is. 
+\end{assumption}
+
+Let $P_{N_x}$ be the map that takes a function $f(x)$ to its Chebyshev projection $p_{N_x}(x)$, and let $P_{N_y}$ map $f(y)$ to $p_{N_y}(y)$. Define $<\cdot,\cdot>_{x}$ be the Chebyshev $L^2$ inner product with respect to $x$; similarly define $<\cdot,\cdot>_{y}$. Here I will show that by examining $(a_{ij})$, we can determine the accuracy of $p(x,y)$.
+
+\begin{corollary}
+\label{col2}
+If the set of coefficients
+$$
+d_i = \sum_{j=1}^{N_y} |a_{ij}|
+$$
+is determined to be happy, then $\forall c \in [-1,1]$ $p(x,c)$ is happy. A similar result holds true if
+$$
+d_j = \sum_{i=1}^{N_x} |a_{ij}|.
+$$	
+\end{corollary}
+\begin{proof}
+We have that
+\begin{equation}
+p(x,c) = \sum_{i=0}^{N_x} T_{i}(x) \sum_{j=0}^{N_y} T_{j}(c) a_{ij}
+\end{equation}
+so that the Chebyshev coefficients $\{c_i\}$ of $p(x,c)$ are
+\begin{equation}
+	c_i = \sum_{j=0}^{N_y} T_j(c) a_{ij}.
+\end{equation}
+Since $|T_j(x)|\leq 1$ for all $x \in [-1,1]$ we have
+\begin{equation}
+|c_i| \leq 	\sum_{j=0}^{N_y} |T_j(c)| |a_{ij}| \leq \sum_{j=0}^{N_y}  |a_{ij}| = d_i.
+\end{equation}
+Thus if $\{d_i\}$ passes the happiness check, then $p(x,c)$ will as well.
+\end{proof}
+
+It should noted that if a polynomial $q(x,c)$ is happy along $y=c$, that does not necessarily mean $q(x,c)$ accurately approximates $f(x,c)$. A simple example would be with
+\begin{equation}
+f(x,y) = g(y),	
+\end{equation}
+where $g(y)$ requires a high resolution. If we say sampled on a ten-by-ten grid and produced a Chebyshev polynomial $q(x,y)$, $q(x,c)$ is constant and hence happy even though it is unlikely to approximate $f(x,c)$ well. I take some care to avoid this in the (rough) theorem below.
+
+\begin{roughtheorem}
+Suppose that the set of coefficients $\{d_i\}$ and $\{d_j\}$ from Corollary~\ref{col2} are happy. Then $p(x,y)$ approximates $f(x,y)$.	
+\end{roughtheorem}
+\begin{proof}
+Suppose we want to evaluate $(x',y')$, and we have a Chebyshev tensor grid $\{x_i\}_{i=0}^{N_x}\times \{y_j\}_{j=0}^{N_y}$. The discrete coefficients $(a_{ij})$ give $p(x_i,y_j) = f(x_i,y_j)$ (i.e. {\tt chebfun2.vals2coeffs(chebfun2.vals2coeffs(vals)) = vals}). For the rest of the proof, I will use the discrete Chebyshev projection (where the coefficients are evaluated with FFT).
+
+We have that
+\begin{equation}
+p(x_i,y) = \sum_{j=0}^{N_y} T_j(y_j) \left < T_j(y),\sum_{i=0}^{N_x} T_i(x_i) \left <  T_i(x),f(x,y) \right >_x \right >_y.
+\end{equation}
+We again assume that the projection at the Chebyshev points is equal to the function we are approximating. That is,
+\begin{equation}
+\sum_{i=0}^{N_x} T_i(x_i) \left <  T_i(x),f(x,y) \right >_x = 	f(x_i,y)
+\end{equation}
+so we get
+\begin{equation}
+p(x_i,y) = \sum_{j=0}^{N_y} T_j(y_j) \left < T_j(y),f(x_i,y)\right >_y,
+\end{equation}
+i.e. the Chebyshev projection of $f(x_i,y)$. Since $p(x_i,y)$ is assumed to be happy, we have that $p(x_i,y)$ approximates $f(x_i,y)$. We can thus use $p(x_1,y)$,$p(x_2,y)$,$\dots$,$p(x_{N_x},y)$ to approximate $f(x,y)$ at $(x_1,y')$, $(x_2,y')$,$\dots$,$(x_{N_x},y')$ respectively. Since $p(x,y')$ is presumed to be happy and approximates $f(x,y')$ on the Chebyshev points along $y=y'$, we have that $p(x,y')$ approximates $f(x,y)$. Thus we can assume $p(x',y')$ approximates $f(x',y')$.
+\end{proof}
 \bibliographystyle{plain}
 \bibliography{PU_BIB}
 

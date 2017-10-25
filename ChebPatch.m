@@ -32,10 +32,15 @@ classdef ChebPatch<LeafPatch
     methods
         % Construct for the ChebPatch
         %
-        %  Input:
-        % domain: (dim x 2) array indiciating array for the hypercube.
-        %   degs: (dim x 1) array indicating the degree of the polynomial
-        %         along the dimensions.
+        %      Input:
+        %       zone: (dim x 2) array indiciating array for the zone.
+        %     domain: (dim x 2) array indiciating array for the domain.
+        %   outerbox: (dim x 2) array indiciating array for the outerbox.
+        %    degs_in: (dim x 1) integer array indicating the degree in each
+        %                       dimension. Here the standard degrees are
+        %                       [3 5 9 17 33 65 129].
+        % split_flag: (dim x 1) boolean array indicating if the patch can
+        %                       be split in any given dimension.
         function obj = ChebPatch(region,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
             obj.outerbox = outerbox;
             obj.region = region;
@@ -98,7 +103,10 @@ classdef ChebPatch<LeafPatch
         end
         
         
-        % Returns the length of the object
+        % Construct for the ChebPatch
+        %
+        % This method coarsens the patch, resampling the patches values
+        % on a coarse grid.
         function Coarsen(obj)
             if ~obj.iscoarse
                 
@@ -124,7 +132,11 @@ classdef ChebPatch<LeafPatch
             end
         end
         
-        % Returns the length of the object
+        
+        % Construct for the ChebPatch
+        %
+        % This method refines the patch, resampling the patches values
+        % on a fine grid.
         function Refine(obj)
             if obj.iscoarse
                 
@@ -152,6 +164,7 @@ classdef ChebPatch<LeafPatch
             ln = obj.cheb_length;
         end
         
+        % Returns the values of the object
         function vals = Getvalues(obj)
             vals = obj.values(:);
         end
@@ -176,6 +189,7 @@ classdef ChebPatch<LeafPatch
             
         end
         
+        % Returns a cell array of the grids of the domain
         function grid = leafGrids(obj)
             grid = cell(1,obj.dim);
             
@@ -189,12 +203,9 @@ classdef ChebPatch<LeafPatch
         %
         %  Input:
         %      X: set of points to evaluate at
-        %    dim: dimension we are evaluating along
-        %  order: order of the derivative we are calculating
         %
         % Output:
-        %     ef: (length(X) x order+1) array containing the derivatves
-        %         along dimension dim from 0 to order.
+        %     ef: length(X) array containing the interpolated
         function ef = evalf(obj,X)
             
             [num_pts,~] = size(X);
@@ -207,8 +218,15 @@ classdef ChebPatch<LeafPatch
             
         end
         
+        % Evaluates the approximant on a grid.
+        %
+        %  Input:
+        %      X: cellarray of grids to be evaluated on.
+        %
+        % Output:
+        %     ef: matrix of dim(X) containing the interpolated values
         function ef = evalfGrid(obj,X)
-                        
+            
             G = obj.values;
             
             for k=1:obj.dim
@@ -226,6 +244,13 @@ classdef ChebPatch<LeafPatch
             ef = G;
         end
         
+        % Evaluates the bump function of a patch.
+        %
+        %  Input:
+        %      X: set of points to evaluate at
+        %
+        % Output:
+        %     ef: array of length(X) of the patch's weight evaluated at X.
         function ef = evalfBump(obj,X)
             
             ef = ones(size(X,1),1);
@@ -235,6 +260,13 @@ classdef ChebPatch<LeafPatch
             
         end
         
+        % Evaluates the bump function of a patch.
+        %
+        %  Input:
+        %      X: cellarray of grids to be evaluated on.
+        %
+        % Output:
+        %     ef: array of dim(X) of the patch's weight evaluated at X.
         function ef = evalfGridBump(obj,X)
             
             W = cell(3,1);
@@ -327,55 +359,73 @@ classdef ChebPatch<LeafPatch
                 pref = chebfunpref();
                 pref.chebfuneps = obj.tol;
                 
-                %                 simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
+                simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
+                
+                if obj.split_flag(1)
+                    colChebtech = sum(abs(simple_2D_coeffs), 2);
+                    fCol = chebtech2({[], colChebtech});
+                    data.hscale = diff(obj.outerbox(1,:));
+                    data.vscale = diff(max(abs(obj.values(:))));
+                    [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], data, pref);
+                    lens(1) = cutoffX2+~isHappyX;
+                end
+                
+                if obj.split_flag(2)
+                    rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
+                    fRow = chebtech2({[], rowChebtech});
+                    data.hscale = diff(obj.outerbox(2,:));
+                    data.vscale = diff(max(abs(obj.values(:))));
+                    [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], data, pref);
+                    lens(2) = cutoffY2+~isHappyY;
+                end
+                
+                
+
+                
                 %                 if obj.split_flag(1)
-                %                     colChebtech = sum(abs(simple_2D_coeffs), 2);
-                %                     fCol = chebtech2({[], colChebtech});
+                %                     fCol = chebtech2(obj.values+max(abs(obj.values(:))));
                 %                     [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
                 %                     lens(1) = cutoffX2+~isHappyX;
                 %                 end
                 %
                 %                 if obj.split_flag(2)
-                %                     rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
-                %                     fRow = chebtech2({[], rowChebtech});
+                %                     fRow = chebtech2(obj.values.'+max(abs(obj.values(:))));
                 %                     [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
                 %                     lens(2) = cutoffY2+~isHappyY;
                 %                 end
-                
-                
-                if obj.split_flag(1)
-                    fCol = chebtech2(obj.values+max(abs(obj.values(:))));
-                    [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
-                    lens(1) = cutoffX2+~isHappyX;
-                end
-                
-                if obj.split_flag(2)
-                    fRow = chebtech2(obj.values.'+max(abs(obj.values(:))));
-                    [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
-                    lens(2) = cutoffY2+~isHappyY;
-                end
-                
+                %
                 
             else
+                
+                data.vscale = max(abs(obj.values(:)));
+                
                 pref = chebfunpref();
                 pref.chebfuneps = obj.tol;
                 simple_3D_coeffs = chebfun3t.vals2coeffs(obj.values);
                 
-                colChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 1), 2);
-                fCol = chebtech2({[], colChebtech});
-                [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], [], pref);
-                lens(1) = cutoffX2+~isHappyX;
+                if obj.split_flag(1)
+                    colChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 1), 2);
+                    fCol = chebtech2({[], colChebtech});
+                    data.hscale = diff(obj.domain(1,:));
+                    [isHappyX, cutoffX2] = happinessCheck(fCol, [], [], data, pref);
+                    lens(1) = cutoffX2+~isHappyX;
+                end
                 
-                rowChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 2), 2);
-                fRow = chebtech2({[], rowChebtech});
-                [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], [], pref);
-                lens(2) = cutoffY2+~isHappyY;
+                if obj.split_flag(2)
+                    rowChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 2), 2);
+                    fRow = chebtech2({[], rowChebtech});
+                    data.hscale = diff(obj.domain(2,:));
+                    [isHappyY, cutoffY2] = happinessCheck(fRow, [], [], data, pref);
+                    lens(2) = cutoffY2+~isHappyY;
+                end
                 
-                
-                tubeChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 3), 2);
-                fTube = chebtech2({[], tubeChebtech});
-                [isHappyZ, cutoffZ2] = happinessCheck(fTube, [], [], [], pref);
-                lens(3) = cutoffZ2+~isHappyZ;
+                if obj.split_flag(3)
+                    tubeChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 3), 2);
+                    fTube = chebtech2({[], tubeChebtech});
+                    data.hscale = diff(obj.domain(3,:));
+                    [isHappyZ, cutoffZ2] = happinessCheck(fTube, [], [], data, pref);
+                    lens(3) = cutoffZ2+~isHappyZ;
+                end
                 
             end
             
@@ -514,6 +564,7 @@ classdef ChebPatch<LeafPatch
                 Z1 = Z*lengths(3)/2+center(3);
                 %Single plot command for all 'cube lines'
                 plot3(X1,Y1,Z1,'color','black');
+                plot3(mean(obj.domain(1,:)),mean(obj.domain(2,:)),mean(obj.domain(3,:)),'.','MarkerSize',10,'Color','black');
                 hold off;
             end
         end
