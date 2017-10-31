@@ -20,11 +20,11 @@ L = @(u,x,y,dx,dy,dxx,dyy) (dxx+dyy);
 %East West South North
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u};
 
-force = @(x) 4*c./(c+x(:,1).^2+x(:,2).^2).^2;
-border = @(x) log((x(:,1).^2+x(:,2).^2)/c+1);
+%force = @(x) 4*c./(c+x(:,1).^2+x(:,2).^2).^2;
+%border = @(x) log((x(:,1).^2+x(:,2).^2)/c+1);
 
-%force = @(x) ones(length(x),1);
-%border = @(x) zeros(length(x),1);
+force = @(x) ones(length(x),1);
+border = @(x) zeros(length(x),1);
 
 Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 

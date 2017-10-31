@@ -11,8 +11,10 @@
 \usepackage[framed,numbered,autolinebreaks,useliterate]{mcode}
 \usepackage{amsthm}
 \usepackage{cite}
-\usepackage[margin=1in]{geometry}
+\usepackage[margin=1.5in]{geometry}
 \DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\osc}{osc}
+
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{roughtheorem}{Rough Theorem}[section]
@@ -1044,6 +1046,61 @@ p(x_i,y) = \sum_{j=0}^{N_y} T_j(y_j) \left < T_j(y),f(x_i,y)\right >_y,
 \end{equation}
 i.e. the Chebyshev projection of $f(x_i,y)$. Since $p(x_i,y)$ is assumed to be happy, we have that $p(x_i,y)$ approximates $f(x_i,y)$. We can thus use $p(x_1,y)$,$p(x_2,y)$,$\dots$,$p(x_{N_x},y)$ to approximate $f(x,y)$ at $(x_1,y')$, $(x_2,y')$,$\dots$,$(x_{N_x},y')$ respectively. Since $p(x,y')$ is presumed to be happy and approximates $f(x,y')$ on the Chebyshev points along $y=y'$, we have that $p(x,y')$ approximates $f(x,y)$. Thus we can assume $p(x',y')$ approximates $f(x',y')$.
 \end{proof}
+
+
+\subsection{Refinement take two}
+Here I attempt to give a formal arguement for the sum method. Suppose that 
+$$
+f(x,y) = \sum_{i=0}^{\infty} \sum_{j=0}^{\infty} T_i(x)T_j(y)a_{ij}
+$$
+where 
+$$
+a_{ij} = \frac{2 \hat{\delta_i}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-x^2}} T_i(x) \frac{2 \hat{\delta_j}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-y^2}} T_j(y) f(x,y) dy dx,
+$$
+such that $\hat{\delta_i} = 1 - \delta_{k0}/2$. Define
+\begin{equation}
+p(x,y) =  \sum_{i=0}^{N_x} \sum_{j=0}^{N_y} T_i(x)T_j(y)a_{ij}.
+\end{equation}
+
+Here we demonstrate how we can look at the coefficients to determine if refinement is needed. Define $c_j(x)$ such that
+ \begin{equation}
+ 	c_j(x) = \frac{2 \hat{\delta_j}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-y^2}}T_j(y)f(x,y)dy.
+\end{equation}
+We then have that the Chebyshev approximation of $f(\hat{x},y)$ along y is $\sum_{j=1}^{N_y} T_j(y)c_j(\hat{x})$. We also have
+\begin{equation}
+p(x,y) = \sum_{i=0}^{N_x} T_i(x) \int_{-1}^{1} \frac{2 \hat{\delta_i}}{\pi}  \sum_{j=0}^{N_y}T_j(y)c_j(x) dx
+\label{fixed_x}
+\end{equation}
+implying $p(x,\hat{y})$ is the Chebyshev approximation of $\sum_{j=1}^{N_y} T_j(\hat{y})c_j(x)$. Here we take an idea from a theorem in \cite{sommariva2005adaptive}.
+
+\begin{theorem} 
+Let $f:[-1,1]^2 \to \R$ be continuous such that
+$$
+\log(n)\osc(f;[-1,1]^2;1/n)\to 0 \text{ as } n\to \infty
+$$
+where
+$$
+\osc(f;[-1,1]^2;1/n):=\max_{|{\vect{x}-\vect{y}}|<1/n}(|f(\vect{x})-f(\vect{y})|;\vect{x},\vect{y} \in [-1,1]^2).
+$$
+Then for $\varepsilon>0$ there exists $N_x,N_y$ such that
+$$
+p(x,y) = \sum_{i=0}^{N_x} \sum_{j=0}^{N_y} T_i(x)T_j(y)a_{ij}
+$$
+and
+$$
+\|f(x,y)-p(x,y)\|_{\infty} \leq \varepsilon.
+$$
+ \end{theorem}
+There are essentially two main arguments to the theorem:
+\begin{enumerate}
+\item We can find $N_y$ such that $\|f(\cdot,y) -\sum_{i=0}^{N_y} c_j(\cdot)T_j(y) \| \leq \varepsilon/2$,
+\item and then find $N_x$ such that $\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\|<\varepsilon/2$.
+\end{enumerate}
+This argument of course works by looking at $x$ first and then $y$. We seek to develop an algorithm testing for these conditions with the coefficients $(a_{ij})$ produced by the discrete Chebyshev transform with a sampling from the Chebyshev tensor product grid $\{x_i\}_{i=0}^{N_x} \times \{y_j\}_{j=0}^{N_y}$. We have that
+\begin{equation}
+\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\| \leq \sum_{i=N_x+1}^{\infty} | \sum_{j=0}^{N_y} T_j(\cdot) a_{ij}	 | \leq \sum_{i=N_x+1}^{\infty} \sum_{j=0}^{N_y} |a_{ij}|.
+\end{equation}
+We can use Chebfun's {\tt standardChop} on $\{\sum_{j=0}^{N_y} |a_{ij}|\}_{i=0}^{N_x}$ to test the second condition. We test the first condition by looking at the series of $f(x_i,y)$ for each Chebyshev point $x_i$. The coefficients given by the discrete Chebyshev transform will force $p(x,y)$ interpolant $f(x,y)$ on the Chebyshev tensor grid \cite{mason2002chebyshev}. This means with that for each $x_i$, for all $y_j$ that $p(x_i,y_j) = f(x_i,y_j)$. We thus have that $p(x_i,y)$ is the discrete Chebyshev transform of $f(x_i,y)$. This implies that we can {\tt standardChop} on $\{\sum_{i=0}^{N_x} |a_{ij}|\}_{j=0}^{N_y}$ to test if each $f(x_i,y)$ is resolved. This argument works if the conditions of $x$ and $y$ are reversed. We thus determine $p(x,y)$ refined $f(x,y)$ if both $\{\sum_{j=0}^{N_y} |a_{ij}|\}_{i=0}^{N_x}$, $\{\sum_{i=0}^{N_x} |a_{ij}|\}_{j=0}^{N_y}$ are determined to be adequate with {\tt standardChop}.
 \bibliographystyle{plain}
 \bibliography{PU_BIB}
 

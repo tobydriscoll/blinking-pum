@@ -83,7 +83,7 @@ classdef PUFun < handle
                         [X{j},W{j}] = chebpts(obj.leafArray{i}.degs(j),obj.leafArray{i}.zone(j,:));
                     end
                     
-                    vals = obj.leafArray{i}.evalfGrid(X,1,0);
+                    vals = obj.leafArray{i}.evalfGrid(X);
                     
                     
                     if obj.ChebRoot.dim==2
