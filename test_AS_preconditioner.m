@@ -39,10 +39,10 @@ while ~is_refined
         
         sol = Tree.linOp\rhs;
         
-        Tree.sample(sol);
+        Max = Tree.sample(sol);
         
         
-        Tree = Tree.splitleaf(true);
+        Tree = Tree.splitleaf(Max,true);
     else
         
         [rhs] = setLinOps(Tree,L,B,force,border);
@@ -54,9 +54,9 @@ while ~is_refined
         
         [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],Tree.Getvalues);
         
-        Tree.sample(sol);
+        Max = Tree.sample(sol);
         
-        Tree.PUsplit(true);
+        Tree.PUsplit(Max,true);
     end
     
     x = linspace(-1,1,100)';

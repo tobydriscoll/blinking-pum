@@ -55,9 +55,9 @@ classdef PUPatch<Patch
             pts = [obj.children{1}.points();obj.children{2}.points()];
         end
         
-        function is_refined = PUsplit(obj,set_vals)
+        function is_refined = PUsplit(obj,Max,set_vals)
             
-            if nargin ==1
+            if nargin ==2
                 set_vals = false;
             end
             
@@ -68,11 +68,11 @@ classdef PUPatch<Patch
                 
                 if ~obj.children{k}.is_refined
                     if obj.children{k}.is_leaf
-                        obj.children{k} = obj.children{k}.splitleaf(set_vals);
+                        obj.children{k} = obj.children{k}.splitleaf(Max,set_vals);
                         is_refined = is_refined && obj.children{k}.is_refined;
                         is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
                     else
-                        temp = obj.children{k}.PUsplit(set_vals);
+                        temp = obj.children{k}.PUsplit(Max,set_vals);
                         is_refined = is_refined && temp;
                         is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
                     end
@@ -89,15 +89,17 @@ classdef PUPatch<Patch
             obj.is_geometric_refined = is_geometric_refined;
         end
         
-        function sample(obj,f)
+        function [Max] = sample(obj,f)
             if ~isnumeric(f)
-                obj.children{1}.sample(f);
-                obj.children{2}.sample(f);
+                Max1 = obj.children{1}.sample(f);
+                Max2 = obj.children{2}.sample(f);
             else
-                obj.children{1}.sample(f(1:length(obj.children{1})));
-                obj.children{2}.sample(f(length(obj.children{1})+1:end));
+                Max1 = obj.children{1}.sample(f(1:length(obj.children{1})));
+                Max2 = obj.children{2}.sample(f(length(obj.children{1})+1:end));
             end
+            Max = max(Max1,Max2);
         end
+        
         
         %  findIndex(obj,index)
         %  This function finds the index (i.e. the path from the root to
@@ -462,6 +464,8 @@ classdef PUPatch<Patch
         end
         
         function Refine(obj)
+            
+            
             for k=1:2
                 obj.children{k}.Refine();
             end
@@ -478,7 +482,7 @@ classdef PUPatch<Patch
                     [~,split_dim] = max(lengths);
                     obj.children{k} = obj.children{k}.split(split_dim);
                 else
-                    obj.children{k}.split();
+                    obj.children{k}.split(Max,set_vals);
                 end
             end
             obj.region = [obj.children{1}.region(:,1) obj.children{2}.region(:,2)];

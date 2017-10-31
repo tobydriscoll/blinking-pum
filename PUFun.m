@@ -21,12 +21,12 @@ classdef PUFun < handle
             
             while ~obj.ChebRoot.is_refined
                 
-                obj.ChebRoot.sample(f);
+                Max = obj.ChebRoot.sample(f);
                 
                 if obj.ChebRoot.is_leaf
-                    obj.ChebRoot = obj.ChebRoot.splitleaf();
+                    obj.ChebRoot = obj.ChebRoot.splitleaf(Max);
                 else
-                    obj.ChebRoot.PUsplit();
+                    obj.ChebRoot.PUsplit(Max);
                 end
                 
             end

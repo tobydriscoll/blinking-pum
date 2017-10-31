@@ -252,30 +252,6 @@ We use {\tt StandardChop} on $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$ to t
 \end{center}
 \end{frame}
 
-\begin{frame}{Refinement for 2D tensor product polynomials}
-\begin{center}
-To test for $\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\|<\varepsilon/2$, we note: $$p(x,\cdot)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(\cdot)a_{ij}$$
-and
-$$ \left | \sum_{j=0}^{N_y} T_j(\cdot)a_{ij} \right | < \sum_{j=0}^{N_y} |a_{ij}|. $$
-\end{center}
-
-\begin{center}
-We use {\tt StandardChop} on $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$ to test for the condition.
-\end{center}
-\end{frame}
-
-\begin{frame}{Partition of unity method}
-\begin{center}
-To refine, we cannot just increase $N_x$ and $N_y$. $N_x N_y$ gets big!
-\end{center}
-
-\begin{itemize}
-\item We instead split $[-1,1] \times [-1,1]$ into overlapping squares $\{ \Omega_k \}$.
-\item With approximations $s_k:\Omega_k \to \R$, we define a partition of unity $w_k:\Omega_k \to \R$ with $\sum_k w_k=1$ so we get an approximation $$s(\vect{x}) = w_k(\vect{x})s_k(\vect{x}).$$
-\end{itemize}
-
-\end{frame}
-
 \begin{frame}{Partition of unity method}
 \begin{center}
 To refine, we cannot just increase $N_x$ and $N_y$. $N_x N_y$ gets big!
