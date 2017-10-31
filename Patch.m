@@ -5,7 +5,6 @@ classdef (Abstract) Patch < handle
     properties
         domain
         zone
-        region
         boundaryIndex
         cheb_length
         is_leaf

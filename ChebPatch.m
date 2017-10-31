@@ -41,11 +41,10 @@ classdef ChebPatch<LeafPatch
         %                       [3 5 9 17 33 65 129].
         % split_flag: (dim x 1) boolean array indicating if the patch can
         %                       be split in any given dimension.
-        function obj = ChebPatch(region,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
+        function obj = ChebPatch(domain,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
             obj.outerbox = outerbox;
-            obj.region = region;
             obj.zone = zone;
-            obj.domain = region;
+            obj.domain = domain;
             obj.is_geometric_refined = true; %square is always geometrically refined
             [obj.dim,~] = size(obj.domain);
             
@@ -499,8 +498,8 @@ classdef ChebPatch<LeafPatch
             zone0 = obj.zone;
             zone1 = obj.zone;
             
-            region0 = obj.region;
-            region1 = obj.region;
+            region0 = obj.domain;
+            region1 = obj.domain;
             
             m = sum(obj.zone(split_dim,:))/2;
             
@@ -516,12 +515,12 @@ classdef ChebPatch<LeafPatch
             
             Children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
             
-            region = obj.region;
+            domain = obj.domain;
             
-            region(split_dim,:) = [region0(split_dim,1) region1(split_dim,2)];
+            domain(split_dim,:) = [region0(split_dim,1) region1(split_dim,2)];
             
             %Return the PUPatch with the new children
-            Child = PUPatch(region,obj.zone,overlap_in,length(Children{1})+length(Children{2}),Children,split_dim,obj.index);
+            Child = PUPatch(domain,obj.zone,overlap_in,length(Children{1})+length(Children{2}),Children,split_dim,obj.index);
             
             if set_vals
                 for k=1:2

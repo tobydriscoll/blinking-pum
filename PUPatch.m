@@ -79,11 +79,10 @@ classdef PUPatch<Patch
                 end
             end
             
-            obj.region = [obj.children{1}.region(:,1) obj.children{2}.region(:,2)];
-            obj.domain = obj.region;
+            obj.domain = [obj.children{1}.region(:,1) obj.children{2}.region(:,2)];
             
             obj.cheb_length = obj.children{1}.cheb_length+obj.children{2}.cheb_length;
-            obj.overlap_in = [obj.children{2}.region(obj.splitting_dim,1), obj.children{1}.region(obj.splitting_dim,2)];
+            obj.overlap_in = [obj.children{2}.domain(obj.splitting_dim,1), obj.children{1}.domain(obj.splitting_dim,2)];
             
             obj.is_refined = is_refined;
             obj.is_geometric_refined = is_geometric_refined;
@@ -485,8 +484,7 @@ classdef PUPatch<Patch
                     obj.children{k}.split(Max,set_vals);
                 end
             end
-            obj.region = [obj.children{1}.region(:,1) obj.children{2}.region(:,2)];
-            obj.domain = obj.region;
+            obj.domain = [obj.children{1}.region(:,1) obj.children{2}.region(:,2)];
         end
         
         
