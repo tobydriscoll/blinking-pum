@@ -16,11 +16,10 @@ classdef PUPatch<Patch
     
     methods
         
-        function obj = PUPatch(region,zone,overlap_in,cheb_length,children,splitting_dim,index)
+        function obj = PUPatch(domain,zone,overlap_in,cheb_length,children,splitting_dim,index)
             obj.outerbox = children{1}.outerbox;
-            obj.region = region;
             obj.zone = zone;
-            obj.domain = region;
+            obj.domain = domain;
             [obj.dim,~] = size(obj.domain);
             obj.overlap_in = overlap_in;
             obj.cheb_length = cheb_length;
@@ -79,7 +78,7 @@ classdef PUPatch<Patch
                 end
             end
             
-            obj.domain = [obj.children{1}.region(:,1) obj.children{2}.region(:,2)];
+            obj.domain = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
             
             obj.cheb_length = obj.children{1}.cheb_length+obj.children{2}.cheb_length;
             obj.overlap_in = [obj.children{2}.domain(obj.splitting_dim,1), obj.children{1}.domain(obj.splitting_dim,2)];
@@ -484,7 +483,7 @@ classdef PUPatch<Patch
                     obj.children{k}.split(Max,set_vals);
                 end
             end
-            obj.domain = [obj.children{1}.region(:,1) obj.children{2}.region(:,2)];
+            obj.domain = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
         end
         
         

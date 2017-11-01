@@ -2,7 +2,7 @@ c = 0.01;
 
 NT = 1;
 
-NT2 = 1;
+NT2 = 0;
 
 %f = @(x) log((x(:,1).^2+x(:,2).^4)/c+1);
 %f2 = @(x,y) log((x.^2+y.^4)/c+1);
@@ -28,7 +28,7 @@ TIMES = zeros(NT,1);
 
 for i=1:NT
 tic;
-TREE = PUFun([-1 1;-1 1],[7 7],f,1e-7);
+TREE = PUFun([-1 1;-1 1],[7 7],f,1e-12);
 TIMES(i)=toc;
 end
 

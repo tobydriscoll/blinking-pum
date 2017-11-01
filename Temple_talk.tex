@@ -252,6 +252,17 @@ We use {\tt StandardChop} on $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$ to t
 \end{center}
 \end{frame}
 
+\begin{frame}{Refinement for 2D tensor product polynomials}
+\begin{center}
+This gives us a discrete test for convergence:
+\end{center}
+
+\begin{center}
+Run	{\tt standardChop} on $\{ \sum_{i=0}^{N_x} |a_{ij}|  \}_{j=0}^{N_y}$ and $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$.
+\end{center}
+
+\end{frame}
+
 \begin{frame}{Partition of unity method}
 \begin{center}
 To refine, we cannot just increase $N_x$ and $N_y$. $N_x N_y$ gets big!
