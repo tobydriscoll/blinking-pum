@@ -547,13 +547,17 @@ classdef ChebPatch<LeafPatch
         end
         
         
-        function plotdomain(obj)
+        function plotdomain(obj,color)
+            
+            if nargin==1
+                color = 'black';
+            end
             
             if obj.dim==2
                 hold on;
                 lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
-                rectangle('position',[obj.domain(:,1)' lengths'],'LineWidth',2);
-                plot(mean(obj.domain(1,:)),mean(obj.domain(2,:)),'.','MarkerSize',10,'Color','black');
+                rectangle('position',[obj.domain(:,1)' lengths'],'LineWidth',2,'EdgeColor',color);
+                plot(mean(obj.domain(1,:)),mean(obj.domain(2,:)),'.','MarkerSize',10,'Color',color);
                 hold off;
             elseif obj.dim==3
                 hold on;

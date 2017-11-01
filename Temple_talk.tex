@@ -171,11 +171,7 @@ Chebyshev points are special because they allow for \textbf{spectral} convergenc
 \end{itemize}
 
 \begin{theorem} 
-Let $f:[-1,1]^2 \to \R$ be continuous such that
-$$
-\log(n)\osc(f;[-1,1]^2;1/n)\to 0 \text{ as } n\to \infty.
-$$
-Then for $\varepsilon>0$ there exists $N_x,N_y$ such that
+Let $f:[-1,1]^2 \to \R$ be Lipschitz continuous. Then for $\varepsilon>0$ there exists $N_x,N_y$ such that
 $$
 \|f(x,y)-p(x,y)\|_{\infty} \leq \varepsilon.
 $$
@@ -193,7 +189,7 @@ f(\hat{x},y) \approx \sum_{j=0}^{N_y}T_j(y)c_j(\hat{x})
 $$
 and for fixed $\hat{y}$
 $$
-p(x,\hat{y}) = \sum_{i=0}^{N_x} \frac{1}{\sqrt{1-x^2}}T_i(x) \frac{2 \hat{\delta_i}}{\pi} \int_{-1}^{1}   \sum_{j=0}^{N_y}T_j(\hat{y})c_j(x) dx.
+p(x,\hat{y}) = \sum_{i=0}^{N_x} \T_i(x) \frac{2 \hat{\delta_i}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-x^2}} \sum_{j=0}^{N_y}T_j(\hat{y})c_j(x) dx.
 $$
 
 \end{itemize}
@@ -241,6 +237,14 @@ $$ |c_j(x_k)| < \sum_{i=0}^{N_x} |a_{ij}|. $$ We use {\tt StandardChop} on $\{ \
 \end{frame}
 
 \begin{frame}{Refinement for 2D tensor product polynomials}
+
+\begin{center}
+\includegraphics[scale = 0.5]{absCoeffs.eps}
+\end{center}
+
+\end{frame}
+
+\begin{frame}{Refinement for 2D tensor product polynomials}
 \begin{center}
 To test for $\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\|<\varepsilon/2$, we note: $$p(x,\cdot)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(\cdot)a_{ij}$$
 and
@@ -270,7 +274,7 @@ To refine, we cannot just increase $N_x$ and $N_y$. $N_x N_y$ gets big!
 
 \begin{itemize}
 \item We instead split $[-1,1] \times [-1,1]$ into overlapping squares $\{ \Omega_k \}$.
-\item With approximations $s_k:\Omega_k \to \R$, we define a partition of unity $w_k:\Omega_k \to \R$ with $\sum_k w_k=1$ so we get an approximation $$s(\vect{x}) = w_k(\vect{x})s_k(\vect{x}).$$
+\item With approximations $s_k:\Omega_k \to \R$, we define a partition of unity $w_k:\Omega_k \to \R$ with $\sum_k w_k=1$ so we get an approximation $$s(\vect{x}) = \sum_k w_k(\vect{x})s_k(\vect{x}).$$
 \end{itemize}
 
 \end{frame}
@@ -297,10 +301,10 @@ For each leaf of the tree, we form the domain by 'pudging out' the rectangle.
 
 \begin{frame}{Partition of unity method}
 \begin{center}
-We decide to split a leaf $\nu_k$ if:
+We build an approximation by recursively splitting the tree until for every leaf $\nu_k$ we have:
 \end{center}
 \begin{itemize}
-\item For the polynomial approximation $s_k(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$, one of $$ \left \{ \sum_{j=0}^{N_y} |a_{ij}|  \right \}_{i=0}^{N_x}, \left \{ \sum_{i=0}^{N_x} |a_{ij}|  \right \}_{j=0}^{N_y} $$ fail the { \tt StandardChop } test.
+\item For the polynomial approximation $s_k(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$ on $\Omega_k$, both $$ \left \{ \sum_{j=0}^{N_y} |a_{ij}|  \right \}_{i=0}^{N_x}, \left \{ \sum_{i=0}^{N_x} |a_{ij}|  \right \}_{j=0}^{N_y} $$ pass the { \tt StandardChop } test.
 \end{itemize}
 
 \end{frame}
@@ -364,7 +368,7 @@ took 1.5 seconds to build, $\| s(x,y)-f(x,y)\|_{\infty} = 6\times10^{-14}$.
 	\end{center}
 
 	\begin{center}
-		\includegraphics[scale = 0.3]{domainPlot.eps}
+		\includegraphics[scale = 0.3]{ASdomain1.eps}
 	\end{center}
 \end{frame}
 
@@ -377,7 +381,7 @@ took 1.5 seconds to build, $\| s(x,y)-f(x,y)\|_{\infty} = 6\times10^{-14}$.
 	\end{center}
 
 	\begin{center}
-		\includegraphics[scale = 0.3]{zonePlot.eps}
+		\includegraphics[scale = 0.3]{ASdomain2.eps}
 	\end{center}
 \end{frame}
 
@@ -392,6 +396,14 @@ took 1.5 seconds to build, $\| s(x,y)-f(x,y)\|_{\infty} = 6\times10^{-14}$.
 	\begin{center}
 		\includegraphics[scale = 0.3]{zonePlot2.eps}
 	\end{center}
+\end{frame}
+
+\begin{frame}{Further Work}
+\begin{itemize}
+\item We use GMRES to solve the alternating Schwarz method.
+\item We are currently developing a preconditioner that appears to keep the number of GMRES iterations constant.	
+\end{itemize}
+
 \end{frame}
 
 \begin{frame}{Resources}
