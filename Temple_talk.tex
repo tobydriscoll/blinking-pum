@@ -106,8 +106,9 @@ University of Delaware\\
 
 \begin{itemize}
 	\item Overview of Chebyshev interpolant convergence theory
-	\item Refinement of 2D Chebyshev polynomials
-	\item Future work
+	\item Overview of Chebfun and Chebfun2
+	\item The partition of unity method
+	\item Alternating Schwarz method
 \end{itemize}
 \end{frame}
 
@@ -120,19 +121,47 @@ University of Delaware\\
 We can use Chebyshev polynomials to construct approximating functions.
 \begin{itemize}
 \item \text{\bf Chebfun} uses polynomial interpolants based on the Chebyshev points $$x_j = \cos(j\pi/n)$$	
-\item Chebyshev interpolants allow for fast and accurate algorithms for interpolation, differentiation, root finding, etc.
+\item Chebyshev interpolants allow for fast and accurate algorithms forinterpolation, differentiation, root finding, etc.
 \end{itemize}
+\end{frame}
 
+\begin{frame}{Overview of Chebyshev polynomial convergence theory}
+Using Chebfun:	
+\bigskip
+
+\begin{center}
+\includegraphics[scale = 0.4]{FishPlot.eps}
+\end{center}
+\begin{center}
+it only took 0.03 seconds to find all these roots!	
+\end{center}
 
 \end{frame}
 
 \begin{frame}{Overview of Chebyshev polynomial convergence theory}
 
-Chebyshev points are special because they allow for \textbf{spectral} convergence.
+Using Chebfun:	
+\bigskip
+
+\begin{center}
+\includegraphics[scale = 0.4]{AiryExample.eps}
+\end{center}
+\begin{center}
+it only took 0.02 seconds to find all these extrema points for the Airy function!	
+\end{center}
+
+\end{frame}
+
+
+
+\begin{frame}{Overview of Chebyshev polynomial convergence theory}
+
+The Chebyshev points allow for \textbf{spectral} convergence.
 
 \begin{itemize}
-\item Key idea: If $f(x) = \sum_{i=0}^{\infty} a_i T_i(x)$, then for the interpolant $p_n(x)$ $$ \|f(x) - p_n \|_{\infty} \leq 2 \sum_{i=n+1}^{\infty} |a_i|.$$
-\item Chebfun uses the coefficients {\tt standardChop} to determine the degree of $p_n(x)$ for a given tolerance.
+\item If $f(x) = \sum_{i=0}^{\infty} a_i T_i(x)$, then for the interpolant $p_n(x)$ $$ \|f(x) - p_n \|_{\infty} \leq 2 \sum_{i=n+1}^{\infty} |a_i|.$$
+\item For analytic functions, $|a_k|<O(\rho^{-k})$
+\item Chebfun's {\tt standardChop} method uses the coefficients to determine the degree of $p_n(x)$ for a given tolerance.
 \end{itemize}
 
 \end{frame}
@@ -165,9 +194,59 @@ Chebyshev points are special because they allow for \textbf{spectral} convergenc
 \end{center}
 \end{frame}
 
+\begin{frame}{2D approximation with Chebfun2}
+	\textbf{Chebfun2} can approximate $f(x,y)$ with a using Singular Value Decomposition:
+	$$
+	f(x,y) \approx f_k(x,y) = \sum_{j=1}^{k} \sigma_j \phi_j(y) \psi_j(x),
+	$$	
+	where $\phi_j$ and $\psi_j$ are orthonormal functions in $L^2([-1,1])$ and
+	$$
+	\|f-f_k \|_2 \leq \sum_{j=1}^{k} \sigma_j^2.
+	$$
+	With low rank functions, we can quickly and accurately find roots, solve for extrema, integrate, differentiation, and more.
+
+\end{frame}
+
+\begin{frame}{2D approximation with Chebfun2}
+	\begin{center}
+	For example, Chebfun2 can:
+	\end{center}
+
+\begin{center}
+\includegraphics[scale = 0.4]{contours.eps}
+\end{center}
+
+\begin{center}
+find where $\cos(2 \pi x y) = 0.95$ in 0.14 seconds!
+\end{center}
+
+\end{frame}
+
+\begin{frame}{2D approximation with Chebfun}
+
+\begin{center}
+It is different for high rank functions. For $f(x,y) = \arctan \lp \lp x^2+y \rp/0.01 \rp$, the rank is 815.
+\end{center}
+
+\begin{columns}
+
+\begin{column}{0.5\textwidth}	
+\begin{center}
+\includegraphics[scale = 0.3]{tan2Dplot.eps}	
+\end{center}
+\end{column}
+
+\begin{column}{0.5\textwidth}
+Chebfun2 took approximately took 3 minutes to adaptively construct an approximation.
+\end{column}
+
+\end{columns}
+
+\end{frame}
+
 \begin{frame}{Refinement for 2D tensor product polynomials}
 \begin{itemize}
-\item We seek to do something similar for $f(x,y)$ via a tensor product approximation $$ p(x,y) = \sum_{i=0}^{N_x} \sum_{j=0}^{N_y} T_i(x)T_j(y) a_{ij}$$
+\item We seek to do something similar for $f(x,y)$ with the use of tensor product approximations of the form $$ p(x,y) = \sum_{i=0}^{N_x} \sum_{j=0}^{N_y} T_i(x)T_j(y) a_{ij}$$
 \end{itemize}
 
 \begin{theorem} 
@@ -179,110 +258,123 @@ $$
 
 \end{frame}
 
-\begin{frame}{Refinement for 2D tensor product polynomials}
-\begin{itemize}
-\item With $$
- 	c_j(x) = \frac{2 \hat{\delta_j}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-y^2}}T_j(y)f(x,y)dy.
-$$ we have for fixed $\hat{x}$
-$$
-f(\hat{x},y) \approx \sum_{j=0}^{N_y}T_j(y)c_j(\hat{x})
-$$
-and for fixed $\hat{y}$
-$$
-p(x,\hat{y}) = \sum_{i=0}^{N_x} \T_i(x) \frac{2 \hat{\delta_i}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-x^2}} \sum_{j=0}^{N_y}T_j(\hat{y})c_j(x) dx.
-$$
-
-\end{itemize}
-\end{frame}
-
-
-\begin{frame}[t]{Refinement for 2D tensor product polynomials}
-
-\begin{center}
-Key idea of proof: with $$p(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$$
-\end{center}
-
-\begin{columns}[t]
-\begin{column}[t]{0.5\textwidth}
-We can find $N_y$ such that
-$$\|f(\cdot,y) -\sum_{i=0}^{N_y} c_j(\cdot)T_j(y) \| \leq \varepsilon/2$$
-\end{column}
-\begin{column}[t]{0.5\textwidth}
-\begin{center}
-We can then find $N_x$ such that
-$$\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\|<\varepsilon/2,$$
-\end{center}	
-\end{column}
-
-\end{columns}
-
-\end{frame}
+%\begin{frame}{Refinement for 2D tensor product polynomials}
+%\begin{itemize}
+%\item With $$
+% 	c_j(x) = \frac{2 \hat{\delta_j}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-y^2}}T_j(y)f(x,y)dy.
+%$$ we have for fixed $\hat{x}$
+%$$
+%f(\hat{x},y) \approx \sum_{j=0}^{N_y}T_j(y)c_j(\hat{x})
+%$$
+%and for fixed $\hat{y}$
+%$$
+%p(x,\hat{y}) = \sum_{i=0}^{N_x} T_i(x) \frac{2 \hat{\delta_i}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-x^2}} \sum_{j=0}^{N_y}T_j(\hat{y})c_j(x) dx.
+%$$
+%
+%\end{itemize}
+%\end{frame}
 
 
-\begin{frame}{Refinement for 2D tensor product polynomials}
-\begin{center}
-We can test $\|f(\cdot,y) -\sum_{i=0}^{N_y} c_j(\cdot)T_j(y) \| \leq \varepsilon/2$ discretely by testing the series  $\{f(x_k,y)\}$ for the Chebyshev points $\{x_k\}$.
-\end{center}
+%\begin{frame}[t]{Refinement for 2D tensor product polynomials}
+%
+%\begin{center}
+%Key idea of proof: with $$p(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$$
+%\end{center}
+%
+%\begin{columns}[t]
+%\begin{column}[t]{0.5\textwidth}
+%We can find $N_y$ such that
+%$$\|f(\cdot,y) -\sum_{i=0}^{N_y} c_j(\cdot)T_j(y) \| \leq \varepsilon/2$$
+%\end{column}
+%\begin{column}[t]{0.5\textwidth}
+%\begin{center}
+%We can then find $N_x$ such that
+%$$\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\|<\varepsilon/2,$$
+%\end{center}	
+%\end{column}
+%
+%\end{columns}
+%
+%\end{frame}
 
-\begin{center}
-For coefficients computed with FFT, we have,
-$$ c_j(x_k) = \sum_{i=0}^{N_x}T_j(x_k)a_{ij}. $$
-\end{center}
 
-\begin{center}
-We thus have
-$$ |c_j(x_k)| < \sum_{i=0}^{N_x} |a_{ij}|. $$ We use {\tt StandardChop} on $\{ \sum_{i=0}^{N_x} |a_{ij}|  \}_{j=0}^{N_y}$ to test for the condition.
-\end{center}
-
-\end{frame}
-
-\begin{frame}{Refinement for 2D tensor product polynomials}
-
-\begin{center}
-\includegraphics[scale = 0.5]{absCoeffs.eps}
-\end{center}
-
-\end{frame}
-
-\begin{frame}{Refinement for 2D tensor product polynomials}
-\begin{center}
-To test for $\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\|<\varepsilon/2$, we note: $$p(x,\cdot)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(\cdot)a_{ij}$$
-and
-$$ \left | \sum_{j=0}^{N_y} T_j(\cdot)a_{ij} \right | < \sum_{j=0}^{N_y} |a_{ij}|. $$
-\end{center}
-
-\begin{center}
-We use {\tt StandardChop} on $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$ to test for the condition.
-\end{center}
-\end{frame}
-
-\begin{frame}{Refinement for 2D tensor product polynomials}
-\begin{center}
-This gives us a discrete test for convergence:
-\end{center}
-
-\begin{center}
-Run	{\tt standardChop} on $\{ \sum_{i=0}^{N_x} |a_{ij}|  \}_{j=0}^{N_y}$ and $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$.
-\end{center}
-
-\end{frame}
+%\begin{frame}{Refinement for 2D tensor product polynomials}
+%\begin{center}
+%We can test $\|f(\cdot,y) -\sum_{i=0}^{N_y} c_j(\cdot)T_j(y) \| \leq \varepsilon/2$ discretely by testing the series  $\{f(x_k,y)\}$ for the Chebyshev points $\{x_k\}$.
+%\end{center}
+%
+%\begin{center}
+%For coefficients computed with FFT, we have,
+%$$ c_j(x_k) = \sum_{i=0}^{N_x}T_j(x_k)a_{ij}. $$
+%\end{center}
+%
+%\begin{center}
+%We thus have
+%$$ |c_j(x_k)| < \sum_{i=0}^{N_x} |a_{ij}|. $$ We use {\tt StandardChop} on $\{ \sum_{i=0}^{N_x} |a_{ij}|  \}_{j=0}^{N_y}$ to test for the condition.
+%\end{center}
+%
+%\end{frame}
+%
+%\begin{frame}{Refinement for 2D tensor product polynomials}
+%
+%\begin{center}
+%\includegraphics[scale = 0.5]{absCoeffs.eps}
+%\end{center}
+%
+%\end{frame}
+%
+%\begin{frame}{Refinement for 2D tensor product polynomials}
+%\begin{center}
+%To test for $\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\|<\varepsilon/2$, we note: $$p(x,\cdot)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(\cdot)a_{ij}$$
+%and
+%$$ \left | \sum_{j=0}^{N_y} T_j(\cdot)a_{ij} \right | < \sum_{j=0}^{N_y} |a_{ij}|. $$
+%\end{center}
+%
+%\begin{center}
+%We use {\tt StandardChop} on $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$ to test for the condition.
+%\end{center}
+%\end{frame}
+%
+%\begin{frame}{Refinement for 2D tensor product polynomials}
+%\begin{center}
+%This gives us a discrete test for convergence:
+%\end{center}
+%
+%\begin{center}
+%Run	{\tt standardChop} on $\{ \sum_{i=0}^{N_x} |a_{ij}|  \}_{j=0}^{N_y}$ and $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$.
+%\end{center}
+%
+%\end{frame}
 
 \begin{frame}{Partition of unity method}
-\begin{center}
+
 To refine, we cannot just increase $N_x$ and $N_y$. $N_x N_y$ gets big!
-\end{center}
+
+\bigskip
 
 \begin{itemize}
 \item We instead split $[-1,1] \times [-1,1]$ into overlapping squares $\{ \Omega_k \}$.
-\item With approximations $s_k:\Omega_k \to \R$, we define a partition of unity $w_k:\Omega_k \to \R$ with $\sum_k w_k=1$ so we get an approximation $$s(\vect{x}) = \sum_k w_k(\vect{x})s_k(\vect{x}).$$
+\item With approximations $s_k:\Omega_k \to \R$, we define a partition of unity $w_k:\Omega \to \R$ with $\sum_k w_k=1$ so we get an approximation $$s(\vect{x}) = \sum_k w_k(\vect{x})s_k(\vect{x}).$$
 \end{itemize}
 
 \end{frame}
 
 \begin{frame}{Partition of unity method}
 \begin{center}
-The domains are defined by the leaves of a kd-tree, where each split is defined by splitting the square in half with a line.
+Some key facts:
 \end{center}
+
+\begin{itemize}
+\item If each $w_k$ is smooth, and $w_k$ has support on $\Omega_k$ then $\sum_k w_k(\vect{x})s_k(\vect{x})$ is smooth.
+\item Thus with overlapping subdomains, we can avoid matching!
+\item With splitting, we can keep the total resolution low while still having an accurate approximation.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Partition of unity method}
+
+The domains are defined by the leaves of a kd-tree, where each split is defined by splitting the rectangle in half with a line.
+\bigskip
 
 \begin{center}
 \includegraphics[scale = 0.4]{zonePlot.eps}
@@ -290,9 +382,9 @@ The domains are defined by the leaves of a kd-tree, where each split is defined 
 \end{frame}
 
 \begin{frame}{Partition of unity method}
-\begin{center}
+
 For each leaf of the tree, we form the domain by 'pudging out' the rectangle.
-\end{center}
+\bigskip
 
 \begin{center}
 \includegraphics[scale = 0.4]{domainPlot.eps}
@@ -300,20 +392,22 @@ For each leaf of the tree, we form the domain by 'pudging out' the rectangle.
 \end{frame}
 
 \begin{frame}{Partition of unity method}
-\begin{center}
-We build an approximation by recursively splitting the tree until for every leaf $\nu_k$ we have:
-\end{center}
+
+We build an approximation of $f(x,y)$ on $[-1,1] \times [-1,1]$ by:
+\bigskip
 \begin{itemize}
-\item For the polynomial approximation $s_k(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$ on $\Omega_k$, both $$ \left \{ \sum_{j=0}^{N_y} |a_{ij}|  \right \}_{i=0}^{N_x}, \left \{ \sum_{i=0}^{N_x} |a_{ij}|  \right \}_{j=0}^{N_y} $$ pass the { \tt StandardChop } test.
+\item For the polynomial approximation $s_k(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$ on $\Omega$, test if 
+$$\|s_k(x,y) - f(x,y) \| < \varepsilon $$
+via the coefficients.
+\item If the do not, split $\Omega$ in half. Recursively repeat this on the two pudged out domains.
 \end{itemize}
 
 \end{frame}
 
 \begin{frame}{Partition of unity method}
 
-\begin{center}
 Here we adaptively build an approximation $s(x,y)$ for $f(x,y) = \arctan \lp \lp x^2+y \rp/0.01 \rp$ with tol=$10^{-12}$.
-\end{center}
+\bigskip
 
 \begin{columns}[t]
 
@@ -337,71 +431,73 @@ took 1.5 seconds to build, $\| s(x,y)-f(x,y)\|_{\infty} = 6\times10^{-14}$.
 
 \end{frame}
 
-\begin{frame}{Further Work}
-	\begin{center}
-		We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. To solve $\mathcal{L}(u)=f$ in $\Omega$, $u=g$ on $\partial G$ we:
-	\end{center}
+\begin{frame}{BVP's}
+
+		We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. To solve $\mathcal{L}(u)=f$ in $\Omega$, $u=g$ on $\partial \Omega$ we:
+\bigskip
 	
 	\begin{center}
 	for $n=1,2,\dots$ solve
 	\begin{equation*}
 	\begin{aligned}
-	&\mathcal{L}(u_1^{n+1})=f \\
+	&\mathcal{L}(u_1^{n+1})=f \text{ in } \Omega_1\\
 	&u_1^{n+1} = g \text{ at } \partial\Omega_1 \cap \partial\Omega \\
 	&u_1^{n+1} = u_2^{n} \text{ at } \partial\Omega_1 \setminus \partial\Omega 
 	\end{aligned} \quad 	\begin{aligned}
-	&\mathcal{L}(u_2^{n+1})=f \\
-	&u_2^{n+1} = g \text{ at } \partial\Omega_1 \cap \partial\Omega \\
-	&u_2^{n+1} = u_1^{n} \text{ at } \partial\Omega_1 \setminus \partial\Omega 
+	&\mathcal{L}(u_2^{n+1})=f \text{ in } \Omega_2 \\
+	&u_2^{n+1} = g \text{ at } \partial\Omega_2 \cap \partial\Omega \\
+	&u_2^{n+1} = u_1^{n} \text{ at } \partial\Omega_2 \setminus \partial\Omega 
 	\end{aligned}
 	\end{equation*}	
 	\end{center}
 
 \end{frame}
 
-\begin{frame}{Further Work}
-	\begin{center}
-		We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. We develop a scheme where:
-	\end{center}
-	\begin{center}
-		We use the overlapping subdomains from a kd-tree.
-	\end{center}
+\begin{frame}{BVP's}
+We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. We develop a scheme where:
+
+\bigskip
+
+We use the overlapping subdomains from a kd-tree.
 
 	\begin{center}
 		\includegraphics[scale = 0.3]{ASdomain1.eps}
 	\end{center}
 \end{frame}
 
-\begin{frame}{Further Work}
-	\begin{center}
+\begin{frame}{BVP's}
 		We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. We develop a scheme where:
-	\end{center}
-	\begin{center}
-		For border interpolation of $\partial \Omega_k$, we interpolant $s_j(x,y)$ if $(x,y)$ is in the non overlapping square of leaf $j$.
-	\end{center}
+\bigskip
+
+		For border interpolation of $\partial \Omega_k$, we evaluate the interpolant $s_j(x,y)$ if $(x,y)$ is in the non overlapping rectangle of leaf $j$.
+\bigskip
 
 	\begin{center}
 		\includegraphics[scale = 0.3]{ASdomain2.eps}
 	\end{center}
 \end{frame}
 
-\begin{frame}{Further Work}
-	\begin{center}
+\begin{frame}{BVP's}
 		We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. We develop a scheme where:
-	\end{center}
-	\begin{center}
-		After obtaining a solution, splitting the leaves using the scheme we defined before.
-	\end{center}
+\bigskip
+
+		After obtaining a solution, split the leaves if necessary using the scheme we defined before.
+\bigskip
 
 	\begin{center}
 		\includegraphics[scale = 0.3]{zonePlot2.eps}
 	\end{center}
 \end{frame}
 
-\begin{frame}{Further Work}
+\begin{frame}{BVP's}
+Put a picture of a cool PDE here.	
+\end{frame}
+
+\begin{frame}{BVP's}
 \begin{itemize}
-\item We use GMRES to solve the alternating Schwarz method.
-\item We are currently developing a preconditioner that appears to keep the number of GMRES iterations constant.	
+\item We apply GMRES with alternating Schwarz as a preconditioner.
+\item We currently use a two level preconditioner, where we observe the number of GMRES iterations stays constant with increasing subdomains.
+\item We will take advantage of the tree to develop a multi-level preconditioner.
 \end{itemize}
 
 \end{frame}

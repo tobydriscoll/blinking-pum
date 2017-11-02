@@ -1,6 +1,10 @@
-c = 0.1;
-f = @(x) atan((x(:,1).^2+x(:,2)+x(:,3).^2)/c);
-f2 = @(x,y,z) atan((x.^2+y+z.^2)/c);
+c = 0.2;
+
+%f = @(x) atan((x(:,1).^2+x(:,2)+x(:,3).^2)/c);
+%f2 = @(x,y,z) atan((x.^2+y+z.^2)/c);
+
+f = @(x) atan((x(:,1).^2+x(:,2).^2+x(:,3).^2)/c);
+f2 = @(x,y,z) atan((x.^2+y.^2+z.^2)/c);
 
 %f = @(x) atan((x(:,1)+x(:,2).^2)/c);
 %f2 = @(x,y,z) atan((x+y.^2)/c);
@@ -9,7 +13,7 @@ f2 = @(x,y,z) atan((x.^2+y+z.^2)/c);
 %f2 = @(x,y,z) 1./(1+x.^2+y.^2+z.^2);
 
 tic;
-TREE = PUFun([-1 1;-1 1;-1 1],[6 6 6],f,1e-8);
+TREE = PUFun([-1 1;-1 1;-1 1],[6 6 6],f,1e-10);
 toc;
 
 x = linspace(-1,1,100)';
@@ -17,7 +21,7 @@ x = linspace(-1,1,100)';
 G = {x x x};
 % 
 tic;
-ef = TREE.evalfGrid(G,1,0);
+ef = TREE.evalfGrid(G);
 toc
 % 
 [X,Y,Z] = ndgrid(x,x,x);

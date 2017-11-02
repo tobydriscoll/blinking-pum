@@ -42,18 +42,18 @@ classdef PUFun < handle
             
         end
         
-        function ef = evalf(obj,X,dim,order)
-            ef = obj.ChebRoot.evalf(X,dim,order);
+        function ef = evalf(obj,X)
+            ef = obj.ChebRoot.evalf(X);
         end
         
-        function ef = evalfGrid(obj,X,dim,order)
-            ef = obj.ChebRoot.evalfGrid(X,dim,order);
+        function ef = evalfGrid(obj,X)
+            ef = obj.ChebRoot.evalfGrid(X);
         end
         
-        function ef = evalfTreeGrid(obj,dim,order)
+        function ef = evalfTreeGrid(obj)
             
             for i=1:length(obj.TreeGrid)
-                ef = obj.ChebRoot.evalfGrid(obj.TreeGrid{i},dim,order);
+                ef = obj.ChebRoot.evalfGrid(obj.TreeGrid{i});
             end
             
         end
