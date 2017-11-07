@@ -7,11 +7,11 @@ NT2 = 0;
 %f = @(x) log((x(:,1).^2+x(:,2).^4)/c+1);
 %f2 = @(x,y) log((x.^2+y.^4)/c+1);
 
-%f = @(x) atan((x(:,1)+x(:,2).^2)/c);
-%f2 = @(x,y) atan((x+y.^2)/c);
+f = @(x) atan((x(:,1)+x(:,2).^2)/c);
+f2 = @(x,y) atan((x+y.^2)/c);
 
-f = @(x) atan((x(:,1).^2+x(:,2).^2)/c);
-f2 = @(x,y) atan((x.^2+y.^2)/c);
+%f = @(x) atan((x(:,1).^2+x(:,2).^2)/c);
+%f2 = @(x,y) atan((x.^2+y.^2)/c);
 
 %f = @(x) exp(-100*(x(:,1).^2+x(:,2).^2));
 %f2 = @(x,y) exp(-100*(x.^2+y.^2));
@@ -46,7 +46,7 @@ TIMESEV = zeros(NT,1);
 
 for i=1:NT
 tic;
-ef = TREE.ChebRoot.evalfZoneGrid({x x});
+ef = TREE.evalfGrid({x x});
 TIMESEV(i) = toc;
 end
 

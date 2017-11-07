@@ -357,40 +357,35 @@ classdef ChebPatch<LeafPatch
                 
                 pref = chebfunpref();
                 pref.chebfuneps = obj.tol;
+                data.vscale = Max;
                 
-                                simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
+                simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
                 
-                                if obj.split_flag(1)
-                                    
-                                    pref.chebfuneps = obj.tol*obj.degs(2);
-                                    colChebtech = sum(abs(simple_2D_coeffs), 2);
-                                    fCol = chebtech2({[], colChebtech});
-                                    data.hscale = diff(obj.domain(1,:));
-                                    data.vscale = Max;
+                if obj.split_flag(1)
+                    
+                    colChebtech = sum(abs(simple_2D_coeffs), 2);
+                    fCol = chebtech2({[], colChebtech});
+                    
+                    vals = zeros(size(colChebtech));
+                    vals(:) = max(abs(obj.values(:)));
+                    
+                    data.hscale = diff(obj.domain(1,:));
+                    [isHappyX, cutoffX2] = standardCheck(fCol,vals, data, pref);
+                    lens(1) = cutoffX2+~isHappyX;
+                end
                 
-                                    vals = zeros(size(colChebtech));
-                                    vals(:) = max(abs(obj.values(:)));
-                
-                                    [isHappyX, cutoffX2] = standardCheck(fCol, vals, data, pref);
-                                    lens(1) = cutoffX2+~isHappyX;
-                                end
-                
-                                if obj.split_flag(2)
-                                    
-                                    pref.chebfuneps = obj.tol*obj.degs(1);
-                                    
-                                    rowChebtech = sum(abs(simple_2D_coeffs.'), 2);
-                                    fRow = chebtech2({[], rowChebtech});
-                                    data.hscale = diff(obj.domain(2,:));
-                                    data.vscale = Max;
-                
-                                    vals = zeros(size(rowChebtech));
-                                    vals(:) = max(abs(obj.values(:)));
-                
-                
-                                    [isHappyY, cutoffY2] = standardCheck(fRow, vals, data, pref);
-                                    lens(2) = cutoffY2+~isHappyY;
-                                end
+                if obj.split_flag(2)
+                    
+                    rowChebtech = sum(abs(simple_2D_coeffs), 1).';
+                    fRow = chebtech2({[], rowChebtech});
+                    data.hscale = diff(obj.domain(2,:));
+                    
+                    vals = zeros(size(rowChebtech));
+                    vals(:) = max(abs(obj.values(:)));
+                    
+                    [isHappyY, cutoffY2] = standardCheck(fRow,vals, data, pref);
+                    lens(2) = cutoffY2+~isHappyY;
+                end
                 
 %                 if obj.split_flag(1)
 %                     fCol = chebtech2(obj.values);

@@ -94,6 +94,9 @@ University of Delaware\\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}[plain]
   \titlepage
+  \begin{center}
+  This research was supported by National Science Foundation grant DMS-1412085
+  \end{center}
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -195,15 +198,12 @@ The Chebyshev points allow for \textbf{spectral} convergence.
 \end{frame}
 
 \begin{frame}{2D approximation with Chebfun2}
-	\textbf{Chebfun2} can approximate $f(x,y)$ with a using Singular Value Decomposition:
+	\textbf{Chebfun2} can approximate $f(x,y)$ with a using a low-rank approximation:
 	$$
-	f(x,y) \approx f_k(x,y) = \sum_{j=1}^{k} \sigma_j \phi_j(y) \psi_j(x),
+	f(x,y) \approx \sum_{j=1}^{k} \sigma_j \phi_j(y) \psi_j(x),
 	$$	
-	where $\phi_j$ and $\psi_j$ are orthonormal functions in $L^2([-1,1])$ and
-	$$
-	\|f-f_k \|_2 \leq \sum_{j=1}^{k} \sigma_j^2.
-	$$
-	With low rank functions, we can quickly and accurately find roots, solve for extrema, integrate, differentiation, and more.
+
+	With low rank functions, we can quickly find roots, solve for extrema, integrate, differentiate , and more.
 
 \end{frame}
 
@@ -227,7 +227,6 @@ find where $\cos(2 \pi x y) = 0.95$ in 0.14 seconds!
 \begin{center}
 It is different for high rank functions. For $f(x,y) = \arctan \lp \lp x^2+y \rp/0.01 \rp$, the rank is 815.
 \end{center}
-
 \begin{columns}
 
 \begin{column}{0.5\textwidth}	
@@ -246,7 +245,7 @@ Chebfun2 took approximately took 3 minutes to adaptively construct an approximat
 
 \begin{frame}{Refinement for 2D tensor product polynomials}
 \begin{itemize}
-\item We seek to do something similar for $f(x,y)$ with the use of tensor product approximations of the form $$ p(x,y) = \sum_{i=0}^{N_x} \sum_{j=0}^{N_y} T_i(x)T_j(y) a_{ij}$$
+\item We seek to do build an approximation of $f(x,y)$ with the use of tensor product approximations of the form $$ p(x,y) = \sum_{i=0}^{N_x} \sum_{j=0}^{N_y} T_i(x)T_j(y) a_{ij}$$
 \end{itemize}
 
 \begin{theorem} 
@@ -353,7 +352,7 @@ To refine, we cannot just increase $N_x$ and $N_y$. $N_x N_y$ gets big!
 \bigskip
 
 \begin{itemize}
-\item We instead split $[-1,1] \times [-1,1]$ into overlapping squares $\{ \Omega_k \}$.
+\item We instead split $[-1,1] \times [-1,1]$ into overlapping rectangles $\{ \Omega_k \}$.
 \item With approximations $s_k:\Omega_k \to \R$, we define a partition of unity $w_k:\Omega \to \R$ with $\sum_k w_k=1$ so we get an approximation $$s(\vect{x}) = \sum_k w_k(\vect{x})s_k(\vect{x}).$$
 \end{itemize}
 
@@ -396,10 +395,10 @@ For each leaf of the tree, we form the domain by 'pudging out' the rectangle.
 We build an approximation of $f(x,y)$ on $[-1,1] \times [-1,1]$ by:
 \bigskip
 \begin{itemize}
-\item For the polynomial approximation $s_k(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$ on $\Omega$, test if 
+\item For the polynomial approximation $s_k(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$ on $\Omega_k$, test if 
 $$\|s_k(x,y) - f(x,y) \| < \varepsilon $$
 via the coefficients.
-\item If the do not, split $\Omega$ in half. Recursively repeat this on the two pudged out domains.
+\item If the do not, split $\Omega_k$ in half. Recursively repeat this on the children.
 \end{itemize}
 
 \end{frame}
@@ -489,9 +488,36 @@ We use the overlapping subdomains from a kd-tree.
 	\end{center}
 \end{frame}
 
-\begin{frame}{BVP's}
-Put a picture of a cool PDE here.	
+\begin{frame}{Partition of unity method}
+
+Here we adaptively solve
+$$
+\varepsilon \Delta u + \nabla\cdot(\vect{v} u) = 0 \text{ in } \Omega, \quad u=1 \text{ on } \partial\Omega
+$$
+\bigskip
+where $\varepsilon=10^{-2}$, $\vect{v}=[y-x^2,-2x]$.
+\begin{columns}[t]
+
+\begin{column}{0.5\textwidth}	
+\begin{center}
+\includegraphics[scale = 0.3]{coolPDE.eps}	
+\end{center}
+\end{column}
+
+\begin{column}{0.5\textwidth}
+\begin{center}
+\includegraphics[scale = 0.3]{coolPDEdomain.eps}	
+\end{center}
+\end{column}
+
+\end{columns}
+
+\begin{center}
+For this solution we adapted to tol=$10^{-7}$.
+\end{center}
+
 \end{frame}
+
 
 \begin{frame}{BVP's}
 \begin{itemize}
