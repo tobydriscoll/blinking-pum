@@ -5,22 +5,27 @@ domain = [-2 2;-2 2];
 deg_in = [5 5];
 cdeg_in = [3 3];
 split_flag = [1 1];
-tol = 1e-7;
-gmres_tol = 1e-7;
+tol = 1e-8;
+gmres_tol = tol;
 maxit = 1200;
 cheb_length  = 65;
 dim = [65 65];
 
-ep = 1e-2;
+ep = 5e-2;
 c = 1;
 a=1;
 b=0;
 
 %East West South North %BVP
-L = @(u,x,y,dx,dy,dxx,dyy) ep*dxx+ep*dyy+dx*(y-x^2)-dy*(2*x);
+% L = @(u,x,y,dx,dy,dxx,dyy) ep*dxx+ep*dyy+dx*(y-x^2)-dy*(2*x);
+% B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u,@(u,x,y,dx,dy,dxx,dyy) u};
+% force = @(x) zeros(size(x,1),1);
+% border = {@(x)ones(size(x,1),1),@(x)ones(size(x,1),1),@(x)ones(size(x,1),1),@(x)ones(size(x,1),1)};
+
+L = @(u,x,y,dx,dy,dxx,dyy) dxx+dyy;
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u,@(u,x,y,dx,dy,dxx,dyy) u};
-force = @(x) zeros(size(x,1),1);
-border = {@(x)ones(size(x,1),1),@(x)ones(size(x,1),1),@(x)ones(size(x,1),1),@(x)ones(size(x,1),1)};
+force = @(x) ones(size(x,1),1);
+border = {@(x)zeros(size(x,1),1),@(x)zeros(size(x,1),1),@(x)zeros(size(x,1),1),@(x)zeros(size(x,1),1)};
 
 Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 

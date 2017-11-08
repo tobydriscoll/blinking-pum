@@ -30,9 +30,11 @@ f2 = @(x,y) atan((x+y.^2)/c);
 TIMES = zeros(NT,1);
 
 for i=1:NT
+    
 tic;
-TREE = PUFun([-1 1;-1 1],[6 6],f,1e-10);
+TREE = PUFun([-1 1;-1 1],[7 7],f,1e-10);
 TIMES(i)=toc;
+
 end
 
 mean(TIMES)
