@@ -356,7 +356,8 @@ classdef ChebPatch<LeafPatch
                 
                 
                 pref = chebfunpref();
-                pref.chebfuneps = obj.tol^(7/8);
+%                pref.chebfuneps = obj.tol^(7/8);
+                pref.chebfuneps = obj.tol;
                 data.vscale = Max;
                 
 %                               simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
@@ -391,9 +392,6 @@ classdef ChebPatch<LeafPatch
                                     fCol = chebtech2(obj.values);
                                     data.hscale = diff(obj.domain(1,:));
                                     data.vscale = Max;
-                
-                                    %vals = obj.values;
-                                    %vals(:) = max(abs(vals(:)));
                                     
                                     [isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
                                     lens(1) = cutoffX2+~isHappyX;
@@ -403,9 +401,6 @@ classdef ChebPatch<LeafPatch
                                     fRow = chebtech2(obj.values.');
                                     data.hscale = diff(obj.domain(2,:));
                                     data.vscale = Max;
-                
-                                    vals = obj.values.';
-                                    vals(:) = max(abs(vals(:)));
 
                                     [isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
                                     lens(2) = cutoffY2+~isHappyY;
@@ -418,7 +413,8 @@ classdef ChebPatch<LeafPatch
                 
                 pref = chebfunpref();
                 pref.chebfuneps = obj.tol^(7/8);
-%                 simple_3D_coeffs = chebfun3t.vals2coeffs(obj.values);
+              % pref.chebfuneps = obj.tol;
+%               simple_3D_coeffs = chebfun3t.vals2coeffs(obj.values);
 %                 
 %                 if obj.split_flag(1)
 %                     
@@ -492,8 +488,8 @@ classdef ChebPatch<LeafPatch
                     [isHappyZ, cutoffZ2] = standardCheck(fTube, tubeChebtech, data, pref);
                     lens(3) = cutoffZ2+~isHappyZ;
                 end
-
-            end
+%  
+             end
             
             for i=1:obj.dim
                 
