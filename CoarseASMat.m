@@ -39,12 +39,12 @@ for k=1:length(LEAVES)
     
     E = eye(prod(cdim));
     
-    OP = L(E,diag(pointsl(:,1)),diag(pointsl(:,2)),Dx,Dy,Dxx,Dyy);
+    OP = L(E,pointsl(:,1),pointsl(:,2),Dx,Dy,Dxx,Dyy);
     
     for i=1:4
         if any(out_border_c{i}) && ~isempty(B{i})
         OP(out_border_c{i},:) = ...
-            B{i}(E(out_border_c{i},:),diag(pointsl(out_border_c{i},1)),diag(pointsl(out_border_c{i},2)),Dx(out_border_c{i},:),Dy(out_border_c{i},:),Dxx(out_border_c{i},:),Dyy(out_border_c{i},:));
+            B{i}(E(out_border_c{i},:),pointsl(out_border_c{i},1),pointsl(out_border_c{i},2),Dx(out_border_c{i},:),Dy(out_border_c{i},:),Dxx(out_border_c{i},:),Dyy(out_border_c{i},:));
         end
     end
     

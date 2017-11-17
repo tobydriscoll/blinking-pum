@@ -26,7 +26,7 @@ for k=1:length(LEAVES)
     
     E = eye(prod(dim));
 
-    OP = L(E,diag(points(:,1)),diag(points(:,2)),Dx,Dy,Dxx,Dyy);
+    OP = L(E,points(:,1),points(:,2),Dx,Dy,Dxx,Dyy);
     
     for i=1:4
         if any(out_border_c{i}) && ~isempty(B{i})

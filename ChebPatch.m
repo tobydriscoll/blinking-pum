@@ -356,159 +356,98 @@ classdef ChebPatch<LeafPatch
                 
                 
                 pref = chebfunpref();
-%                pref.chebfuneps = obj.tol^(7/8);
-                pref.chebfuneps = obj.tol;
+                loc_tol = obj.tol^(7/8);
                 data.vscale = Max;
                 
-%                               simple_2D_coeffs = chebfun2.vals2coeffs(obj.values);
-%                 
-%                                 if obj.split_flag(1)
-%                 
-%                                     colChebtech = sum(abs(simple_2D_coeffs), 2);
-%                                     fCol = chebtech2({[], colChebtech});
-%                 
-%                                     vals = zeros(size(colChebtech));
-%                                     vals(:) = max(abs(obj.values(:)));
-%                 
-%                                     data.hscale = diff(obj.domain(1,:));
-%                                     [isHappyX, cutoffX2] = standardCheck(fCol,vals, data, pref);
-%                                     lens(1) = cutoffX2+~isHappyX;
-%                                 end
-%                 
-%                                 if obj.split_flag(2)
-%                 
-%                                     rowChebtech = sum(abs(simple_2D_coeffs), 1).';
-%                                     fRow = chebtech2({[], rowChebtech});
-%                                     data.hscale = diff(obj.domain(2,:));
-%                 
-%                                     vals = zeros(size(rowChebtech));
-%                                     vals(:) = max(abs(obj.values(:)));
-%                 
-%                                     [isHappyY, cutoffY2] = standardCheck(fRow,vals, data, pref);
-%                                     lens(2) = cutoffY2+~isHappyY;
-%                                 end
+                local_max = max(abs(obj.values(:)));
                 
-                                if obj.split_flag(1)
-                                    fCol = chebtech2(obj.values);
-                                    data.hscale = diff(obj.domain(1,:));
-                                    data.vscale = Max;
-                                    
-                                    [isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
-                                    lens(1) = cutoffX2+~isHappyX;
-                                end
+                if obj.split_flag(1)
+                   % fCol = chebtech2(obj.values);
+                    data.hscale = diff(obj.domain(1,:));
+                    data.vscale = Max;
+                    
+                    %[isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
+                    %lens(1) = cutoffX2+~isHappyX;
+                    
+                    tol = loc_tol*max(data.vscale./local_max,data.hscale);
+                    lens(1) = KevinSimplify(obj.values, tol);
+                    
+                    sliceSample(obj,1,lens(1));
+                end
                 
-                                if obj.split_flag(2)
-                                    fRow = chebtech2(obj.values.');
-                                    data.hscale = diff(obj.domain(2,:));
-                                    data.vscale = Max;
-
-                                    [isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
-                                    lens(2) = cutoffY2+~isHappyY;
-                                end
+                if obj.split_flag(2)
+                    %fRow = chebtech2(obj.values.');
+                    data.hscale = diff(obj.domain(2,:));
+                    data.vscale = Max;
+                    
+                    %[isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
+                    %lens(2) = cutoffY2+~isHappyY;
+                    
+                    tol = loc_tol*max(data.vscale./local_max,data.hscale);
+                    lens(2) = KevinSimplify(obj.values.', tol);
+                    
+                    sliceSample(obj,2,lens(2));
+                end
                 
                 
             else
                 
                 data.vscale = Max;
+                local_max = max(abs(obj.values(:)));
                 
-                pref = chebfunpref();
-                pref.chebfuneps = obj.tol^(7/8);
-              % pref.chebfuneps = obj.tol;
-%               simple_3D_coeffs = chebfun3t.vals2coeffs(obj.values);
-%                 
-%                 if obj.split_flag(1)
-%                     
-%                     
-%                     colChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 1), 2);
-%                     fCol = chebtech2({[], colChebtech});
-%                     
-%                     vals = zeros(size(colChebtech));
-%                     vals(:) = max(abs(obj.values(:)));
-%                     
-%                     data.hscale = diff(obj.domain(1,:));
-%                     [isHappyX, cutoffX2] = standardCheck(fCol,vals, data, pref);
-%                     lens(1) = cutoffX2+~isHappyX;
-%                 end
-%                 
-%                 if obj.split_flag(2)
-%                     
-%                     rowChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 2), 2);
-%                     fRow = chebtech2({[], rowChebtech});
-%                     data.hscale = diff(obj.domain(2,:));
-%                     
-%                     vals = zeros(size(rowChebtech));
-%                     vals(:) = max(abs(obj.values(:)));
-%                     
-%                     [isHappyY, cutoffY2] = standardCheck(fRow,vals, data, pref);
-%                     lens(2) = cutoffY2+~isHappyY;
-%                 end
-%                 
-%                 if obj.split_flag(3)
-%                     
-%                     tubeChebtech = sum(chebfun3t.unfold(abs(simple_3D_coeffs), 3), 2);
-%                     fTube = chebtech2({[], tubeChebtech});
-%                     data.hscale = diff(obj.domain(3,:));
-%                     
-%                     vals = zeros(size(tubeChebtech));
-%                     vals(:) = max(abs(obj.values(:)));
-%                     
-%                     [isHappyZ, cutoffZ2] = standardCheck(fTube, vals, data, pref);
-%                     lens(3) = cutoffZ2+~isHappyZ;
-%                 end
-
+                %pref = chebfunpref();
+                loc_tol = obj.tol^(7/8);
+                
+                
                 if obj.split_flag(1)
                     
-                    
                     colChebtech = chebfun3t.unfold(obj.values, 1);
-                    fCol = chebtech2(colChebtech);
+                    %fCol = chebtech2(colChebtech);
                     
                     
                     data.hscale = diff(obj.domain(1,:));
-                    [isHappyX, cutoffX2] = standardCheck(fCol,colChebtech, data, pref);
-                    lens(1) = cutoffX2+~isHappyX;
+                    
+                    %[isHappyX, cutoffX2] = standardCheck(fCol,colChebtech, data, pref);
+                    %lens(1) = cutoffX2+~isHappyX;
+                    
+                    tol = loc_tol*max(data.vscale./local_max,data.hscale);
+                    lens(1) = KevinSimplify(colChebtech, tol);
+                    
+                    
+                    sliceSample(obj,1,lens(1));
                 end
                 
                 if obj.split_flag(2)
                     
                     rowChebtech = chebfun3t.unfold(obj.values, 2);
-                    fRow = chebtech2(rowChebtech);
+                    %fRow = chebtech2(rowChebtech);
                     data.hscale = diff(obj.domain(2,:));
                     
-                    [isHappyY, cutoffY2] = standardCheck(fRow,rowChebtech, data, pref);
-                    lens(2) = cutoffY2+~isHappyY;
+                    
+                    %[isHappyY, cutoffY2] = standardCheck(fRow,rowChebtech, data, pref);
+                    %lens(2) = cutoffY2+~isHappyY;
+                    
+                    tol = loc_tol*max(data.vscale./local_max,data.hscale);
+                    lens(2) = KevinSimplify(rowChebtech, tol);
+                    
+                    sliceSample(obj,2,lens(2));
                 end
                 
                 if obj.split_flag(3)
                     
                     tubeChebtech = chebfun3t.unfold(obj.values, 3);
-                    fTube = chebtech2(tubeChebtech);
+                    %fTube = chebtech2(tubeChebtech);
+                    
                     data.hscale = diff(obj.domain(3,:));
                     
                     
-                    [isHappyZ, cutoffZ2] = standardCheck(fTube, tubeChebtech, data, pref);
-                    lens(3) = cutoffZ2+~isHappyZ;
-                end
-%  
-             end
-            
-            for i=1:obj.dim
-                
-                %We first see if the interpolant is refined along dimension
-                %i
-                if obj.split_flag(i) && lens(i)<obj.degs(i)
-                    obj.split_flag(i) = false;
+                    %[isHappyZ, cutoffZ2] = standardCheck(fTube, tubeChebtech, data, pref);
+                    %lens(3) = cutoffZ2+~isHappyZ;
                     
-                    %If it is, find the smallest degree we can use.
-                    k = find(lens(i)<=obj.standard_degs,1);
+                    tol = loc_tol*max(data.vscale./local_max,data.hscale);
+                    lens(3) = KevinSimplify(tubeChebtech,tol);
                     
-                    %Slice the values for the new dimension k along i
-                    if k<obj.deg_in(i)
-                        obj.values = obj.slice(obj.values,1:2^(obj.deg_in(i)-k):obj.standard_degs(obj.deg_in(i)),i);
-                    end
-                    
-                    obj.deg_in(i) = k;
-                    obj.degs(i) = obj.standard_degs(k);
-                    
+                    sliceSample(obj,3,lens(3));
                 end
             end
             
@@ -529,6 +468,23 @@ classdef ChebPatch<LeafPatch
                 Child = obj.split(split_dim,set_vals);
             end
             
+        end
+        
+        function [] = sliceSample(obj,d_in,len)
+            if obj.split_flag(d_in) && len<obj.degs(d_in)
+                obj.split_flag(d_in) = false;
+                
+                %If it is, find the smallest degree we can use.
+                k = find(len<=obj.standard_degs,1);
+                
+                %Slice the values for the new dimension k along i
+                if k<obj.deg_in(d_in)
+                    obj.values = obj.slice(obj.values,1:2^(obj.deg_in(d_in)-k):obj.standard_degs(obj.deg_in(d_in)),d_in);
+                end
+                
+                obj.deg_in(d_in) = k;
+                obj.degs(d_in) = obj.standard_degs(k);
+            end
         end
         
         % The method determines if a splitting is needed, and creates
@@ -673,9 +629,6 @@ classdef ChebPatch<LeafPatch
             subses{dim} = ix;
             out = A(subses{:});
         end
-        
-        
-        
     end
     
 end

@@ -81,7 +81,7 @@
   Department of Mathematics\\
 University of Delaware\\
 }
-\date[October 2016]{October 30, 2017}
+\date[November 2017]{November 14, 2017}
 
 
 \begin{document}
@@ -425,7 +425,7 @@ Here we adaptively build an approximation $s(x,y)$ for $f(x,y) = \arctan \lp \lp
 \end{columns}
 
 \begin{center}
-took 1.5 seconds to build, $\| s(x,y)-f(x,y)\|_{\infty} = 6\times10^{-14}$.	
+took 2 seconds to build, $\| s(x,y)-f(x,y)\|_{\infty} = 5\times10^{-13}$.	
 \end{center}
 
 \end{frame}
@@ -488,14 +488,14 @@ We use the overlapping subdomains from a kd-tree.
 	\end{center}
 \end{frame}
 
-\begin{frame}{Partition of unity method}
+\begin{frame}{BVPs}
 
 Here we adaptively solve
 $$
-\varepsilon \Delta u + \nabla\cdot(\vect{v} u) = 0 \text{ in } \Omega, \quad u=1 \text{ on } \partial\Omega
+\varepsilon \Delta u + 2 u_x+u_y = f(x,y) \text{ in } \Omega, \quad u=b(x,y) \text{ on } \partial\Omega
 $$
 \bigskip
-where $\varepsilon=10^{-2}$, $\vect{v}=[y-x^2,-2x]$.
+where $\varepsilon=5\times10^{-3}$ and $u(x,y) = \left(1-e^{\frac{x-1}{\epsilon }}\right) \left(1-e^{\frac{y-1}{\epsilon }}\right) \cos (\pi  (x+y)).$
 \begin{columns}[t]
 
 \begin{column}{0.5\textwidth}	
@@ -513,7 +513,7 @@ where $\varepsilon=10^{-2}$, $\vect{v}=[y-x^2,-2x]$.
 \end{columns}
 
 \begin{center}
-For this solution we adapted to tol=$10^{-7}$.
+For this solution we adapted to tol=$10^{-8}$, and got error $5 \times 10^{-8}$.
 \end{center}
 
 \end{frame}
@@ -524,6 +524,15 @@ For this solution we adapted to tol=$10^{-7}$.
 \item We apply GMRES with alternating Schwarz as a preconditioner.
 \item We currently use a two level preconditioner, where we observe the number of GMRES iterations stays constant with increasing subdomains.
 \item We will take advantage of the tree to develop a multi-level preconditioner.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Future Work}
+\begin{itemize}
+\item Adaptive solvers for nonlinear BVPs
+\item Extending work into 3D and non rectangular domains
+\item Apply method to tear film models with moving boundary
 \end{itemize}
 
 \end{frame}
