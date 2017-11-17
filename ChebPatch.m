@@ -359,32 +359,32 @@ classdef ChebPatch<LeafPatch
                 loc_tol = obj.tol^(7/8);
                 data.vscale = Max;
                 
-                local_max = max(abs(obj.values(:)));
+                %local_max = max(abs(obj.values(:)));
                 
                 if obj.split_flag(1)
-                   % fCol = chebtech2(obj.values);
+                    fCol = chebtech2(obj.values);
                     data.hscale = diff(obj.domain(1,:));
                     data.vscale = Max;
                     
-                    %[isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
-                    %lens(1) = cutoffX2+~isHappyX;
+                    [isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
+                    lens(1) = cutoffX2+~isHappyX;
                     
-                    tol = loc_tol*max(data.vscale./local_max,data.hscale);
-                    lens(1) = KevinSimplify(obj.values, tol);
+                    tol = loc_tol*max(data.vscale./max(abs(obj.values),[],2),data.hscale);
+                    lens(1) = length(simplify(fCol, tol))+1;
                     
                     sliceSample(obj,1,lens(1));
                 end
                 
                 if obj.split_flag(2)
-                    %fRow = chebtech2(obj.values.');
+                    fRow = chebtech2(obj.values.');
                     data.hscale = diff(obj.domain(2,:));
                     data.vscale = Max;
                     
-                    %[isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
-                    %lens(2) = cutoffY2+~isHappyY;
+                    [isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
+                    lens(2) = cutoffY2+~isHappyY;
                     
-                    tol = loc_tol*max(data.vscale./local_max,data.hscale);
-                    lens(2) = KevinSimplify(obj.values.', tol);
+                    tol = loc_tol*max(data.vscale./max(abs(obj.values.'),[],2),data.hscale);
+                    lens(2) = length(simplify(fRow,tol))+1;
                     
                     sliceSample(obj,2,lens(2));
                 end
@@ -395,23 +395,21 @@ classdef ChebPatch<LeafPatch
                 data.vscale = Max;
                 local_max = max(abs(obj.values(:)));
                 
-                %pref = chebfunpref();
+                pref = chebfunpref();
                 loc_tol = obj.tol^(7/8);
                 
                 
                 if obj.split_flag(1)
                     
                     colChebtech = chebfun3t.unfold(obj.values, 1);
-                    %fCol = chebtech2(colChebtech);
-                    
-                    
+                    fCol = chebtech2(colChebtech);
                     data.hscale = diff(obj.domain(1,:));
                     
                     %[isHappyX, cutoffX2] = standardCheck(fCol,colChebtech, data, pref);
                     %lens(1) = cutoffX2+~isHappyX;
                     
                     tol = loc_tol*max(data.vscale./local_max,data.hscale);
-                    lens(1) = KevinSimplify(colChebtech, tol);
+                    lens(1) = length(simplify(fCol, tol))+1;
                     
                     
                     sliceSample(obj,1,lens(1));
@@ -420,7 +418,7 @@ classdef ChebPatch<LeafPatch
                 if obj.split_flag(2)
                     
                     rowChebtech = chebfun3t.unfold(obj.values, 2);
-                    %fRow = chebtech2(rowChebtech);
+                    fRow = chebtech2(rowChebtech);
                     data.hscale = diff(obj.domain(2,:));
                     
                     
@@ -428,7 +426,7 @@ classdef ChebPatch<LeafPatch
                     %lens(2) = cutoffY2+~isHappyY;
                     
                     tol = loc_tol*max(data.vscale./local_max,data.hscale);
-                    lens(2) = KevinSimplify(rowChebtech, tol);
+                    lens(2) = length(simplify(fRow, tol))+1;
                     
                     sliceSample(obj,2,lens(2));
                 end
@@ -436,7 +434,7 @@ classdef ChebPatch<LeafPatch
                 if obj.split_flag(3)
                     
                     tubeChebtech = chebfun3t.unfold(obj.values, 3);
-                    %fTube = chebtech2(tubeChebtech);
+                    fTube = chebtech2(tubeChebtech);
                     
                     data.hscale = diff(obj.domain(3,:));
                     
@@ -445,7 +443,7 @@ classdef ChebPatch<LeafPatch
                     %lens(3) = cutoffZ2+~isHappyZ;
                     
                     tol = loc_tol*max(data.vscale./local_max,data.hscale);
-                    lens(3) = KevinSimplify(tubeChebtech,tol);
+                    lens(3) = length(simplify(fTube,tol))+1;
                     
                     sliceSample(obj,3,lens(3));
                 end

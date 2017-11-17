@@ -13,7 +13,7 @@ coeffs = chebtech2.vals2coeffs(values);
 nDiff = N - n;
 
 %Pad the coefficients with zeros
-coeffs = [coeffs ; normrnd(0,tol,[nDiff, m]) ];
+coeffs = [coeffs ; normrnd(0,max(tol.^2),[nDiff, m]) ];
 
 %coeffs = chebtech2.vals2coeffs(chebtech2.coeffs2vals(coeffs));
 
