@@ -41,14 +41,14 @@ E = abs(ef-f2(X,Y,Z));
 % 
 max(E(:))
 
-tic;
-F = chebfun3(f2,'eps',1e-10);
-toc;
-% % 
-tic;
-ef2 = F(X,Y,Z);
-toc;
-
-E2 = abs(ef2 - f2(X,Y,Z));
-
-max(E2(:))
+% tic;
+% F = chebfun3(f2,'eps',1e-10);
+% toc;
+% % % 
+% tic;
+% ef2 = F(X,Y,Z);
+% toc;
+% 
+% E2 = abs(ef2 - f2(X,Y,Z));
+% 
+% max(E2(:))

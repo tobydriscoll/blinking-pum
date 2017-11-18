@@ -366,8 +366,8 @@ classdef ChebPatch<LeafPatch
                     data.hscale = diff(obj.domain(1,:));
                     data.vscale = Max;
                     
-                    [isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
-                    lens(1) = cutoffX2+~isHappyX;
+                    %[isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
+                    %lens(1) = cutoffX2+~isHappyX;
                     
                     tol = loc_tol*max(data.vscale./max(abs(obj.values),[],2),data.hscale);
                     lens(1) = length(simplify(fCol, tol))+1;
@@ -380,8 +380,8 @@ classdef ChebPatch<LeafPatch
                     data.hscale = diff(obj.domain(2,:));
                     data.vscale = Max;
                     
-                    [isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
-                    lens(2) = cutoffY2+~isHappyY;
+                    %[isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
+                    %lens(2) = cutoffY2+~isHappyY;
                     
                     tol = loc_tol*max(data.vscale./max(abs(obj.values.'),[],2),data.hscale);
                     lens(2) = length(simplify(fRow,tol))+1;
@@ -451,9 +451,9 @@ classdef ChebPatch<LeafPatch
             
             %We find the longest length of the box, and split along that
             %dimension
-            lengths = diff(obj.domain');
-            lengths(~obj.split_flag) = 0;
-            [~,split_dim] = max(lengths);
+            %lengths = diff(obj.domain');
+            %lengths(~obj.split_flag) = 0;
+            %[~,split_dim] = max(lengths);
             
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.
@@ -461,9 +461,20 @@ classdef ChebPatch<LeafPatch
                 obj.cheb_length = prod(obj.degs);
                 Child = obj;
             else
+               
+                Child = obj;
+                for i=1:obj.dim
+                    if obj.split_flag(i)
+                        if Child.is_leaf
+                            Child = split(obj,i,set_vals);
+                        else
+                            Child.split(i,set_vals);
+                        end
+                    end
+                end
                 
                 %Return the PUPatch with the new children
-                Child = obj.split(split_dim,set_vals);
+                %Child = split(obj,split_dim,set_vals)
             end
             
         end

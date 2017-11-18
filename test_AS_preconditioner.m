@@ -58,7 +58,7 @@ msz = 8;       % MarkerSize
 
 xc = -1;
 yc = -1;
-alpha = 100;
+alpha = 10;
 r0 = 1;
 
 f2 = @(x,y) ((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(-1/2).*(alpha+alpha.^3.*( ...

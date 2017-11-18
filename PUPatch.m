@@ -473,14 +473,12 @@ classdef PUPatch<Patch
             vals = [obj.children{1}.Getvalues();obj.children{2}.Getvalues()];
         end
         
-        function split(obj)
+        function split(obj,split_dim,set_vals)
             for k=1:2
                 if obj.children{k}.is_leaf
-                    lengths = diff(obj.children{k}.zone');
-                    [~,split_dim] = max(lengths);
-                    obj.children{k} = obj.children{k}.split(split_dim);
+                    obj.children{k} = obj.children{k}.split(split_dim,set_vals);
                 else
-                    obj.children{k}.split(Max,set_vals);
+                    obj.children{k}.split(split_dim,set_vals);
                 end
             end
             obj.domain = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
