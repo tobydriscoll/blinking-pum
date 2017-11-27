@@ -356,7 +356,9 @@ classdef ChebPatch<LeafPatch
                 
                 
                 pref = chebfunpref();
-                loc_tol = obj.tol^(7/8);
+                pref.chebfuneps = obj.tol^(7/8);
+                %loc_tol = obj.tol^(7/8);
+                %loc_tol = obj.tol;
                 data.vscale = Max;
                 
                 %local_max = max(abs(obj.values(:)));
@@ -366,11 +368,11 @@ classdef ChebPatch<LeafPatch
                     data.hscale = diff(obj.domain(1,:));
                     data.vscale = Max;
                     
-                    %[isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
-                    %lens(1) = cutoffX2+~isHappyX;
+                    [isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
+                    lens(1) = cutoffX2+~isHappyX;
                     
-                    tol = loc_tol*max(data.vscale./max(abs(obj.values),[],2),data.hscale);
-                    lens(1) = length(simplify(fCol, tol))+1;
+                    %tol = loc_tol*max(data.vscale./max(abs(obj.values),[],2),data.hscale);
+                    %lens(1) = length(simplify(fCol, tol))+1;
                     
                     sliceSample(obj,1,lens(1));
                 end
@@ -380,11 +382,11 @@ classdef ChebPatch<LeafPatch
                     data.hscale = diff(obj.domain(2,:));
                     data.vscale = Max;
                     
-                    %[isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
-                    %lens(2) = cutoffY2+~isHappyY;
+                    [isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
+                    lens(2) = cutoffY2+~isHappyY;
                     
-                    tol = loc_tol*max(data.vscale./max(abs(obj.values.'),[],2),data.hscale);
-                    lens(2) = length(simplify(fRow,tol))+1;
+                    %tol = loc_tol*max(data.vscale./max(abs(obj.values.'),[],2),data.hscale);
+                    %lens(2) = length(simplify(fRow,tol))+1;
                     
                     sliceSample(obj,2,lens(2));
                 end

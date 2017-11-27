@@ -1,11 +1,11 @@
 overlap = 0.1;
 
-domain = [-1 1;-1 1];
+domain = [0 1;0 1];
 
 deg_in = [5 5];
 cdeg_in = [3 3];
 split_flag = [1 1];
-tol = 1e-8;
+tol = 1e-4;
 gmres_tol = 1e-8;
 maxit = 1200;
 
@@ -61,18 +61,28 @@ yc = -1;
 alpha = 10;
 r0 = 1;
 
-f2 = @(x,y) ((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(-1/2).*(alpha+alpha.^3.*( ...
-r0.^2+(-1).*x.^2+2.*x.*xc+(-1).*xc.^2+(-1).*y.^2+2.*y.*yc+(-1).* ...
- yc.^2)).*((-1)+alpha.^2.*((-1).*r0.^2+(-1).*x.^2+2.*x.*xc+(-1).* ...
-  xc.^2+(-1).*y.^2+2.*r0.*(x.^2+(-2).*x.*xc+xc.^2+(y+(-1).*yc).^2) ...
-  .^(1/2)+2.*y.*yc+(-1).*yc.^2)).^(-2);
+% f2 = @(x,y) ((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(-1/2).*(alpha+alpha.^3.*( ...
+% r0.^2+(-1).*x.^2+2.*x.*xc+(-1).*xc.^2+(-1).*y.^2+2.*y.*yc+(-1).* ...
+%  yc.^2)).*((-1)+alpha.^2.*((-1).*r0.^2+(-1).*x.^2+2.*x.*xc+(-1).* ...
+%   xc.^2+(-1).*y.^2+2.*r0.*(x.^2+(-2).*x.*xc+xc.^2+(y+(-1).*yc).^2) ...
+%   .^(1/2)+2.*y.*yc+(-1).*yc.^2)).^(-2);
 
-f3 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
+%f3 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
 
-L = @(u,x,y,dx,dy,dxx,dyy) (dxx+dyy);
+%f2 = @(x,y) exp(x+y).*(y./(0.1+x)-2);
+
+%f3 = @(x,y) exp(x+y);
+
+f2 = @(x,y) exp(1).^(0.109956E2.*y).*x.*((-6)+3.*exp(1).^(3.*x.*y).*x+(-0.119903E3).*x.^2+0.109956E2.*x.^2.*sin(pi.*(x+y)));
+
+f3 = @(x,y) x.^3.*exp(3.5*pi*y);
+
+L = @(u,x,y,dx,dy,dxx,dyy) -(dxx+dyy)+diag(exp(3*x.*y))*dx+diag(sin(pi*(x+y)))*dy+u;
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u,@(u,x,y,dx,dy,dxx,dyy) u};
 force = @(x) f2(x(:,1),x(:,2));
 border = {@(x)f3(x(:,1),x(:,2)),@(x)f3(x(:,1),x(:,2)),@(x)f3(x(:,1),x(:,2)),@(x)f3(x(:,1),x(:,2))};
+
+
 
 Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
 

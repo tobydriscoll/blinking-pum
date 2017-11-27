@@ -2,12 +2,13 @@ c = 1e-2;
 
 NT = 1;
 
-NT2 = 0;
+NT2 = 1;
 
 ep = 1e-5;
 
 degs = [7 7];
 
+domain = [0 1;0 1];
 %f = @(x) log((x(:,1).^2+x(:,2).^4)/c+1);
 %f2 = @(x,y) log((x.^2+y.^4)/c+1);
 
@@ -21,8 +22,11 @@ degs = [7 7];
 %f = @(x) (1-exp((x(:,1)-1)/ep)).*(1-exp((x(:,2)-1)/ep)).*cos(pi*(x(:,1)+x(:,2)));
 %f2 = @(x,y) (1-exp((x-1)/ep)).*(1-exp((y-1)/ep)).*cos(pi*(x+y));
 
-f = @(x) atan((x(:,1)+x(:,2).^2)/c);
-f2 = @(x,y) atan((x+y.^2)/c);
+%f = @(x) atan((x(:,1)+x(:,2).^2)/c);
+%f2 = @(x,y) atan((x+y.^2)/c);
+
+f  = @(x) x(:,1).^3.*exp(3.5*pi*x(:,2));
+f2 = @(x,y) x.^3.*exp(3.5*pi*y);
 
 %f2 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
 %f = @(x) f2(x(:,1),x(:,2));
@@ -59,16 +63,17 @@ TIMES = zeros(NT,1);
 for i=1:NT
     
 tic;
-TREE = PUFun([-1 1;-1 1],degs,f,1e-12);
+TREE = PUFun(domain,degs,f,1e-12);
 TIMES(i)=toc;
 
 end
 
 mean(TIMES)
 
-x = linspace(-1,1,200)';
+x = linspace(domain(1,1),domain(1,2),200)';
+y = linspace(domain(2,1),domain(2,2),200)';
 
-G = {x x};
+G = {x y};
 
 
 TIMESEV = zeros(NT,1);
@@ -90,7 +95,7 @@ surf(X,Y,ef,defaultOpts{:});
 
 E = abs(ef-f2(X,Y));
 
-max(E(:))
+max(E(:)./max(ef(:)))
 
 TIMES = zeros(NT2,1);
 
