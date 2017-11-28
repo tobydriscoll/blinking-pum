@@ -1,4 +1,4 @@
-function [ output ] = ASCoarsePreconditioner(PUApprox,domain,rhs,Mat)
+function [ output ] = ASCoarsePreconditioner(PUApprox,rhs,Mat)
 
 LEAVES = PUApprox.collectLeaves({});
 

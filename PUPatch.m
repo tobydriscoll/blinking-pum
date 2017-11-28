@@ -16,6 +16,17 @@ classdef PUPatch<Patch
     
     methods
         
+        % Construct for the PUPatch
+        %
+        %        Input:
+        %        domain: (dim x 2) array indiciating array for the domain.
+        %          zone: (dim x 2) array indiciating array for the zone.
+        %    overlap_in: overlap interval along splitting dimension.
+        %   cheb_length: total number of interpolating points.
+        %      children: (2 x 1) cell array of Patch objects;
+        % splitting_dim: dimension the patch is split in.
+        %         index: array indicating patch from root to patch (1 left,
+        %         right left).
         function obj = PUPatch(domain,zone,overlap_in,cheb_length,children,splitting_dim,index)
             obj.outerbox = children{1}.outerbox;
             obj.zone = zone;
@@ -31,11 +42,15 @@ classdef PUPatch<Patch
             obj.children{2}.index = [index 2];
         end
         
+        % Returns the length of the patch
+        %   Output:
+        %       ln: total number of interpolating points
         function ln = length(obj)
             ln = obj.cheb_length;
             %ln = length(obj.children{1})+length(obj.children{2});
         end
         
+        % Returns cell array of grids on leaves
         function grids = leafGrids(obj)
             gridsl = leafGrids(obj.children{1});
             gridsr = leafGrids(obj.children{2});
@@ -50,11 +65,15 @@ classdef PUPatch<Patch
             end
         end
         
-        %Implement this later.
+        % Returns vector of interpolating points for the leaf.
         function pts = points(obj)
             pts = [obj.children{1}.points();obj.children{2}.points()];
         end
         
+        % Will split the children of the patch if they are unrefined.
+        %
+        %     Output: 
+        % is_refined: returns if the patch is refined.
         function is_refined = PUsplit(obj,Max,set_vals)
             
             if nargin ==2
@@ -88,6 +107,11 @@ classdef PUPatch<Patch
             obj.is_geometric_refined = is_geometric_refined;
         end
         
+        % This method samples the leaves of the patch.
+        %
+        %     Input:
+        %         f: vector of values for the interpolating values on the 
+        %            leaves depth first, or an anonymous function.
         function [Max] = sample(obj,f)
             if ~isnumeric(f)
                 Max1 = obj.children{1}.sample(f);
@@ -120,17 +144,32 @@ classdef PUPatch<Patch
             
         end
         
-        
-        function vals = evalfGrid(obj,X,dim,order)
+        %  evalfGrid(obj,X)
+        %  Evaluates the approximation on a grid.
+        %
+        %Input:
+        %    X: cell array of grid values.
+        function vals = evalfGrid(obj,X)
             [sum,dotprod] = obj.evalfGrid_recurse(X);
             vals = dotprod./sum;
         end
         
-        function vals = evalf(obj,X,dim,order)
+        %  evalf(obj,X)
+        %  Evaluates the approximation on a list of points.
+        %
+        %Input:
+        %    X: list of points.
+        function vals = evalf(obj,X)
             [sum,dotprod] = obj.evalf_recurse(X);
             vals = dotprod./sum;
         end
         
+        %  evalf_recurse(obj,X)
+        %  Evaluates the values need recursively for the approximation on a 
+        %  list of points X.
+        %
+        %Input:
+        %    X: list of points.
         function [sum,dotprod] = evalf_recurse(obj,X)
             
             [num_pts,~] = size(X);
@@ -157,7 +196,12 @@ classdef PUPatch<Patch
             end
         end
         
-        
+        %  evalfGrid_recurse(obj,X)
+        %  Evaluates the values need recursively for the approximation on a 
+        %  grid X.
+        %
+        %Input:
+        %    X: cell array of grid values.
         function [sum,dotprod] = evalfGrid_recurse(obj,X)
 
             grid_lengths = cellfun(@(x)length(x),X);
@@ -190,17 +234,37 @@ classdef PUPatch<Patch
             end
         end
         
+        %  interpSparseMatrixZone(obj,X)
+        %  Creates a sparse interpolating matrix for a list of points X.
+        %
+        % Output:
+        %      M: sparse interpolating matrix.
         function M = interpSparseMatrixZone(obj,X)
             [ii,jj,zz] = obj.interpMatrixZone_vecs(X);
             M = sparse(ii,jj,zz,size(X,1),length(obj));
         end
         
+        %  interpSparseMatrixZoneGrid(obj,X)
+        %  Creates a sparse interpolating matrix along the zones
+        %  for a grid X.
+        %
+        % Output:
+        %      M: sparse interpolating matrix.
         function M = interpSparseMatrixZoneGrid(obj,X)
             [ii,jj,zz] = obj.interpMatrixZoneGrid_vecs(X);
             grid_lengths = cellfun(@(x)length(x),X);
             M = sparse(ii,jj,zz,prod(grid_lengths),length(obj));
         end
         
+        %  interpSparseMatrixZone_vecs(obj,X)
+        %  Creates a sparse interpolating matrix along the zones
+        %  for a list of points X.
+        %
+        %     Input:
+        %      grid: cell array of grid values.
+        %
+        %    Output:
+        %  ii,jj,kk: vectors used to construct the sparse matrix.
         function [ii,jj,zz] = interpMatrixZoneGrid_vecs(obj,grid)
             
             ii = []; jj = []; zz = [];
@@ -290,6 +354,14 @@ classdef PUPatch<Patch
             end
         end
         
+        %  evalfZoneGrid(obj,X)
+        %  Evaluates a grid along the zones for a grid X.
+        %
+        %     Input:
+        %      grid: cell array of grid values.
+        %
+        %    Output:
+        %      vals: values of approximation on grid along the zones.
         function vals = evalfZoneGrid(obj,X)
             grid_lengths = cellfun(@(x)length(x),X);
             
@@ -351,6 +423,14 @@ classdef PUPatch<Patch
             end
         end
         
+        %  interpMatrixZone_vecs(obj,X)
+        %  Creates a sparse interpolating matrix for a list of points X.
+        %
+        %     Input:
+        %      grid: cell array of grid values.
+        %
+        %    Output:
+        %  ii,jj,kk: vectors used to construct the sparse matrix.
         function [ii,jj,zz] = interpMatrixZone_vecs(obj,X)
             
             [numpts,~] = size(X);
@@ -397,6 +477,16 @@ classdef PUPatch<Patch
             end
         end
         
+        %  evalfZone(obj,X)
+        %  Evaluates the approximation along the zones for a list of
+        %  points.
+        %
+        %     Input:
+        %         X: list of points.
+        %
+        %    Output:
+        %      vals: values of approximation along the zones 
+        %            for the list of points.
         function vals = evalfZone(obj,X)
             
             [numpts,~] = size(X);
@@ -427,7 +517,14 @@ classdef PUPatch<Patch
             vals(ind(:,2)) = child_vals{2};
         end
         
-        
+        %  collectLeaves(obj,leaves)
+        %  Recursive function that collects leaves into cell array.
+        %
+        %     Input:
+        %    leaves: current list of leaves
+        %
+        %    Output:
+        %    LEAVES: leaves list with children of patch added.
         function [LEAVES]= collectLeaves(obj,leaves)
             for k=1:2
                 if obj.children{k}.is_leaf
@@ -445,11 +542,13 @@ classdef PUPatch<Patch
             IsGeometricallyRefined = G1 & G2;
         end
         
+        % Plots the domains of the children.
         function plotdomain(obj)
             obj.children{1}.plotdomain();
             obj.children{2}.plotdomain();
         end
         
+        % Plots the zones of the children.
         function plotzone(obj)
             if(~isempty(obj.children{1}.zone))
                 obj.children{1}.plotzone();
@@ -460,8 +559,7 @@ classdef PUPatch<Patch
             end
         end
         
-
-        
+        %Coarsens the leaves of the patch.
         function Coarsen(obj)
             for k=1:2
                 obj.children{k}.Coarsen();
@@ -469,6 +567,7 @@ classdef PUPatch<Patch
             obj.cheb_length = length(obj.children{1})+length(obj.children{2});
         end
         
+        %Refines the leaves of the patch.
         function Refine(obj)
             for k=1:2
                 obj.children{k}.Refine();
@@ -476,10 +575,18 @@ classdef PUPatch<Patch
             obj.cheb_length = length(obj.children{1})+length(obj.children{2});
         end
         
+        %Method returns vector of values of interpolating points of patch.
         function vals = Getvalues(obj)
             vals = [obj.children{1}.Getvalues();obj.children{2}.Getvalues()];
         end
         
+        %Recursive method that splits the children of a patch along a given
+        %dimension.
+        %
+        %       Input:
+        %   split_dim: splitting dimension
+        %    set_vals: indicator if new children will have values 
+        %              interpolated from the parent.
         function split(obj,split_dim,set_vals)
             for k=1:2
                 if obj.children{k}.is_leaf
@@ -492,7 +599,7 @@ classdef PUPatch<Patch
             obj.domain = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
         end
         
-        
+        % String function for method.
         function str = toString(obj)
             str = strvcat(strcat('1',obj.children{1}.toString()),strcat('2',obj.children{2}.toString()));
         end

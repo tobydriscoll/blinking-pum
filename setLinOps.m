@@ -6,16 +6,20 @@ else
     LEAVES = Tree.collectLeaves({});    
 end
 
-step = 0;
+rhs = zeros(length(Tree),1);
 
-rhs = [];
+step = zeros(length(LEAVES),1);
+
+for k=2:length(LEAVES)
+    step(k) = step(k-1) + length(LEAVES{k-1});
+end
 
 for k=1:length(LEAVES)
     points = LEAVES{k}.points;
     sol = force(points);
     dim = LEAVES{k}.degs;
     
-    [out_border_c,out_border,in_border,in_border_c,in_border_g] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain(),LEAVES{k}.outerbox);
+    [out_border_c,~,in_border,in_border_c,in_border_g] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain(),LEAVES{k}.outerbox);
     
     
     Dx = kron(eye(dim(2)),diffmat(dim(1),1,LEAVES{k}.domain(1,:)));
@@ -39,7 +43,7 @@ for k=1:length(LEAVES)
     
     sol(in_border) = 0;
     
-    rhs = [rhs;sol];
+    rhs(step(k)+(1:length(LEAVES{k}))) = sol;
     
     OP(in_border,:) = E(in_border,:);
     

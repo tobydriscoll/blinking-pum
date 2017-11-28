@@ -125,9 +125,9 @@ while ~is_refined
         [rhs] = setLinOps(Tree,L,B,force,border);
         Mat = CoarseASMat( Tree,L,B );
         
-        A = @(sol) LaplacianForward(Tree,domain,sol);
-        %M = @(rhs) ASPreconditioner(Tree,domain,rhs);
-        M = @(rhs) CoarseCorrection(rhs,Tree,domain,Mat);
+        A = @(sol) LaplacianForward(Tree,sol);
+        %M = @(rhs) ASPreconditioner(Tree,rhs);
+        M = @(rhs) CoarseCorrection(rhs,Tree,Mat);
         
         [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],Tree.Getvalues);
         

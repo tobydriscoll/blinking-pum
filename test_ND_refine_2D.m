@@ -1,10 +1,10 @@
-c = 7.5e-2;
+c = 1e-2;
 
 NT = 1;
 
-NT2 = 1;
+NT2 = 0;
 
-ep = 1e-5;
+ep = 1e-2;
 
 degs = [7 7];
 
@@ -22,11 +22,11 @@ domain = [-1 1;-1 1];
 %f = @(x) (1-exp((x(:,1)-1)/ep)).*(1-exp((x(:,2)-1)/ep)).*cos(pi*(x(:,1)+x(:,2)));
 %f2 = @(x,y) (1-exp((x-1)/ep)).*(1-exp((y-1)/ep)).*cos(pi*(x+y));
 
-%f = @(x) atan((x(:,1)+x(:,2).^2)/c);
-%f2 = @(x,y) atan((x+y.^2)/c);
+f = @(x) atan((x(:,1)+x(:,2).^2)/c);
+f2 = @(x,y) atan((x+y.^2)/c);
 
-f  = @(x) x(:,1).^3.*exp(3.5*pi*x(:,2));
-f2 = @(x,y) x.^3.*exp(3.5*pi*y);
+%f  = @(x) x(:,1).^3.*exp(3.5*pi*x(:,2));
+%f2 = @(x,y) x.^3.*exp(3.5*pi*y);
 
 %f = @(x) atan(x(:,2)./x(:,1));
 %f2 = @(x,y) atan(y./x);
@@ -66,7 +66,7 @@ TIMES = zeros(NT,1);
 for i=1:NT
     
 tic;
-TREE = PUFun(domain,degs,f,1e-6);
+TREE = PUFun(domain,degs,f,1e-12);
 TIMES(i)=toc;
 
 end

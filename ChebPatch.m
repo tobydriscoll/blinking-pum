@@ -350,113 +350,27 @@ classdef ChebPatch<LeafPatch
                 set_vals = false;
             end
             
-            lens = zeros(obj.dim,1);
+            data.vscale = Max;
             
-            if obj.dim==2
+            loc_tol = obj.tol^(7/8);
+            
+            for k=1:obj.dim
                 
-                
-                pref = chebfunpref();
-                pref.chebfuneps = obj.tol^(7/8);
-                loc_tol = obj.tol^(7/8);
-                %loc_tol = obj.tol;
-                data.vscale = Max;
-                
-                %local_max = max(abs(obj.values(:)));
-                
-                if obj.split_flag(1)
-                    fCol = chebtech2(obj.values);
-                    data.hscale = diff(obj.domain(1,:));
-                    data.vscale = Max;
+                if obj.split_flag(k)
                     
-                    [isHappyX, cutoffX2] = standardCheck(fCol, obj.values, data, pref);
-                    lens(1) = cutoffX2+~isHappyX;
-                    
-                    tol = loc_tol*max(data.vscale./max(abs(obj.values),[],1),data.hscale);
-                    lens(1) = length(simplify(fCol, tol))+1;
-                    
-                    sliceSample(obj,1,lens(1));
-                end
-                
-                if obj.split_flag(2)
-                    fRow = chebtech2(obj.values.');
-                    data.hscale = diff(obj.domain(2,:));
-                    data.vscale = Max;
-                    
-                    %[isHappyY, cutoffY2] = standardCheck(fRow, obj.values.', data, pref);
-                    %lens(2) = cutoffY2+~isHappyY;
-                    
-                    tol = loc_tol*max(data.vscale./max(abs(obj.values.'),[],1),data.hscale);
-                    lens(2) = length(simplify(fRow,tol))+1;
-                    
-                    sliceSample(obj,2,lens(2));
-                end
-                
-                
-            else
-                
-                data.vscale = Max;
-                
-                %pref = chebfunpref();
-                loc_tol = obj.tol^(7/8);
-                
-                if obj.split_flag(1)
-                    
-                    colChebtech = chebfun3t.unfold(obj.values, 1);
+                    colChebtech = chebfun3t.unfold(obj.values, k);
                     fCol = chebtech2(colChebtech);
-                    data.hscale = diff(obj.domain(1,:));
-                    
-                    %[isHappyX, cutoffX2] = standardCheck(fCol,colChebtech, data, pref);
-                    %lens(1) = cutoffX2+~isHappyX;
+                    data.hscale = diff(obj.domain(k,:));
                     
                     vscaleF = max(abs(colChebtech), [], 1);
                     tol = loc_tol*max(data.vscale./vscaleF,data.hscale);
-                    lens(1) = length(simplify(fCol, tol))+1;
+                    lens = length(simplify(fCol, tol))+1;
                     
                     
-                    sliceSample(obj,1,lens(1));
+                    sliceSample(obj,k,lens);
                 end
                 
-                if obj.split_flag(2)
-                    
-                    rowChebtech = chebfun3t.unfold(obj.values, 2);
-                    fRow = chebtech2(rowChebtech);
-                    data.hscale = diff(obj.domain(2,:));
-                    
-                    
-                    %[isHappyY, cutoffY2] = standardCheck(fRow,rowChebtech, data, pref);
-                    %lens(2) = cutoffY2+~isHappyY;
-                    
-                    vscaleF = max(abs(rowChebtech), [], 1);
-                    tol = loc_tol*max(data.vscale./vscaleF,data.hscale);
-                    lens(2) = length(simplify(fRow, tol))+1;
-                    
-                    sliceSample(obj,2,lens(2));
-                end
-                
-                if obj.split_flag(3)
-                    
-                    tubeChebtech = chebfun3t.unfold(obj.values, 3);
-                    fTube = chebtech2(tubeChebtech);
-                    
-                    data.hscale = diff(obj.domain(3,:));
-                    
-                    
-                    %[isHappyZ, cutoffZ2] = standardCheck(fTube, tubeChebtech, data, pref);
-                    %lens(3) = cutoffZ2+~isHappyZ;
-                    
-                    vscaleF = max(abs(tubeChebtech), [], 1);
-                    tol = loc_tol*max(data.vscale./vscaleF,data.hscale);
-                    lens(3) = length(simplify(fTube,tol))+1;
-                    
-                    sliceSample(obj,3,lens(3));
-                end
             end
-            
-            %We find the longest length of the box, and split along that
-            %dimension
-            %lengths = diff(obj.domain');
-            %lengths(~obj.split_flag) = 0;
-            %[~,split_dim] = max(lengths);
             
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.
@@ -464,22 +378,20 @@ classdef ChebPatch<LeafPatch
                 obj.cheb_length = prod(obj.degs);
                 Child = obj;
             else
-               
+                
                 Child = obj;
-                for i=1:obj.dim
-                    if obj.split_flag(i)
+                
+                %Go through and split in each unresolved direction
+                for k=1:obj.dim
+                    if obj.split_flag(k)
                         if Child.is_leaf
-                            Child = split(obj,i,set_vals);
+                            Child = split(obj,k,set_vals);
                         else
-                            Child.split(i,set_vals);
+                            Child.split(k,set_vals);
                         end
                     end
                 end
-                
-                %Return the PUPatch with the new children
-                %Child = split(obj,split_dim,set_vals)
             end
-            
         end
         
         function [] = sliceSample(obj,d_in,len)
@@ -501,16 +413,14 @@ classdef ChebPatch<LeafPatch
             end
         end
         
-        % The method determines if a splitting is needed, and creates
-        % the new children if splitting is required.
+        % The method determines will split a child into along
+        % a dimension.
         %
         %     Input:
         %   overlap: overlap intended to be used for the splitting
         %
         %    Output:
-        %     Child: obj if no splitting is needed. If a splitting
-        %            is needed, Child is the PUPatch object with
-        %            the new children.
+        %     Child: the PUPatch with the two new children.
         function Child = split(obj,split_dim,set_vals)
             
             if nargin == 2
@@ -556,7 +466,11 @@ classdef ChebPatch<LeafPatch
             end
         end
         
-        
+        % String function for object.
+        %
+        %     Input:
+        %
+        %     Child: string of object.
         function str = toString(obj)
             str = '';
             for i=1:obj.dim
@@ -573,7 +487,12 @@ classdef ChebPatch<LeafPatch
             str = strcat(str,sprintf(' length %d', obj.length));
         end
         
-        
+        % Plots the overlaping domain of the tree. Works only
+        % in 2D and 3D.
+        %
+        %     Input:
+        %     color: color of marker for the center of the domain.
+        %
         function plotdomain(obj,color)
             
             if nargin==1
@@ -605,6 +524,9 @@ classdef ChebPatch<LeafPatch
             end
         end
         
+        % Plots the zones of the tree. Works only
+        % in 2D and 3D.
+        %
         function plotzone(obj)
             
             if obj.dim==2

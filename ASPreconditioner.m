@@ -1,20 +1,22 @@
-function [ output ] = ASPreconditioner(PUApprox,domain,rhs)
+function [ output ] = ASPreconditioner(PUApprox,rhs)
 
 LEAVES = PUApprox.collectLeaves({});
 
-output = [];
+output = zeros(length(PUApprox),1);
 
-step_n = 0;
+step = zeros(length(LEAVES),1);
+
+for k=2:length(LEAVES)
+    step(k) = step(k-1) + length(LEAVES{k-1});
+end
 
 for k=1:length(LEAVES)
     
-    dim = LEAVES{k}.degs;
-        
-    rhs_k = rhs(step_n+(1:prod(dim)));
+    ind_k = step(k)+(1:length(LEAVES{k}));
     
-    step_n = step_n + prod(dim);
+    rhs_k = rhs(ind_k);
     
-    output = [output;LEAVES{k}.linOp\rhs_k];
+    output(ind_k) = LEAVES{k}.linOp\rhs_k;
 end
 
 % PUApprox.sample(output);

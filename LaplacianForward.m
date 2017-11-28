@@ -1,22 +1,26 @@
-function [ output ] = LaplacianForward(Tree,domain,sol)
+function [ output ] = LaplacianForward(Tree,sol)
 
 Tree.sample(sol);
 
 LEAVES = Tree.collectLeaves({});
 
-output = [];
+output = zeros(size(sol));
 
-step_n = 0;
+step = zeros(length(LEAVES),1);
+
+for k=2:length(LEAVES)
+    step(k) = step(k-1) + length(LEAVES{k-1});
+end
 
 for k=1:length(LEAVES)
     
     dim = LEAVES{k}.degs;
     
-    sol_k = sol(step_n+(1:prod(dim)));
+    sol_k = sol(step(k)+(1:prod(dim)));
     
     lap = LEAVES{k}.linOp*sol_k;
     
-    [out_border_c,out_border,in_border,in_border_c,in_border_g] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain(),LEAVES{k}.outerbox);
+    [~,~,~,in_border_c,~] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain(),LEAVES{k}.outerbox);
     
     for i=1:4
         if any(in_border_c{i})
@@ -26,10 +30,7 @@ for k=1:length(LEAVES)
     
 %    lap(in_border) = lap(in_border)-LEAVES{k}.Binterp*sol;
     
-    output = [output;lap];
-    
-    step_n = step_n + prod(dim);
-    
+    output(step(k)+(1:length(LEAVES{k}))) = lap;
 end
 
 end
