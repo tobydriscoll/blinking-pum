@@ -148,14 +148,13 @@ classdef PUPatch<Patch
                         [sumk,dotprodk] = obj.children{k}.evalf_recurse(X(ind,:));
                     else
                         sumk = obj.children{k}.evalfBump(X(ind,:));
-                        dotprodk = sumk.*obj.children{k}.evalf(X(ind,:),1,0);
+                        dotprodk = sumk.*obj.children{k}.evalf(X(ind,:));
                     end
                         sum(ind) = sum(ind) + sumk;
                         dotprod(ind) = dotprod(ind) + dotprodk;
                 end
             end
         end
-        
         
         
         function [sum,dotprod] = evalfGrid_recurse(obj,X)
@@ -194,7 +193,13 @@ classdef PUPatch<Patch
             [ii,jj,zz] = obj.interpMatrixZone_vecs(X);
             M = sparse(ii,jj,zz,size(X,1),length(obj));
         end
-            
+        
+        function M = interpSparseMatrixZoneGrid(obj,X)
+            [ii,jj,zz] = obj.interpMatrixZoneGrid_vecs(X);
+            grid_lengths = cellfun(@(x)length(x),X);
+            M = sparse(ii,jj,zz,prod(grid_lengths),length(obj));
+        end
+        
         function [ii,jj,zz] = interpMatrixZoneGrid_vecs(obj,grid)
             
             ii = []; jj = []; zz = [];
@@ -258,6 +263,7 @@ classdef PUPatch<Patch
                         else
                             ind_k(:,inds{k}) = true;
                         end
+                        
                     elseif obj.dim==3
                         ind_k = false(grid_lengths(1),grid_lengths(2),grid_lengths(3));
                         
@@ -277,9 +283,9 @@ classdef PUPatch<Patch
                     ii = [ii;ind_k(ii_k)];
                     jj = [jj;jj_k+step];
                     zz = [zz;zz_k];
-                    step = step + obj.children{k}.length();
+                    
                 end
-                
+                step = step + obj.children{k}.length();
             end
         end
         

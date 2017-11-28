@@ -212,7 +212,7 @@ classdef ChebPatch<LeafPatch
             ef = zeros(num_pts,1);
             
             for i=1:num_pts
-                ef(i) = evalfGrid(obj,mat2cell(X(i,:)));
+                ef(i) = evalfGrid(obj,num2cell(X(i,:)));
             end
             
         end

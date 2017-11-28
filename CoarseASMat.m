@@ -6,7 +6,6 @@ else
     LEAVES = Tree.collectLeaves({});    
 end
 
-Tree.sample(@(x)zeros(length(x),1));
 Tree.Coarsen();
 
 step = 0;

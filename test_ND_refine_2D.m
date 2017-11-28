@@ -1,19 +1,19 @@
-c = 1e-2;
+c = 7.5e-2;
 
 NT = 1;
 
-NT2 = 1;
+NT2 = 0;
 
 ep = 1e-5;
 
 degs = [7 7];
 
-domain = [0 1;0 1];
+domain = [-1 1;-1 1];
 %f = @(x) log((x(:,1).^2+x(:,2).^4)/c+1);
 %f2 = @(x,y) log((x.^2+y.^4)/c+1);
 
-%f = @(x) atan((x(:,1)+x(:,2).^2)/c);
-%f2 = @(x,y) atan((x+y.^2)/c);
+f = @(x) atan((x(:,1)+x(:,2).^2)/c);
+f2 = @(x,y) atan((x+y.^2)/c);
 
 %alpha = 1/(10*pi);
 %f  = @(x) sin(1./(alpha+sqrt(x(:,1).^2+x(:,2).^2)));
@@ -25,8 +25,11 @@ domain = [0 1;0 1];
 %f = @(x) atan((x(:,1)+x(:,2).^2)/c);
 %f2 = @(x,y) atan((x+y.^2)/c);
 
-f  = @(x) x(:,1).^3.*exp(3.5*pi*x(:,2));
-f2 = @(x,y) x.^3.*exp(3.5*pi*y);
+%f  = @(x) x(:,1).^3.*exp(3.5*pi*x(:,2));
+%f2 = @(x,y) x.^3.*exp(3.5*pi*y);
+
+%f = @(x) atan(x(:,2)./x(:,1));
+%f2 = @(x,y) atan(y./x);
 
 %f2 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
 %f = @(x) f2(x(:,1),x(:,2));
@@ -63,15 +66,15 @@ TIMES = zeros(NT,1);
 for i=1:NT
     
 tic;
-TREE = PUFun(domain,degs,f,1e-12);
+TREE = PUFun(domain,degs,f,1e-6);
 TIMES(i)=toc;
 
 end
 
 mean(TIMES)
 
-x = linspace(domain(1,1),domain(1,2),200)';
-y = linspace(domain(2,1),domain(2,2),200)';
+x = linspace(domain(1,1),domain(1,2),100)';
+y = linspace(domain(2,1),domain(2,2),100)';
 
 G = {x y};
 
@@ -101,7 +104,7 @@ TIMES = zeros(NT2,1);
 
 for i=1:NT2
 tic;
-F = chebfun2(f2);
+F = chebfun2(f2,[domain(1,:) domain(2,:)]);
 TIMES(i) = toc;
 end
 

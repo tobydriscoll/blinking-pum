@@ -1,4 +1,4 @@
-function [out_border_c,out_border,in_border] = FindBoundaryIndex2DSides(dim,domain,out_domain)
+function [out_border_c,out_border,in_border,in_border_c,in_border_g] = FindBoundaryIndex2DSides(dim,domain,out_domain)
 
 out_border = false(dim);
 in_border = false(dim);
@@ -31,6 +31,11 @@ end
 
 in_border(border) = ~out_border(border);
 
+in_border_g{1} = {[true;false(dim(1)-1,1)] in_border(1,:)};
+in_border_g{2} = {[false(dim(1)-1,1);true] in_border(end,:)};
+in_border_g{3} = {in_border(:,1) [true;false(dim(2)-1,1)]};
+in_border_g{4} = {in_border(:,end) [false(dim(2)-1,1);true]};
+
 out_border = out_border(:);
 
 in_border = in_border(:);
@@ -42,5 +47,11 @@ out_border_c{2} = out_border & West(:);
 
 out_border_c{3} = out_border & South(:);
 out_border_c{4} = out_border & North(:);
+
+in_border_c{1} = in_border & East(:);
+in_border_c{2} = in_border & West(:);
+
+in_border_c{3} = in_border & South(:);
+in_border_c{4} = in_border & North(:);
 
 end
