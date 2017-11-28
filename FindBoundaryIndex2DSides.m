@@ -31,27 +31,29 @@ end
 
 in_border(border) = ~out_border(border);
 
-in_border_g{1} = {[true;false(dim(1)-1,1)] in_border(1,:)};
-in_border_g{2} = {[false(dim(1)-1,1);true] in_border(end,:)};
-in_border_g{3} = {in_border(:,1) [true;false(dim(2)-1,1)]};
-in_border_g{4} = {in_border(:,end) [false(dim(2)-1,1);true]};
-
 out_border = out_border(:);
-
 in_border = in_border(:);
-
 out_border_c = cell(4,1);
 
 out_border_c{1} = out_border & East(:);
-out_border_c{2} = out_border & West(:);
+out_border_c{2} = out_border & West(:) & ~ out_border_c{1};
 
-out_border_c{3} = out_border & South(:);
-out_border_c{4} = out_border & North(:);
+out_border_c{3} = out_border & South(:) & ~(out_border_c{1} | out_border_c{2});
+out_border_c{4} = out_border & North(:) & ~(out_border_c{1} | out_border_c{2} | out_border_c{3});
 
 in_border_c{1} = in_border & East(:);
-in_border_c{2} = in_border & West(:);
+in_border_c{2} = (in_border & West(:)) & ~ in_border_c{1};
 
-in_border_c{3} = in_border & South(:);
-in_border_c{4} = in_border & North(:);
+in_border_c{3} = in_border & South(:) & ~(in_border_c{1} | in_border_c{2});
+in_border_c{4} = in_border & North(:) & ~(in_border_c{1} | in_border_c{2} | in_border_c{3});
 
+
+B = reshape(in_border_c{1},dim);
+in_border_g{1} = {[true;false(dim(1)-1,1)] B(1,:)};
+B = reshape(in_border_c{2},dim);
+in_border_g{2} = {[false(dim(1)-1,1);true] B(end,:)};
+B = reshape(in_border_c{3},dim);
+in_border_g{3} = {B(:,1) [true;false(dim(2)-1,1)]};
+B = reshape(in_border_c{4},dim);
+in_border_g{4} = {B(:,end) [false(dim(2)-1,1);true]};
 end

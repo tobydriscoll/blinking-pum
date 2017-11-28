@@ -32,7 +32,8 @@ classdef PUPatch<Patch
         end
         
         function ln = length(obj)
-            ln = length(obj.children{1})+length(obj.children{2});
+            ln = obj.cheb_length;
+            %ln = length(obj.children{1})+length(obj.children{2});
         end
         
         function grids = leafGrids(obj)
@@ -465,14 +466,14 @@ classdef PUPatch<Patch
             for k=1:2
                 obj.children{k}.Coarsen();
             end
+            obj.cheb_length = length(obj.children{1})+length(obj.children{2});
         end
         
         function Refine(obj)
-            
-            
             for k=1:2
                 obj.children{k}.Refine();
             end
+            obj.cheb_length = length(obj.children{1})+length(obj.children{2});
         end
         
         function vals = Getvalues(obj)
@@ -487,6 +488,7 @@ classdef PUPatch<Patch
                     obj.children{k}.split(split_dim,set_vals);
                 end
             end
+            obj.cheb_length = length(obj.children{1})+length(obj.children{2});
             obj.domain = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
         end
         

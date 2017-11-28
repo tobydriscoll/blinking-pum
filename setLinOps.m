@@ -47,17 +47,17 @@ for k=1:length(LEAVES)
     
     grid = LEAVES{k}.leafGrids;
     
-%         if ~Tree.is_leaf
-%             for i=1:4
-%                 if any(in_border_c{i})
-%                     LEAVES{k}.Binterp{i} = Tree.interpSparseMatrixZoneGrid({grid{1}(in_border_g{i}{1}) grid{2}(in_border_g{i}{2})});
-%                 end
-%             end
-%         end
+        if ~Tree.is_leaf
+            for i=1:4
+                if any(in_border_c{i})
+                    LEAVES{k}.Binterp{i} = Tree.interpSparseMatrixZoneGrid({grid{1}(in_border_g{i}{1}) grid{2}(in_border_g{i}{2})});
+                end
+            end
+        end
     
-    if ~Tree.is_leaf
-                LEAVES{k}.Binterp = Tree.interpSparseMatrixZone(points(in_border,:));
-    end
+%     if ~Tree.is_leaf
+%                 LEAVES{k}.Binterp = Tree.interpSparseMatrixZone(points(in_border,:));
+%     end
 end
 
 end

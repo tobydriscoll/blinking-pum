@@ -395,11 +395,9 @@ classdef ChebPatch<LeafPatch
             else
                 
                 data.vscale = Max;
-                local_max = max(abs(obj.values(:)));
                 
-                pref = chebfunpref();
+                %pref = chebfunpref();
                 loc_tol = obj.tol^(7/8);
-                
                 
                 if obj.split_flag(1)
                     
@@ -446,7 +444,8 @@ classdef ChebPatch<LeafPatch
                     %[isHappyZ, cutoffZ2] = standardCheck(fTube, tubeChebtech, data, pref);
                     %lens(3) = cutoffZ2+~isHappyZ;
                     
-                    tol = loc_tol*max(data.vscale./local_max,data.hscale);
+                    vscaleF = max(abs(tubeChebtech), [], 1);
+                    tol = loc_tol*max(data.vscale./vscaleF,data.hscale);
                     lens(3) = length(simplify(fTube,tol))+1;
                     
                     sliceSample(obj,3,lens(3));
@@ -497,6 +496,8 @@ classdef ChebPatch<LeafPatch
                 
                 obj.deg_in(d_in) = k;
                 obj.degs(d_in) = obj.standard_degs(k);
+                
+                obj.cheb_length = prod(obj.degs);
             end
         end
         
