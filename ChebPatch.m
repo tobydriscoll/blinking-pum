@@ -282,7 +282,15 @@ classdef ChebPatch<LeafPatch
             
         end
         
-        
+        %  interpMatrixPoints(obj,X)
+        %  This method creates a interpolating matrix given a list of
+        %  points.
+        %
+        %  Input:
+        %      X: list of points.
+        %
+        % Output:
+        %      M: interpolating matrix.
         function M = interpMatrixPoints(obj,X)
             
             M = zeros(size(X,1),length(obj));
@@ -293,7 +301,14 @@ classdef ChebPatch<LeafPatch
             
         end
         
-        
+        %  interpMatrixGrid(obj,grid)
+        %  This method creates a interpolating matrix given a grid.
+        %
+        %  Input:
+        %      X: cell array of grid values.
+        %
+        % Output:
+        %      M: interpolating matrix.
         function M = interpMatrixGrid(obj,grid)
             G = obj.leafGrids();
             if obj.dim==1
@@ -366,7 +381,6 @@ classdef ChebPatch<LeafPatch
                     tol = loc_tol*max(data.vscale./vscaleF,data.hscale);
                     lens = length(simplify(fCol, tol))+1;
                     
-                    
                     sliceSample(obj,k,lens);
                 end
                 
@@ -394,6 +408,11 @@ classdef ChebPatch<LeafPatch
             end
         end
         
+        % The method will slice a sample in a given dimension.
+        %
+        %     Input:
+        %      d_in: splitting dimension
+        %       len: length to be sliced too
         function [] = sliceSample(obj,d_in,len)
             if obj.split_flag(d_in) && len<obj.degs(d_in)
                 obj.split_flag(d_in) = false;
