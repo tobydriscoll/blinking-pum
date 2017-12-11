@@ -10,7 +10,6 @@ classdef ChebPatch<LeafPatch
         linOp
         ClinOp
         Binterp
-        bump
         ind_start
     end
     
@@ -26,8 +25,10 @@ classdef ChebPatch<LeafPatch
         standard_degs = [3 5 9 17 33 65 129];
         invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
         forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
-        cheb_bump = chebfun( {0,@(x) exp(1-1./(1-x.^2)),0},[-20 -1 1 20]);
+        %cheb_bump = chebfun( {0,@(x) exp(1-1./(1-x.^2)),0},[-20 -1 1 20]);
+        cheb_bump = @(x) exp(1-1./(1-x.^2));
     end
+    
     
     methods
         % Construct for the ChebPatch
@@ -242,46 +243,7 @@ classdef ChebPatch<LeafPatch
             end
             ef = G;
         end
-        
-        % Evaluates the bump function of a patch.
-        %
-        %  Input:
-        %      X: set of points to evaluate at
-        %
-        % Output:
-        %     ef: array of length(X) of the patch's weight evaluated at X.
-        function ef = evalfBump(obj,X)
-            
-            ef = ones(size(X,1),1);
-            for k=1:obj.dim
-                ef = ef.*obj.bump{k}(X(:,k));
-            end
-            
-        end
-        
-        % Evaluates the bump function of a patch.
-        %
-        %  Input:
-        %      X: cellarray of grids to be evaluated on.
-        %
-        % Output:
-        %     ef: array of dim(X) of the patch's weight evaluated at X.
-        function ef = evalfGridBump(obj,X)
-            
-            W = cell(3,1);
-            
-            for i=1:obj.dim
-                W{i} = obj.bump{i}(X{i});
-            end
-            
-            if obj.dim==2
-                ef = W{1}*W{2}.';
-            else
-                ef = reshape(W{3},1,1,length(W{3})).*(W{2}'.*W{1});
-            end
-            
-        end
-        
+                
         %  interpMatrixPoints(obj,X)
         %  This method creates a interpolating matrix given a list of
         %  points.
@@ -369,22 +331,68 @@ classdef ChebPatch<LeafPatch
             
             loc_tol = obj.tol^(7/8);
             
+            %loc_tol = obj.tol;
+             perf = chebfunpref;
+             
+             perf.chebfuneps = loc_tol;
+             
+            if obj.dim==2
+                 coeffs = chebfun2.vals2coeffs(obj.values);
+            else
+                coeffs = chebfun3.vals2coeffs(obj.values);
+            end
+
+            ishappy = zeros(obj.dim,1);
+            cutoff = zeros(obj.dim,1);
+            
+            Local_max = max(abs(obj.values(:)));
+            
             for k=1:obj.dim
                 
                 if obj.split_flag(k)
                     
-                    colChebtech = chebfun3t.unfold(obj.values, k);
-                    fCol = chebtech2(colChebtech);
-                    data.hscale = diff(obj.domain(k,:));
-                    
-                    vscaleF = max(abs(colChebtech), [], 1);
-                    tol = loc_tol*max(data.vscale./vscaleF,data.hscale);
-                    lens = length(simplify(fCol, tol))+1;
-                    
-                    sliceSample(obj,k,lens);
+                colChebtech = chebfun3t.unfold(coeffs, k);
+                colChebtech = sum(abs(colChebtech),2);
+                fCol = chebtech2({[],colChebtech});
+                data.hscale = diff(obj.domain(k,:));
+                
+                tol = loc_tol*max(data.vscale./Local_max,data.hscale);
+                cutoff(k) = length(simplify(fCol, tol))+1;
+                %loc_values = colChebtech;
+                %loc_values(:) = Local_max;
+                
+
+                %fCol = chebtech2({[],colChebtech});
+                %[ishappy(k), cutoff(k)] = happinessCheck(fCol,loc_values, [], data, perf);
+                
                 end
                 
             end
+
+            for k=1:obj.dim
+                    sliceSample(obj,k,cutoff(k));
+            end
+            
+%             for k=1:obj.dim
+%                 
+%                 if obj.split_flag(k)
+%                     
+%                     colChebtech = chebfun3t.unfold(obj.values, k);
+%                     fCol = chebtech2(colChebtech);
+%                     data.hscale = diff(obj.domain(k,:));
+%                     
+%                     %vscaleF = max(abs(colChebtech), [], 1);
+%                     
+%                     %tol = loc_tol*max(data.vscale./vscaleF,data.hscale);
+%                     %lens = length(simplify(fCol, tol))+1;
+%                     
+%                     [ishappy, cutoff] = standardCheck(fCol, colChebtech, data, perf);
+%                     
+%                     if ishappy
+%                         sliceSample(obj,k,cutoff);
+%                     end
+%                 end
+%             end
             
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.

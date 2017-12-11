@@ -4,11 +4,10 @@ NT = 1;
 
 NT2 = 0;
 
-ep = 1e-2;
-
 degs = [7 7];
 
 domain = [-1 1;-1 1];
+
 %f = @(x) log((x(:,1).^2+x(:,2).^4)/c+1);
 %f2 = @(x,y) log((x.^2+y.^4)/c+1);
 
@@ -60,13 +59,27 @@ f2 = @(x,y) atan((x+y.^2)/c);
 %f = @(x) 1./(1+100*(x(:,1).^2+x(:,2).^2).^2);
 %f2 = @(x,y) 1./(1+100*(x.^2+y.^2).^2);
 
+%f = @(x) sinh(pi*(1-x(:,1))).*sinh(pi*x(:,2));
+%f2 = @(x,y) sinh(pi*(1-x)).*sinh(pi*y);
 
+%f = @(x) x(:,1).*(1-x(:,1)).*x(:,2).*(1-x(:,2)).*atan(20*((x(:,1)+x(:,2))/sqrt(2)-0.8));
+%f2 = @(x,y) x.*(1-x).*y.*(1-y).*atan(20*((x+y)/sqrt(2)-0.8));
+
+%f = @(x) f2(x(:,1),x(:,2));
+%f2 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
+
+%f = @(x) f2(x(:,1),x(:,2));
+%f2 = @(x,y) f3(x,y);
+
+% alpha = 500;
+% f = @(x) cos(alpha*pi*sqrt(x(:,1).^2+x(:,2).^2));
+% f2 = @(x,y) cos(alpha*pi*sqrt(x.^2+y.^2));
 TIMES = zeros(NT,1);
 
 for i=1:NT
     
 tic;
-TREE = PUFun(domain,degs,f,1e-12);
+TREE = PUFun(domain,degs,f,1e-10);
 TIMES(i)=toc;
 
 end
@@ -94,7 +107,7 @@ mean(TIMESEV)
 defaultOpts = {'facecolor', 'flat', 'edgealpha', .5, 'edgecolor', 'none'};
 
 
-surf(X,Y,ef,defaultOpts{:});
+%surf(X,Y,ef,defaultOpts{:});
 
 E = abs(ef-f2(X,Y));
 
@@ -112,6 +125,7 @@ mean(TIMES)
 
 TIMESEV = zeros(NT2,1);
 
+length(TREE)
 
 for i=1:NT2
 tic;

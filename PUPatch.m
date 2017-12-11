@@ -1,8 +1,7 @@
 classdef PUPatch<Patch
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
-    % To do. figure out way to deal with weights. Maybe have seperate
-    % object for weights? IDK.
+    % This class is represents a tree with two Patch Children.
+    % Children can be any Patch class, including PUPatch and 
+    % LeafPatch.
     properties
         children
         splitting_dim
@@ -47,7 +46,6 @@ classdef PUPatch<Patch
         %       ln: total number of interpolating points
         function ln = length(obj)
             ln = obj.cheb_length;
-            %ln = length(obj.children{1})+length(obj.children{2});
         end
         
         % Returns cell array of grids on leaves
@@ -203,32 +201,56 @@ classdef PUPatch<Patch
         %Input:
         %    X: cell array of grid values.
         function [sum,dotprod] = evalfGrid_recurse(obj,X)
-
+            
             grid_lengths = cellfun(@(x)length(x),X);
             
             sum = zeros(grid_lengths);
             
             dotprod = zeros(grid_lengths);
             
+            for k=1:2
+                [sub_grid{k},sub_ind{k}] = obj.children{k}.IndDomainGrid(X);
+            end
+            
+            if obj.dim==3
+                for i=1:obj.dim
+                    com_ind{i} = sub_ind{1}{i} & sub_ind{2}{i};
+                    
+                    for k=1:2
+                        com_sub_ind{k}{i} = com_ind{i}(sub_ind{k}{i});
+                    end
+                end
+            end
+            
+            
             %calculate values for the children
             for k=1:2
-                
-                [sub_grid,sub_ind] = obj.children{k}.IndDomainGrid(X);
-                
-                if all(cellfun(@any,sub_ind))
+                if all(cellfun(@any,sub_ind{k}))
                     if ~obj.children{k}.is_leaf
-                            [sumk,dotprodk] = obj.children{k}.evalfGrid_recurse(sub_grid);
+                        [sumk,dotprodk] = obj.children{k}.evalfGrid_recurse(sub_grid{k});
                     else
-                        sumk = obj.children{k}.evalfGridBump(sub_grid);
-                        dotprodk = sumk.*obj.children{k}.evalfGrid(sub_grid);
+                        sumk = obj.children{k}.evalfGridBump(sub_grid{k});
+                        dotprodk = sumk.*obj.children{k}.evalfGrid(sub_grid{k});
                     end
                     
                     if obj.dim == 2
-                            sum(sub_ind{1},sub_ind{2}) = sum(sub_ind{1},sub_ind{2}) + sumk;
-                            dotprod(sub_ind{1},sub_ind{2}) = dotprod(sub_ind{1},sub_ind{2}) + dotprodk;
+                        sum(sub_ind{k}{1},sub_ind{k}{2}) = sum(sub_ind{k}{1},sub_ind{k}{2}) + sumk;
+                        dotprod(sub_ind{k}{1},sub_ind{k}{2}) = dotprod(sub_ind{k}{1},sub_ind{k}{2}) + dotprodk;
                     else
-                            sum(sub_ind{1},sub_ind{2},sub_ind{3}) = sum(sub_ind{1},sub_ind{2},sub_ind{3}) + sumk;
-                            dotprod(sub_ind{1},sub_ind{2},sub_ind{3}) = dotprod(sub_ind{1},sub_ind{2},sub_ind{3}) + dotprodk;
+                        
+                        sum(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2},sub_ind{k}{3} & ~ com_ind{3}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2},~com_sub_ind{k}{3});
+                        dotprod(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2},sub_ind{k}{3} & ~ com_ind{3}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2},~com_sub_ind{k}{3});
+                        
+                        if k==1
+                            sum(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = sumk;
+                            dotprod(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = dotprodk;
+                        else
+                            sum(com_ind{1},com_ind{2},com_ind{3}) = sum(com_ind{1},com_ind{2},com_ind{3})+sumk(com_sub_ind{k}{1},com_sub_ind{k}{2},com_sub_ind{k}{3});
+                            dotprod(com_ind{1},com_ind{2},com_ind{3}) = dotprod(com_ind{1},com_ind{2},com_ind{3})+dotprodk(com_sub_ind{k}{1},com_sub_ind{k}{2},com_sub_ind{k}{3});
+                        end
+                        
+                        %sum(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = sum(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) + sumk;
+                        %dotprod(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = dotprod(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) + dotprodk;
                     end
                 end
             end

@@ -4,6 +4,8 @@ classdef PUFun < handle
         ChebRoot
         TreeGrid
         leafArray
+        Errs
+        Nums
     end
     
     methods
@@ -15,13 +17,26 @@ classdef PUFun < handle
             end
                 
             [dim,~] = size(domain);
-            obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,ones(1,dim),tol);
+            obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,true(1,dim),tol);
             
             %Refine on f(x)
             
+            errs = [];
+            
+            nums = [];
+%             x = linspace(domain(1,1),domain(1,2),100).';
+%             y = linspace(domain(2,1),domain(2,2),100).';
+%             
+%             [X,Y] = ndgrid(x,y);
             while ~obj.ChebRoot.is_refined
                 
                 Max = obj.ChebRoot.sample(f);
+                
+%                 E = obj.ChebRoot.evalfGrid({x,y});
+%                 
+%                 errs = [errs norm(E(:)-f([X(:) Y(:)]),inf)];
+%                 
+%                 nums = [nums length(obj.ChebRoot)];
                 
                 if obj.ChebRoot.is_leaf
                     obj.ChebRoot = obj.ChebRoot.splitleaf(Max);
@@ -30,6 +45,9 @@ classdef PUFun < handle
                 end
                 
             end
+            
+            obj.Errs = errs;
+            obj.Nums = nums;
             obj.TreeGrid = obj.ChebRoot.leafGrids();
             
             if ~obj.ChebRoot.is_leaf
