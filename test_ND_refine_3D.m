@@ -71,8 +71,8 @@ f = @(x) f2(x(:,1),x(:,2),x(:,3));
 % TREE = PUFun([-1 1;-1 1;-1 1],[6 6 6],f,1e-12);
 % TIMES(i) = toc;
 % end
-
-mean(TIMES)
+% 
+% mean(TIMES)
 
 x = linspace(-1,1,200)';
 
@@ -117,8 +117,8 @@ length(TREE)
 
 %mean(TIMES)
 
-E2 = abs(ef2 - f2(X,Y,Z));
+%E2 = abs(ef2 - f2(X,Y,Z));
 
-max(E2(:))
+%max(E2(:))
 
-rank(F)
+%rank(F)

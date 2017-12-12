@@ -202,7 +202,7 @@ classdef PUPatch<Patch
         %    X: cell array of grid values.
         function [sum,dotprod] = evalfGrid_recurse(obj,X)
             
-            grid_lengths = cellfun(@(x)length(x),X);
+            grid_lengths = cellfun(@(x)size(x,1),X);
             
             sum = zeros(grid_lengths);
             
@@ -212,18 +212,84 @@ classdef PUPatch<Patch
                 [sub_grid{k},sub_ind{k}] = obj.children{k}.IndDomainGrid(X);
             end
             
-            if obj.dim==3
-                for i=1:obj.dim
-                    com_ind{i} = sub_ind{1}{i} & sub_ind{2}{i};
-                    
-                    for k=1:2
-                        com_sub_ind{k}{i} = com_ind{i}(sub_ind{k}{i});
-                    end
+            for i=1:obj.dim
+                com_ind{i} = sub_ind{1}{i} & sub_ind{2}{i};
+                
+                for k=1:2
+                    com_sub_ind{k}{i} = com_ind{i}(sub_ind{k}{i});
                 end
             end
             
             
-            %calculate values for the children
+            %             any1 = all(cellfun(@any,sub_ind{1}));
+            %             any2 = all(cellfun(@any,sub_ind{2}));
+            %
+            %             if any1
+            %                 if ~obj.children{1}.is_leaf
+            %                     [sum1,dotprod1] = obj.children{1}.evalfGrid_recurse(sub_grid{1});
+            %                 else
+            %                     sum1 = obj.children{1}.evalfGridBump(sub_grid{1});
+            %                     dotprod1 = sum1.*obj.children{1}.evalfGrid(sub_grid{1});
+            %                 end
+            %             end
+            %
+            %             if any2
+            %
+            %                 if ~obj.children{2}.is_leaf
+            %                     [sum2,dotprod2] = obj.children{2}.evalfGrid_recurse(sub_grid{2});
+            %                 else
+            %                     sum2 = obj.children{2}.evalfGridBump(sub_grid{2});
+            %                     dotprod2 = sum2.*obj.children{2}.evalfGrid(sub_grid{2});
+            %                 end
+            %             end
+            %
+            %             if any1
+            %
+            %                 subses1 = repmat({':'}, [obj.dim]);
+            %                 subses2 = repmat({':'}, [obj.dim]);
+            %
+            %                 for i=1:obj.dim
+            %                     subses1{i} = sub_ind{1}{i} & ~ com_ind{i};
+            %                     subses2{i} = ~com_sub_ind{1}{i};
+            %                 end
+            %
+            %                 sum(subses1{:}) = sum1(subses2{:});
+            %                 dotprod(subses1{:}) = dotprod1(subses2{:});
+            %             end
+            %
+            %             if any1 || any2
+            %
+            %                 subses1 = repmat({':'}, [obj.dim]);
+            %                 subses2 = repmat({':'}, [obj.dim]);
+            %                 subses3 = repmat({':'}, [obj.dim]);
+            %
+            %                 for i=1:obj.dim
+            %                     subses1{i} = com_ind{i};
+            %                     subses2{i} = com_sub_ind{1}{i};
+            %                     subses3{i} = com_sub_ind{2}{i};
+            %                 end
+            %
+            %                 sum(subses1{:}) = sum1(subses2{:})+sum2(subses3{:});
+            %                 dotprod(subses1{:}) = dotprod1(subses2{:})+dotprod2(subses3{:});
+            %             end
+            %
+            %             if any2
+            %
+            %                 subses1 = repmat({':'}, [obj.dim]);
+            %                 subses2 = repmat({':'}, [obj.dim]);
+            %
+            %                 for i=1:obj.dim
+            %                     subses1{i} = sub_ind{2}{i} & ~ com_ind{i};
+            %                     subses2{i} = ~com_sub_ind{2}{i};
+            %                 end
+            %
+            %                 sum(subses1{:}) = sum2(subses2{:});
+            %                 dotprod(subses1{:}) = dotprod2(subses2{:});
+            %
+            %             end
+            
+            %            calculate values for the children
+            
             for k=1:2
                 if all(cellfun(@any,sub_ind{k}))
                     if ~obj.children{k}.is_leaf
@@ -234,23 +300,35 @@ classdef PUPatch<Patch
                     end
                     
                     if obj.dim == 2
-                        sum(sub_ind{k}{1},sub_ind{k}{2}) = sum(sub_ind{k}{1},sub_ind{k}{2}) + sumk;
-                        dotprod(sub_ind{k}{1},sub_ind{k}{2}) = dotprod(sub_ind{k}{1},sub_ind{k}{2}) + dotprodk;
-                    else
                         
-                        sum(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2},sub_ind{k}{3} & ~ com_ind{3}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2},~com_sub_ind{k}{3});
-                        dotprod(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2},sub_ind{k}{3} & ~ com_ind{3}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2},~com_sub_ind{k}{3});
+                        if k==1
+                            sum(sub_ind{k}{1},sub_ind{k}{2}) = sumk;
+                            dotprod(sub_ind{k}{1},sub_ind{k}{2}) = dotprodk;
+                            
+                        else
+                            
+                            sum(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2});
+                            dotprod(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2}) = dotprodk(~com_sub_ind{k}{1},~com_sub_ind{k}{2});
+                            
+                            sum(com_ind{1},com_ind{2}) = sum(com_ind{1},com_ind{2})+sumk(com_sub_ind{k}{1},com_sub_ind{k}{2});
+                            dotprod(com_ind{1},com_ind{2}) = dotprod(com_ind{1},com_ind{2})+dotprodk(com_sub_ind{k}{1},com_sub_ind{k}{2});
+                        end
+                        
+                    else
                         
                         if k==1
                             sum(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = sumk;
                             dotprod(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = dotprodk;
+                            
                         else
+                            
+                            sum(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2},sub_ind{k}{3} & ~ com_ind{3}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2},~com_sub_ind{k}{3});
+                            dotprod(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2},sub_ind{k}{3} & ~ com_ind{3}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2},~com_sub_ind{k}{3});
+                            
                             sum(com_ind{1},com_ind{2},com_ind{3}) = sum(com_ind{1},com_ind{2},com_ind{3})+sumk(com_sub_ind{k}{1},com_sub_ind{k}{2},com_sub_ind{k}{3});
                             dotprod(com_ind{1},com_ind{2},com_ind{3}) = dotprod(com_ind{1},com_ind{2},com_ind{3})+dotprodk(com_sub_ind{k}{1},com_sub_ind{k}{2},com_sub_ind{k}{3});
                         end
                         
-                        %sum(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = sum(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) + sumk;
-                        %dotprod(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = dotprod(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) + dotprodk;
                     end
                 end
             end

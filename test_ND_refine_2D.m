@@ -111,30 +111,30 @@ defaultOpts = {'facecolor', 'flat', 'edgealpha', .5, 'edgecolor', 'none'};
 
 E = abs(ef-f2(X,Y));
 
-max(E(:)./max(ef(:)))
+max(E(:))
 
 TIMES = zeros(NT2,1);
 
-for i=1:NT2
-tic;
-F = chebfun2(f2,[domain(1,:) domain(2,:)]);
-TIMES(i) = toc;
-end
-
-mean(TIMES)
-
-TIMESEV = zeros(NT2,1);
-
-length(TREE)
-
-for i=1:NT2
-tic;
-ef2 = F(X,Y);
-TIMESEV(i) = toc;
-end
-
-mean(TIMESEV)
-
-E2 = abs(ef2-f2(X,Y));
-
-max(E2(:))
+% for i=1:NT2
+% tic;
+% F = chebfun2(f2,[domain(1,:) domain(2,:)]);
+% TIMES(i) = toc;
+% end
+% 
+% mean(TIMES)
+% 
+% TIMESEV = zeros(NT2,1);
+% 
+% length(TREE)
+% 
+% for i=1:NT2
+% tic;
+% ef2 = F(X,Y);
+% TIMESEV(i) = toc;
+% end
+% 
+% mean(TIMESEV)
+% 
+% E2 = abs(ef2-f2(X,Y));
+% 
+% max(E2(:))
