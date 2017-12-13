@@ -25,8 +25,6 @@ classdef ChebPatch<LeafPatch
         standard_degs = [3 5 9 17 33 65 129];
         invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
         forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
-        %cheb_bump = chebfun( {0,@(x) exp(1-1./(1-x.^2)),0},[-20 -1 1 20]);
-        cheb_bump = @(x) exp(1-1./(1-x.^2));
     end
     
     
@@ -43,11 +41,9 @@ classdef ChebPatch<LeafPatch
         % split_flag: (dim x 1) boolean array indicating if the patch can
         %                       be split in any given dimension.
         function obj = ChebPatch(domain,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
-            obj.outerbox = outerbox;
-            obj.zone = zone;
-            obj.domain = domain;
-            obj.is_geometric_refined = true; %square is always geometrically refined
-            [obj.dim,~] = size(obj.domain);
+            
+            %Call superclass constructor
+            obj = obj@LeafPatch(domain,zone,outerbox);
             
             if nargin < 4
                 obj.deg_in = zeros(1,obj.dim);
@@ -84,22 +80,9 @@ classdef ChebPatch<LeafPatch
             obj.degs = obj.standard_degs(obj.deg_in);
             obj.cdegs = obj.standard_degs(obj.cdeg_in);
             obj.cheb_length = prod(obj.degs);
-            obj.is_leaf = true;
             obj.is_refined = false;
             obj.is_geometric_refined = true;
             
-            obj.bump = cell(3,1);
-            
-            for k=1:obj.dim
-                if obj.domain(k,1) == obj.outerbox(k,1)
-                    w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
-                elseif obj.domain(k,2) == obj.outerbox(k,2)
-                    w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))-1)/2);
-                else
-                    w = @(x) obj.cheb_bump(obj.invf(x,obj.domain(k,:)));
-                end
-                obj.bump{k} = w;
-            end
         end
         
         
@@ -512,71 +495,6 @@ classdef ChebPatch<LeafPatch
             end
             
             str = strcat(str,sprintf(' length %d', obj.length));
-        end
-        
-        % Plots the overlaping domain of the tree. Works only
-        % in 2D and 3D.
-        %
-        %     Input:
-        %     color: color of marker for the center of the domain.
-        %
-        function plotdomain(obj,color)
-            
-            if nargin==1
-                color = 'black';
-            end
-            
-            if obj.dim==2
-                hold on;
-                lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
-                rectangle('position',[obj.domain(:,1)' lengths'],'LineWidth',2,'EdgeColor',color);
-                plot(mean(obj.domain(1,:)),mean(obj.domain(2,:)),'.','MarkerSize',10,'Color',color);
-                hold off;
-            elseif obj.dim==3
-                hold on;
-                lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:));diff(obj.domain(3,:))];
-                center = sum(obj.domain,2)/2;
-                %Vertices for Line Cube. Order matters
-                X = [-1 -1 1 1 -1 -1 1 1 1 1 1 1 -1 -1 -1 -1 -1]';
-                Y = [-1 1 1 -1 -1 -1 -1 -1 -1 1 1 1 1 1 1 -1 -1]';
-                Z = [-1 -1 -1 -1 -1 1 1 -1 1 1 -1 1 1 -1 1 1 -1]';
-                %Example two cube matrix. Unit cube and one scaled/translated cube
-                X1 = X*lengths(1)/2+center(1);
-                Y1 = Y*lengths(2)/2+center(2);
-                Z1 = Z*lengths(3)/2+center(3);
-                %Single plot command for all 'cube lines'
-                plot3(X1,Y1,Z1,'color','black');
-                plot3(mean(obj.domain(1,:)),mean(obj.domain(2,:)),mean(obj.domain(3,:)),'.','MarkerSize',10,'Color','black');
-                hold off;
-            end
-        end
-        
-        % Plots the zones of the tree. Works only
-        % in 2D and 3D.
-        %
-        function plotzone(obj)
-            
-            if obj.dim==2
-                hold on;
-                lengths = [diff(obj.zone(1,:));diff(obj.zone(2,:))];
-                rectangle('position',[obj.zone(:,1)' lengths'],'LineWidth',2);
-                hold off;
-            elseif obj.dim==3
-                hold on;
-                lengths = [diff(obj.zone(1,:));diff(obj.zone(2,:));diff(obj.zone(3,:))];
-                center = sum(obj.zone,2)/2;
-                %Vertices for Line Cube. Order matters
-                X = [-1 -1 1 1 -1 -1 1 1 1 1 1 1 -1 -1 -1 -1 -1]';
-                Y = [-1 1 1 -1 -1 -1 -1 -1 -1 1 1 1 1 1 1 -1 -1]';
-                Z = [-1 -1 -1 -1 -1 1 1 -1 1 1 -1 1 1 -1 1 1 -1]';
-                %Example two cube matrix. Unit cube and one scaled/translated cube
-                X1 = X*lengths(1)/2+center(1);
-                Y1 = Y*lengths(2)/2+center(2);
-                Z1 = Z*lengths(3)/2+center(3);
-                %Single plot command for all 'cube lines'
-                plot3(X1,Y1,Z1,'color','black');
-                hold off;
-            end
         end
         
         function IsGeometricallyRefined = IsGeometricallyRefined(obj)

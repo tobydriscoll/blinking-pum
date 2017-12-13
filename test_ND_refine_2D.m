@@ -79,7 +79,7 @@ TIMES = zeros(NT,1);
 for i=1:NT
     
 tic;
-TREE = PUFun(domain,degs,f,1e-10);
+TREE = PUFun(domain,degs,f,1e-12);
 TIMES(i)=toc;
 
 end
