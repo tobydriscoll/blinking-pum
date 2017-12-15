@@ -233,26 +233,9 @@ classdef PUPatch<Patch
                     end
                     
                     if obj.dim == 2
-                        
-                        
-                        if(size(dotprod(sub_ind{k}{1},sub_ind{k}{2}),1)~=size(dotprodk,1)||size(dotprod(sub_ind{k}{1},sub_ind{k}{2}),2)~=size(dotprodk,2))
-                            a=1;
-                        end
+
                         sum(sub_ind{k}{1},sub_ind{k}{2}) = sum(sub_ind{k}{1},sub_ind{k}{2})+sumk;
                         dotprod(sub_ind{k}{1},sub_ind{k}{2}) = dotprod(sub_ind{k}{1},sub_ind{k}{2})+dotprodk;
-
-%                         if k==1
-%                             sum(sub_ind{k}{1},sub_ind{k}{2}) = sumk;
-%                             dotprod(sub_ind{k}{1},sub_ind{k}{2}) = dotprodk;
-%                             
-%                         else
-%                             
-%                             sum(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2});
-%                             dotprod(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2}) = dotprodk(~com_sub_ind{k}{1},~com_sub_ind{k}{2});
-%                             
-%                             sum(com_ind{1},com_ind{2}) = sum(com_ind{1},com_ind{2})+sumk(com_sub_ind{k}{1},com_sub_ind{k}{2});
-%                             dotprod(com_ind{1},com_ind{2}) = dotprod(com_ind{1},com_ind{2})+dotprodk(com_sub_ind{k}{1},com_sub_ind{k}{2});
-%                         end
                         
                     else
                         
@@ -284,6 +267,18 @@ classdef PUPatch<Patch
             M = sparse(ii,jj,zz,size(X,1),length(obj));
         end
         
+        %  interpSparseMatrix(obj,X)
+        %  Creates a sparse interpolating matrix for a list of points X.
+        %
+        % Output:
+        %      M: sparse interpolating matrix.
+        function M = interpSparseMatrix(obj,X)
+            [ii,jj,zz,sum] = obj.interpMatrix_vecs(X);
+            zz = zz./sum(ii);
+            M = sparse(ii,jj,zz,size(X,1),length(obj));
+        end
+        
+        
         %  interpSparseMatrixZoneGrid(obj,X)
         %  Creates a sparse interpolating matrix along the zones
         %  for a grid X.
@@ -295,6 +290,22 @@ classdef PUPatch<Patch
             grid_lengths = cellfun(@(x)length(x),X);
             M = sparse(ii,jj,zz,prod(grid_lengths),length(obj));
         end
+        
+        
+        %  interpSparseMatrixZoneGrid(obj,X)
+        %  Creates a sparse interpolating matrix along the zones
+        %  for a grid X.
+        %
+        % Output:
+        %      M: sparse interpolating matrix.
+        function M = interpSparseMatrixGrid(obj,X)
+            [ii,jj,zz,sum] = obj.interpMatrixGrid_vecs(X);
+            sum = sum(:);
+            zz = zz./sum(ii);
+            grid_lengths = cellfun(@(x)length(x),X);
+            M = sparse(ii,jj,zz,prod(grid_lengths),length(obj));
+        end
+        
         
         %  interpSparseMatrixZone_vecs(obj,X)
         %  Creates a sparse interpolating matrix along the zones
@@ -393,6 +404,96 @@ classdef PUPatch<Patch
                 step = step + obj.children{k}.length();
             end
         end
+        
+        %  interpSparseMatrixZone_vecs(obj,X)
+        %  Creates a sparse interpolating matrix along the zones
+        %  for a list of points X.
+        %
+        %     Input:
+        %      grid: cell array of grid values.
+        %
+        %    Output:
+        %  ii,jj,kk: vectors used to construct the sparse matrix.
+        function [ii,jj,zz,sum] = interpMatrixGrid_vecs(obj,grid)
+            
+            ii = []; jj = []; zz = [];
+            grid_lengths = cellfun(@(x)length(x),grid);
+            
+            [n,~] = size(grid_lengths);
+            
+            sum = zeros(grid_lengths);
+            
+            if n>1
+                grid_lengths = grid_lengths';
+            end
+            
+            sub_grids = cell(2,1);
+            
+            inds = cell(2,1);
+            
+            not_empty_child = true(2,1);
+            
+            for k=1:2
+                [sub_grids{k},inds{k}] = obj.children{k}.IndDomainGrid(grid);
+                not_empty_child(k) = all(cellfun(@(x)~isempty(x),sub_grids{k}));
+            end
+            
+            in_index = (1:prod(grid_lengths))';
+            
+            step = 0;
+            
+            for k=1:2
+                if not_empty_child(k)
+                    if obj.children{k}.is_leaf
+                        
+                        sumk = obj.children{k}.evalfGridBump(sub_grids{k});
+                        [ii_k,jj_k,zz_k] = find(obj.children{k}.interpMatrixGrid(sub_grids{k}));
+                        W = sumk(:);
+                        
+                        zz_k = zz_k.*W(ii_k);
+                        
+                        if size(ii_k,2)~=1
+                            ii_k = ii_k';
+                        end
+                        
+                        if size(jj_k,2)~=1
+                            jj_k = jj_k';
+                        end
+                        
+                        if size(zz_k,2)~=1
+                            zz_k = zz_k';
+                        end
+                        
+                    else
+                        [ii_k,jj_k,zz_k,sumk] = obj.children{k}.interpMatrixGrid_vecs(sub_grids{k});
+                    end
+                    
+                    if obj.dim==2
+                        ind_k = false(grid_lengths(1),grid_lengths(2));
+                        ind_k(inds{k}{1},inds{k}{2}) = true;
+                        
+                        sum(inds{k}{1},inds{k}{2}) = sum(inds{k}{1},inds{k}{2})+sumk;
+                        
+                    elseif obj.dim==3
+                        ind_k = false(grid_lengths(1),grid_lengths(2),grid_lengths(3));
+                        ind_k(inds{k}{1},inds{k}{2},inds{k}{3}) = true;
+                        
+                        sum(inds{k}{1},inds{k}{2},inds{k}{3}) = sum(inds{k}{1},inds{k}{2},inds{k}{3})+sumk;
+                    end
+                    
+                    ind_k = ind_k(:);
+                    
+                    ind_k = in_index(ind_k);
+                    
+                    ii = [ii;ind_k(ii_k)];
+                    jj = [jj;jj_k+step];
+                    zz = [zz;zz_k];
+                    
+                end
+                step = step + obj.children{k}.length();
+            end
+        end
+        
         
         %  evalfZoneGrid(obj,X)
         %  Evaluates a grid along the zones for a grid X.
@@ -517,6 +618,64 @@ classdef PUPatch<Patch
             end
         end
         
+        %  interpMatrix_vecs(obj,X)
+        %  Creates a sparse interpolating matrix for a list of points X.
+        %
+        %     Input:
+        %      grid: cell array of grid values.
+        %
+        %    Output:
+        %  ii,jj,kk: vectors used to construct the sparse matrix.
+        function [ii,jj,zz,sum] = interpMatrix_vecs(obj,X)
+            
+            [numpts,~] = size(X);
+            
+            ind = false(numpts,2);
+            
+            sum = zeros(size(X,1),1);
+            
+            ii = [];
+            jj = [];
+            zz = [];
+            
+            ind(:,1) = obj.children{1}.InDomain(X);
+            ind(:,2) = obj.children{2}.InDomain(X);
+            
+            step = 0;
+            
+            %calculate values for the children
+            for k=1:2
+                if any(ind(:,k))
+                    
+                in_index = (1:numpts)';
+                in_index = in_index(ind(:,k));
+                
+                    if obj.children{k}.is_leaf
+                        
+                        sumk = obj.children{k}.evalfBump(X(ind(:,k),:));
+                        M = obj.children{k}.interpMatrixPoints(X(ind(:,k),:));
+                        [iik,jjk,zzk] = find(M);
+                        zzk = zzk.*sumk(iik);
+                        
+                        if(size(iik,2)~=1)
+                            iik = iik.';
+                            jjk = jjk.';
+                            zzk = zzk.';
+                        end
+                        
+                    else
+                        [iik,jjk,zzk,sumk] = obj.children{k}.interpMatrix_vecs(X(ind(:,k),:));
+                    end
+                    
+                    ii = [ii;in_index(iik)];
+                    jj = [jj;jjk+step];
+                    zz = [zz;zzk];
+                    sum(ind(:,k)) = sum(ind(:,k)) + sumk;
+                end
+                step = step+length(obj.children{k});
+            end
+        end
+        
         %  evalfZone(obj,X)
         %  Evaluates the approximation along the zones for a list of
         %  points.
@@ -534,6 +693,8 @@ classdef PUPatch<Patch
             vals = zeros(numpts,1);
             
             ind = false(numpts,2);
+            
+            mid_point = mean(obj.zone(obj.splitting_dim,:));
             
             ind(:,1) = X(:,obj.splitting_dim)<mid_point;
             ind(:,2) = ~ind(:,1);

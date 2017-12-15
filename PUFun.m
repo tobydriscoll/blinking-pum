@@ -129,6 +129,16 @@ classdef PUFun < handle
             show(obj.ChebRoot)
         end
         
+        function plot(obj)
+            domain = obj.ChebRoot.domain;
+            x = linspace(domain(1,1),domain(1,2),100)';
+            y = linspace(domain(2,1),domain(2,2),100)';
+            ef = obj.evalfGrid({x y});
+            [X,Y] = ndgrid(x,y);
+            surf(X,Y,ef);
+            xlabel('x');
+            ylabel('y');
+        end
         
     end
 end

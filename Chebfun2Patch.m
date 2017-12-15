@@ -135,14 +135,19 @@ classdef Chebfun2Patch<LeafPatch
         % Input:
         %     f: values sampled at obj.points.
         function [Max] = sample(obj,f)
-           % chebfunpref.setDefaults({'cheb2Prefs','maxRank'},obj.Crank);
+            
+            if ~obj.is_refined
+           %chebfunpref.setDefaults({'cheb2Prefs','maxRank'},obj.Crank);
             %Just assume we sample f for right now.
             warning('off','all');
-            obj.cheb2 = chebfun2(f,[obj.domain(1,:) obj.domain(2,:)],obj.degs);
+            obj.cheb2 = chebfun2(f,[obj.domain(1,:) obj.domain(2,:)],obj.Crank,obj.degs);
             warning('on','all');
 %            Max = max(abs(obj.values(:)));
+            
+           %chebfunpref.setDefaults({'cheb2Prefs','maxRank'},512);
+            end
+            
             Max = inf;
-           % chebfunpref.setDefaults({'cheb2Prefs','maxRank'},512);
         end
         
         % The method determines if a splitting is needed, and creates
@@ -157,30 +162,48 @@ classdef Chebfun2Patch<LeafPatch
         %            the new children.
         function Child = splitleaf(obj,Max,set_vals)
             
-            r = rank(obj.cheb2);
             
-            if r<obj.Crank
-                
-                SF = simplify(obj.cheb2);
-                
-                [m,n] = length(SF);
-                
-                if m<obj.degs(1) && n<obj.degs(2)
-                
-                obj.cheb2 = SF;
-                
-                obj.degs(1) = m;
-                obj.degs(2) = n;
-                obj.is_refined = true;
-                obj.Crank = r;
-                
+            
+            SF = simplify(obj.cheb2);
+            
+            [m,n] = length(obj.cheb2);
+            
+            if m<obj.degs(1) && n<obj.degs(2)
+                SF2 = simplify(SF,'rank');
+                r = rank(SF2);
+                if r<obj.Crank
+                    obj.degs(1) = m;
+                    obj.degs(2) = n;
+                    obj.is_refined = true;
+                    obj.Crank = r;
+                    obj.Cheb2 = SF2;
                 end
-            end
+             end
+            
+            %r = rank(obj.cheb2);
+            
+%             if r<obj.Crank
+%                 
+%                 %SF = simplify(obj.cheb2);
+%                 
+%                 [m,n] = length(obj.cheb2);
+%                 
+%                 %if m<obj.degs(1) && n<obj.degs(2)
+%                 
+%                 %obj.cheb2 = SF;
+%                 
+%                 obj.degs(1) = m;
+%                 obj.degs(2) = n;
+%                 obj.is_refined = true;
+%                 obj.Crank = r;
+%                 
+%                 %end
+%             end
             
             Child = obj;
             
             if ~obj.is_refined
-                %Go through and split in each dimension
+                %Go through and split in each direction
                 for k=1:obj.dim
                     if Child.is_leaf
                         Child = split(obj,k,false);
@@ -262,7 +285,7 @@ classdef Chebfun2Patch<LeafPatch
         end
         str = strcat(str,sprintf('rank %d ',obj.Crank));
         
-        str = strcat(str,sprintf(' length %d', length(obj)));
+        str = strcat(str,sprintf(' degs %d %d',obj.degs(1),obj.degs(2)));
     end
     
     
