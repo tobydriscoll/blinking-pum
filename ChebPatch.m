@@ -324,8 +324,7 @@ classdef ChebPatch<LeafPatch
             else
                 coeffs = chebfun3.vals2coeffs(obj.values);
             end
-
-            ishappy = zeros(obj.dim,1);
+            
             cutoff = zeros(obj.dim,1);
             
             Local_max = max(abs(obj.values(:)));
