@@ -4,7 +4,7 @@ u = [0.75 0.25];
 
 a = [5 10];
 
-tol = 1e-5;
+tol = 1e-12;
 
 opt = spset('GridType','Chebyshev','reltol',tol,'abstol',tol,...
     'maxdepth',10,'vectorized','on');
