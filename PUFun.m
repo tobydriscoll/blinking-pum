@@ -68,6 +68,14 @@ classdef PUFun < handle
             ef = obj.ChebRoot.evalfGrid(X);
         end
         
+        function ef = evalfZoneGrid(obj,X)
+            if obj.ChebRoot.is_leaf
+                ef = obj.ChebRoot.evalfGrid(X);
+            else
+                ef = obj.ChebRoot.evalfZoneGrid(X);
+            end
+        end
+        
         function ef = evalfTreeGrid(obj)
             
             for i=1:length(obj.TreeGrid)

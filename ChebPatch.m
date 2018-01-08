@@ -276,7 +276,11 @@ classdef ChebPatch<LeafPatch
         function [Max] = sample(obj,f)
             %Just assume we sample f for right now.
             if ~isnumeric(f)
-                obj.values = reshape(f(obj.points()),obj.degs);
+                if obj.dim==1
+                    obj.values = f(obj.points());
+                else
+                    obj.values = reshape(f(obj.points()),obj.degs);
+                end
             else
                 switch obj.dim
                     case 1
@@ -319,62 +323,45 @@ classdef ChebPatch<LeafPatch
              
              perf.chebfuneps = loc_tol;
              
-            if obj.dim==2
-                 coeffs = chebfun2.vals2coeffs(obj.values);
-            else
-                coeffs = chebfun3.vals2coeffs(obj.values);
-            end
             
             cutoff = zeros(obj.dim,1);
             
             Local_max = max(abs(obj.values(:)));
             
-            for k=1:obj.dim
-                
-                if obj.split_flag(k)
-                    
-                colChebtech = chebfun3t.unfold(coeffs, k);
-                colChebtech = sum(abs(colChebtech),2);
-                fCol = chebtech2({[],colChebtech});
-                data.hscale = diff(obj.domain(k,:));
-                
+            if obj.dim==1
+                fCol = chebtech2(obj.values);
+                data.hscale = diff(obj.domain);
                 tol = loc_tol*max(data.vscale./Local_max,data.hscale);
-                cutoff(k) = length(simplify(fCol, tol))+1;
-                %loc_values = colChebtech;
-                %loc_values(:) = Local_max;
+                cutoff(1) = length(simplify(fCol, tol))+1;
+            else
                 
-
-                %fCol = chebtech2({[],colChebtech});
-                %[ishappy(k), cutoff(k)] = happinessCheck(fCol,loc_values, [], data, perf);
-                
+                if obj.dim==2
+                    coeffs = chebfun2.vals2coeffs(obj.values);
+                else
+                    coeffs = chebfun3.vals2coeffs(obj.values);
                 end
                 
-            end
-
-            for k=1:obj.dim
-                    sliceSample(obj,k,cutoff(k));
+                for k=1:obj.dim
+                    
+                    if obj.split_flag(k)
+                        
+                        colChebtech = chebfun3t.unfold(coeffs, k);
+                        colChebtech = sum(abs(colChebtech),2);
+                        fCol = chebtech2({[],colChebtech});
+                        data.hscale = diff(obj.domain(k,:));
+                        
+                        tol = loc_tol*max(data.vscale./Local_max,data.hscale);
+                        cutoff(k) = length(simplify(fCol, tol))+1;
+                        
+                    end
+                    
+                end
             end
             
-%             for k=1:obj.dim
-%                 
-%                 if obj.split_flag(k)
-%                     
-%                     colChebtech = chebfun3t.unfold(obj.values, k);
-%                     fCol = chebtech2(colChebtech);
-%                     data.hscale = diff(obj.domain(k,:));
-%                     
-%                     %vscaleF = max(abs(colChebtech), [], 1);
-%                     
-%                     %tol = loc_tol*max(data.vscale./vscaleF,data.hscale);
-%                     %lens = length(simplify(fCol, tol))+1;
-%                     
-%                     [ishappy, cutoff] = standardCheck(fCol, colChebtech, data, perf);
-%                     
-%                     if ishappy
-%                         sliceSample(obj,k,cutoff);
-%                     end
-%                 end
-%             end
+            for k=1:obj.dim
+                sliceSample(obj,k,cutoff(k));
+            end
+            
             
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.
@@ -410,11 +397,17 @@ classdef ChebPatch<LeafPatch
                 %If it is, find the smallest degree we can use.
                 k = find(len<=obj.standard_degs,1);
                 
-                %Slice the values for the new dimension k along i
-                if k<obj.deg_in(d_in)
-                    obj.values = obj.slice(obj.values,1:2^(obj.deg_in(d_in)-k):obj.standard_degs(obj.deg_in(d_in)),d_in);
+                if obj.dim==1
+                    if k<obj.deg_in(d_in)
+                        obj.values = obj.values(1:2^(obj.deg_in(d_in)-k):obj.standard_degs(obj.deg_in(d_in)));
+                    end
+                else
+                    
+                    %Slice the values for the new dimension k along i
+                    if k<obj.deg_in(d_in)
+                        obj.values = obj.slice(obj.values,1:2^(obj.deg_in(d_in)-k):obj.standard_degs(obj.deg_in(d_in)),d_in);
+                    end
                 end
-                
                 obj.deg_in(d_in) = k;
                 obj.degs(d_in) = obj.standard_degs(k);
                 

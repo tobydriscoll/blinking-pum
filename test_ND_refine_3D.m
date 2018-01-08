@@ -1,4 +1,4 @@
-NT = 30;
+NT = 1;
 
 c = 5e-2;
 
@@ -64,17 +64,23 @@ f = @(x) f2(x(:,1),x(:,2),x(:,3));
 %f2 = @(x,y,z) atan((x+y.^2+z.^2)/1e-1);
 %f = @(x) f2(x(:,1),x(:,2),x(:,3));
 
-% TIMES = zeros(NT,1);
-% 
-% for i=1:NT
-% tic;
-% TREE = PUFun([-1 1;-1 1;-1 1],[5 5 5],f,1e-12);
-% TIMES(i) = toc;
-% end
-% 
-% mean(TIMES)
+%f2 = @(x,y,z) atan((x+y+z)*3.5);
+%f = @(x) f2(x(:,1),x(:,2),x(:,3));
 
-x = linspace(-1,1,200)';
+f2 = @(x,y,z) 1./(1+25*(x.^2+y.^2+z.^2));
+f = @(x) f2(x(:,1),x(:,2),x(:,3));
+
+TIMES = zeros(NT,1);
+
+for i=1:NT
+tic;
+TREE = PUFun([-1 1;-1 1;-1 1],[6 6 6],f,1e-12);
+TIMES(i) = toc;
+end
+% 
+mean(TIMES)
+
+x = linspace(-1,1,50)';
 
 G = {x x x};
 

@@ -12,7 +12,7 @@ classdef (Abstract) Patch < handle
         is_geometric_refined = false
         dim
         tol
-        overlap = 0.1;
+        overlap = 0.08;
         outerbox
     end
     
