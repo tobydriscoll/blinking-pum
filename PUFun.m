@@ -1,4 +1,4 @@
-classdef PUFun < handle
+classdef PUFun < handle & matlab.mixin.Copyable
     
     properties
         ChebRoot
@@ -6,37 +6,49 @@ classdef PUFun < handle
         leafArray
         Errs
         Nums
+        deg_in
+        tol
+        grid_opt
+        domain
     end
     
     methods
         
-        function obj = PUFun(domain,deg_in,f,tol)
+        function obj = PUFun(domain,deg_in,f,tol,grid_opt)
             
-            if nargin < 4
-                tol = 1e-12;
+            obj.domain = domain;
+            obj.deg_in = deg_in;
+            
+            if nargin < 5
+                obj.tol = 1e-12;
+                obj.grid_opt = false;
+            else
+                obj.tol = tol;
+                obj.grid_opt = grid_opt;
             end
-                
+            
+            
             [dim,~] = size(domain);
-            obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,true(1,dim),tol);
+            obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,true(1,dim),obj.tol);
             
             %Refine on f(x)
             
             errs = [];
             
             nums = [];
-%             x = linspace(domain(1,1),domain(1,2),100).';
-%             y = linspace(domain(2,1),domain(2,2),100).';
-%             
-%             [X,Y] = ndgrid(x,y);
+            %             x = linspace(domain(1,1),domain(1,2),100).';
+            %             y = linspace(domain(2,1),domain(2,2),100).';
+            %
+            %             [X,Y] = ndgrid(x,y);
             while ~obj.ChebRoot.is_refined
                 
-                Max = obj.ChebRoot.sample(f);
+                Max = obj.ChebRoot.sample(f,obj.grid_opt);
                 
-%                 E = obj.ChebRoot.evalfGrid({x,y});
-%                 
-%                 errs = [errs norm(E(:)-f([X(:) Y(:)]),inf)];
-%                 
-%                 nums = [nums length(obj.ChebRoot)];
+                %                 E = obj.ChebRoot.evalfGrid({x,y});
+                %
+                %                 errs = [errs norm(E(:)-f([X(:) Y(:)]),inf)];
+                %
+                %                 nums = [nums length(obj.ChebRoot)];
                 
                 if obj.ChebRoot.is_leaf
                     obj.ChebRoot = obj.ChebRoot.splitleaf(Max);
@@ -74,6 +86,19 @@ classdef PUFun < handle
             else
                 ef = obj.ChebRoot.evalfZoneGrid(X);
             end
+        end
+        
+        function addTree = add(obj,Tree2)
+            deg_in_add = obj.deg_in;
+            tol_add = obj.tol;
+            addTree = PUFun(obj.domain,deg_in_add,@(x)obj.evalfGrid(x)+Tree2.evalfGrid(x),tol_add,true);
+            
+            %             addTree = copy(obj);
+            %
+            %             for i=1:length(obj.leafArray)
+            %                 addTree.leafArray{i}.values = obj.leafArray{i}.values + Tree2.leafArray{i}.values;
+            %             end
+            
         end
         
         function ef = evalfTreeGrid(obj)
@@ -119,7 +144,7 @@ classdef PUFun < handle
                     end
                     
                 end
-
+                
                 
             end
         end
@@ -149,5 +174,23 @@ classdef PUFun < handle
         end
         
     end
+    
+    methods(Access = protected)
+        % Override copyElement method:
+        function cpObj = copyElement(obj)
+            % Make a shallow copy of all properties
+            cpObj = copyElement@matlab.mixin.Copyable(obj);
+            
+            cpObj.ChebRoot = obj.ChebRoot.copy();
+            
+            if ~cpObj.ChebRoot.is_leaf
+                cpObj.ChebRoot.findIndex([]);
+                cpObj.leafArray = cpObj.ChebRoot.collectLeaves({});
+            else
+                cpObj.leafArray = cpObj.ChebRoot;
+            end
+        end
+    end
+    
 end
 

@@ -1,4 +1,4 @@
-classdef (Abstract) Patch < handle
+classdef (Abstract) Patch < handle & matlab.mixin.Copyable
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -78,7 +78,7 @@ classdef (Abstract) Patch < handle
             % Make a pretty graph showing the domains (2D)
             assert(obj.dim==2,'Must be 2-D')
             if nargin==1  % user call
-                level = 0; 
+                level = 0;
                 newplot
             end
             if obj.is_leaf
@@ -92,6 +92,23 @@ classdef (Abstract) Patch < handle
             end
         end
         
+        function domain_f = collapse_dim_test(obj,dim)
+            if obj.is_leaf
+                domain_f = obj.domain;
+                domain_f(dim,:) = [];
+            else
+                domain_1 = collapse_dim_test(obj.children{1},dim);
+                domain_2 = collapse_dim_test(obj.children{2},dim);
+                
+                domain_f = [domain_1(:,1) domain_2(:,2)];
+                
+                domain_1
+                domain_2
+                if obj.splitting_dim==dim
+                    assert(isequal(domain_1,domain_2));
+                end
+            end
+        end
     end
 end
 

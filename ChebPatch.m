@@ -273,13 +273,25 @@ classdef ChebPatch<LeafPatch
         %
         % Input:
         %     f: values sampled at obj.points.
-        function [Max] = sample(obj,f)
+        function [Max] = sample(obj,f,grid_opt)
+            
+            if(nargin==2)
+                grid_opt = false;
+            end
+            
             %Just assume we sample f for right now.
             if ~isnumeric(f)
-                if obj.dim==1
-                    obj.values = f(obj.points());
+                
+                if ~grid_opt
+                    if obj.dim==1
+                        obj.values = f(obj.points());
+                    else
+                        obj.values = reshape(f(obj.points()),obj.degs);
+                    end
                 else
-                    obj.values = reshape(f(obj.points()),obj.degs);
+                    %If a function is more efficient on a grid, evaluate it
+                    %as so.
+                    obj.values = f(obj.leafGrids());
                 end
             else
                 switch obj.dim

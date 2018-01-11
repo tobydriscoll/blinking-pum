@@ -7,7 +7,7 @@ a = [5 10];
 tol = 1e-12;
 
 opt = spset('GridType','Chebyshev','reltol',tol,'abstol',tol,...
-    'maxdepth',10,'vectorized','on');
+    'maxdepth',100,'vectorized','on');
     
 test_funs = {@(x,y) log(1+10^5*(x.^2+y.^2));
             @(x,y) atan(10^2*(x+y.^2));

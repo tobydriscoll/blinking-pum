@@ -1,6 +1,6 @@
 classdef PUPatch<Patch
     % This class is represents a tree with two Patch Children.
-    % Children can be any Patch class, including PUPatch and 
+    % Children can be any Patch class, including PUPatch and
     % LeafPatch.
     properties
         children
@@ -70,7 +70,7 @@ classdef PUPatch<Patch
         
         % Will split the children of the patch if they are unrefined.
         %
-        %     Output: 
+        %     Output:
         % is_refined: returns if the patch is refined.
         function is_refined = PUsplit(obj,Max,set_vals)
             
@@ -108,17 +108,31 @@ classdef PUPatch<Patch
         % This method samples the leaves of the patch.
         %
         %     Input:
-        %         f: vector of values for the interpolating values on the 
+        %         f: vector of values for the interpolating values on the
         %            leaves depth first, or an anonymous function.
-        function [Max] = sample(obj,f)
-            if ~isnumeric(f)
-                Max1 = obj.children{1}.sample(f);
-                Max2 = obj.children{2}.sample(f);
+        function [Max] = sample(obj,f,grid_opt)
+            
+            if ~obj.is_refined
+                
+                if nargin==2
+                    grid_opt = false;
+                end
+                
+                if ~isnumeric(f)
+                    Max1 = obj.children{1}.sample(f,grid_opt);
+                    Max2 = obj.children{2}.sample(f,grid_opt);
+                else
+                    Max1 = obj.children{1}.sample(f(1:length(obj.children{1})),grid_opt);
+                    Max2 = obj.children{2}.sample(f(length(obj.children{1})+1:end),grid_opt);
+                end
+                Max = max(Max1,Max2);
+                
             else
-                Max1 = obj.children{1}.sample(f(1:length(obj.children{1})));
-                Max2 = obj.children{2}.sample(f(length(obj.children{1})+1:end));
+                
+                Max = -inf;
+                
             end
-            Max = max(Max1,Max2);
+            
         end
         
         
@@ -163,7 +177,7 @@ classdef PUPatch<Patch
         end
         
         %  evalf_recurse(obj,X)
-        %  Evaluates the values need recursively for the approximation on a 
+        %  Evaluates the values need recursively for the approximation on a
         %  list of points X.
         %
         %Input:
@@ -188,14 +202,14 @@ classdef PUPatch<Patch
                         sumk = obj.children{k}.evalfBump(X(ind,:));
                         dotprodk = sumk.*obj.children{k}.evalf(X(ind,:));
                     end
-                        sum(ind) = sum(ind) + sumk;
-                        dotprod(ind) = dotprod(ind) + dotprodk;
+                    sum(ind) = sum(ind) + sumk;
+                    dotprod(ind) = dotprod(ind) + dotprodk;
                 end
             end
         end
         
         %  evalfGrid_recurse(obj,X)
-        %  Evaluates the values need recursively for the approximation on a 
+        %  Evaluates the values need recursively for the approximation on a
         %  grid X.
         %
         %Input:
@@ -233,7 +247,7 @@ classdef PUPatch<Patch
                     end
                     
                     if obj.dim == 2
-
+                        
                         sum(sub_ind{k}{1},sub_ind{k}{2}) = sum(sub_ind{k}{1},sub_ind{k}{2})+sumk;
                         dotprod(sub_ind{k}{1},sub_ind{k}{2}) = dotprod(sub_ind{k}{1},sub_ind{k}{2})+dotprodk;
                         
@@ -593,9 +607,9 @@ classdef PUPatch<Patch
             for k=1:2
                 if any(ind(:,k))
                     
-                in_index = (1:numpts)';
-                in_index = in_index(ind(:,k));
-                
+                    in_index = (1:numpts)';
+                    in_index = in_index(ind(:,k));
+                    
                     if obj.children{k}.is_leaf
                         M = obj.children{k}.interpMatrixPoints(X(ind(:,k),:));
                         [iik,jjk,zzk] = find(M);
@@ -647,9 +661,9 @@ classdef PUPatch<Patch
             for k=1:2
                 if any(ind(:,k))
                     
-                in_index = (1:numpts)';
-                in_index = in_index(ind(:,k));
-                
+                    in_index = (1:numpts)';
+                    in_index = in_index(ind(:,k));
+                    
                     if obj.children{k}.is_leaf
                         
                         sumk = obj.children{k}.evalfBump(X(ind(:,k),:));
@@ -684,7 +698,7 @@ classdef PUPatch<Patch
         %         X: list of points.
         %
         %    Output:
-        %      vals: values of approximation along the zones 
+        %      vals: values of approximation along the zones
         %            for the list of points.
         function vals = evalfZone(obj,X)
             
@@ -786,7 +800,7 @@ classdef PUPatch<Patch
         %
         %       Input:
         %   split_dim: splitting dimension
-        %    set_vals: indicator if new children will have values 
+        %    set_vals: indicator if new children will have values
         %              interpolated from the parent.
         function split(obj,split_dim,set_vals)
             for k=1:2
@@ -805,6 +819,19 @@ classdef PUPatch<Patch
             str = strvcat(strcat('1',obj.children{1}.toString()),strcat('2',obj.children{2}.toString()));
         end
         
+    end
+    
+    methods(Access = protected)
+        % Override copyElement method:
+        function cpObj = copyElement(obj)
+            % Make a shallow copy of all four properties
+            cpObj = copyElement@matlab.mixin.Copyable(obj);
+            % Make a deep copy of the DeepCp object
+            if ~obj.is_leaf
+                cpObj.children{1} = obj.children{1}.copy();
+                cpObj.children{2} = obj.children{2}.copy();
+            end
+        end
     end
     
 end
