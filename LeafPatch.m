@@ -73,7 +73,7 @@ classdef LeafPatch<Patch
             
         end
         
-                % Plots the overlaping domain of the tree. Works only
+        % Plots the overlaping domain of the tree. Works only
         % in 2D and 3D.
         %
         %     Input:

@@ -819,6 +819,17 @@ classdef PUPatch<Patch
             str = strvcat(strcat('1',obj.children{1}.toString()),strcat('2',obj.children{2}.toString()));
         end
         
+        function reset(obj)
+            obj.is_refined = false;
+            obj.is_geometric_refined = false;
+            
+            if ~obj.is_leaf
+                reset(obj.children{1});
+                reset(obj.children{2});
+            end
+        end
+        
+        
     end
     
     methods(Access = protected)

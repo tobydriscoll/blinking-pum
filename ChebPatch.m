@@ -11,10 +11,12 @@ classdef ChebPatch<LeafPatch
         ClinOp
         Binterp
         ind_start
+        deg_in %index for the standard degrees
     end
     
     properties (Access = protected)
-        deg_in %index for the standard degrees
+        orig_degs
+        orig_deg_in
         cdeg_in %index for the course degrees
         swap_deg_in
         split_flag %array indicating if we will split along a dimension
@@ -79,6 +81,10 @@ classdef ChebPatch<LeafPatch
             
             obj.degs = obj.standard_degs(obj.deg_in);
             obj.cdegs = obj.standard_degs(obj.cdeg_in);
+            
+            obj.orig_degs = obj.degs;
+            obj.orig_deg_in = obj.deg_in;
+            
             obj.cheb_length = prod(obj.degs);
             obj.is_refined = false;
             obj.is_geometric_refined = true;
@@ -503,6 +509,15 @@ classdef ChebPatch<LeafPatch
         
         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
             IsGeometricallyRefined = true;
+        end
+        
+
+        
+        function reset(obj)
+            obj.is_refined = false;
+            obj.is_geometric_refined = false;
+            obj.degs = obj.orig_degs;
+            obj.deg_in = obj.orig_deg_in;
         end
         
     end
