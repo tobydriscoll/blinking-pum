@@ -167,7 +167,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
                 leafArray = obj.collectLeaves({});
                 num_patch1 = length(leafArray);
                 
-                leafArray = obj.collectLeaves({});
+                leafArray = T_2.collectLeaves({});
                 num_patch2 = length(leafArray);
                 
                 if num_patch1>num_patch2
@@ -234,7 +234,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
                 leafArray = obj.collectLeaves({});
                 num_patch1 = length(leafArray);
                 
-                leafArray = obj.collectLeaves({});
+                leafArray = T_2.collectLeaves({});
                 num_patch2 = length(leafArray);
                 
                 if num_patch1>num_patch2
@@ -301,7 +301,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
                 leafArray = obj.collectLeaves({});
                 num_patch1 = length(leafArray);
                 
-                leafArray = obj.collectLeaves({});
+                leafArray = T_2.collectLeaves({});
                 num_patch2 = length(leafArray);
                 
                 if num_patch1>num_patch2
@@ -367,7 +367,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
                 leafArray = obj.collectLeaves({});
                 num_patch1 = length(leafArray);
                 
-                leafArray = obj.collectLeaves({});
+                leafArray = T_2.collectLeaves({});
                 num_patch2 = length(leafArray);
                 
                 if num_patch1>num_patch2
