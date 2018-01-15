@@ -104,10 +104,27 @@ classdef PUFun < handle & matlab.mixin.Copyable
         
         function MultTree = multiply(obj,Tree2)
             
-            add_f = @(x) obj.evalfGrid(x).*Tree2.evalfGrid(x);
-            addTreeRoot = multiply(obj.ChebRoot,Tree2.ChebRoot,add_f);
+            mult_f = @(x) obj.evalfGrid(x).*Tree2.evalfGrid(x);
+            addTreeRoot = multiply(obj.ChebRoot,Tree2.ChebRoot,mult_f);
             
             MultTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,addTreeRoot);
+            
+        end
+        
+        function MultTree = divide(obj,Tree2)
+            
+            div_f = @(x)obj.evalfGrid(x)./Tree2.evalfGrid(x);
+            addTreeRoot = divide(obj.ChebRoot,Tree2.ChebRoot,div_f);
+            
+            MultTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,addTreeRoot);
+            
+        end
+        
+        function PowTree = power(obj,p)
+            
+            addTreeRoot = power(obj.ChebRoot,p);
+            
+            PowTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,addTreeRoot);
             
         end
         
