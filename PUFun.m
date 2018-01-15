@@ -102,29 +102,38 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
-        function MultTree = multiply(obj,Tree2)
+        function subTree = subtract(obj,Tree2)
             
-            mult_f = @(x) obj.evalfGrid(x).*Tree2.evalfGrid(x);
-            addTreeRoot = multiply(obj.ChebRoot,Tree2.ChebRoot,mult_f);
+            sub_f = @(x) obj.evalfGrid(x) - Tree2.evalfGrid(x);
+            subTreeRoot = add(obj.ChebRoot,Tree2.ChebRoot,sub_f);
             
-            MultTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,addTreeRoot);
+            subTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,subTreeRoot);
             
         end
         
-        function MultTree = divide(obj,Tree2)
+        function MultTree = multiply(obj,Tree2)
+            
+            mult_f = @(x) obj.evalfGrid(x).*Tree2.evalfGrid(x);
+            multTreeRoot = multiply(obj.ChebRoot,Tree2.ChebRoot,mult_f);
+            
+            MultTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,multTreeRoot);
+            
+        end
+        
+        function DivTree = divide(obj,Tree2)
             
             div_f = @(x)obj.evalfGrid(x)./Tree2.evalfGrid(x);
-            addTreeRoot = divide(obj.ChebRoot,Tree2.ChebRoot,div_f);
+            divTreeRoot = divide(obj.ChebRoot,Tree2.ChebRoot,div_f);
             
-            MultTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,addTreeRoot);
+            DivTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,divTreeRoot);
             
         end
         
         function PowTree = power(obj,p)
             
-            addTreeRoot = power(obj.ChebRoot,p);
+            PowTreeRoot = power(obj.ChebRoot,p);
             
-            PowTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,addTreeRoot);
+            PowTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,PowTreeRoot);
             
         end
         

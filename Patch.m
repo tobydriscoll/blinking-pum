@@ -182,6 +182,73 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
             
         end
         
+        function T_sub = subtract(obj,T_2,sub_f)
+            
+            if obj.is_leaf
+                
+                T_sub = copy(T_2);
+                
+                if ~T_sub.is_leaf
+                    T_sub.findIndex([]);
+                    leafArray = T_sub.collectLeaves({});
+                else
+                    leafArray = {T_sub};
+                end
+                
+                for i=1:length(leafArray)
+                    if isequal(obj.domain,leafArray{i}.domain) && isequal(obj.degs,leafArray{i}.degs)
+                        leafArray{i}.values = obj.values-leafArray{i}.values;
+                    else
+                        leafArray{i}.values = obj.evalfGrid(leafArray{i}.leafGrids())-leafArray{i}.values;
+                    end
+                end
+                
+            elseif T_2.is_leaf
+                T_sub = copy(obj);
+                
+                if ~T_sub.is_leaf
+                    T_sub.findIndex([]);
+                    leafArray = T_sub.collectLeaves({});
+                else
+                    leafArray = {T_sub};
+                end
+                
+                for i=1:length(leafArray)
+                    if isequal(T_2.domain,leafArray{i}.domain) && isequal(T_2.degs,leafArray{i}.degs)
+                        leafArray{i}.values = leafArray{i}.values-T_2.values;
+                    else
+                        leafArray{i}.values = leafArray{i}.values-T_2.evalfGrid(leafArray{i}.leafGrids());
+                    end
+                end
+                
+            elseif obj.splitting_dim == T_2.splitting_dim
+                
+                children{1} = subtract(obj.children{1},T_2.children{1},sub_f);
+                children{2} = subtract(obj.children{2},T_2.children{2},sub_f);
+                
+                cheb_length_add = length(obj.children{1})+length(obj.children{2});
+                domain_add = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
+                
+                T_sub = PUPatch(domain_add,obj.zone,cheb_length_add,children,obj.splitting_dim,obj.index);
+            else
+                leafArray = obj.collectLeaves({});
+                num_patch1 = length(leafArray);
+                
+                leafArray = obj.collectLeaves({});
+                num_patch2 = length(leafArray);
+                
+                if num_patch1>num_patch2
+                    T_sub = copy(obj);
+                else
+                    T_sub = copy(T_2);
+                end
+                
+                T_sub.reset();
+                T_sub = T_sub.refine(sub_f,true);
+            end
+            
+        end
+        
         function T_mult = multiply(obj,T_2,mult_f)
             
             if obj.is_leaf
