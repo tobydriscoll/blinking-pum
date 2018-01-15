@@ -12,11 +12,11 @@ classdef ChebPatch<LeafPatch
         Binterp
         ind_start
         deg_in %index for the standard degrees
+        orig_degs
+        orig_deg_in
     end
     
     properties (Access = protected)
-        orig_degs
-        orig_deg_in
         cdeg_in %index for the course degrees
         swap_deg_in
         split_flag %array indicating if we will split along a dimension
@@ -469,8 +469,13 @@ classdef ChebPatch<LeafPatch
             overlap_in = [m-delta,m+delta];
             
             Children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
-            
             Children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+            
+            Children{1}.orig_degs = obj.orig_degs;
+            Children{1}.orig_deg_in = obj.orig_deg_in;
+            
+            Children{2}.orig_degs = obj.orig_degs;
+            Children{2}.orig_deg_in = obj.orig_deg_in;
             
             domain = obj.domain;
             
@@ -518,6 +523,7 @@ classdef ChebPatch<LeafPatch
             obj.is_geometric_refined = false;
             obj.degs = obj.orig_degs;
             obj.deg_in = obj.orig_deg_in;
+            obj.split_flag = ones(obj.dim,1);
         end
         
     end
