@@ -22,7 +22,9 @@ classdef LeafPatch<Patch
             obj.bump = cell(3,1);
             
             for k=1:obj.dim
-                if obj.domain(k,1) == obj.outerbox(k,1)
+                if isequal(obj.domain(k,:),obj.outerbox(k,:))
+                    w = @(x) ones(size(x));
+                elseif obj.domain(k,1) == obj.outerbox(k,1)
                     w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
                 elseif obj.domain(k,2) == obj.outerbox(k,2)
                     w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))-1)/2);

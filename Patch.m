@@ -13,7 +13,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
         is_geometric_refined = false
         dim
         tol
-        overlap = 0.08;
+        overlap = 0.1;
         outerbox
     end
     
@@ -129,7 +129,11 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
                 end
                 
                 for i=1:length(leafArray)
-                    leafArray{i}.values = leafArray{i}.values+obj.evalfGrid(leafArray{i}.leafGrids());
+                    if isequal(obj.domain,leafArray{i}.domain) && isequal(obj.degs,leafArray{i}.degs)
+                        leafArray{i}.values = leafArray{i}.values+obj.values;
+                    else
+                        leafArray{i}.values = leafArray{i}.values+obj.evalfGrid(leafArray{i}.leafGrids());
+                    end
                 end
                 
             elseif T_2.is_leaf
@@ -143,7 +147,11 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
                 end
                 
                 for i=1:length(leafArray)
-                    leafArray{i}.values = leafArray{i}.values+T_2.evalfGrid(leafArray{i}.leafGrids());
+                    if isequal(T_2.domain,leafArray{i}.domain) && isequal(T_2.degs,leafArray{i}.degs)
+                        leafArray{i}.values = leafArray{i}.values+T_2.values;
+                    else
+                        leafArray{i}.values = leafArray{i}.values+T_2.evalfGrid(leafArray{i}.leafGrids());
+                    end
                 end
                 
             elseif obj.splitting_dim == T_2.splitting_dim

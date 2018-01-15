@@ -95,7 +95,7 @@ classdef PUFun < handle & matlab.mixin.Copyable
         
         function addTree = add(obj,Tree2)
             
-            add_f = @(x) obj.evalfZoneGrid(x) + Tree2.evalfZoneGrid(x);
+            add_f = @(x) obj.evalfGrid(x) + Tree2.evalfGrid(x);
             addTreeRoot = add(obj.ChebRoot,Tree2.ChebRoot,add_f);
             
             addTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,addTreeRoot);
