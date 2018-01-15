@@ -466,7 +466,6 @@ classdef ChebPatch<LeafPatch
             region0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
             region1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
             
-            overlap_in = [m-delta,m+delta];
             
             Children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
             Children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
@@ -482,7 +481,7 @@ classdef ChebPatch<LeafPatch
             domain(split_dim,:) = [region0(split_dim,1) region1(split_dim,2)];
             
             %Return the PUPatch with the new children
-            Child = PUPatch(domain,obj.zone,overlap_in,length(Children{1})+length(Children{2}),Children,split_dim,obj.index);
+            Child = PUPatch(domain,obj.zone,length(Children{1})+length(Children{2}),Children,split_dim,obj.index);
             
             if set_vals
                 for k=1:2

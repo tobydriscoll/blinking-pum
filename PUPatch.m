@@ -5,7 +5,6 @@ classdef PUPatch<Patch
     properties
         children
         splitting_dim
-        overlap_in
         index = [];
     end
     
@@ -20,18 +19,16 @@ classdef PUPatch<Patch
         %        Input:
         %        domain: (dim x 2) array indiciating array for the domain.
         %          zone: (dim x 2) array indiciating array for the zone.
-        %    overlap_in: overlap interval along splitting dimension.
         %   cheb_length: total number of interpolating points.
         %      children: (2 x 1) cell array of Patch objects;
         % splitting_dim: dimension the patch is split in.
         %         index: array indicating patch from root to patch (1 left,
         %         right left).
-        function obj = PUPatch(domain,zone,overlap_in,cheb_length,children,splitting_dim,index)
+        function obj = PUPatch(domain,zone,cheb_length,children,splitting_dim,index)
             obj.outerbox = children{1}.outerbox;
             obj.zone = zone;
             obj.domain = domain;
             [obj.dim,~] = size(obj.domain);
-            obj.overlap_in = overlap_in;
             obj.cheb_length = cheb_length;
             obj.children = children;
             obj.splitting_dim = splitting_dim;
@@ -99,7 +96,6 @@ classdef PUPatch<Patch
             obj.domain = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
             
             obj.cheb_length = obj.children{1}.cheb_length+obj.children{2}.cheb_length;
-            obj.overlap_in = [obj.children{2}.domain(obj.splitting_dim,1), obj.children{1}.domain(obj.splitting_dim,2)];
             
             obj.is_refined = is_refined;
             obj.is_geometric_refined = is_geometric_refined;

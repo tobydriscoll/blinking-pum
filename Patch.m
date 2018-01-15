@@ -13,7 +13,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
         is_geometric_refined = false
         dim
         tol
-        overlap = 0.1;
+        overlap = 0.08;
         outerbox
     end
     
@@ -106,7 +106,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
                 Max = fun_obj.sample(f,grid_opt);
                 
                 if fun_obj.is_leaf
-                    fun_obj = obj.ChebRoot.splitleaf(Max);
+                    fun_obj = obj.splitleaf(Max);
                 else
                     fun_obj.PUsplit(Max);
                 end
@@ -162,7 +162,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
                 cheb_length_add = length(obj.children{1})+length(obj.children{2});
                 domain_add = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
                 
-                T_add = PUPatch(domain_add,obj.zone,[],cheb_length_add,children,obj.splitting_dim,obj.index);
+                T_add = PUPatch(domain_add,obj.zone,cheb_length_add,children,obj.splitting_dim,obj.index);
             else
                 leafArray = obj.collectLeaves({});
                 num_patch1 = length(leafArray);
@@ -182,7 +182,71 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
             
         end
         
-        
+        function T_mult = multiply(obj,T_2,mult_f)
+            
+            if obj.is_leaf
+                
+                T_mult = copy(T_2);
+                
+                if ~T_mult.is_leaf
+                    T_mult.findIndex([]);
+                    leafArray = T_mult.collectLeaves({});
+                    T_2Array = T_2.collectLeaves({});
+                else
+                    leafArray = {T_mult};
+                    T_2Array = {T_2};
+                end
+                
+                T_mult.reset();
+                
+                for i=1:length(leafArray)
+                    leafArray{i} = refine(leafArray{i},@(x)obj.evalfGrid(x).*T_2Array{i}.evalfGrid(x),true);
+                end
+                
+            elseif T_2.is_leaf
+                T_mult = copy(obj);
+                
+                if ~T_mult.is_leaf
+                    T_Array = obj.collectLeaves({});
+                    T_mult.findIndex([]);
+                    leafArray = T_mult.collectLeaves({});
+                else
+                    T_Array = {obj};
+                    leafArray = {T_mult};
+                end
+                
+                T_mult.reset();
+                
+                for i=1:length(leafArray)
+                    leafArray{i} = refine(leafArray{i},@(x)T_2.evalfGrid(x).*T_Array{i}.evalfGrid(x),true);
+                end
+                
+            elseif obj.splitting_dim == T_2.splitting_dim
+                
+                children{1} = multiply(obj.children{1},T_2.children{1},mult_f);
+                children{2} = multiply(obj.children{2},T_2.children{2},mult_f);
+                
+                cheb_length_add = length(obj.children{1})+length(obj.children{2});
+                domain_add = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
+                
+                T_mult = PUPatch(domain_add,obj.zone,cheb_length_add,children,obj.splitting_dim,obj.index);
+            else
+                leafArray = obj.collectLeaves({});
+                num_patch1 = length(leafArray);
+                
+                leafArray = obj.collectLeaves({});
+                num_patch2 = length(leafArray);
+                
+                if num_patch1>num_patch2
+                    T_mult = copy(obj);
+                else
+                    T_mult = copy(T_2);
+                end
+                
+                T_mult.reset();
+                T_mult = T_mult.refine(mult_f,true);
+            end
+        end
     end
 end
 
