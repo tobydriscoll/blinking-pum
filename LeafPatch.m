@@ -112,6 +112,10 @@ classdef LeafPatch<Patch
             end
         end
         
+        function List = collectLeaves(obj)
+            List = {obj};
+        end
+        
         % Plots the zones of the tree. Works only
         % in 2D and 3D.
         %

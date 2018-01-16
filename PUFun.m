@@ -30,20 +30,12 @@ classdef PUFun < handle & matlab.mixin.Copyable
                 obj.ChebRoot = ChebRoot;
             end
             
-            
-            
             if nargin<6
                 refine(obj,f,grid_opt);
             else
-                
                 obj.TreeGrid = obj.ChebRoot.leafGrids();
                 
-                if ~obj.ChebRoot.is_leaf
-                    obj.ChebRoot.findIndex([]);
-                    obj.leafArray = obj.ChebRoot.collectLeaves({});
-                else
-                    obj.leafArray = {obj.ChebRoot};
-                end
+                obj.leafArray = obj.ChebRoot.collectLeaves();
             end
             
         end
@@ -70,7 +62,7 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
             if ~obj.ChebRoot.is_leaf
                 obj.ChebRoot.findIndex([]);
-                obj.leafArray = obj.ChebRoot.collectLeaves({});
+                obj.leafArray = obj.ChebRoot.collectLeaves();
             else
                 obj.leafArray = {obj.ChebRoot};
             end
@@ -93,45 +85,45 @@ classdef PUFun < handle & matlab.mixin.Copyable
             end
         end
         
-        function addTree = add(obj,Tree2)
+        function addTree = plus(obj,Tree2)
             
             add_f = @(x) obj.evalfGrid(x) + Tree2.evalfGrid(x);
-            addTreeRoot = add(obj.ChebRoot,Tree2.ChebRoot,add_f);
+            addTreeRoot = PUFun.add(obj.ChebRoot,Tree2.ChebRoot,add_f);
             
             addTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,addTreeRoot);
             
         end
         
-        function subTree = subtract(obj,Tree2)
+        function subTree = minus(obj,Tree2)
             
             sub_f = @(x) obj.evalfGrid(x) - Tree2.evalfGrid(x);
-            subTreeRoot = add(obj.ChebRoot,Tree2.ChebRoot,sub_f);
+            subTreeRoot = PUFun.subtract(obj.ChebRoot,Tree2.ChebRoot,sub_f);
             
             subTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,subTreeRoot);
             
         end
         
-        function MultTree = multiply(obj,Tree2)
+        function MultTree = mtimes(obj,Tree2)
             
             mult_f = @(x) obj.evalfGrid(x).*Tree2.evalfGrid(x);
-            multTreeRoot = multiply(obj.ChebRoot,Tree2.ChebRoot,mult_f);
+            multTreeRoot = PUFun.multiply(obj.ChebRoot,Tree2.ChebRoot,mult_f);
             
             MultTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,multTreeRoot);
             
         end
         
-        function DivTree = divide(obj,Tree2)
+        function DivTree = mrdivide(obj,Tree2)
             
             div_f = @(x)obj.evalfGrid(x)./Tree2.evalfGrid(x);
-            divTreeRoot = divide(obj.ChebRoot,Tree2.ChebRoot,div_f);
+            divTreeRoot = PUFun.divide(obj.ChebRoot,Tree2.ChebRoot,div_f);
             
             DivTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,divTreeRoot);
             
         end
         
-        function PowTree = power(obj,p)
+        function PowTree = mpower(obj,p)
             
-            PowTreeRoot = power(obj.ChebRoot,p);
+            PowTreeRoot = PUFun.power(obj.ChebRoot,p);
             
             PowTree = PUFun(obj.domain,obj.deg_in,[],obj.tol,true,PowTreeRoot);
             
@@ -221,7 +213,7 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
             if ~cpObj.ChebRoot.is_leaf
                 cpObj.ChebRoot.findIndex([]);
-                cpObj.leafArray = cpObj.ChebRoot.collectLeaves({});
+                cpObj.leafArray = cpObj.ChebRoot.collectLeaves();
             else
                 cpObj.leafArray = cpObj.ChebRoot;
             end
@@ -234,6 +226,250 @@ classdef PUFun < handle & matlab.mixin.Copyable
             subses = repmat({':'}, [1 ndims(A)]);
             subses{dim} = ix;
             out = A(subses{:});
+        end
+        
+        function T_add = add(T_1,T_2,add_f)
+            
+            if T_1.is_leaf
+                
+                T_add = copy(T_2);
+                
+                leafArray = T_add.collectLeaves();
+                
+                for i=1:length(leafArray)
+                    if isequal(T_1.domain,leafArray{i}.domain) && isequal(T_1.degs,leafArray{i}.degs)
+                        leafArray{i}.values = leafArray{i}.values+T_1.values;
+                    else
+                        leafArray{i}.values = leafArray{i}.values+T_1.evalfGrid(leafArray{i}.leafGrids());
+                    end
+                end
+                
+            elseif T_2.is_leaf
+                T_add = copy(T_1);
+                
+                leafArray = T_add.collectLeaves();
+                
+                for i=1:length(leafArray)
+                    if isequal(T_2.domain,leafArray{i}.domain) && isequal(T_2.degs,leafArray{i}.degs)
+                        leafArray{i}.values = leafArray{i}.values+T_2.values;
+                    else
+                        leafArray{i}.values = leafArray{i}.values+T_2.evalfGrid(leafArray{i}.leafGrids());
+                    end
+                end
+                
+            elseif T_1.splitting_dim == T_2.splitting_dim
+                
+                children{1} = PUFun.add(T_1.children{1},T_2.children{1},add_f);
+                children{2} = PUFun.add(T_1.children{2},T_2.children{2},add_f);
+                
+                cheb_length_add = length(T_1.children{1})+length(T_1.children{2});
+                domain_add = [T_1.children{1}.domain(:,1) T_1.children{2}.domain(:,2)];
+                
+                T_add = PUPatch(domain_add,T_1.zone,cheb_length_add,children,T_1.splitting_dim,T_1.index);
+            else
+                leafArray = T_1.collectLeaves();
+                num_patch1 = length(leafArray);
+                
+                leafArray = T_2.collectLeaves();
+                num_patch2 = length(leafArray);
+                
+                if num_patch1>num_patch2
+                    T_add = copy(T_1);
+                else
+                    T_add = copy(T_2);
+                end
+                
+                T_add.reset();
+                T_add = T_add.refine(add_f,true);
+            end
+            
+        end
+        
+        function T_sub = subtract(T_1,T_2,sub_f)
+            
+            if T_1.is_leaf
+                
+                T_sub = copy(T_2);
+                
+                if ~T_sub.is_leaf
+                    T_sub.findIndex([]);
+                    leafArray = T_sub.collectLeaves();
+                else
+                    leafArray = {T_sub};
+                end
+                
+                for i=1:length(leafArray)
+                    if isequal(T_1.domain,leafArray{i}.domain) && isequal(T_1.degs,leafArray{i}.degs)
+                        leafArray{i}.values = T_1.values-leafArray{i}.values;
+                    else
+                        leafArray{i}.values = T_1.evalfGrid(leafArray{i}.leafGrids())-leafArray{i}.values;
+                    end
+                end
+                
+            elseif T_2.is_leaf
+                
+                T_sub = copy(T_1);
+                
+                leafArray = T_sub.collectLeaves();
+                
+                for i=1:length(leafArray)
+                    if isequal(T_2.domain,leafArray{i}.domain) && isequal(T_2.degs,leafArray{i}.degs)
+                        leafArray{i}.values = leafArray{i}.values-T_2.values;
+                    else
+                        leafArray{i}.values = leafArray{i}.values-T_2.evalfGrid(leafArray{i}.leafGrids());
+                    end
+                end
+                
+            elseif T_1.splitting_dim == T_2.splitting_dim
+                
+                children{1} = PUFun.subtract(T_1.children{1},T_2.children{1},sub_f);
+                children{2} = PUFun.subtract(T_1.children{2},T_2.children{2},sub_f);
+                
+                cheb_length_add = length(T_1.children{1})+length(T_1.children{2});
+                domain_add = [T_1.children{1}.domain(:,1) T_1.children{2}.domain(:,2)];
+                
+                T_sub = PUPatch(domain_add,T_1.zone,cheb_length_add,children,T_1.splitting_dim,T_1.index);
+            else
+                leafArray = T_1.collectLeaves();
+                num_patch1 = length(leafArray);
+                
+                leafArray = T_2.collectLeaves();
+                num_patch2 = length(leafArray);
+                
+                if num_patch1>num_patch2
+                    T_sub = copy(T_1);
+                else
+                    T_sub = copy(T_2);
+                end
+                
+                T_sub.reset();
+                T_sub = T_sub.refine(sub_f,true);
+            end
+            
+        end
+        
+        function T_mult = multiply(T_1,T_2,mult_f)
+            
+            if T_1.is_leaf
+                
+                T_mult = copy(T_2);
+                
+                leafArray = T_mult.collectLeaves();
+                T_2Array = T_2.collectLeaves();
+                
+                T_mult.reset();
+                
+                for i=1:length(leafArray)
+                    leafArray{i} = refine(leafArray{i},@(x)T_1.evalfGrid(x).*T_2Array{i}.evalfGrid(x),true);
+                end
+                
+            elseif T_2.is_leaf
+                T_mult = copy(T_1);
+                
+                
+                T_Array = T_1.collectLeaves();
+                leafArray = T_mult.collectLeaves();
+                
+                T_mult.reset();
+                
+                for i=1:length(leafArray)
+                    leafArray{i} = refine(leafArray{i},@(x)T_2.evalfGrid(x).*T_Array{i}.evalfGrid(x),true);
+                end
+                
+            elseif T_1.splitting_dim == T_2.splitting_dim
+                
+                children{1} = PUFun.multiply(T_1.children{1},T_2.children{1},mult_f);
+                children{2} = PUFun.multiply(T_1.children{2},T_2.children{2},mult_f);
+                
+                cheb_length_add = length(T_1.children{1})+length(T_1.children{2});
+                domain_add = [T_1.children{1}.domain(:,1) T_1.children{2}.domain(:,2)];
+                
+                T_mult = PUPatch(domain_add,T_1.zone,cheb_length_add,children,T_1.splitting_dim,T_1.index);
+            else
+                leafArray = T_1.collectLeaves();
+                num_patch1 = length(leafArray);
+                
+                leafArray = T_2.collectLeaves();
+                num_patch2 = length(leafArray);
+                
+                if num_patch1>num_patch2
+                    T_mult = copy(T_1);
+                else
+                    T_mult = copy(T_2);
+                end
+                
+                T_mult.reset();
+                T_mult = T_mult.refine(mult_f,true);
+            end
+        end
+        
+        function T_divide = divide(T_1,T_2,divide_f)
+            
+            if T_1.is_leaf
+                
+                T_divide = copy(T_2);
+                
+                leafArray = T_divide.collectLeaves();
+                T_2Array = T_2.collectLeaves();
+                
+                T_divide.reset();
+                
+                for i=1:length(leafArray)
+                    leafArray{i} = refine(leafArray{i},@(x)T_1.evalfGrid(x)./T_2Array{i}.evalfGrid(x),true);
+                end
+                
+            elseif T_2.is_leaf
+                T_divide = copy(T_1);
+                
+                T_Array = T_1.collectLeaves();
+                leafArray = T_divide.collectLeaves();
+                
+                T_divide.reset();
+                
+                for i=1:length(leafArray)
+                    leafArray{i} = refine(leafArray{i},@(x)T_Array{i}.evalfGrid(x)./T_2.evalfGrid(x),true);
+                end
+                
+            elseif T_1.splitting_dim == T_2.splitting_dim
+                
+                children{1} = PUFun.divide(T_1.children{1},T_2.children{1},divide_f);
+                children{2} = PUFun.divide(T_1.children{2},T_2.children{2},divide_f);
+                
+                cheb_length_add = length(T_1.children{1})+length(T_1.children{2});
+                domain_add = [T_1.children{1}.domain(:,1) T_1.children{2}.domain(:,2)];
+                
+                T_divide = PUPatch(domain_add,T_1.zone,cheb_length_add,children,T_1.splitting_dim,T_1.index);
+            else
+                
+                leafArray = T_1.collectLeaves();
+                num_patch1 = length(leafArray);
+                
+                leafArray = T_2.collectLeaves();
+                num_patch2 = length(leafArray);
+                
+                if num_patch1>num_patch2
+                    T_divide = copy(T_1);
+                else
+                    T_divide = copy(T_2);
+                end
+                
+                T_divide.reset();
+                T_divide = T_divide.refine(divide_f,true);
+            end
+        end
+        
+        function T_power = power(Tree,p)
+            T_power = copy(Tree);
+            
+            T_power.reset();
+            
+            T_Array = Tree.collectLeaves();
+            leafArray = T_power.collectLeaves();
+            
+            
+            for i=1:length(T_Array)
+                leafArray{i} = refine(leafArray{i},@(x)T_Array{i}.evalfGrid(x).^p,true);
+            end
         end
     end
 end

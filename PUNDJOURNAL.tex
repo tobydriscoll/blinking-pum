@@ -1101,6 +1101,49 @@ This argument of course works by looking at $x$ first and then $y$. We seek to d
 \|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\| \leq \sum_{i=N_x+1}^{\infty} | \sum_{j=0}^{N_y} T_j(\cdot) a_{ij}	 | \leq \sum_{i=N_x+1}^{\infty} \sum_{j=0}^{N_y} |a_{ij}|.
 \end{equation}
 We can use Chebfun's {\tt standardChop} on $\{\sum_{j=0}^{N_y} |a_{ij}|\}_{i=0}^{N_x}$ to test the second condition. We test the first condition by looking at the series of $f(x_i,y)$ for each Chebyshev point $x_i$. The coefficients given by the discrete Chebyshev transform will force $p(x,y)$ interpolant $f(x,y)$ on the Chebyshev tensor grid \cite{mason2002chebyshev}. This means with that for each $x_i$, for all $y_j$ that $p(x_i,y_j) = f(x_i,y_j)$. We thus have that $p(x_i,y)$ is the discrete Chebyshev transform of $f(x_i,y)$. This implies that we can {\tt standardChop} on $\{\sum_{i=0}^{N_x} |a_{ij}|\}_{j=0}^{N_y}$ to test if each $f(x_i,y)$ is resolved. This argument works if the conditions of $x$ and $y$ are reversed. We thus determine $p(x,y)$ refined $f(x,y)$ if both $\{\sum_{j=0}^{N_y} |a_{ij}|\}_{i=0}^{N_x}$, $\{\sum_{i=0}^{N_x} |a_{ij}|\}_{j=0}^{N_y}$ are determined to be adequate with {\tt standardChop}.
+
+\section{Adding and multiplying PU approximations}
+
+\begin{algorithm}[!h]
+\caption{$T$ = add($T_1$,$T_2$)}
+\label{addition}
+\begin{algorithmic}
+\IF{$T_1$ is a leaf}
+\STATE $T:=T_2$
+\STATE for each leaf $\nu$ of $T$, add interpolant($T_1$) to interpolant($\nu$)
+\ELSIF{$T_2$ is a leaf}
+\STATE $T:=T_1$
+\STATE for each leaf $\nu$ of $T$, add interpolant($T_2$) to interpolant($\nu$)
+\ELSIF{splittingDim($T_1$)=splittingDim($T_2$)}
+\STATE \child{0}($T$) = add(\child{0}($T_1$),\child{0}($T_2$))
+\STATE \child{1}($T$) = add(\child{1}($T_1$),\child{1}($T_2$))
+\ELSE
+\STATE $T$=refine(max($T_1.\nmax,T_2.\nmax$),$T_1.t$,$T_1.\text{root.evalute}(x)+T_2.\text{root.evalute}(x)$)
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[!h]
+\caption{$T$ = multiply($T_1$,$T_2$)}
+\label{multiply}
+\begin{algorithmic}
+\IF{$T_1$ is a leaf}
+\STATE $T:=T_2$
+\STATE for each leaf $\nu$ of $T$, refine $\nu$ with $f(x)=\text{interpolant}(\nu)(x)\text{interpolant}(T_1)(x)$
+\ELSIF{$T_2$ is a leaf}
+\STATE $T:=T_1$
+\STATE $T:=T_2$
+\STATE for each leaf $\nu$ of $T$, refine $\nu$ with $f(x)=\text{interpolant}(\nu)(x)\text{interpolant}(T_2)(x)$
+\ELSIF{splittingDim($T_1$)=splittingDim($T_2$)}
+\STATE \child{0}($T$) = add(\child{0}($T_1$),\child{0}($T_2$))
+\STATE \child{1}($T$) = add(\child{1}($T_1$),\child{1}($T_2$))
+\ELSE
+\STATE $T$=refine(max($T_1.\nmax,T_2.\nmax$),$T_1.t$,$T_1.\text{root.evalute}(x)+T_2.\text{root.evalute}(x)$)
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
 \bibliographystyle{plain}
 \bibliography{PU_BIB}
 

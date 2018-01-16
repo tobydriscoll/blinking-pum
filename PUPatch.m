@@ -736,15 +736,8 @@ classdef PUPatch<Patch
         %
         %    Output:
         %    LEAVES: leaves list with children of patch added.
-        function [LEAVES]= collectLeaves(obj,leaves)
-            for k=1:2
-                if obj.children{k}.is_leaf
-                    leaves{length(leaves)+1} = obj.children{k};
-                else
-                    leaves = obj.children{k}.collectLeaves(leaves);
-                end
-            end
-            LEAVES = leaves;
+        function [LEAVES]= collectLeaves(obj)
+            LEAVES = collectLeaves_recurse(obj,{});
         end
         
         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
@@ -829,6 +822,18 @@ classdef PUPatch<Patch
     end
     
     methods(Access = protected)
+        
+        function [LEAVES]= collectLeaves_recurse(obj,leaves)
+            for k=1:2
+                if obj.children{k}.is_leaf
+                    leaves{length(leaves)+1} = obj.children{k};
+                else
+                    leaves = obj.children{k}.collectLeaves_recurse(leaves);
+                end
+            end
+            LEAVES = leaves;
+        end
+        
         % Override copyElement method:
         function cpObj = copyElement(obj)
             % Make a shallow copy of all four properties
