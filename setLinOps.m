@@ -3,7 +3,7 @@ function [rhs] = setLinOps(Tree,L,B,force,border)
 if Tree.is_leaf
     LEAVES = {Tree};
 else
-    LEAVES = Tree.collectLeaves({});    
+    LEAVES = Tree.collectLeaves();    
 end
 
 rhs = zeros(length(Tree),1);

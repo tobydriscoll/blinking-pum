@@ -2,7 +2,7 @@ function [ output ] = LaplacianForward(Tree,sol)
 
 Tree.sample(sol);
 
-LEAVES = Tree.collectLeaves({});
+LEAVES = Tree.collectLeaves();
 
 output = zeros(size(sol));
 

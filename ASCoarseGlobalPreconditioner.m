@@ -1,6 +1,6 @@
-function [ output ] = ASCoarseGlobalPreconditioner(PUApprox,domain,rhs)
+function [ output ] = ASCoarseGlobalPreconditioner(PUApprox,rhs)
 
-LEAVES = PUApprox.collectLeaves({});
+LEAVES = PUApprox.collectLeaves();
 
 %initialize solution to zero
 PUApprox.sample(rhs);

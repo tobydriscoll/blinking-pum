@@ -1,6 +1,6 @@
 function [ output ] = ASPreconditioner(PUApprox,rhs)
 
-LEAVES = PUApprox.collectLeaves({});
+LEAVES = PUApprox.collectLeaves();
 
 output = zeros(length(PUApprox),1);
 
@@ -18,13 +18,3 @@ for k=1:length(LEAVES)
     
     output(ind_k) = LEAVES{k}.linOp\rhs_k;
 end
-
-% PUApprox.sample(output);
-% 
-% new_output = [];
-% for i=1:length(LEAVES)
-%     G = PUApprox.evalfGrid(LEAVES{1}.leafGrids(),1,0);
-%     new_output = [new_output;G(:)];
-% end
-% 
-% output = new_output;

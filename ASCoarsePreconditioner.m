@@ -1,7 +1,5 @@
 function [ output ] = ASCoarsePreconditioner(PUApprox,rhs,Mat)
 
-LEAVES = PUApprox.collectLeaves({});
-
 %initialize solution to zero
 PUApprox.sample(rhs);
 

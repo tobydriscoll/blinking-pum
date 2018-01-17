@@ -382,24 +382,18 @@ classdef ChebPatch<LeafPatch
                 set_vals = false;
             end
             
-            data.vscale = Max;
+            vscale = Max;
             
             loc_tol = obj.tol^(7/8);
             
-            %loc_tol = obj.tol;
-             perf = chebfunpref;
-             
-             perf.chebfuneps = loc_tol;
-             
-            
             cutoff = zeros(obj.dim,1);
             
-            Local_max = max(abs(obj.values(:)));
+            local_max = max(abs(obj.values(:)));
             
             if obj.dim==1
                 fCol = chebtech2(obj.values);
-                data.hscale = diff(obj.domain);
-                tol = loc_tol*max(data.vscale./Local_max,data.hscale);
+                hscale = diff(obj.domain);
+                tol = loc_tol*max(vscale./local_max,hscale);
                 cutoff(1) = length(simplify(fCol, tol))+1;
             else
                 
@@ -416,9 +410,9 @@ classdef ChebPatch<LeafPatch
                         colChebtech = chebfun3t.unfold(coeffs, k);
                         colChebtech = sum(abs(colChebtech),2);
                         fCol = chebtech2({[],colChebtech});
-                        data.hscale = diff(obj.domain(k,:));
+                        hscale = diff(obj.domain(k,:));
                         
-                        tol = loc_tol*max(data.vscale./Local_max,data.hscale);
+                        tol = loc_tol*max(vscale./local_max,hscale);
                         cutoff(k) = length(simplify(fCol, tol))+1;
                         
                     end
@@ -565,7 +559,7 @@ classdef ChebPatch<LeafPatch
             IsGeometricallyRefined = true;
         end
         
-
+        
         
         function reset(obj)
             obj.is_refined = false;

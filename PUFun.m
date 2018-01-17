@@ -1,5 +1,5 @@
 classdef PUFun < handle & matlab.mixin.Copyable
-    
+    % This is the class for the PU approximation on squares and cubes.  
     properties
         ChebRoot
         TreeGrid
@@ -40,6 +40,13 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % refine(obj,f,grid_opt)
+        % This method refines the tree by f(x).
+        %Input:
+        %   f          : the function to split on
+        %   grid_opt   : boolean value indicating if
+        %                function is evaluated for grids;
+        %                must take cell array of grids
         function refine(obj,f,grid_opt)
             
             if nargin<3
@@ -69,22 +76,32 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % ef = evalf(obj,X)
+        % This method evalutes the PUM approximation at X.
+        %Input:
+        %   x          : this constructs matrices given f|x.
+        %Output:
+        %   ef         : vector of approximation at X
         function ef = evalf(obj,X)
             ef = obj.ChebRoot.evalf(X);
         end
         
+        % ef = evalf(obj,X)
+        % This method evalutes the PUM approximation at at grid X.
+        %Input:
+        %   x          : this constructs matrices given f|x.
+        %Output:
+        %   ef         : grid of approximation at X
         function ef = evalfGrid(obj,X)
             ef = obj.ChebRoot.evalfGrid(X);
         end
         
-        function ef = evalfZoneGrid(obj,X)
-            if obj.ChebRoot.is_leaf
-                ef = obj.ChebRoot.evalfGrid(X);
-            else
-                ef = obj.ChebRoot.evalfZoneGrid(X);
-            end
-        end
-        
+        % addTree = plus(obj,Tree2)
+        % This method adds obj and Tree2
+        %Input:
+        %   Tree2      : the other tree
+        %Output:
+        %   addTree    : new tree of the sum
         function addTree = plus(obj,Tree2)
             
             add_f = @(x) obj.evalfGrid(x) + Tree2.evalfGrid(x);
@@ -94,6 +111,12 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % subTree = minus(obj,Tree2)
+        % This method subtracts obj and Tree2
+        %Input:
+        %   Tree2      : the other tree
+        %Output:
+        %   subTree    : new tree of the difference
         function subTree = minus(obj,Tree2)
             
             sub_f = @(x) obj.evalfGrid(x) - Tree2.evalfGrid(x);
@@ -103,6 +126,12 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % MultTree = mtimes(obj,Tree2)
+        % This method multiplies obj and Tree2
+        %Input:
+        %   Tree2      : the other tree
+        %Output:
+        %   MultTree   : new tree of the product
         function MultTree = mtimes(obj,Tree2)
             
             mult_f = @(x) obj.evalfGrid(x).*Tree2.evalfGrid(x);
@@ -112,6 +141,12 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % DivTree = mrdivide(obj,Tree2)
+        % This method divides obj and Tree2
+        %Input:
+        %   Tree2      : the other tree
+        %Output:
+        %   DivTree    : new tree of the quotient
         function DivTree = mrdivide(obj,Tree2)
             
             div_f = @(x)obj.evalfGrid(x)./Tree2.evalfGrid(x);
@@ -121,6 +156,12 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % PowTree = mpower(obj,p)
+        % This method computes obj to the power p
+        %Input:
+        %   p          : the power to be used
+        %Output:
+        %   PowTree    : the new tree of the power
         function PowTree = mpower(obj,p)
             
             PowTreeRoot = PUFun.power(obj.ChebRoot,p);
@@ -129,27 +170,21 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
-        function ef = evalfTreeGrid(obj)
-            
-            for i=1:length(obj.TreeGrid)
-                ef = obj.ChebRoot.evalfZoneGrid(obj.TreeGrid{i});
-            end
-            
-        end
-        
+        % Coarsen(obj)
+        % This method Coarsens each of the patches
         function Coarsen(obj)
             obj.ChebRoot.Coarsen
         end
         
+        % Refines(obj)
+        % This method Refines each of the patches
+        function Refine(obj)
+            obj.ChebRoot.Coarsen
+        end
         
-        % [PUF,DX,DXX]=evalf(obj,X)
-        % This method evalutes the PUM approximation at X.
-        %Input:
-        %   x          : this constructs matrices given f|x.
-        %Output:
-        %   PU         : vector of approximation at X
-        %   DX         : vector of derivative values at X
-        %   DXX        : vector of second derivative values at X
+        
+        % int = sum(obj)
+        % This method computes the integral of obj
         function int = sum(obj)
             
             int = 0;
@@ -177,6 +212,14 @@ classdef PUFun < handle & matlab.mixin.Copyable
             end
         end
         
+        % [PUF,DX,DXX]=diff(obj,diff_dim,order)
+        % This method evalutes the PUM approximation at X.
+        %Input:
+        %   diff_Tree  : this constructs matrices given f|x.
+        %   diff_dim   : dimension to differentiate
+        %   order      : order of derivative
+        %Output:
+        %   diff_Tree  : PU approximation of derivative
         function diff_Tree = diff(obj,diff_dim,order)
             diff_Tree = copy(obj);
             
@@ -186,18 +229,26 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % ln = length(obj)
+        % This returns the length of the tree
         function ln = length(obj)
             ln = length(obj.ChebRoot);
         end
         
+        % disp(obj)
+        % Returns string of object
         function disp(obj)
             disp(obj.ChebRoot.toString());
         end
         
+        % disp(obj)
+        % Returns color plot of patches
         function show(obj)
             show(obj.ChebRoot)
         end
         
+        % plot(obj)
+        % Returns a plot of the function in 2D
         function plot(obj)
             domain = obj.ChebRoot.domain;
             x = linspace(domain(1,1),domain(1,2),100)';
@@ -210,6 +261,7 @@ classdef PUFun < handle & matlab.mixin.Copyable
         end
         
     end
+    
     
     methods(Access = protected)
         % Override copyElement method:
@@ -236,6 +288,13 @@ classdef PUFun < handle & matlab.mixin.Copyable
             out = A(subses{:});
         end
         
+        % T_add = add(T_1,T_2,add_f)
+        % This method adds T_1 and T_2
+        %Input:
+        %   T_1,T_2    : trees to be added together
+        %   add_f      : function for adding T_1 and T_2 using PU
+        %Output:
+        %   T_add      : PU approximation of the sum
         function T_add = add(T_1,T_2,add_f)
             
             if T_1.is_leaf
@@ -293,6 +352,13 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % T_sub = subtract(T_1,T_2,sub_f)
+        % This method subtracts T_1 and T_2
+        %Input:
+        %   T_1,T_2    : trees to be subtracted together
+        %   sub_f      : function for subtracting T_1 and T_2 using PU
+        %Output:
+        %   T_sub      : PU approximation of the sum
         function T_sub = subtract(T_1,T_2,sub_f)
             
             if T_1.is_leaf
@@ -356,6 +422,13 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % T_mult = multiply(T_1,T_2,mult_f)
+        % This method multiplies T_1 and T_2
+        %Input:
+        %   T_1,T_2    : trees to be multiplied together
+        %   mult_f     : function for multiplying T_1 and T_2 using PU
+        %Output:
+        %   T_mult     : PU approximation of the product
         function T_mult = multiply(T_1,T_2,mult_f)
             
             if T_1.is_leaf
@@ -411,6 +484,14 @@ classdef PUFun < handle & matlab.mixin.Copyable
             end
         end
         
+                
+        % T_divide = divide(T_1,T_2,divide_f)
+        % This method divides T_1 and T_2
+        %Input:
+        %   T_1,T_2    : trees to be divided together
+        %   mult_f     : function for dividing T_1 and T_2 using PU
+        %Output:
+        %   T_divide   : PU approximation of the quotient
         function T_divide = divide(T_1,T_2,divide_f)
             
             if T_1.is_leaf
@@ -466,6 +547,13 @@ classdef PUFun < handle & matlab.mixin.Copyable
             end
         end
         
+        % T_power = power(Tree,p)
+        % This method computes Tree^p
+        %Input:
+        %   Tree       : trees to be powered
+        %   p          : power to use
+        %Output:
+        %   T_power    : PU approximation of the power
         function T_power = power(Tree,p)
             T_power = copy(Tree);
             

@@ -3,7 +3,7 @@ function [ Mat ] = CoarseASMat( Tree,L,B )
 if Tree.is_leaf
     LEAVES = {Tree};
 else
-    LEAVES = Tree.collectLeaves({});    
+    LEAVES = Tree.collectLeaves();    
 end
 
 Tree.Coarsen();
@@ -17,7 +17,7 @@ zz = [];
 for k=1:length(LEAVES)
     cdim = LEAVES{k}.cdegs;
 
-    [out_border_c,out_border,in_border] = FindBoundaryIndex2DSides(cdim,LEAVES{k}.domain(),LEAVES{k}.outerbox); 
+    [out_border_c,~,in_border] = FindBoundaryIndex2DSides(cdim,LEAVES{k}.domain(),LEAVES{k}.outerbox); 
     
     pointsl = LEAVES{k}.points();
     
