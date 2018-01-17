@@ -177,6 +177,14 @@ classdef PUFun < handle & matlab.mixin.Copyable
             end
         end
         
+        function diff_Tree = diff(obj,diff_dim,order)
+            diff_Tree = copy(obj);
+            
+            for i=1:length(obj.leafArray)
+                obj.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},diff_dim,order);
+            end
+            
+        end
         
         function ln = length(obj)
             ln = length(obj.ChebRoot);

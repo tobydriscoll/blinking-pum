@@ -195,16 +195,41 @@ classdef ChebPatch<LeafPatch
         %
         % Output:
         %     ef: length(X) array containing the interpolated
-        function ef = evalf(obj,X)
+        function ef = evalf(obj,X,G)
+            
+            if nargin<3
+                G = obj.values;
+            end
             
             [num_pts,~] = size(X);
             
             ef = zeros(num_pts,1);
             
             for i=1:num_pts
-                ef(i) = evalfGrid(obj,num2cell(X(i,:)));
+                ef(i) = evalfGrid(obj,num2cell(X(i,:)),G);
             end
             
+        end
+        
+        % Evaluates the approximant and its derivatives.
+        %
+        %  Input:
+        %      X: set of points to evaluate at
+        %
+        % Output:
+        %     ef: length(X) array containing the interpolated
+        function ef = Diff(obj,diff_dim,order,X)
+            if nargin<3
+                order = 1;
+            end
+            
+            G = chebfun3t.txm(obj.values, obj.standard_variables.matrices{obj.deg_in(diff_dim)}, order);
+            
+            if nargin<4
+                ef = G(:);
+            else
+                ef = evalfDiffGrid(obj,diff_dim,order,X,G);
+            end
         end
         
         % Evaluates the approximant on a grid.
@@ -214,9 +239,11 @@ classdef ChebPatch<LeafPatch
         %
         % Output:
         %     ef: matrix of dim(X) containing the interpolated values
-        function ef = evalfGrid(obj,X)
+        function ef = evalfGrid(obj,X,G)
             
-            G = obj.values;
+            if nargin<3
+                G = obj.values;
+            end
             
             for k=1:obj.dim
                 %Shift the points to the right domain
@@ -232,7 +259,30 @@ classdef ChebPatch<LeafPatch
             end
             ef = G;
         end
-                
+        
+        % Evaluates the derivative on a grid.
+        %
+        %  Input:
+        %      diff_dim: dimension derivative is taken in
+        %         order: order of derivative (up to 2 right now)
+        %             X: cellarray of grids to be evaluated on.
+        %
+        % Output:
+        %     ef: matrix of dim(X) containing the interpolated derivative values
+        function ef = evalfDiffGrid(obj,diff_dim,order,X)
+            if nargin<3
+                order = 1;
+            end
+            
+            G = chebfun3t.txm(obj.values, obj.standard_variables.chebmatrices{obj.deg_in(diff_dim)}, order);
+            
+            if nargin<4
+                ef = G;
+            else
+                ef = evalfDiffGrid(obj,diff_dim,order,X);
+            end
+        end
+        
         %  interpMatrixPoints(obj,X)
         %  This method creates a interpolating matrix given a list of
         %  points.

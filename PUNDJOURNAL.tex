@@ -202,7 +202,7 @@ Lets suppose we want to interpolate onto a tensor product grid with points $\{\h
  \end{equation}
 Let suppose instead that we calculate the p(x,y) along the $x$-dimension for $\{\hat{x}_i\}$, i.e. call \mcode{G=bary(x,F)}, where \mcode{x} is the vector of points $\{\hat{x}_i\}$ (with my rewritten code). Here \mcode{G} will be a multidimensional array of dimension $M \times N \times N$. In this case, \mcode{G(i,:,:)} is the set of Chebyshev interpolant evaluations for points $\{y_j\}, \{z_k\}$ calculated at $\hat{x}_i$.
 
-Let's shift the dimensions of \mcode{G} with \mcode{G = shiftdim(G,1)} i.e. now the dimensions of G are $N \times N \times M$. Since we are interpolating on a grid, for each $\hat{y}_j$ we need to evaluate $p(\hat{x}_i,y,z)$ for each $i$. This can be achieved by calling \mcode{G=bary(y,G)}, where \mcode{y} is the vector of points $\{\hat{y}_j\}$. This is repeated for the $z$-dimension. Putting it altogether, we have
+Let's shift the dimensions of \mcode{G} with \mcode{G = shiftdim(G,1)} i.e. now the dimensions of G are $N \times N \times N$. Since we are interpolating on a grid, for each $\hat{y}_j$ we need to evaluate $p(\hat{x}_i,y,z)$ for each $i$. This can be achieved by calling \mcode{G=bary(y,G)}, where \mcode{y} is the vector of points $\{\hat{y}_j\}$. This is repeated for the $z$-dimension. Putting it altogether, we have
 \begin{lstlisting}[frame=single]  % Start your code-block
 
 G=bary(x,F);
@@ -398,7 +398,7 @@ I completed the code for evaluating the approximation on the grid; this works ve
 \end{itemize}
 For a tree $T$ with leaves $\{\nu_i\}_{i=1}^N$, let grid($\nu_i$) be the grid of the leaf (in Matlab, this would be stored as a cell array of coordinate vectors). For a forward solver, we would need to evaluate the approximation on $\{\text{grid($\nu_i$)}\}_{i=1}^N$. From what I have seen, a single iteration in the RASPEN solve will require hundreds of evaluations. For the approximation of $tan(x+y)$, the method took 6 seconds to evaluate on the grid.
 
-Looking at the profiler though, almost \%75 to \%80 of the work is determining which points belong to which patches and calculating the weights. These can be pre-calculated. Suppose we have a cell array of the leafs as well as the tree (since I am using the handle class, changes in one data structure will change the other since Matlab uses references).
+Looking at the profiler though, almost \%75 to \%80 of the work is determining which points belong to which patches and calculating the weights. These can be pre-calculated. Suppose we have a cell array of the leaves as well as the tree (since I am using the handle class, changes in one data structure will change the other since Matlab uses references).
 
 First, we could use the tree to determine $\text{leafpoints($\nu$)}=\text{points($T$)}\cap\text{domain($\nu$)}$. In this case, $\text{leafpoints($\nu$)}$ could be stored as a cell array of grids. Let's look at an example of a tree in Figure~\ref{Tree_weights} to see how we might precalculate the weights. In this case, the approximate in terms of the leaves is
 \begin{equation}
@@ -1103,6 +1103,66 @@ This argument of course works by looking at $x$ first and then $y$. We seek to d
 We can use Chebfun's {\tt standardChop} on $\{\sum_{j=0}^{N_y} |a_{ij}|\}_{i=0}^{N_x}$ to test the second condition. We test the first condition by looking at the series of $f(x_i,y)$ for each Chebyshev point $x_i$. The coefficients given by the discrete Chebyshev transform will force $p(x,y)$ interpolant $f(x,y)$ on the Chebyshev tensor grid \cite{mason2002chebyshev}. This means with that for each $x_i$, for all $y_j$ that $p(x_i,y_j) = f(x_i,y_j)$. We thus have that $p(x_i,y)$ is the discrete Chebyshev transform of $f(x_i,y)$. This implies that we can {\tt standardChop} on $\{\sum_{i=0}^{N_x} |a_{ij}|\}_{j=0}^{N_y}$ to test if each $f(x_i,y)$ is resolved. This argument works if the conditions of $x$ and $y$ are reversed. We thus determine $p(x,y)$ refined $f(x,y)$ if both $\{\sum_{j=0}^{N_y} |a_{ij}|\}_{i=0}^{N_x}$, $\{\sum_{i=0}^{N_x} |a_{ij}|\}_{j=0}^{N_y}$ are determined to be adequate with {\tt standardChop}.
 
 \section{Adding and multiplying PU approximations}
+Suppose we have PU approximations represented by trees $T_1$ and $T_2$. My first idea for addition was to add leaf by leaf if they have the same structure, and create a new tree by sampling $T_1.\text{evaluate}(x)+T_2.\text{evaluate}(x)$ otherwise. I first looked at examples in 2D. As a test example, I added
+\begin{equation}
+f_1(x,y) = \arctan(100(x^2+y)), \quad f_2(x,y) = \arctan(100(x+y^2)).
+\end{equation}
+Suppose $T_1$,$T_2$ are the trees representing the PU approximations of $f_1(x,y)$ and $f_2(x,y)$ respectively. I first tried just sampling $T_1.\text{evaluate}(x)+T_2.\text{evaluate}(x)$; this took 60 seconds to do.
+
+The main reason for the time increase is the time needed for barycentric interpolation (this can be seen in the MATLAB profile). To evaluate a $n^2$ grid with a Chebyshev polynomial of max degree $n$, $O(n^3)$ work is needed. It becomes clear that we can speed up the addition by anticipating the splitting. My second idea was to take the tree with the most patches, and refine further on that tree. By starting with the tree at $T_1$ and refining down, we shorten the time to 30 seconds. It appears that the new tree of the sum is a merging of $T_1$ and $T_2$, as seen in Figure~\ref{zone_tan}. This is where Algorithm~\ref{addition} comes from. Using this algorithm, the time of adding $T_1$ and $T_2$ is reduced to 5 seconds. 
+
+In order to motivate the algorithm, suppose that $T_1$ is an arbitrary tree and $T_2$ is a single leaf, with respective approximations $\hat{s}_1(x),\hat{s}_2(x)$. Suppose with PU $\{w_k(x)\}_{k=1}^m$ that
+ \begin{equation}
+ \hat{s}_1(x)=\sum_{k=1}^m w_k(x) s_k(x).
+ \end{equation}
+Since $\sum_{k=1}^m w_k(x) = 1$ we have that
+ \begin{equation}
+ \hat{s}_1(x)+ \hat{s}_2(x)=\sum_{k=1}^m w_k(x) (s_k(x)+ \hat{s}_2(x)).
+ \end{equation}
+We are thus free to add $\hat{s}_2(x)$ to each leaf of $T_1$. This is the essential idea of the first two cases of Algorithm~\ref{addition}. By tracing down the trees $T_1,T_2$ and seeing which nodes are enclosed in the leaves of others, we can easily predetermine the splitting that is needed; this is what the third case of Algorithm~\ref{addition} is doing. This only works though if the trees are split similarly; a key point is that the leaf of one tree contains each leaf of the other tree. For example, in Figure~\ref{bad_split}, we have an example of a splitting where the leaves of the trees don't contain each other. In this case, we sample the sum via $T_1.\text{evaluate}(x)+T_2.\text{evaluate}(x)$.
+
+For multiplication, we have Algorithm~\ref{multiply} which is similar to addition. Again, suppose we have $\hat{s}_1(x)=\sum_{k=1}^m w_k(x) s_k(x)$, and a single approximation $\hat{s}_2(x)$. We then have that the product is
+\begin{equation}
+	\hat{s}_2(x) \sum_{k=1}^m w_k(x) s_k(x) = \sum_{k=1}^m w_k(x) \hat{s}_2(x) s_k(x).
+\end{equation}
+In this case, we could resample the leaves $\hat{s}_2(x) s_k(x)$ for each patch, splitting if necessary.
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Zone plot of $f_1(x,y)$]{
+\includegraphics[scale = 0.3]{tan_100_1.eps}
+   \label{zone_tan_a}
+ }
+\subfloat[Zone plot of $f_2(x,y)$]{
+\includegraphics[scale = 0.3]{tan_100_2.eps}
+   \label{zone_tan_b}
+ }
+ 
+ \subfloat[Zone plot of $f_1(x,y)+f_2(x,y)$]{
+\includegraphics[scale = 0.3]{tan_100_3.eps}
+   \label{zone_tan_c}
+ }
+ 
+
+\caption{Zone plots for $f_1(x,y)$,$f_2(x,y)$ and $f_1(x,y)+f_2(x,y)$.}
+\label{zone_tan}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\subfloat[]{
+\includegraphics[scale = 0.3]{split_x.eps}
+   \label{zone_tan_x}
+ }
+\subfloat[]{
+\includegraphics[scale = 0.3]{split_y.eps}
+   \label{zone_tan_y}
+ }
+
+
+\caption{Example of two trees where recursion can not be used.}
+\label{bad_split}
+\end{figure}
 
 \begin{algorithm}[!h]
 \caption{$T$ = add($T_1$,$T_2$)}
@@ -1135,13 +1195,14 @@ We can use Chebfun's {\tt standardChop} on $\{\sum_{j=0}^{N_y} |a_{ij}|\}_{i=0}^
 \STATE $T:=T_2$
 \STATE for each leaf $\nu$ of $T$, refine $\nu$ with $f(x)=\text{interpolant}(\nu)(x)\text{interpolant}(T_2)(x)$
 \ELSIF{splittingDim($T_1$)=splittingDim($T_2$)}
-\STATE \child{0}($T$) = add(\child{0}($T_1$),\child{0}($T_2$))
-\STATE \child{1}($T$) = add(\child{1}($T_1$),\child{1}($T_2$))
+\STATE \child{0}($T$) = multiply(\child{0}($T_1$),\child{0}($T_2$))
+\STATE \child{1}($T$) = multiply(\child{1}($T_1$),\child{1}($T_2$))
 \ELSE
-\STATE $T$=refine(max($T_1.\nmax,T_2.\nmax$),$T_1.t$,$T_1.\text{root.evalute}(x)+T_2.\text{root.evalute}(x)$)
+\STATE $T$=refine(max($T_1.\nmax,T_2.\nmax$),$T_1.t$,$T_1.\text{root.evalute}(x)T_2.\text{root.evalute}(x)$)
 \ENDIF
 \end{algorithmic}
 \end{algorithm}
+
 
 
 \bibliographystyle{plain}
