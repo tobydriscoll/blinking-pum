@@ -212,19 +212,56 @@ classdef PUFun < handle & matlab.mixin.Copyable
             end
         end
         
-        % [PUF,DX,DXX]=diff(obj,diff_dim,order)
-        % This method evalutes the PUM approximation at X.
+        % diff_Tree = diff(obj,diff_dim,order)
+        % This method computes thd approximation of the derivative
         %Input:
-        %   diff_Tree  : this constructs matrices given f|x.
-        %   diff_dim   : dimension to differentiate
-        %   order      : order of derivative
         %Output:
         %   diff_Tree  : PU approximation of derivative
         function diff_Tree = diff(obj,diff_dim,order)
             diff_Tree = copy(obj);
             
             for i=1:length(obj.leafArray)
-                obj.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},diff_dim,order);
+                diff_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},diff_dim,order);
+            end
+            
+        end
+        
+        % div_Tree = div(obj)
+        % This method computes thd approximation of the derivative
+        %Input:
+        %Output:
+        %   div_Tree  : PU approximation of divergence
+        function div_Tree = div(obj)
+            div_Tree = copy(obj);
+            
+            for i=1:length(obj.leafArray)
+                if obj.ChebRoot.dim==1
+                    div_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,1);
+                elseif obj.ChebRoot.dim==2
+                    div_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,1)+evalfDiffGrid(obj.leafArray{i},2,1);
+                else
+                    div_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,1)+evalfDiffGrid(obj.leafArray{i},2,1)+evalfDiffGrid(obj.leafArray{i},3,1);
+                end
+            end
+            
+        end
+        
+        % lap_Tree = lap(obj)
+        % This method computes thd approximation of the Laplacian
+        %Input:
+        %Output:
+        %   lap_Tree  : PU approximation of Laplacian
+        function lap_Tree = lap(obj)
+            lap_Tree = copy(obj);
+            
+            for i=1:length(obj.leafArray)
+                if obj.ChebRoot.dim==1
+                    lap_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,2);
+                elseif obj.ChebRoot.dim==2
+                    lap_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,2)+evalfDiffGrid(obj.leafArray{i},2,2);
+                else
+                    lap_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,2)+evalfDiffGrid(obj.leafArray{i},2,2)+evalfDiffGrid(obj.leafArray{i},3,2);
+                end
             end
             
         end
@@ -271,12 +308,7 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
             cpObj.ChebRoot = obj.ChebRoot.copy();
             
-            if ~cpObj.ChebRoot.is_leaf
-                cpObj.ChebRoot.findIndex([]);
-                cpObj.leafArray = cpObj.ChebRoot.collectLeaves();
-            else
-                cpObj.leafArray = cpObj.ChebRoot;
-            end
+            cpObj.leafArray = cpObj.ChebRoot.collectLeaves();
         end
     end
     
