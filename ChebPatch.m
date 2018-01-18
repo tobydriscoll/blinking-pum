@@ -436,13 +436,13 @@ classdef ChebPatch<LeafPatch
                 
                 %Go through and split in each unresolved direction
                 for k=1:obj.dim
-                    %if obj.split_flag(k)
+                    if obj.split_flag(k)
                         if Child.is_leaf
                             Child = split(obj,k,set_vals);
                         else
                             Child.split(k,set_vals);
                         end
-                    %end
+                    end
                 end
             end
         end

@@ -255,11 +255,9 @@ classdef PUPatch<Patch
                             
                         else
                             
-                            sum(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2},sub_ind{k}{3} & ~ com_ind{3}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2},~com_sub_ind{k}{3});
-                            dotprod(sub_ind{k}{1} & ~ com_ind{1},sub_ind{k}{2} & ~ com_ind{2},sub_ind{k}{3} & ~ com_ind{3}) = sumk(~com_sub_ind{k}{1},~com_sub_ind{k}{2},~com_sub_ind{k}{3});
-                            
-                            sum(com_ind{1},com_ind{2},com_ind{3}) = sum(com_ind{1},com_ind{2},com_ind{3})+sumk(com_sub_ind{k}{1},com_sub_ind{k}{2},com_sub_ind{k}{3});
-                            dotprod(com_ind{1},com_ind{2},com_ind{3}) = dotprod(com_ind{1},com_ind{2},com_ind{3})+dotprodk(com_sub_ind{k}{1},com_sub_ind{k}{2},com_sub_ind{k}{3});
+                        sum(sub_ind{k}{1},sub_ind{k}{2}) = sum(sub_ind{k}{1},sub_ind{k}{2})+sumk;
+                        dotprod(sub_ind{k}{1},sub_ind{k}{2}) = dotprod(sub_ind{k}{1},sub_ind{k}{2})+dotprodk;
+                        
                         end
                         
                     end
