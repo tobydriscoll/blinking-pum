@@ -255,8 +255,8 @@ classdef PUPatch<Patch
                             
                         else
                             
-                        sum(sub_ind{k}{1},sub_ind{k}{2}) = sum(sub_ind{k}{1},sub_ind{k}{2})+sumk;
-                        dotprod(sub_ind{k}{1},sub_ind{k}{2}) = dotprod(sub_ind{k}{1},sub_ind{k}{2})+dotprodk;
+                        sum(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = sum(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3})+sumk;
+                        dotprod(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3}) = dotprod(sub_ind{k}{1},sub_ind{k}{2},sub_ind{k}{3})+dotprodk;
                         
                         end
                         
