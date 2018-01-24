@@ -790,6 +790,11 @@ classdef PUPatch<Patch
         %    set_vals: indicator if new children will have values
         %              interpolated from the parent.
         function split(obj,split_dim,set_vals)
+            
+            if nargin==2
+                set_vals = false;
+            end
+            
             for k=1:2
                 if obj.children{k}.is_leaf
                     obj.children{k} = obj.children{k}.split(split_dim,set_vals);

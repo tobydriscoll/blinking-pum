@@ -52,13 +52,13 @@ classdef ChebPatch<LeafPatch
                 obj.cdeg_in = zeros(1,obj.dim);
                 obj.deg_in(:) = 7;
                 obj.cdeg_in(:) = 3;
-                obj.split_flag = ones(obj.dim,1);
+                obj.split_flag = true(obj.dim,1);
                 obj.tol = 1e-12;
             elseif nargin < 5
                 obj.deg_in = deg_in;
                 obj.cdeg_in = zeros(1,obj.dim);
                 obj.cdeg_in(:) = 3;
-                obj.split_flag = ones(obj.dim,1);
+                obj.split_flag = true(obj.dim,1);
                 obj.tol = 1e-12;
             elseif nargin < 6
                 obj.deg_in = deg_in;

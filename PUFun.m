@@ -384,6 +384,65 @@ classdef PUFun < handle & matlab.mixin.Copyable
             
         end
         
+        % T_add = add(T_1,T_2,add_f)
+        % This method adds T_1 and T_2
+        %Input:
+        %   T_1,T_2    : trees to be added together
+        %   add_f      : function for adding T_1 and T_2 using PU
+        %Output:
+        %   T_add      : PU approximation of the sum
+        function T_add = fast_add(T_1,T_2,T_add,split_dim)
+            if T_1.is_leaf && T_2.is_leaf
+                if isequal(T_1.domain,T_2.domain) && isequal(T_1.degs,T_2.degs)
+                    T_add.values = T_1.values+T_2.values;
+                elseif isequal(T_1.domain,T_add.domain)
+                    T_add.values = T_1.values+T_2.evalfGrid(T_1.leafGrids());
+                elseif isequal(T_2.domain,T_add.domain)
+                    T_add.values = T_2.values+T_1.evalfGrid(T_2.leafGrids());
+                else
+                    T_add = T_add.refine(@(x)T_1.evalfGrid(x)+T_2.evalfGrid(x),true);
+                end
+            elseif T_1.is_leaf && ~T_2.is_leaf
+                T_add = T_add.split(T_2.splitting_dim);
+                T_add.children{1} = PUFun.fast_add(T_1,T_2.children{1},T_add.children{1},T_add.splitting_dim);
+                T_add.children{2} = PUFun.fast_add(T_1,T_2.children{2},T_add.children{2},T_add.splitting_dim);
+            elseif ~T_1.is_leaf && T_2.is_leaf
+                T_add = T_add.split(T_1.splitting_dim);
+                T_add.children{1} = PUFun.fast_add(T_1.children{1},T_2,T_add.children{1},T_add.splitting_dim);
+                T_add.children{2} = PUFun.fast_add(T_1.children{2},T_2,T_add.children{2},T_add.splitting_dim);
+            elseif T_1.splitting_dim == T_2.splitting_dim
+                T_add = T_add.split(T_1.splitting_dim);
+                T_add.children{1} = PUFun.fast_add(T_1.children{1},T_2.children{1},T_add.children{1},T_add.splitting_dim);
+                T_add.children{2} = PUFun.fast_add(T_1.children{2},T_2.children{2},T_add.children{2},T_add.splitting_dim);
+            else
+                
+                next_split = mod(split_dim,T_1.dim)+1;
+                while true
+                    if T_1.splitting_dim == next_split
+                        First_T = T_1;
+                        Last_T = T_2;
+                        break;
+                    elseif T_2.splitting_dim == next_split
+                        First_T = T_2;
+                        Last_T = T_1;
+                        break;
+                    else
+                        next_split = mod(next_split,T_1.dim)+1;
+                    end
+                end
+                
+                T_add = T_add.split(First_T.splitting_dim);
+                T_add.split(Last_T.splitting_dim);
+                
+                T_add.children{1}.children{1} = PUFun.fast_add(First_T.children{1},Last_T.children{1},T_add.children{1}.children{1},T_add.children{1}.splitting_dim);
+                T_add.children{1}.children{2} = PUFun.fast_add(First_T.children{1},Last_T.children{2},T_add.children{1}.children{2},T_add.children{1}.splitting_dim);
+                
+                T_add.children{2}.children{1} = PUFun.fast_add(First_T.children{2},Last_T.children{1},T_add.children{2}.children{1},T_add.children{2}.splitting_dim);
+                T_add.children{2}.children{2} = PUFun.fast_add(First_T.children{2},Last_T.children{2},T_add.children{2}.children{2},T_add.children{2}.splitting_dim);
+                
+            end
+        end
+        
         % T_sub = subtract(T_1,T_2,sub_f)
         % This method subtracts T_1 and T_2
         %Input:
