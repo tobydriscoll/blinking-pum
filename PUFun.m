@@ -394,10 +394,13 @@ classdef PUFun < handle & matlab.mixin.Copyable
         function T_add = fast_add(T_1,T_2,T_add,split_dim)
             if T_1.is_leaf && T_2.is_leaf
                 if isequal(T_1.domain,T_2.domain) && isequal(T_1.degs,T_2.degs)
+                    T_add = copy(T_1);
                     T_add.values = T_1.values+T_2.values;
                 elseif isequal(T_1.domain,T_add.domain)
+                    T_add = copy(T_1);
                     T_add.values = T_1.values+T_2.evalfGrid(T_1.leafGrids());
                 elseif isequal(T_2.domain,T_add.domain)
+                    T_add = copy(T_2);
                     T_add.values = T_2.values+T_1.evalfGrid(T_2.leafGrids());
                 else
                     T_add = T_add.refine(@(x)T_1.evalfGrid(x)+T_2.evalfGrid(x),true);
