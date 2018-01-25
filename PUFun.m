@@ -393,18 +393,18 @@ classdef PUFun < handle & matlab.mixin.Copyable
         %   T_add      : PU approximation of the sum
         function T_add = fast_add(T_1,T_2,T_add,split_dim)
             if T_1.is_leaf && T_2.is_leaf
-                if isequal(T_1.domain,T_2.domain) && isequal(T_1.degs,T_2.degs)
-                    T_add = copy(T_1);
-                    T_add.values = T_1.values+T_2.values;
-                elseif isequal(T_1.domain,T_add.domain)
-                    T_add = copy(T_1);
-                    T_add.values = T_1.values+T_2.evalfGrid(T_1.leafGrids());
-                elseif isequal(T_2.domain,T_add.domain)
-                    T_add = copy(T_2);
-                    T_add.values = T_2.values+T_1.evalfGrid(T_2.leafGrids());
-                else
-                    T_add = T_add.refine(@(x)T_1.evalfGrid(x)+T_2.evalfGrid(x),true);
-                end
+%                 if isequal(T_1.domain,T_2.domain) && isequal(T_1.degs,T_2.degs)
+%                       T_add = copy(T_1);
+%                       T_add.values = T_1.values+T_2.values;
+%                 elseif isequal(T_1.domain,T_add.domain)
+%                      T_add = copy(T_1);
+%                       T_add.values = T_1.values+T_2.evalfGrid(T_1.leafGrids());
+%                 elseif isequal(T_2.domain,T_add.domain)
+%                      T_add = copy(T_2);
+%                       T_add.values = T_2.values+T_1.evalfGrid(T_2.leafGrids());
+%                 else
+                       T_add = T_add.refine(@(x)T_1.evalfGrid(x)+T_2.evalfGrid(x),true);
+               % end
             elseif T_1.is_leaf && ~T_2.is_leaf
                 T_add = T_add.split(T_2.splitting_dim);
                 T_add.children{1} = PUFun.fast_add(T_1,T_2.children{1},T_add.children{1},T_add.splitting_dim);
@@ -434,14 +434,23 @@ classdef PUFun < handle & matlab.mixin.Copyable
                     end
                 end
                 
-                T_add = T_add.split(First_T.splitting_dim);
-                T_add.split(Last_T.splitting_dim);
-                
-                T_add.children{1}.children{1} = PUFun.fast_add(First_T.children{1},Last_T.children{1},T_add.children{1}.children{1},T_add.children{1}.splitting_dim);
-                T_add.children{1}.children{2} = PUFun.fast_add(First_T.children{1},Last_T.children{2},T_add.children{1}.children{2},T_add.children{1}.splitting_dim);
-                
-                T_add.children{2}.children{1} = PUFun.fast_add(First_T.children{2},Last_T.children{1},T_add.children{2}.children{1},T_add.children{2}.splitting_dim);
-                T_add.children{2}.children{2} = PUFun.fast_add(First_T.children{2},Last_T.children{2},T_add.children{2}.children{2},T_add.children{2}.splitting_dim);
+                if ~First_T.split_flag(Last_T.splitting_dim)
+                    
+                    T_add = T_add.split(First_T.splitting_dim);
+                    T_add.split(Last_T.splitting_dim);
+                    
+                    T_add.children{1}.children{1} = PUFun.fast_add(First_T.children{1},Last_T.children{1},T_add.children{1}.children{1},T_add.children{1}.splitting_dim);
+                    T_add.children{1}.children{2} = PUFun.fast_add(First_T.children{1},Last_T.children{2},T_add.children{1}.children{2},T_add.children{1}.splitting_dim);
+                    
+                    T_add.children{2}.children{1} = PUFun.fast_add(First_T.children{2},Last_T.children{1},T_add.children{2}.children{1},T_add.children{2}.splitting_dim);
+                    T_add.children{2}.children{2} = PUFun.fast_add(First_T.children{2},Last_T.children{2},T_add.children{2}.children{2},T_add.children{2}.splitting_dim);
+                    
+                else
+                    T_add = T_add.split(First_T.splitting_dim);
+                    T_add.children{1} = PUFun.fast_add(First_T.children{1},Last_T,T_add.children{1},T_add.splitting_dim);
+                    T_add.children{2} = PUFun.fast_add(First_T.children{2},Last_T,T_add.children{2},T_add.splitting_dim);
+                    
+                end
                 
             end
         end

@@ -15,6 +15,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
         tol
         overlap = 0.08;
         outerbox
+        split_flag %array indicating if we will split along a dimension
     end
     
     methods (Abstract)

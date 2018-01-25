@@ -19,7 +19,6 @@ classdef ChebPatch<LeafPatch
     properties (Access = protected)
         cdeg_in %index for the course degrees
         swap_deg_in
-        split_flag %array indicating if we will split along a dimension
     end
     
     properties (Constant)

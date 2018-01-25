@@ -36,6 +36,7 @@ classdef PUPatch<Patch
             obj.is_refined = false;
             obj.children{1}.index = [index 1];
             obj.children{2}.index = [index 2];
+            obj.split_flag = obj.children{1}.split_flag | obj.children{2}.split_flag;
         end
         
         % Returns the length of the patch
@@ -91,6 +92,10 @@ classdef PUPatch<Patch
                         is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
                     end
                 end
+            end
+            
+            if obj.children{1}.is_leaf || obj.children{2}.is_leaf
+                obj.split_flag = obj.children{1}.split_flag | obj.children{2}.split_flag;
             end
             
             obj.domain = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
