@@ -86,6 +86,7 @@ classdef PUPatch<Patch
                         obj.children{k} = obj.children{k}.splitleaf(Max,set_vals);
                         is_refined = is_refined && obj.children{k}.is_refined;
                         is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
+                        obj.split_flag =  obj.split_flag | obj.children{k}.split_flag;
                     else
                         temp = obj.children{k}.PUsplit(Max,set_vals);
                         is_refined = is_refined && temp;
@@ -94,9 +95,6 @@ classdef PUPatch<Patch
                 end
             end
             
-            if obj.children{1}.is_leaf || obj.children{2}.is_leaf
-                obj.split_flag = obj.children{1}.split_flag | obj.children{2}.split_flag;
-            end
             
             obj.domain = [obj.children{1}.domain(:,1) obj.children{2}.domain(:,2)];
             

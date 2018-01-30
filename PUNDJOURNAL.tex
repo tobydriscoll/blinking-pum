@@ -1203,7 +1203,112 @@ In this case, we could resample the leaves $\hat{s}_2(x) s_k(x)$ for each patch,
 \end{algorithmic}
 \end{algorithm}
 
+\section{Faster methods for adding and multiplying PU approximations}
 
+Here I attempt to increase the speed of the addition and multiplication methods from before. There are two key differences here:
+\begin{enumerate}
+\item Here the new tree is created with recursive splits rather than by copying the subtrees,
+\item and we add a case for dealing with trees where the splitting dimension does not match.	
+\end{enumerate}
+If we have a tree with uniform splitting (such as a 1D tree, or a 2D tree where leaves are always split in quarters), then the first four cases of Algorithm~\ref{addition2} will suffice. Suppose that we have trees $T_1$, $T_2$ that are first split in $x$ and $y$ respectively, and none of the children of $T_2$ are split in $x$. A simple example can be seen in Figure~\ref{bad_split_2}. In our method, we would add \child{0}($T_1$) with $T_2$ and \child{1}($T_1$) with $T_2$. Since $T_2$ has no splits in $x$, we can assume that any subsequent splits of $T_{\mbox{add}}$ in Algorithm~\ref{addition2} will match that of $T_1$ and $T_2$ (i.e., the dividing hyperplanes will be the same). 
+
+For our trees,
+\begin{enumerate}
+\item we always split in order ($x$-$y$ in 2D, $x$-$y$-$z$ in 3D),
+\item and if a tree stops splitting in a dimension at any node, then no child of the node will split in that dimension.
+\end{enumerate}
+In 2D we can then see that the first 5 cases in Algorithm~\ref{addition2} will suffice. Suppose that we have two trees $T_1$, $T_2$ where the splitting dimensions don't match, and the previous step in the recursion the trees split in $y$. In this case $nextSplit$ in Algorithm~\ref{addition2} will be in the $x$ direction. If $T_1$, $T_2$ split in $x,y$ respectively, then we know that $T_2$ does not split in $x$ direction anymore since the $x$ split was skipped (there were two splits in $y$ in a row). Since the $T_2$ only splits in $y$, at any other point of the recursion where $nextSplit$ is in the $x$ direction we know the fifth case of Algorithm~\ref{addition2} will hold true. I have found this to work well in 3D, and have not found a case where the first 5 cases do not suffice. For example, adding the numerically approximations for
+\begin{equation}
+f_1(x,y,z) = \arctan(10(x+y)+z), \quad f_2(x,y,z) = \arctan(10(x+z)+y)
+\end{equation}
+only took 3 seconds; it takes 15 seconds to build an approximation for $f_1+f_2$ from scratch. I've included a failsafe step to ensure the algorithm does not fail for good measure.
+
+
+
+\begin{figure}[!htb]
+\centering
+\subfloat[]{
+\includegraphics[scale = 0.3]{split_x.eps}
+   \label{zone_tan_x}
+ }
+\subfloat[]{
+\includegraphics[scale = 0.3]{split_y.eps}
+   \label{zone_tan_y}
+ }
+
+\caption{Example of two trees with different splittings.}
+\label{bad_split_2}
+\end{figure}
+
+\begin{algorithm}[!h]
+\caption{$T_{\mbox{add}}$ = add($T_1$,$T_2$,$T_{\mbox{add}}$,$split$)}
+\label{addition2}
+\begin{algorithmic}
+\IF{$T_1$ and $T_2$ are leaves}
+\STATE interpolant($T_{\mbox{add}}$)=interpolant($T_1$)+interpolant($T_2$) on domain($T_{\mbox{add}}$).
+\ELSIF{$T_1$ is a leaf while $T_2$ is not}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_2$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=add($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_2$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=add($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_2$.splitDim)
+\ELSIF{$T_1$ is not a leaf while $T_2$ is}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=add(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=add(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSIF{$T_1$.splitDim=$T_2$.splitDim}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=add(\child{0}($T_1$),\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=add(\child{1}($T_1$),\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSE
+\STATE Let $nextSplit$ be the next ordered split after $split$ from $T_1$.splitDim, $T_2$.splitDim
+\IF{$nextSplit$=$T_1$.splitDim and $T_2$ does not split in $T_1$.splitDim anymore}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=add(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=add(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSIF{$nextSplit$=$T_2$.splitDim and $T_1$ does not split in $T_2$.splitDim anymore}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=add($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=add($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSE
+\STATE $T_{\mbox{add}}$=refine(max($T_1.\nmax,T_2.\nmax$),$T_1$.overlap,$T_1(x)+T_2(x)$)
+\ENDIF
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[!h]
+\caption{$T_{\mbox{add}}$ = multiply($T_1$,$T_2$,$T_{\mbox{add}}$,$split$)}
+\label{addition2}
+\begin{algorithmic}
+\IF{$T_1$ and $T_2$ are leaves}
+\STATE $T_{\mbox{add}}$=refine(max($T_1.\nmax,T_2.\nmax$),$T_1$.overlap,$T_1(x)T_2(x)$) on domain($T_{\mbox{add}}$).
+\ELSIF{$T_1$ is a leaf while $T_2$ is not}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_2$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=multiply($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_2$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=multiply($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_2$.splitDim)
+\ELSIF{$T_1$ is not a leaf while $T_2$ is}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=multiply(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=multiply(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSIF{$T_1$.splitDim=$T_2$.splitDim}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=multiply(\child{0}($T_1$),\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=multiply(\child{1}($T_1$),\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSE
+\STATE Let $nextSplit$ be the next ordered split after $split$ from $T_1$.splitDim, $T_2$.splitDim
+\IF{$nextSplit$=$T_1$.splitDim and $T_2$ does not split in $T_1$.splitDim anymore}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=multiply(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=multiply(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSIF{$nextSplit$=$T_2$.splitDim and $T_1$ does not split in $T_2$.splitDim anymore}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE \child{0}($T_{\mbox{add}}$)=multiply($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE \child{1}($T_{\mbox{add}}$)=multiply($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSE
+\STATE $T_{\mbox{add}}$=refine(max($T_1.\nmax,T_2.\nmax$),$T_1$.overlap,$T_1(x)T_2(x)$)
+\ENDIF
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
 
 \bibliographystyle{plain}
 \bibliography{PU_BIB}

@@ -94,6 +94,24 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
             end
         end
         
+        function clean(obj)
+            if obj.is_leaf
+                obj.split_flag = false(size(obj.split_flag));
+            else
+                
+                clean(obj.children{1});
+                clean(obj.children{2});
+                obj.split_flag = obj.children{1}.split_flag | obj.children{2}.split_flag;
+                obj.split_flag(obj.splitting_dim) = true;
+                
+                for i=1:obj.dim
+                    obj.domain(i,:) = [min(obj.children{1}.domain(i,1),min(obj.children{2}.domain(i,1))) max(obj.children{1}.domain(i,2),min(obj.children{2}.domain(i,2)))];
+                end
+                
+                obj.cheb_length = obj.children{1}.cheb_length()+obj.children{2}.cheb_length();
+            end
+        end
+        
         function fun_obj = refine(obj,f,grid_opt)
             
             if nargin<3
