@@ -424,6 +424,8 @@ classdef ChebPatch<LeafPatch
             end
             
             
+            
+            
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.
                 obj.is_refined = true;
@@ -431,8 +433,16 @@ classdef ChebPatch<LeafPatch
                 Child = obj;
             else
                 
-                Child = obj;
+%                 ind = 1:obj.dim;
+%                 ind = ind(obj.split_flag);
+%                 
+%                 [~,split_dim] = max(diff(obj.domain(obj.split_flag,:).',1));
+%                 split_dim = ind(split_dim);
+%                 
+%                 Child = split(obj,split_dim,set_vals);
                 
+                
+                Child = obj;
                 %Go through and split in each unresolved direction
                 for k=1:obj.dim
                     if obj.split_flag(k)
@@ -443,6 +453,9 @@ classdef ChebPatch<LeafPatch
                         end
                     end
                 end
+                
+                
+                
             end
         end
         

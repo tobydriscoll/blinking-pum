@@ -18,13 +18,12 @@ classdef PUFun < handle & matlab.mixin.Copyable
             obj.domain = domain;
             obj.deg_in = deg_in;
             [dim,~] = size(domain);
+            obj.tol = tol;
             
             if nargin < 5
-                obj.tol = 1e-12;
                 grid_opt = false;
                 obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,true(1,dim),obj.tol);
             elseif nargin < 6
-                obj.tol = tol;
                 obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,true(1,dim),obj.tol);
             else
                 obj.ChebRoot = ChebRoot;

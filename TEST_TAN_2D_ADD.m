@@ -2,7 +2,7 @@ clear;
 
 c = 0.2;
 
-NT = 1;
+NT = 10;
 
 AVT = 1;
 
@@ -14,7 +14,7 @@ ang = linspace(0,pi/2,NT);
 
 k = 2.5e1;
 
-g2t = @(x,y) atan(k*(x+y));
+g2t = @(x,y) atan(k*(x));
 gt = @(x) g2t(x(:,1),x(:,2));
 
 f2t = @(x,y,t) atan(k*(cos(t)*x+sin(t)*y));
@@ -24,6 +24,7 @@ TIMES1 = zeros(NT,1);
 TIMES2 = zeros(NT,1);
 
 TREE1 = PUFun(domain,degs,gt,1e-12);
+F1 = chebfun2(g2t);
 
 for i=1:NT
     
@@ -33,19 +34,22 @@ for i=1:NT
     
     for j=1:AVT
         tic;
-        TREE3 = TREE1 + TREE2;
+        TREE3 = TREE1*TREE2;
         AV(j)=toc;
     end
     
     TIMES1(i) = mean(AV);
     
-%     for j=1:AVT
-%         tic;
-%         F = chebfun2(@(x,y)f2t(x,y,ang(i)));
-%         AV(j)=toc;
-%     end
-%     
-%     TIMES2(i) = mean(AV);
+    F2 = chebfun2(@(x,y)f2t(x,y,ang(i)));
+    
+    for j=1:AVT
+        tic;
+        F = F1.*F2;
+        AV(j)=toc;
+    end
+    
+    TIMES2(i) = mean(AV);
+    
     a=1;
     
 end

@@ -1205,23 +1205,23 @@ In this case, we could resample the leaves $\hat{s}_2(x) s_k(x)$ for each patch,
 
 \section{Faster methods for adding and multiplying PU approximations}
 
-Here I attempt to increase the speed of the addition and multiplication methods from before. There are two key differences here:
+Here we attempt to increase the speed of the addition and multiplication methods from before. There are two key differences here:
 \begin{enumerate}
 \item Here the new tree is created with recursive splits rather than by copying the subtrees,
 \item and we add a case for dealing with trees where the splitting dimension does not match.	
 \end{enumerate}
-If we have a tree with uniform splitting (such as a 1D tree, or a 2D tree where leaves are always split in quarters), then the first four cases of Algorithm~\ref{addition2} will suffice. Suppose that we have trees $T_1$, $T_2$ that are first split in $x$ and $y$ respectively, and none of the children of $T_2$ are split in $x$. A simple example can be seen in Figure~\ref{bad_split_2}. In our method, we would add \child{0}($T_1$) with $T_2$ and \child{1}($T_1$) with $T_2$. Since $T_2$ has no splits in $x$, we can assume that any subsequent splits of $T_{\mbox{add}}$ in Algorithm~\ref{addition2} will match that of $T_1$ and $T_2$ (i.e., the dividing hyperplanes will be the same). 
+If we have a tree with uniform splitting (such as a 1D tree, or a 2D tree where leaves are always split in quarters), then the first four cases of Algorithm~\ref{addition2} will suffice. Suppose that we have trees $T_1$, $T_2$ that are first split in $x$ and $y$ respectively, and none of the children of $T_2$ are split in $x$. A simple example can be seen in Figure~\ref{bad_split_2}. In this case we would split $T_{\mbox{add}}$ along the $x$ dimension, as seen in the fifth case of Algorithm~\ref{addition2}. We then add \child{0}($T_1$) with $T_2$ and \child{1}($T_1$) with $T_2$. Since $T_2$ has no splits in $x$, we can assume that any subsequent splits of $T_{\mbox{add}}$ in Algorithm~\ref{addition2} will match that of $T_1$ and $T_2$ (i.e., the dividing hyperplanes will be the same). 
 
 For our trees,
 \begin{enumerate}
 \item we always split in order ($x$-$y$ in 2D, $x$-$y$-$z$ in 3D),
 \item and if a tree stops splitting in a dimension at any node, then no child of the node will split in that dimension.
 \end{enumerate}
-In 2D we can then see that the first 5 cases in Algorithm~\ref{addition2} will suffice. Suppose that we have two trees $T_1$, $T_2$ where the splitting dimensions don't match, and the previous step in the recursion the trees split in $y$. In this case $nextSplit$ in Algorithm~\ref{addition2} will be in the $x$ direction. If $T_1$, $T_2$ split in $x,y$ respectively, then we know that $T_2$ does not split in $x$ direction anymore since the $x$ split was skipped (there were two splits in $y$ in a row). Since the $T_2$ only splits in $y$, at any other point of the recursion where $nextSplit$ is in the $x$ direction we know the fifth case of Algorithm~\ref{addition2} will hold true. I have found this to work well in 3D, and have not found a case where the first 5 cases do not suffice. For example, adding the numerically approximations for
+In 2D we can then see that the first 5 cases in Algorithm~\ref{addition2} will suffice. Suppose that we have two trees $T_1$, $T_2$ where the splitting dimensions don't match, and in the previous step in the recursion the trees split in $y$. In this case $nextSplit$ in Algorithm~\ref{addition2} will be in the $x$ direction. If $T_1$, $T_2$ split in $x,y$ respectively, then we know that $T_2$ does not split in $x$ direction anymore since the $x$ split was skipped (there were two splits in $y$ in a row). Since $T_2$ only splits in $y$, at any other point of the recursion where $nextSplit$ is in the $x$ direction we know the fifth case of Algorithm~\ref{addition2} will hold true. We have found this to work well in 3D, and have not found a case where the first 5 cases do not suffice. For example, adding the numerically approximations for
 \begin{equation}
 f_1(x,y,z) = \arctan(10(x+y)+z), \quad f_2(x,y,z) = \arctan(10(x+z)+y)
 \end{equation}
-only took 3 seconds; it takes 15 seconds to build an approximation for $f_1+f_2$ from scratch. I've included a failsafe step to ensure the algorithm does not fail for good measure.
+only took 3 seconds; it takes 15 seconds to build an approximation for $f_1+f_2$ from scratch. We've included a failsafe step to ensure the algorithm does not fail for good measure.
 
 
 
@@ -1305,6 +1305,139 @@ only took 3 seconds; it takes 15 seconds to build an approximation for $f_1+f_2$
 \STATE \child{1}($T_{\mbox{add}}$)=multiply($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
 \ELSE
 \STATE $T_{\mbox{add}}$=refine(max($T_1.\nmax,T_2.\nmax$),$T_1$.overlap,$T_1(x)T_2(x)$)
+\ENDIF
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\section{Addition take 3}
+
+
+From Algorithm~\ref{addition3}, we see that there are 5 cases to check for:
+\begin{enumerate}
+\item Both $T_1$ and $T_2$ are leaves,
+\item $T_1$ is a leaf but $T_2$ is not,
+\item $T_1$ is not a leaf but $T_2$ is,
+\item $T_1$ and $T_2$ are both not leaves and immediately split in the same dimension,
+\item $T_1$ and $T_2$ are both not leaves, and if $T_k$ immediately splits in dim $split$, then the other tree does not for any of its children.
+\end{enumerate}
+This list is not logically exhaustive, so we must prove inductively that these five cases hold. If we have two leaves, there is nothing to prove. If $T_1$ is a leaf and $T_2$ is not, then only cases 1-2 can hold for $T_1$ and \child{k}($T_2$); this is similarly true if $T_2$ is a leaf and $T_1$ is not. Suppose we have case 4 with $T_1$ and $T_2$ for $split$, and for \child{k}($T_1$), \child{k}($T_2$) cases 1-4 are false. If $\text{\child{k}}(T_1).\text{splitDim}=nextsplit$ in Algorithm~\ref{addition3}, then it must be the case that $\text{\child{k}}(T_2)$ stops splitting entirely for dimensions $T_2.\text{splitDim}+1,\dots,\text{\child{k}}(T_1).\text{splitDim},\dots,\text{\child{k}}(T_2).\text{splitDim}-1$. Thus the fifth case holds for \child{k}($T_1$) and \child{k}($T_2$).
+
+Suppose now we have reached the fifth case of Algorithm~\ref{addition3}, where $T_1.\text{splitDim}=nextsplit$, and for \child{k}($T_1$), $T_2$ cases 1-4 fail. We first reach this case either from the first call, or from a recursive call from case 4. In any case, we can assume that $T_2$ stops splitting entirely for dimensions $T_1.\text{splitDim},\dots,T_2.\text{splitDim}-1$; this is the induction hypothesis we will use to argue that with subsequent calls of Algorithm~\ref{addition3} from case 5 that $T_1$, $T_2$ must satisfy one of the cases. If we have $\text{\child{k}}(T_1).\text{splitDim}<T_2.\text{splitDim}$, we know that then that $nextsplit$=\child{k}($T_1$).splitDim and by assumption that $T_2$ does not split in $\text{\child{k}}(T_1).\text{splitDim},\dots,T_2.\text{splitDim}-1$, hence case 5 is true and the induction hypothesis is satisfied. Next suppose that $\text{\child{k}}(T_1)>T_2.\text{splitDim}$. We can know that $\text{\child{k}}(T_1)$ stops splitting entirely for dimensions $T_1.\text{splitDim}+1,\dots,T_2.\text{splitDim},\dots,\text{\child{k}}(T_1).\text{splitDim}-1$. In this case we see that $nextsplit=T_2.\text{splitDim}$, so case 5 and the induction hypothesis hold. We thus have by induction that in any point in the recursion, only cases 1-5 can hold.
+
+\section{Addition take 4: putting it all together}
+
+Suppose we have two PU approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $T_1$ and $T_2$ respectively. The simplest approach to building a PU approximation of $sum(\vect{x})=\hat{s}_1(\vect{x})+\hat{s}_2(\vect{x})$ is to add patch by patch if $T_1$ and $T_2$ share the same leaves, or use Algorithm~\ref{alg3} with $sum(\vect{x})$ otherwise. The cost of sampling $sum(\vect{x})$ can be expensive though; to evaluate an $n^{d}$ grid with a $d$-dimensional Chebyshev interpolant of max degree $n$ requires $O(n^{d+1})$ computations (while taking advantage of the grid structure). Thus by predetermining the needed splitting to approximate $sum(\vect{x})$, we can greatly reduce the cost of the numerical addition. As an example we build approximations for
+\begin{equation}
+f_1(x,y) = \arctan(100(x^2+y)), \quad f_2(x,y) = \arctan(100(x+y^2)),
+\end{equation}
+as well as $f_1(x,y)+f_2(x,y)$. It can readily be observed that the splitting of $f_1(x,y)+f_2(x,y)$ is a merging of that of $f_1(x,y)$ and $f_2(x,y)$. Algorithm~\ref{addition3} adds the approximations by first producing a tree $T_{\text{add}}$ with a merged splitting of the different approximations; at the initial call of Algorithm~\ref{addition3}, $T_{\text{add}}$ is a single leaf.
+
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Zone plot of $f_1(x,y)$]{
+\includegraphics[scale = 0.3]{tan_100_1.eps}
+   \label{zone_tan_a}
+ }
+\subfloat[Zone plot of $f_2(x,y)$]{
+\includegraphics[scale = 0.3]{tan_100_2.eps}
+   \label{zone_tan_b}
+ }
+ 
+ \subfloat[Zone plot of $f_1(x,y)+f_2(x,y)$]{
+\includegraphics[scale = 0.3]{tan_100_3.eps}
+   \label{zone_tan_c}
+ }
+ \caption{Zone plots for $f_1(x,y)$,$f_2(x,y)$ and $f_1(x,y)+f_2(x,y)$.}
+\label{zone_tan}
+\end{figure}
+ 
+ \begin{figure}[!htb]
+\centering
+\subfloat[]{
+\includegraphics[scale = 0.3]{split_x.eps}
+   \label{zone_tan_1}
+ }
+\subfloat[]{
+\includegraphics[scale = 0.3]{split_y.eps}
+   \label{zone_tan_2}
+ }
+\caption{Example of two trees where the initial split does not match}
+\label{bad_split}
+\end{figure}
+
+If $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$ are 1D approximations, only the first four cases of Algorithm~\ref{addition3} are needed, and it is clear that $T_{\text{add}}$ is a tree with a merged splitting of $T_1$ and $T_2$. Suppose $T_1$ and $T_2$ produce zones as seen in Figures~\ref{zone_tan_1}-\ref{zone_tan_2}. Here we have that splitDim($T_1$)=x, splitDim($T_2$)=y, and $T_2$ only splits in $y$. Since this is first call $nextSplit=x$. This means in Algorithm~\ref{addition3} we would split $T_{\mbox{add}}$ in the $x$ direction, and call add(\child{k}($T_1$),$T_2$,\child{k}($T_{\mbox{add}}$)) for $k=1,2$.  We see that $T_2$ is fully needed to cover the zones of both \child{1}($T_1$),\child{2}($T_1$) since $T_2$ does not split in $x$. Furthermore, even though the domains of \child{k}($T_{\mbox{add}}$) and $T_2$ don't match, the length in the $y$-dimension is the same; this is enough to ensure that further splittings of $T_{\mbox{add}}$ in the $y$ direction will match that of $T_2$. In this case, Algorithm~\ref{addition3} would produce a merged splitting of the two trees. It is the case that this holds when the splitting dimensions don't match, as seen in Theorem~\ref{split_theorem}.  A key fact of this proof is that for our trees
+\begin{enumerate}
+\item we always split in order ($x$-$y$ in 2D, $x$-$y$-$z$ in 3D),
+\item and if a tree stops splitting in a dimension at any node, then no child of the node will split in that dimension.
+\end{enumerate} 
+Thus if we have a tree $T$ where splitDim($T$)=$d_1$ and splitDim(\child{0}($T$))=$d_k$, we then know that $T$ skipped dimensions $d_2,\dots,d_{k-1}$; this means that \child{0}($T$) can not split in these dimensions at all. We use this fact to prove Theorem~\ref{split_theorem} inductively.
+
+
+\begin{theorem}
+Suppose in Algorithm~\ref{addition3} that 
+\begin{equation}
+\text{splitDim($T_1$)} \neq \text{splitDim($T_2$)}, \quad nextsplit=\text{splitDim($T_1$)}.
+\label{split_assump}
+\end{equation}
+Then $T_2$ stops splitting in dimension splitDim($T_1$). 
+\label{split_theorem}
+\end{theorem}
+
+\begin{proof}
+For the different cases where (\ref{split_assump}) occurs we argue with specific dimensions; the proofs can be easily generalized. Suppose that we are at the fist call where
+\begin{equation}
+ \text{splitDim($T_1$)}=d_1 , \quad \text{splitDim($T_2$)}=d_k
+\end{equation}
+with $k>1$. In Algorithm~\ref{addition3} $nextsplit=d_1$ because we are at the first call. Since $T_2$ starts splitting in $d_k$, it does not split in $d_1,\dots,d_{k-1}$. The next case to consider is when 
+\begin{equation}
+\text{splitDim($T_1$)}=\text{splitDim($T_2$)}, \quad \text{splitDim(\child{k}($T_1$))} \neq \text{splitDim(\child{k}($T_2$))}.
+\end{equation}
+Suppose here that
+\begin{equation}
+\text{splitDim($T_1$)}=d_n, \quad \text{splitDim(\child{k}($T_1$))}=d_1, \quad \text{splitDim(\child{k}($T_2$))}=d_k.
+\end{equation}
+such that $k>1$. Again $nextsplit=d_1$, and we see that $T_2$ has skipped past dimensions $d_1,d_2,\dots,d_{k-1}$. This implies that splitDim(\child{k}($T_2$)) stops splitting in these dimensions as well.
+
+Finally suppose that 
+\begin{equation}
+\text{splitDim($T_1$)} \neq \text{splitDim($T_2$)}, \quad  \text{splitDim(\child{k}($T_1$))} \neq \text{splitDim($T_2$)},
+\end{equation}
+where with $T_1$ and $T_2$ we have $nextsplit=\text{splitDim($T_1$)}$. The first time that the fifth case of Algorithm~\ref{addition3} can occur is if we are at the first call, or if in the previous call the splitting dimension matched between the trees. In either case, we would have $T_2$ does not split in dimensions $\text{splitDim($T_1$)}+1,\dots,\text{splitDim($T_2$)}-1$. We claim this remains true with successive calls of the fifth case, and will prove so inductively. Suppose that with splitDim(\child{k}($T_1$)) and splitDim($T_2$) that $nextsplit=\text{splitDim(\child{k}($T_1$))}$. This implies splitDim(\child{k}($T_1$)) lies between splitDim($T_1$) and splitDim($T_2$); by assumption we have $T_2$ does not split in $\text{splitDim(\child{k}($T_1$))}+1,\dots,\text{splitDim($T_2$)}-1$ so the induction hypothesis holds. If $nextsplit=\text{splitDim($T_2$)}$, then we know that $T_1$ skipped dimensions $\text{splitDim($T_1$)},\dots,\text{splitDim($T_2$)},\dots,\text{splitDim(\child{k}($T_1$))}-1$ implying the induction hypothesis holds in this case as well for \child{k}($T_1$). This shows that with successive calls of the fifth case of Algorithm~\ref{addition3} starting from the first call or the fourth case that if splitDim($T_1$)$\neq$splitDim($T_2$) and $nextsplit$=splitDim($T_1$), then $T_2$ stops splitting in splitDim($T_1$).
+
+\end{proof}
+
+\begin{algorithm}[!h]
+\caption{add($T_1$,$T_2$,$T_{\mbox{add}}$,$LastSplit$)}
+\label{addition3}
+\begin{algorithmic}
+\IF{$T_1$ and $T_2$ are leaves}
+\STATE interpolant($T_{\mbox{add}}$)=interpolant($T_1$)+interpolant($T_2$) on domain($T_{\mbox{add}}$).
+\ELSIF{$T_1$ is a leaf while $T_2$ is not}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_2$.overlap)
+\STATE add($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_2$.splitDim)
+\STATE add($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_2$.splitDim)
+\ELSIF{$T_1$ is not a leaf while $T_2$ is}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE add(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE add(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSIF{$T_1$.splitDim=$T_2$.splitDim}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE add(\child{0}($T_1$),\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE add(\child{1}($T_1$),\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSE
+\STATE $nextsplit=(LastSplit \mod \text{dim($T_1$)}) +1$
+\WHILE{$T_1$.splitDim $\neq nextsplit$ and $T_2$.splitDim $\neq nextsplit$}
+\STATE $nextsplit=(nextsplit \mod \text{dim($T_1$)}) +1$
+\ENDWHILE
+\STATE split($T_{\mbox{add}}$,$nextsplit$,$T_2$.overlap)
+\IF{$T_1$.splitDim=$nextsplit$}
+\STATE add(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$nextsplit$)
+\STATE add(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$nextsplit$)
+\ELSE
+\STATE add($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$nextsplit$)
+\STATE add($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$nextsplit$)
 \ENDIF
 \ENDIF
 \end{algorithmic}
