@@ -1,0 +1,775 @@
+% SIAM Article Template
+\documentclass{siamart0516}
+\usepackage{subfig}
+\usepackage{forest}
+\usepackage[section]{placeins}
+\usepackage[export]{adjustbox}
+\usepackage[title]{appendix}
+
+\newcommand{\lp}{\left(}
+\newcommand{\rp}{\right)}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand\supp{\mathop{\rm supp}}
+
+%%
+
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\plotwidth}{0.45}
+\newcommand{\WRP}{\par\qquad\(\hookrightarrow\)\enspace}
+\newcommand{\ARP}{\par\qquad\ \enspace}
+\DeclareMathOperator*{\argmax}{argmax}
+
+%%%%% custom commands for this paper
+\newcommand{\nmax}{n_{\text{max}}}
+\newcommand{\child}[1]{c\textsubscript{#1}}
+\newcommand{\weight}[1]{w\textsubscript{#1}}
+%%%%%
+
+
+% Information that is shared between the article and the supplement
+% (title and author information, macros, packages, etc.) goes into
+% ex_shared.tex. If there is no supplement, this file can be included
+% directly.
+\input{ex_shared}
+
+% Optional PDF information
+\ifpdf
+\hypersetup{
+  pdftitle={\TheTitle},
+  pdfauthor={\TheAuthors}
+}
+\fi
+
+% The next statement enables references to information in the
+% supplement. See the xr-hyperref package for details.
+
+\externaldocument{ex_supplement}
+
+% FundRef data to be entered by SIAM
+%<funding-group>
+%<award-group>
+%<funding-source>
+%<named-content content-type="funder-name"> 
+%</named-content> 
+%<named-content content-type="funder-identifier"> 
+%</named-content>
+%</funding-source>
+%<award-id> </award-id>
+%</award-group>
+%</funding-group>
+
+\begin{document}
+
+\maketitle
+
+% REQUIRED
+\begin{abstract}
+We are doing adaptive multivariate approximations, and it works pretty well. This is a working abstract.
+
+\end{abstract}
+
+% REQUIRED
+\begin{keywords}
+  partition of unity, Chebyshev interpolation, Chebfun, overlapping domain decomposition
+\end{keywords}
+
+% REQUIRED
+\begin{AMS}
+  	65L11, 65D05, 65D25
+\end{AMS}
+
+\section{Introduction}
+
+\section{Multivariate partition of unity adaptation}
+\label{recurse}
+Here we describe a recursive bisection algorithm that builds an adaptive partition of unity approximation using overlapping domains. Let $\Omega = \{ \vect{x} \in \R^n: \vect{x}_i \in [a_i,b_i]\}$ (i.e. an $n$th dimensional hypercuboid), and suppose we wish to approximate $f:\Omega \to \R$. We build our overlapping covering by first partitioning $\Omega$ into a set of nonoverlapping cuboids $\{Z_k\}_{k=1}^{M}$, which we refer to as zones. The nonoverlapping zones are extended into overlapping domains $\Omega_k$ by expanding them by amounts proportional to their dimensional widths. Specifically as an example, if $Z_k = [a_{k1},b_{k2}] \times [a_{k2},b_{k2}]$ and $\Omega = [a_1,b_1] \times [a_2,b_2]$ then if $\delta_{kj} =  \frac{b_{kj}-a_{kj}}{2}(1+t)$ where $j=1,2$ we let $\Omega_k = [c_{k1},d_{k1}] \times [c_{k2},d_{k2}]$ where for $k=1,2$
+\begin{equation}
+c_{kj} = \max(a_k,b_{kj}-\delta_{kj}) \quad d_{kj} = \min(a_{kj}+\delta_{kj},b_k).
+\label{zone_extend}
+\end{equation}
+We assign each domain $\Omega_k$ an infinitely smooth function $\psi_k(\vect{x}):\Omega \to \R$ whose support is $\Omega_k$, and define a partition of unity $\{w_k (\vect{x})\}$ via Shepard's method \cite{wendland2004scattered}, where
+\begin{equation}
+w_k(\vect{x}) = \frac{\psi_k(\vect{x})}{\sum_{j=1}^M \psi_j(\vect{x})}.
+\end{equation}
+If each domain $\Omega_k$ has an approximation $s_k(\vect{x})$, the partition of unity approximation is
+\begin{equation}
+s(\vect{x}) = \sum_{k=1}^M w_k(\vect{x})s_k(\vect{x}).
+\label{PU_APPROX_EQ}	
+\end{equation}
+
+The zones are determined by a $k$d-tree on $\Omega$, where each splitting of the tree splits the zone of the node in half with a hyperplane. We define a binary tree $T$ with each node $\nu$ having the following properties:
+\begin{itemize}
+\item zone($\nu$):=zone of the patch
+\item domain($\nu$):=domain of the patch
+\item \child{0}($\nu$),\child{1}($\nu$):=respective left and right subtrees of $\nu$ (if split)
+\item splitDim($\nu$):= the dimension $\nu$ is immediately split in (if split)
+\item overlap($\nu$):= overlap percentage for two children (if split)
+\item bump($\nu$):= compactly supported function used for the partition of unity if $\nu$ is a leaf
+\item interpolant($\nu$):=Chebyshev tensor product interpolant on domain($\nu$) if $\nu$ is a leaf
+\item values($\nu$):=values of the function we are approximating at the Chebyshev tensor product grid of $\nu$ if $\nu$ is a leaf
+\item unfinished($\nu$):=array of boolean values of length $n$, where $\text{unfinished}_k$ indicates if we can split in the $kth$ dimension
+\item dim($\nu$):=dimension of domain($\nu$)
+\end{itemize}
+
+
+
+Suppose we have a leaf $\nu$ with Chebyshev grids $X^1, \dots, X^n$ of length $d_1, \dots, d_n$  defined on the intervals $[a_1,b_1], \dots [a_n,b_n]$. We sample on the grid $X = X^1 \times X^2 \times \dots \times X^n$ to define a Chebyshev tensor product approximation $s(\vect{x})$. Let $C \in \C^{d_1 \times d_2 \times \dots \times d_n}$ be the Chebyshev coefficients corresponding to $s(\vect{x})$. To determine if $s(\vect{x})$ is refined in the $x$-direction, we use Chebfun's {\tt StandardChop}  algorithm for coefficients
+$$
+s_j = \sum_{k_2=1}^{d_2} \sum_{k_3=1}^{d_3} \dots \sum_{k_n=1}^{d_n} |C_{j,k_2,\dots,k_n}|,
+$$
+for $j=1,\dots,d_1$ \cite{Aurentz:2017:CCS:3034774.2998442}. This is an idea borrowed from Chebfun3t \cite{hashemi2017chebfun}. This provides a simple way of eliminating the other variables, and is more efficient than applying {\tt StandardChop} to each row of $C$ in higher dimensions.
+
+%Chebfun includes a splitting algorithm to create piecewise polynomial approximations \cite{pachon2010piecewise}. Here, the tolerance {\tt chebfuneps} used in {\tt StandardChop} is set to 
+%\begin{equation}\text{{\tt chebfuneps*max(vscaleGlobal/vscaleLocal,hscale)}}, 	
+%\end{equation}
+%where {\tt vscaleGlobal},{ \tt vscaleLocal} and {\tt hscale} are estimates of the scales of the global function, local function, and interval width respectively \cite{Aurentz:2017:CCS:3034774.2998442}. We utilize this by keeping track of the scales. For example suppose we are testing in the first dimension. In our method {\tt vscaleGlobal} is set to the global sampled absolute maximum sampled value over the whole tree (which is kept track of when sampling), {\tt vscaleLocal} to the maximum absolute value locally sampled, and {\tt hscale} is set to the length of the domain of the dimension we are testing in (i.e. {\tt hscale}=$b_1-a_1$ if testing along the $x$-direction).
+
+ If the function is determined to be fully resolved on node $\nu$ in a dimension $j$, then the $j$th element of the array unfinished($\nu$) is set to false. This property is inherited by all the descendants of $\nu$, on the assumption that dimension $j$ will remain resolved in all future splittings of $\nu$. We keep track of this with the unfinished($\nu$) array where we set $\text{unfinished($\nu$)}_k$ to FALSE if the interpolant for $\nu$ can be refined in dimension $k$. We set unfinished(root($T$)) to an array of all TRUE values, and when splitting a leaf $\nu$ passes unfinished($\nu$) to the children of $\nu$. 
+
+%We choose to split in the dimension $j$ of greatest length of the cuboid, excluding dimensions that have been determined to be refined for itself or any of the leaf's ancestors in the tree. For a leaf $\nu$, we keep track of this with the unfinished($\nu$) array where we set $\text{unfinished($\nu$)}_k$ to FALSE if the interpolant for $\nu$ can be refined in dimension $k$. We set unfinished(root($T$)) to an array of all TRUE values, and when splitting a leaf $\nu$ passes unfinished($\nu$) to the children of $\nu$. Thus we split in the the dimension $j$ where
+%\begin{equation}
+%j = \underset{j}{\mathrm{argmax}}\{(b_j - a_j): \text{unfinished($\nu$)}_j=\text{TRUE}\},	
+%\end{equation}
+%as seen in Algorithm~\ref{alg2}.
+
+\begin{algorithm}[!h]
+\caption{splitleaves($\nu$,$\nmax$,$t$)}
+\label{alg2}
+\begin{algorithmic}
+\IF{$\nu$ is a leaf and for some $k$ $\text{unfinished($\nu$)}_k=\text{TRUE}$}
+\FOR{$j=1:\text{dim}(\nu)$}
+\IF{$\nu$ is a leaf and $f(\vect{x})$ can be resolved by interpolant($\nu$) in the $jth$ direction and $\text{unfinished($\nu$)}_j=\text{TRUE}$}
+\STATE $\text{unfinished($\nu$)}_j=\text{FALSE}$
+\ENDIF
+\ENDFOR
+\FOR{$j=1:\text{dim}(\nu)$}
+\IF{$\text{unfinished($\nu$)}_j=\text{TRUE}$}
+\STATE split($\nu$,$j$,t)
+\ENDIF
+\ENDFOR
+\ELSIF{$\nu$ is a leaf and $f(\vect{x})$ can be resolved by a Chebyshev tensor product interpolant with degree less than $\nmax$ in each dimension}
+\STATE interpolant($\nu$):=minimum degree interpolant $f(\vect{x})$ can be resolved by \ARP 
+as determined by Chebfun
+\ELSE
+\FOR{$k=0,1$}
+\STATE splitleaves(\child{k}($\nu$),$\nmax$,$t$)
+\STATE domain($\nu$):=smallest hypercuboid containing \child{1}($\nu$) and \child{2}($\nu$).
+\ENDFOR
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[!h]
+\caption{split($\nu$,$k$,$t$)}
+\label{alg9}
+\begin{algorithmic}
+\IF{$\nu$ is a leaf}
+\STATE splitDim($\nu$)=k
+\STATE Define new nodes $\nu_0$, $\nu_1$.
+\STATE $[a_1,b_1],[a_2,b_2],\dots,[a_n,b_n]$ be the subintervals from zone($\nu$)
+\STATE $m:= \frac{b_k+a_k}{2}$
+\STATE zone($\nu_0$) $= [a_1,b_1] \times \dots \times [a_{k-1},b_{k-1}] \times [a_{k},m_k] \times [a_{k+1},b_{k+1}] \times \dots \times [a_{n},b_{n}] $
+\STATE zone($\nu_1$) $= [a_1,b_1] \times \dots \times [a_{k-1},b_{k-1}] \times [m_k,b_{k}] \times [a_{k+1},b_{k+1}] \times \dots \times [a_{n},b_{n}] $
+\STATE domain($\nu_0$),domain($\nu_1$) are defined with parameter $t$ using zone($\nu_0$),zone($\nu_1$) as in (\ref{zone_extend}).
+\STATE define $C^{\infty}$ bump functions $\psi_0$, $\psi_1$ that have support in domain($\nu_0$),domain($\nu_1$).
+\STATE bump($\nu_0$):=$\psi_0$
+\STATE bump($\nu_1$):=$\psi_1$
+\STATE Define interpolant($\nu_1$), interpolant($\nu_1$) for domain($\nu_0$),domain($\nu_1$).	
+\FOR{$k=0,1$}
+\STATE $\text{unfinished(\child{k}($\nu$))} = \text{unfinished($\nu$)}$
+\STATE \child{k}($\nu$) := $\nu_k$
+\ENDFOR
+\ELSE
+\FOR{$k=0,1$}
+\STATE split(\child{k}($\nu$),$k$,$t$)
+\ENDFOR
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
+If there are one or more unfinished dimensions which are found to be unresolved, node $\nu$ is split in each unfinished dimension, where we first split the node in the first unfinished dimension, and recursively split the children of $\nu$ in the subsequent unfinished dimensions as seen in Algorithm~\ref{alg2}. When we split a leaf $\nu$ to \child{0}($\nu$) and \child{1}($\nu$), the zones of the children are formed by splitting the zone($\nu$) in half along a dimension by a hyperplane; this is demonstrated in Algorithm~\ref{alg9}. 
+
+
+This process is recursively  repeated on the leaves until every leaf is determined to be resolved in every dimension. When recursing, we redefine the domains of non-leaf nodes $\nu$ to be the smallest hypercuboid that contains the domains of \child{0}($\nu$) and \child{1}($\nu$). In Algorithm~\ref{alg2} we show formally how we split the leaves. The binary tree representing the approximation is formed with Algorithm~\ref{alg3}, where sample($\nu$,$f(\vect{x})$) samples $f(\vect{x})$ on the Chebyshev tensor product grids at the leaves of $\nu$.
+
+\begin{algorithm}[!h]
+\caption{refine($\nu$,$\nmax$,$t$,$f(x)$)}
+\label{alg3}
+\begin{algorithmic}
+\WHILE{$\nu$ has unresolved leaves}
+\STATE sample($\nu$,$f(x)$)
+\STATE splitleaves(root($\nu$),$\nmax$,$t$)
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\section{Numerical Computation}
+
+\subsection{approximation}
+We can use the tree to quickly evaluate the PU approximation. We have that the PU approximation (\ref{PU_APPROX_EQ}) with the Shepards PU weights can be rearranged to
+\begin{equation}
+s(\vect{x}) = \sum_{k=1}^M \frac{\psi_k(\vect{x}) s_k(\vect{x})}{\sum_{j=1}^{M} \psi_j(\vect{x})} = \frac{1}{\sum_{j=1}^{M} \psi_j(\vect{x})}\sum_{k=1}^{M} \psi_k(\vect{x})s_k(\vect{x}),
+\label{new_eq}
+\end{equation}
+where $s_k(\vect{x})$ and $\psi_{k}(\vect{x})$ are the approximation and bump function for the $k$th leaf from a tree $T$ produced by Algorithm~\ref{alg3}. To evaluate at a point $\vect{x}$, we need to:
+\begin{enumerate}
+\item Determine which patches $\vect{x}$ belongs to.
+\item Calculate $\sum_{j=1}^{M} \psi_j(\vect{x})$ and $\sum_{k=1}^M \psi_k(\vect{x}) s_k(\vect{x})$.
+\item Use $\sum_{j=1}^{M} \psi_j(\vect{x})$ and $\sum_{k=1}^M \psi_k(\vect{x}) s_k(\vect{x})$ to evaluate $s(\vect{x})$.
+\end{enumerate}
+We can use $T$ to quickly determine which patches $\vect{x}$ belongs to and recursively calculate $\sum_{j=1}^{M} \psi_j(\vect{x})$ and $\sum_{k=1}^M \psi_k(\vect{x}) s_k(\vect{x})$ from which we can determine $s(\vect{x})$, as seen in Algorithms~\ref{alg4}-\ref{alg5}; this makes determining how patches neighbor with each other unnecessary. This recursive algorithm is similar to that in \cite{tobor2006reconstructing}. These algorithms can easily be vectorized to evaluate $s(\vect{x})$ at a set of points. 
+
+\begin{algorithm}[h!]
+\caption{[$S$,$P$]=evaluateSumProd($\nu$,$\vect{x}$)}
+\label{alg4}
+\begin{algorithmic}
+\STATE $S=0$, $P=0$
+\IF{$\nu$ is a leaf}
+\STATE $S=\text{bump}(\nu)(\vect{x})$
+\STATE $P = S \cdot \text{interpolant}(\nu)(\vect{x})$
+\ELSE
+\FOR{$k=0,1$}
+\IF{$\vect{x} \in \text{domain(\child{k}}(\nu))$}
+\STATE $[S_k,P_k]$ = evaluateSumProd(\child{k}($\nu$),$\vect{x}$) 
+\STATE $S = S + S_k$
+\STATE $P = P + P_k$
+\ENDIF
+\ENDFOR
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[h!]
+\caption{[$F$]=evaluate($\nu$,$\vect{x}$)}
+\label{alg5}
+\begin{algorithmic}
+\STATE $[S,P]$=evaluateSumProd($\nu$,$\vect{x}$).
+\STATE $F = P/S$.
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{addition, subtraction, multiplication and division}
+
+Suppose we have two PU approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $T_1$ and $T_2$ respectively. The simplest approach to building a PU approximation of $sum(\vect{x})=\hat{s}_1(\vect{x})+\hat{s}_2(\vect{x})$ is to add patch by patch if $T_1$ and $T_2$ share the same leaves, or use Algorithm~\ref{alg3} with $sum(\vect{x})$ otherwise. The cost of sampling $sum(\vect{x})$ can be expensive though; to evaluate an $n^{d}$ grid with a $d$-dimensional Chebyshev interpolant of max degree $n$ requires $O(n^{d+1})$ computations (while taking advantage of the grid structure). Thus by predetermining the needed splitting to approximate $sum(\vect{x})$, we can greatly reduce the cost of the numerical addition. As an example we build approximations for
+\begin{equation}
+f_1(x,y) = \arctan(100(x^2+y)), \quad f_2(x,y) = \arctan(100(x+y^2)),
+\end{equation}
+as well as $f_1(x,y)+f_2(x,y)$. It can readily be observed that the splitting of $f_1(x,y)+f_2(x,y)$ is a merging of that of $f_1(x,y)$ and $f_2(x,y)$. Algorithm~\ref{addition3} adds the approximations by first producing a tree $T_{\text{add}}$ with a merged splitting of the different approximations; at the initial call of Algorithm~\ref{addition3}, $T_{\text{add}}$ is a single leaf. Multiplication works similarly, but we sample the product on the full grid at the leaves, and split if necessary using Algorithm~\ref{alg3}. A more in depth explanation of the merging algorithm can be seen in Appendix~\ref{AdditionAlgorithm}.
+
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Zone plot of $f_1(x,y)$]{
+\includegraphics[scale = 0.3]{tan_100_1.eps}
+   \label{zone_tan_a}
+ }
+\subfloat[Zone plot of $f_2(x,y)$]{
+\includegraphics[scale = 0.3]{tan_100_2.eps}
+   \label{zone_tan_b}
+ }
+ 
+ \subfloat[Zone plot of $f_1(x,y)+f_2(x,y)$]{
+\includegraphics[scale = 0.3]{tan_100_3.eps}
+   \label{zone_tan_c}
+ }
+ \caption{Zone plots for $f_1(x,y)$,$f_2(x,y)$ and $f_1(x,y)+f_2(x,y)$.}
+\label{zone_tan}
+\end{figure}
+ 
+
+\subsection{Differentiation}
+We compute partial derivatives of a PU approximation $s(\vect{x}) = \sum_{k=1}^m w_k(\vect{x}) s_k(\vect{x})$ patch by patch. For example if each $s_k(\vect{x})$ approximates $f(\vect{x})$, the the PU approximation of $\frac{\partial f(\vect{x})}{\partial x}$ we use is
+\begin{equation}
+	\frac{\partial f(\vect{x})}{\partial x} \approx \sum_{k=1}^m w_k(\vect{x})\frac{\partial s_k(\vect{x})}{\partial x}.
+	\label{PU_diff} 
+\end{equation}
+Here it is important that each $\frac{\partial s_k(\vect{x})}{\partial x}$ approximates $\frac{\partial f(\vect{x})}{\partial x}$ locally since (\ref{PU_diff}) is not the derivative of the PU approximation itself.
+
+\section{Numerical Experiments}
+\label{numerical_experiments}
+
+\subsection{2D experiments}
+All our experiments were performed on a computer with a 2.6 GHz Intel core i5 processor in version 2017a of Matlab. We first test the 2D functions $\log(1+(x^2+y^4)/10^{-5})$, $\arctan((x+y^2)/10^{-2})$, $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$, Franke's function \cite{franke1979critical}, and the smooth functions from the Genz family test package \cite{genz1987package}. For each function we record the time of construction, the time to evaluate on a 200x200 grid, and the max error on this grid. 
+
+
+Table~\ref{putable} shows the results for the adaptive PU method. For comparison, Table~\ref{chb2table} shows the results for Chebfun 2 \cite{townsend2013extension}, using version 5.5.0 of Chebfun. For the low-rank test cases, the methods are comparable, with neither showing a consistent advantage; most importantly, both methods are fast. In the tests of high-rank functions, the adaptive PU method enjoys a clear advantage in both construction and evaluation times. Moreover, the method remains fast enough for interactive computing even as the total number of nodes exceeds 1.6 million.  We include plots of the functions and adaptively generated subdomains for the first three test functions in Figures~\ref{TANFUN1}-\ref{rungeFUN1}.
+
+As a simple experiment, we examine how the construction time changes with respect to rotation. We use the function
+\begin{equation}
+f(x,y)=\arctan(250(\cos(t)x+\sin(t)y))
+\label{rotate_func_2D}	
+\end{equation}
+for $t \in [0,\pi/4]$. We plot the results in Figure~\ref{tan_rotate_2D}. As we rotate the interface, we would expect the numerical rank of $f(x,y)$ to increase as $t \to \pi/4$; this is observed in the time increase of the Chebfun2 construction in Figure~\ref{tan_rotate_2D}. The construction for the PU method however remains relatively constant despite the rotation.
+
+We preform a similar experiment, but record the time to add and multiply $\arctan(250x)$ with (\ref{rotate_func_2D}) for $t \to \pi/2$, the results of which can be seen in Figure~\ref{TAN_ADD_MULT}. We first observe that the time combine different PU approximations does not heavily depend on how the splittings of the different approximations align (we expect the splittings of $f(x,y)$ and $g(x,y)$ to differ as we rotate $f(x,y)$). We also see that the PU method out preforms except in cases where the sum or product is a low rank approximation itself.
+
+
+\begin{table}[!htb]
+
+\begin{tabular}{r|c|c|c|c}
+& error & construct time & interp time & points \\[5pt] \hline
+$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$ & 1.05e-13 & 0.6403 & 0.063 & 110496 \\[5pt]
+$\arctan(\frac{x_1+x_2^2}{10^{-2}})$ & 2.15e-12 & 2.9690 & 0.3138 & 1553816 \\[5pt]
+$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$ & 1.01e-11 & 0.7298 & 0.1087 & 145280 \\[2pt]
+franke & 4.22E-15 & 0.0116 & 0.0045 & 16641 \\[2pt]
+$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 2.65e-14 & 0.0127 & 0.0025 & 1089 \\[5pt]
+$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 5.00e-12 & 0.0555 & 0.016 & 29283 \\[2pt]
+$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 2.27e-12 & 0.0119 & 8.97e-04 & 25 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 1.65E-14 & 0.0130 & 0.0026 & 2145 \\
+\end{tabular}
+\caption{Table for our method tested with a 200x200 grid with recorded error, construction time, time to interpolate, and number of interpolation points used for the method. Here the target tolerance is set to $10^{-12}$, and $\nmax=129$. Here $u=[0.75,0.25]$, $a=[5,10]$.}
+\label{putable}
+\end{table}
+
+\begin{figure}[!htb]
+\centering
+
+\includegraphics[scale = 0.5]{tan_rotatate_2D.eps}
+
+\caption{Plot of construction time of $\arctan(250(\cos(t)x+\sin(t)y))$ for $t \in [0,\pi/4]$ for the partition of unity method and Chebfun2.}
+\label{tan_rotate_2D}
+\end{figure}
+
+
+
+
+\begin{figure}[!htbp]
+\centering
+\subfloat[Plot of $\arctan \lp (x+y^2)/0.01 \rp$.]{
+\includegraphics[scale = 0.34]{tan_add2D_1.eps}
+   \label{add_plot_1}
+ }
+\subfloat[Plot of subdomains.]{
+\includegraphics[scale = 0.34]{tan_mult2D_1.eps}
+   \label{mult_plot_1}
+ }
+\caption{Plot of $\arctan \lp (x+y^2)/0.01 \rp$ and the subdomains formed from the partition of unity method.}
+\label{TAN_ADD_MULT}
+\end{figure}
+
+\begin{table}[!htb]
+\begin{tabular}{r|c|c|c|c}
+& obsd error & time & interp time & rank \\[5pt] \hline
+$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$ & 1.14E-06 & 2.2997 & 0.1045 & 30 \\[5pt]
+$\arctan(\frac{x_1+x_2^2}{10^{-2}})$ & 7.09E-12 & 150.2228 & 4.979 & 816 \\[5pt]
+$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$ & 5.44E-15 & 0.0493 & 0.0037 & 1 \\[5pt]
+franke & 1.33E-15 & 0.0198 & 0.0024 & 4 \\[5pt]
+$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 4.47E-14 & 0.0155 & 0.002 & 2 \\[5pt]
+$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 1.59E-12 & 0.0203 & 0.0022 & 1 \\[5pt]
+$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 2.27E-12 & 0.0117 & 0.0021 & 4 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 4.44E-16 & 0.0149 & 0.0022 & 1 \\[5pt]
+\end{tabular}\caption{Table for Chebfun2 tested with a 200x200 grid with recorded error, construction time, time to interpolate, and numerical rank. Here the target tolerance is set to $10^{-12}$, and $\nmax=129$. Here $u=[0.75,0.25]$, $a=[5,10]$.}	
+\label{chb2table}
+\end{table}
+
+
+\begin{figure}[!htbp]
+\centering
+\subfloat[Plot of $\arctan \lp (x+y^2)/0.01 \rp$.]{
+\includegraphics[scale = 0.34]{tan2Dplot.eps}
+   \label{tanfunplot}
+ }
+\subfloat[Plot of subdomains.]{
+\includegraphics[scale = 0.34]{tan2Dsubdomains.eps}
+   \label{tanfundomains}
+ }
+\caption{Plot of $\arctan \lp (x+y^2)/0.01 \rp$ and the subdomains formed from the partition of unity method.}
+\label{TANFUN1}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\subfloat[Plot of $\log(1+(x^2+y^4)/10^{-5})$.]{
+\includegraphics[scale = 0.34]{log2Dplot.eps}
+   \label{logfunplot}
+ }
+\subfloat[Plot of subdomains.]{
+\includegraphics[scale = 0.34]{log2Dsubdomains.eps}
+   \label{logfundomains}
+ }
+\caption{Plot of $\log(1+(x^2+y^4)/10^{-5})$ and the subdomains formed from the partition of unity method.}
+\label{logFUN1}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\subfloat[Plot of $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$.]{
+\includegraphics[scale = 0.34]{runge2Dplot.eps}
+   \label{rungefunplot}
+ }
+\subfloat[Plot of subdomains.]{
+\includegraphics[scale = 0.34]{rungesubdomains.eps}
+   \label{rungefundomains}
+ }
+\caption{Plot of $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$ and the subdomains formed from the partition of unity method.}
+\label{rungeFUN1}
+\end{figure}
+
+\subsection{3D experiments} We next test the 3D functions $1/(\cosh(5(x+y+z)))^2$, $\arctan(5(x+y)+z)$ and the smooth functions from the Genz family test package again, but in 3D. We similarly record the construction time, time to evaluate on a $200\times 200 \times 200$ grid and the max error on the grid.
+
+We have the results for the PU method and Chebfun3 \cite{hashemi2017chebfun} in Tables~\ref{putable3D},\ref{chb3table}. We see that Chebfun3 preforms well for low rank functions \footnote{In Chebfun3, functions are approximated in a compressed splice-Tucker decomposition, a variant of a multivariate adaptive cross approximation \cite{bebendorf2011adaptive}. Here the rank refers to the so called tucker rank. }, and out preforms when there are sharp singularities as seen with the Genz function with the Runge singularities. For high rank functions there is an evident advantage in construction times, and evaluation times are comparable. For $\arctan(5(x+y)+z)$ we see a dramatic difference in the construction time; this is because the PU method stops splitting in the $z$-direction early as seen in Figure~\ref{tan_not_z}.
+
+We preform a rotation experiment with the function
+\begin{equation}
+\arctan(5(\sin(p)\cos(t)x+\sin(p)\sin(t)y+\cos(p)z))
+\end{equation}
+for $p,t \in [0,\pi/4]$ where we record the construction time for our method and Chebfun3. The results can be seen in Figure~\ref{tan3D}. We see that slight changes in $t,p$ can dramatically increase the construction time, where rotations have a slight effect with the PU method.
+
+\begin{figure}[!htbp]
+\centering
+\subfloat[PU method]{
+\includegraphics[scale = 0.34]{TAN_3D_PU.eps}
+   \label{tan3DPU}
+ }
+\subfloat[Chebfun3]{
+\includegraphics[scale = 0.34]{TAN_3D_CHEB.eps}
+   \label{tan3DCheb}
+ }
+\caption{Plot of construction time of $\arctan(5(\sin(p)\cos(t)x+\sin(p)\sin(t)y+\cos(p)z))$ for $t,p \in [0,\pi/4]$ for the PU method and Chebfun3.}
+\label{tan3D}
+\end{figure}
+
+
+
+\begin{table}
+\begin{tabular}{r|c|c|c|c}
+& error & construct time & interp time & points \\[5pt] \hline
+$\cos(u_1\pi + \sum_{i=1}^3 a_i x_i)$ & 22.71E-14 & 0.151 & 0.118 & 275000 \\ [5pt]
+$\prod_{i=1}^3 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 1.52E-05 & 7.204 & 1.312 & 10400000 \\[2pt]
+$(1+\sum_{i=1}^3 a_i x_i)^{-3}$ & 4.66E-10 & 0.16555 & 0.033 & 125 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 3.11E-15 & 0.0818 & 0.078 & 275000  \\[5pt]
+$1/(\cosh(5(x+y+z)))^2$ & 1.14E-14 & 0.706 & 0.545 & 2200000 \\
+$\arctan(5(x+y)+z)$ & 7.60e-13 & 0.7512 & 0.030 & 549153 \\
+\end{tabular}
+\caption{Table for our method tested with a $200^3$ grid with recorded error, construction time, time to interpolate, and number of interpolation points used for the method. Here the target tolerance is set to $10^{-12}$, and $\nmax=65$. Here $u=[0.75,0.25,-0.75]$, $a=[25,25,25]$.}
+\label{putable3D}
+\end{table}
+
+\begin{table}
+\begin{tabular}{r|c|c|c|c}
+& error & construct time & interp time & rank \\[5pt] \hline
+$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 2.16E-14 & 0.061 & 0.150 & 2  \\[5pt]
+$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 5.66E-07 & 0.057 & 0.137 & 1 \\[5pt]
+$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 4.07E-10 & 0.038 & 0.143 & 4 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 7.77E-16 & 0.047 & 0.144 & 1 \\[5pt]
+$1/(\cosh(5(x+y+z)))^2$ & 3.69E-13 & 80.666 & 0.398 & 93 \\
+$\arctan(5(x+y)+z)$ & 4.69e-13 & 89.957 & 0.104 & 110 \\
+\end{tabular}\caption{Table for Chebfun3 tested with a $200^3$ grid with recorded error, construction time, time to interpolate, and numerical rank. Here $u=[0.75,0.25,-0.75]$, $a=[25,25,25]$.}	
+\label{chb3table}
+\end{table}
+
+\begin{figure}[!htb]
+\centering
+
+\includegraphics[scale = 0.5]{tan_not_z.eps}
+
+\caption{Plot of zones for $\arctan(5(x+y)+z)$.}
+\label{tan_not_z}
+\end{figure}
+
+\begin{appendices}
+
+\section{Addition algorithm}
+\label{AdditionAlgorithm}
+If $T_1$, $T_2$ are trees with 1D splittings, only the first four cases of Algorithm~\ref{addition3} are needed and it is clear that $T_{\text{add}}$ is a tree with a merged splitting of $T_1$ and $T_2$; since we are splitting by bisection, if $T_1$ and $T_2$ have the same zones, so do their children (if both are split). This isn't necessarily true with splittings in higher dimensions though. For instance, suppose $T_1$ and $T_2$ produce zones as seen in Figures~\ref{zone_tan_1}-\ref{zone_tan_2}. Here we have that splitDim($T_1$)=$x$, splitDim($T_2$)=$y$ and that the zones of the children of $T_1$ and $T_2$ are not equal. But we do have that $T_2$ only splits in $y$; this gives us that all leaves of $T_2$ are needed for the sum in \child{1}($T_1$),\child{2}($T_1$). In Algorithm~\ref{addition3} we would split $T_{\text{add}}$ in the $x$-direction, and call add(\child{k}($T_1$),$T_2$,\child{k}($T_{\mbox{add}}$)) for $k=0,1$. Even though zone(\child{k}($T_{\text{add}}$)) does not match zone($T_2$) along the $x$ dimension, it still matches along the $y$-dimension. We can thus inductively argue that this will remain true with future splittings of $T_{\text{add}}$ where splitDim($T_1$) and splitDim($T_2$) differ (if $T_2$ does not split in $y$ at all, neither does its children).
+
+It is in fact the case that when splitDim($T_1$) and splitDim($T_2$) differ in Algorithm~\ref{addition3}, one tree stops splitting in the splitting dimension of the other as seen in Lemma ~\ref{split_theorem}. This is true for arbitrary dimensions.  A key fact of this proof is that for our trees
+\begin{enumerate}
+\item we always split in order ($x$-$y$ in 2D, $x$-$y$-$z$ in 3D),
+\item and if a tree stops splitting in a dimension at any node, then no child of the node will split in that dimension.
+\end{enumerate} 
+Thus if we have a tree $T$ where splitDim($T$)=$d_1$ and splitDim(\child{0}($T$))=$d_k$, we then know that $T$ skipped dimensions $d_2,\dots,d_{k-1}$; this means that \child{0}($T$) can not split in these dimensions at all. 
+
+\begin{figure}[!htbp]
+\centering
+\subfloat[]{
+\includegraphics[scale = 0.3]{split_x.eps}
+   \label{zone_tan_1}
+ }
+\subfloat[]{
+\includegraphics[scale = 0.3]{split_y.eps}
+   \label{zone_tan_2}
+ }
+\caption{Example of two trees where the initial split does not match}
+\label{bad_split}
+\end{figure}
+
+\begin{lemma}
+Suppose in Algorithm~\ref{addition3} that 
+\begin{equation}
+\text{splitDim($T_1$)} \neq \text{splitDim($T_2$)}, \quad nextsplit=\text{splitDim($T_1$)}.
+\label{split_assump}
+\end{equation}
+Then $T_2$ stops splitting in dimension splitDim($T_1$). 
+\label{split_theorem}
+\end{lemma}
+
+\begin{proof}
+
+For the different cases where (\ref{split_assump}) occurs we argue with specific dimensions; the proofs can be easily generalized. Suppose that we are at the first call where
+\begin{align}
+ \text{splitDim($T_1$)}=d_1 , \quad \text{splitDim($T_2$)}=d_k
+\end{align}
+with $k>1$. In Algorithm~\ref{addition3} $nextsplit=d_1$ because we are at the first call. Since $T_2$ starts splitting in $d_k$, it does not split in $d_1,\dots,d_{k-1}$. The next case to consider is when 
+\begin{align}
+\text{splitDim($T_1$)}=\text{splitDim($T_2$)}, \quad \text{splitDim(\child{k}($T_1$))} \neq \text{splitDim(\child{k}($T_2$))}.
+\end{align}
+Suppose here that
+\begin{align}
+\text{splitDim($T_1$)}=d_n, \quad \text{splitDim(\child{k}($T_1$))}=d_1, \quad \text{splitDim(\child{k}($T_2$))}=d_k
+\end{align}
+such that $k>1$. Again $nextsplit=d_1$, and we see that $T_2$ has skipped past dimensions $d_2,\dots,d_{k-1}$. This implies that \child{k}($T_2$) stops splitting in these dimensions.
+
+Finally suppose that 
+\begin{align}
+\text{splitDim($T_1$)} \neq \text{splitDim($T_2$)}, \quad  \text{splitDim(\child{k}($T_1$))} \neq \text{splitDim($T_2$)},
+\end{align}
+where with $T_1$ and $T_2$ we have $nextsplit=\text{splitDim($T_1$)}$. The first time that the fifth case of Algorithm~\ref{addition3} can occur is if we are at the first call, or if in the previous call the splitting dimension matched between the trees. In either case, we would have $T_2$ does not split in dimensions $\text{splitDim($T_1$)}+1,\dots,\text{splitDim($T_2$)}-1$. We claim this remains true with successive calls of the fifth case, and will prove so inductively. Suppose that with \child{k}($T_1$) and $T_2$ that $nextsplit=\text{splitDim(\child{k}($T_1$))}$. This implies splitDim(\child{k}($T_1$)) lies between splitDim($T_1$) and splitDim($T_2$); by assumption we have $T_2$ does not split in $\text{splitDim(\child{k}($T_1$))}+1,\dots,\text{splitDim($T_2$)}-1$ so the induction hypothesis holds with \child{k}($T_1$) and $T_2$. If $nextsplit=\text{splitDim($T_2$)}$, then we know that $T_1$ skipped dimensions $\text{splitDim($T_1$)}+1,\dots,\text{splitDim($T_2$)},\dots,\text{splitDim(\child{k}($T_1$))}-1$ implying the induction hypothesis holds in this case as well for \child{k}($T_1$) and $T_2$. This shows that with successive calls of the fifth case of Algorithm~\ref{addition3} starting from the first call or the fourth case that if splitDim($T_1$)$\neq$splitDim($T_2$) and $nextsplit$=splitDim($T_1$), then $T_2$ stops splitting in splitDim($T_1$) (or vice versa when $nextsplit=\text{splitDim($T_2$)}$).
+\end{proof}
+
+
+
+%\begin{theorem}
+%Algorithm~\ref{addition3} produces a tree $T_{\text{add}}$ with a merged splitting of $T_1$ and $T_2$.
+%\label{split_theorem_2}
+%\end{theorem}
+%
+%\begin{proof}
+%Suppose we have that zone($T_{\text{add}}$) and zone($T_1$) are the same along the first dimension i.e. if zone($T_{\text{add}}$)=$[a,b]\times[c,d]$ and zone($T_1$)=$[e,f]\times[g,h]$ then $[a,b]=[e,f]$. Then it is clear that if $T_1$ and $T_{\text{add}}$ split first in $x$ that zone(\child{k}($T_{\text{add}}$)) and zone(\child{k}($T_1$)) will match along the first dimension as well. Suppose for induction that for $k=0,1$ zone($T_{\text{add}}$) and zone($T_k$) are the same along dimensions that $T_k$ still splits in. This is trivially true at the first call since at the root zone($T_{\text{add}}$)=zone($T_1$)=zone($T_2$).
+%
+%Suppose we are at a case where $T_1$ is not a leaf and we split zone($T_{\text{add}}$) along splitDim($T_1$). By the induction hypothesis we have that zone($T_{\text{add}}$) matches zone($T_1$) along dimension splitDim($T_1$); this gives us that zone(\child{k}($T_{\text{add}}$)) and zone(\child{k}($T_1$)) match along splitDim($T_1$) as well. Since nothing has changed for the other dimensions, the induction hypothesis holds for \child{k}($T_1$) and \child{k}($T_{\text{add}}$).
+%
+%The only case left is where $T_1$ and $T_2$ are not leaves, but splitDim($T_1$) and splitDim($T_2$) differ. Suppose that in this case $nextsplit$=splitDim($T_1$) in Algorithm~\ref{addition3}. We then call add(\child{k}($T_1$),$T_2$,\child{k}($T_{\mbox{add}}$),$nextsplit$). The induction hypothesis holds for \child{k}($T_1$) and \child{k}($T_{\mbox{add}}$) for similar reasons as before. Given that \child{k}($T_{\mbox{add}}$) is changed only in splitDim($T_1$), the induction hypothesis holds for $T_2$ and \child{k}($T_{\mbox{add}}$) for all dimensions except possibly splitDim($T_1$). But by Lemma~\ref{split_theorem}, we have $T_2$ does not split in splitDim($T_1$) so the induction hypothesis holds for $T_2$ and \child{k}($T_{\mbox{add}}$).
+%\end{proof}
+
+
+\begin{algorithm}[!h]
+\caption{add($T_1$,$T_2$,$T_{\mbox{add}}$,$LastSplit$)}
+\label{addition3}
+\begin{algorithmic}
+\IF{$T_1$ and $T_2$ are leaves}
+\STATE interpolant($T_{\mbox{add}}$)=interpolant($T_1$)+interpolant($T_2$) on domain($T_{\mbox{add}}$).
+\ELSIF{$T_1$ is a leaf while $T_2$ is not}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_2$.overlap)
+\STATE add($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_2$.splitDim)
+\STATE add($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_2$.splitDim)
+\ELSIF{$T_1$ is not a leaf while $T_2$ is}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE add(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE add(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSIF{$T_1$.splitDim=$T_2$.splitDim}
+\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
+\STATE add(\child{0}($T_1$),\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE add(\child{1}($T_1$),\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\ELSE
+\STATE $nextsplit=(LastSplit \mod \text{dim($T_1$)}) +1$
+\WHILE{$T_1$.splitDim $\neq nextsplit$ and $T_2$.splitDim $\neq nextsplit$}
+\STATE $nextsplit=(nextsplit \mod \text{dim($T_1$)}) +1$
+\ENDWHILE
+\STATE split($T_{\mbox{add}}$,$nextsplit$,$T_2$.overlap)
+\IF{$T_1$.splitDim=$nextsplit$}
+\STATE add(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$nextsplit$)
+\STATE add(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$nextsplit$)
+\ELSE
+\STATE add($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$nextsplit$)
+\STATE add($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$nextsplit$)
+\ENDIF
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\end{appendices}
+
+
+%\section{Adaptive alternating Schwarz}
+%The \textit{alternating Schwarz method} is an iterative method used to solve boundary value problems. Suppose we wish to solve
+%\begin{equation}
+%\label{pde_2_solve}
+%\Delta u = 0 \text{ in } \Omega, \quad u=g \text{ on } \partial\Omega,
+%\end{equation}
+%with overlapping subdomains $\Omega_1,\Omega_2$ such that $\Omega = \Omega_1 \cup \Omega_2$. Let $\Gamma_k = \partial \Omega_k \setminus \partial \Omega$ for $k=1,2$. Starting with $u_1^0=u_2^0=0$ the alternating Schwarz method iteratively solves for $u_1^n,u_2^n$ by solving
+%\begin{equation}
+%\begin{aligned}
+%	\Delta u_1^{n+1}&=0 \text{ in } \Omega_1 ,\\
+%	u_1^{n+1}&=g \text{ on } \partial\Omega_1 \setminus \Gamma_1 \\
+%	u_1^{n+1}&=u_{2}^{n} \text{ on } \Gamma_1,
+%\end{aligned},\quad
+%\begin{aligned}
+%	\Delta u_2^{n+1}&=0 \text{ in } \Omega_2, \\
+%	u_2^{n+1}&=g \text{ on } \partial\Omega_2 \setminus \Gamma_2, \\
+%	u_2^{n+1}&=u_{1}^{n+1} \text{ on } \Gamma_2,
+%\end{aligned}
+%\label{ASSchwarz}
+%\end{equation}
+%for $n=1,2,\dots$. This was first proven to converge to the solution of (\ref{pde_2_solve}) by H. Schwarz in order to prove existence of solutions on arbitrary domains (in his case, the union of a square and circle) \cite{OriginalSchwarz}. Slightly altering (\ref{ASSchwarz}) we have the {\it parallel Schwarz method} where we iteratively solve
+%\begin{equation}
+%\begin{aligned}
+%	\Delta u_1^{n+1}&=0 \text{ in } \Omega_1, \\
+%	u_1^{n+1}&=g \text{ on } \partial\Omega_1 \setminus \Gamma_1, \\
+%	u_1^{n+1}&=u_{2}^{n} \text{ on } \Gamma_1,
+%\end{aligned}\quad
+%\begin{aligned}
+%	\Delta u_2^{n+1}&=0 \text{ in } \Omega_2, \\
+%	u_2^{n+1}&=g \text{ on } \partial\Omega_2 \setminus \Gamma_2, \\
+%	u_2^{n+1}&=u_{1}^{n} \text{ on } \Gamma_2,
+%\end{aligned}
+%\end{equation}
+%which was examined by Lions \cite{lions1988schwarz}. This method is parallel in the sense that for each iteration, the two systems can be solved simultaneously. We use the parallel Schwarz approach with our method to construct an adaptive BVP solver.
+%
+%Suppose we are solving
+%\begin{equation}
+%\label{bvp_to_solve}
+%\mathcal{L}(u)=f \text{ in } \Omega, \\ \quad u=g \text{ on } \partial\Omega
+%\end{equation}
+%using a tree $T$ from our method. For each leaf $\nu_k$ of $T$ we assign a discrete operator $A_k$ of (\ref{bvp_to_solve}). Let $\Omega_k:=$domain($\nu_k$). Since we can have multiply overlapping domains, we must decide which neighboring leaves to interpolate from on the interface $\Gamma_k = \partial \Omega_k \setminus \Omega$ \footnote{In fact, we could use the partition of unity interpolant to resolve multiple overlaps without ambiguity. However, the approach we take here is faster in practice and does not seem to affect the convergence we observe.}. For our scheme, we interpolate along the zones of $T$ as seen in Algorithm~\ref{alg6}.
+%
+%
+%
+%\begin{algorithm}[t]
+%\caption{$F$=zoneEvaluate($\nu$,$\vect{x}$)}
+%\label{alg6}
+%\begin{algorithmic}
+%\IF{$\nu$ is a leaf}
+%\STATE $F = \text{interpolant}(\nu)(\vect{x})$
+%\ELSE
+%\IF{$\vect{x} \in \text{zone(\child{0}}(\nu))$}
+%\STATE $F$ = zoneEvaluate(\child{0}($\nu$),$\vect{x}$) 
+%\ELSE
+%\STATE $F$ = zoneEvaluate(\child{1}($\nu$),$\vect{x}$) 
+%\ENDIF
+%\ENDIF
+%\end{algorithmic}
+%\end{algorithm}
+%Let the interpolating points of $T$ be ordered depth first. For each leaf $\nu_k$, we define an interpolation matrix $B_k$ that uses Algorithm~\ref{alg6} on $\Gamma_k$, and returns zero for points outside $\Gamma_k$. Let $A = \diag(A_1,A_2,\dots,A_m)$ and $B = [B_1^T B_2^T \dots B_m^T]^T$. For each leaf $\nu_k$, define the vector $f_k = [(f \vert_{\Omega_k})^T (g \vert_{\partial \Omega \setminus \Gamma_k})^T 0]^T$, and define $b = [f_1^T f_2^T \dots f_m^T]^T$. We can then define the parallel Schwarz method iteratively:
+%\begin{equation}
+%\label{iterative_Schwarz}
+%A u^{n+1} =	B u^{n}+b.
+%\end{equation}
+%By adding and subtracting $u^{n}$, we can rewrite (\ref{iterative_Schwarz}) as
+%\begin{equation}
+%\label{gmres_as}
+%u^{n+1} = u^{n} - A^{-1}((A-B)u^{n}-b).	
+%\end{equation}
+%This formulation allows us to use GMRES to solve for the fixed point of the iterative process, where we solve
+%\begin{equation}
+%	(A-B)u = b
+%\label{master_eq}
+%\end{equation}
+%with $A^{-1}$ as the preconditioner, as seen in \cite{smith2004domain}.
+%
+% In order to keep the number of preconditioned GMRES iterations from growing with the number of subdomains, we use a two-level iteration that allows rapid communication between distant domains. Let $A_c$, $B_c$ be matrices formed similarly to $A$ and $B$, but with coarse grids over the leaves. Define block diagonal matrices $P$ and $C$ that interpolate from the fine grid and coarse grid  for each leaf and vice versa, respectively. We define a two level multiplicative preconditioner $M$, where $v=M r$ is given by
+%\begin{equation}
+%\label{2levelprec}
+%\begin{aligned}
+%	v &\leftarrow P (A_c-B_c)^{-1} C r \\
+%	v &\leftarrow v + A^{-1}(r-Av).
+%\end{aligned}
+%\end{equation}
+%To invert $(A_c-B_c)$, we use direct linear algebra with a sparse matrix since the size of the system is relatively small. We compute $P$, $C$, and $A^{-1}$ iteratively over the leaves.
+%
+%In Algorithm~\ref{alg8} we combine the two-level parallel AS for BVPs with the adaptive PU refinement method of section 2. The process starts with a global, tensor-product solution. Decisions about adaptation refinement are made based on the resolvedness of the proposed solution, which is interpolated onto any new subdomains. Then preconditioned GMRES is used to improve the solution, leading to new adaptation decisions. 
+%
+%
+%\begin{algorithm}[!t]
+%\caption{$T$=refineBVP($\nmax$,$t$,BVP)}
+%\label{alg8}
+%\begin{algorithmic}
+%\STATE Define $T$ as a tree with a single node with the domain of the BVP.
+%\WHILE{$T$ has unrefined leaves}
+%\IF{$T$ is a single leaf}
+%\STATE sample $T$ by solving with a single tensor product approximation.
+%\ELSE
+%\STATE For each leaf $\nu_k$, construct local discretization of the BVP $A_k$.
+%\STATE Construct a sparse matrix $A_c-B_c$ as seen in (\ref{2levelprec}).
+%\STATE Sample $T$ by solving (\ref{master_eq}) with GMRES with $M$ from  (\ref{2levelprec}) as a preconditioner, \ARP and the sampled values on $T$ as an initial condition.
+%\ENDIF
+%\STATE splitleaves(root($T$),$\nmax$,$t$). Here if a leaf $\nu$ is split, sample the values of the children of $\nu$ with \ARP interpolant($\nu$).
+%\ENDWHILE
+%\end{algorithmic}
+%\label{BVP_solve}
+%\end{algorithm}
+%
+%\section{BVP examples}
+%As in section~\ref{numerical_experiments}, these experiments were computed on a computer with a 2.6 GHz Intel core i5 processor in version 2017a of Matlab.
+%Our first example is Poisson's equation
+%\begin{equation}
+% \Delta u = f(x,y) \text{ in } \Omega, \quad u=b(x,y) \text{ on } \partial\Omega
+%\label{peterbed_bvp_2}
+%\end{equation}
+%where $f(x,y),b(x,y)$ are chosen so that 
+%\begin{equation}
+%u(x,y) = \arctan \left(100 \lp \sqrt{(x+1)^2+(y+1)^2}-1 \rp \right)
+%\label{boundary_layer_sol_2}
+%\end{equation}
+%and the solution has a wave front \cite{mitchell2013collection}. The PDE was solved using Algorithm~\ref{alg8} with parameters $t=0.1$, $tol=10^{-8}$ and $\nmax=33$. Our method took 205 second to adapt, and had a max absolute error of $1.6 \times 10^{-8}$. The number of GMRES iterations needed during the domain adaptation is shown in Figure 7.
+%
+%\begin{figure}[!htb]
+%\centering
+%\subfloat[Plot of (\ref{boundary_layer_sol_2}).]{
+%\includegraphics[scale = 0.34]{cool_pde_2.eps}
+%   \label{fun_bound_plot_2}
+% }
+%\subfloat[Plot of subdomains.]{
+%\includegraphics[scale = 0.34]{cool_pde_domain_2.eps}
+%   \label{bound_plot_2_domains}
+% }
+%\caption{Plot of $\log(1+(x^2+y^4)/10^{-5})$ and the subdomains formed from the partition of unity method.}
+%\label{bound_plot_2}
+%\end{figure}
+%
+%\begin{figure}[!htb]
+%\centering
+%
+%\includegraphics[scale = 0.5]{GMRES_ITERATION_2.eps}
+%
+%\caption{Plot of GMRES iterations for each adaptive step need to solve (\ref{peterbed_bvp}).}
+%\label{bound_gmres_it_2}
+%\end{figure}
+%
+%For our next example, we look at an advection diffusion PDE from \cite{aiffa5computational}:
+%\begin{equation}
+%\varepsilon \Delta u + 2 u_x+u_y = f(x,y) \text{ in } \Omega, \quad u=b(x,y) \text{ on } \partial\Omega
+%\label{peterbed_bvp}
+%\end{equation}
+%where $f(x,y),b(x,y)$ are chosen so that 
+%\begin{equation}
+%u(x,y) = \left(1-e^{\frac{x-1}{\epsilon }}\right) \left(1-e^{\frac{y-1}{\epsilon }}\right) \cos (\pi  (x+y)).
+%\label{boundary_layer_sol}
+%\end{equation}
+%This solution has boundary layers at $x=1,y=1$ when $\varepsilon \ll 1$. We use Algorithm~\ref{alg8} to solve (\ref{peterbed_bvp}) with $\varepsilon=5\times10^{-3}$, $t=0.1$, $tol=10^{-8}$ and $\nmax=33$. The solution and subsequent domains are plotted in Figure~\ref{bound_plot_1}. Our method took 74 seconds to solve the BVP, with a max error of $3.12\times 10^{-8}$ as sampled on a $100 \times 100$ grid. As this problem is convection-dominated, the preconditioner is only moderately effective, but the number of GMRES iterations levels off as the number of subdomains increases, as seen in Figure 5. The number of GMRES iterations per adaptive step can be seen in Figure~\ref{bound_gmres_it}.
+%
+%\begin{figure}[!htb]
+%\centering
+%\subfloat[Plot of (\ref{boundary_layer_sol}).]{
+%\includegraphics[scale = 0.34]{coolPDE.eps}
+%   \label{fun_bound_plot_1}
+% }
+%\subfloat[Plot of subdomains.]{
+%\includegraphics[scale = 0.34]{coolPDEdomain.eps}
+%   \label{bound_plot_1_domains}
+% }
+%\caption{Plot of $\log(1+(x^2+y^4)/10^{-5})$ and the subdomains formed from the partition of unity method.}
+%\label{bound_plot_1}
+%\end{figure}
+%
+%\begin{figure}[!htb]
+%\centering
+%
+%\includegraphics[scale = 0.5]{gmres_it_bound.eps}
+%
+%\caption{Plot of GMRES iterations for each adaptive step need to solve (\ref{peterbed_bvp}).}
+%\label{bound_gmres_it}
+%\end{figure}
+
+\clearpage
+
+\bibliographystyle{siamplain}
+\bibliography{PU_BIB}
+\end{document}

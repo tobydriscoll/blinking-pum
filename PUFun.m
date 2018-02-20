@@ -238,8 +238,6 @@ classdef PUFun < handle & matlab.mixin.Copyable
                     end
                     
                 end
-                
-                
             end
         end
         

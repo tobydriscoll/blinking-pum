@@ -5,29 +5,67 @@ classdef LSPatch2D<LeafPatch
     properties
         degs %array of degrees along the dimensions
         coeffs %grid of values to be used for interpolation
-        Out_Domain %Domain of outer square
+        in_domain
         max_lengths %Max lengths of patch
         values
         pinvM %Store the pseudoInverse
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
-        cheblength = 32;
+        deg_in
+        cheblength = 5;
+    end
+    
+    properties (Access = protected)
+        cdeg_in %index for the course degrees
+        swap_deg_in
     end
     
     properties (Constant)
+        standard_variables = load('cheb_points_matrices.mat');
+        standard_degs = [3 5 9 17 33 65 129];
         invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
         forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
     end
     
     methods
-        function obj = LSPatch2D(domain,sqr_domain,degs,max_lengths)
-            obj.domain = domain;
-            obj.Out_Domain = sqr_domain;
-            obj.degs = degs;
-            obj.cheb_length = prod(obj.degs);
-            obj.is_leaf = true;
+        function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
+            
+            %Call superclass constructor
+            obj = obj@LeafPatch(domain,zone,outerbox);
+            obj.in_domain = in_domain;
             obj.max_lengths = max_lengths;
-            obj.tol = 1e-12;
-            obj.values = [];
+            
+            if nargin < 6
+                obj.deg_in = zeros(1,obj.dim);
+                obj.cdeg_in = zeros(1,obj.dim);
+                obj.deg_in(:) = 7;
+                obj.cdeg_in(:) = 3;
+                obj.split_flag = true(obj.dim,1);
+                obj.tol = 1e-12;
+            elseif nargin < 7
+                obj.deg_in = deg_in;
+                obj.cdeg_in = zeros(1,obj.dim);
+                obj.cdeg_in(:) = 3;
+                obj.split_flag = true(obj.dim,1);
+                obj.tol = 1e-12;
+            elseif nargin < 8
+                obj.deg_in = deg_in;
+                obj.cdeg_in = zeros(1,obj.dim);
+                obj.cdeg_in(:) = 3;
+                obj.split_flag = split_flag;
+                obj.tol = 1e-12;
+            elseif nargin < 9
+                obj.deg_in = deg_in;
+                obj.cdeg_in = zeros(1,obj.dim);
+                obj.cdeg_in(:) = 3;
+                obj.split_flag = split_flag;
+                obj.tol = tol;
+            elseif nargin < 10
+                obj.deg_in = deg_in;
+                obj.cdeg_in = cdeg_in;
+                obj.split_flag = split_flag;
+                obj.tol = tol;
+            end
+            
         end
         
         % TODO. Figure out what to do here!
@@ -51,7 +89,7 @@ classdef LSPatch2D<LeafPatch
             
             for k=1:2
                 %Shift the points to the domain [-1 1]x[-1 1]
-                X{k} = obj.invf(X{k},obj.Out_Domain(:,k));
+                X{k} = obj.invf(X{k},obj.domain(:,k));
                 
                 %Evaluate the points at the Chebyshev polynomials
                 F = clenshaw(X{k},eye(obj.cheblength));
@@ -66,12 +104,8 @@ classdef LSPatch2D<LeafPatch
         
         
         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
-            outer_points_s = [1 1;-1 1;1 -1;-1 -1];
             
-            outer_points(:,1) = obj.forf(outer_points_s(:,1),obj.Out_Domain(1,:));
-            outer_points(:,2) = obj.forf(outer_points_s(:,2),obj.Out_Domain(2,:));
-            
-            lengths = [diff(obj.Out_Domain(1,:));diff(obj.Out_Domain(2,:))];
+            lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
             
             is_less_max = lengths<=obj.max_lengths;
             
@@ -80,125 +114,141 @@ classdef LSPatch2D<LeafPatch
             obj.is_geometric_refined = IsGeometricallyRefined;
         end
         
-        function Child = splitleaf(obj)
+        function Child = splitleaf(obj,Max,set_vals)
+            obj.is_geometric_refined = IsGeometricallyRefined(obj);
             
-            if ~obj.is_geometric_refined
-                obj.IsGeometricallyRefined();
-            end
-            
-            
-            obj.is_refined = obj.mid_values_err<= obj.tol;
-            %obj.is_refined = true;
-            
-            if obj.is_geometric_refined
-                a=1;
-            end
-            
-            
-            if obj.is_geometric_refined && obj.is_refined
+            if ~obj.is_geometric_refined || obj.mid_values_err>obj.tol
                 
                 Child = obj;
-                
+                %Go through and split in each unresolved direction
+                for k=1:obj.dim
+                    if Child.is_leaf
+                        Child = split(obj,k);
+                    else
+                        Child.split(k);
+                    end
+                end
             else
+                Child = obj;
+                Child.is_refined = true;
+            end
+        end
+        
+                % The method determines will split a child into along
+        % a dimension.
+        %
+        %     Input:
+        %   overlap: overlap intended to be used for the splitting
+        %
+        %    Output:
+        %     Child: the PUPatch with the two new children.
+        function Child = split(obj,split_dim,set_vals)
+            
+            if nargin == 2
+                set_vals = false;
+            end
+            
+            children = cell(1,2);
+            
+            %The width of the overlap
+            delta = 0.5*obj.overlap*diff(obj.zone(split_dim,:));
+            
+            zone0 = obj.zone;
+            zone1 = obj.zone;
+            
+            domain0 = obj.domain;
+            domain1 = obj.domain;
+            
+            m = sum(obj.zone(split_dim,:))/2;
+            
+            zone0(split_dim,:) = [obj.zone(split_dim,1) m];
+            zone1(split_dim,:) = [m obj.zone(split_dim,2)];
+            
+            domain0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
+            domain1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
+            
+            %We first figure out if the the subdomains sit entirely in the domain itself.
+            %In this case, we would just use a standard chebyshev
+            %tensor product approximation.
+            x1 = chebpts(16,domain0(1,:))';
+            y1 = chebpts(16,domain0(2,:))';
+            [X1,Y1] = ndgrid(x1,y1);
+            XP1 = [X1(:),Y1(:)];
+            
+            x2 = chebpts(16,domain1(1,:))';
+            y2 = chebpts(16,domain1(2,:))';
+            [X2,Y2] = ndgrid(x2,y2);
+            XP2 = [X2(:),Y2(:)];
+            
+            if all(obj.in_domain.Interior(XP1))
+                %The square is in the domain. Set the child to a
+                %standard Chebpatch
+                children{1} = ChebPatch(domain0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+            else
+                %The square is not in the domain. Set the child to a
+                %least square patch
+                children{1} = LSPatch2D(obj.in_domain,obj.max_lengths,domain0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+            end
+            
+            if all(obj.in_domain.Interior(XP2))
+                %The square is in the domain. Set the child to a
+                %standard Chebpatch
+                children{2} = ChebPatch(domain1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+            else
+                %The square is not in the domain. Set the child to a
+                %least square patch
+                children{2} = LSPatch2D(obj.in_domain,obj.max_lengths,domain1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+            end
+            
+            x = chebpts(16,obj.domain(1,:))';
+            y = chebpts(16,obj.domain(2,:))';
+            
+            [X,Y] = ndgrid(x,y);
+            
+            XP = [X(:),Y(:)];
+            
+            ind = obj.in_domain.Interior(XP);
+            
+            XP = XP(ind,:);
+            
+            ind11 = XP(:,split_dim)<=domain0(split_dim,2);
+            ind22 = XP(:,split_dim)>=domain1(split_dim,1);
+            
+            
+            if all(ind11)
+                %The domain sits entirely in the first child
+                Child = children{1};
                 
-                %we need to split.
-                lengths = [diff(obj.Out_Domain(1,:));diff(obj.Out_Domain(2,:))];
+            elseif all(ind22)
                 
-                is_less_max = lengths<=obj.max_lengths;
-                %We split along the max length of the outer box.
-                
-                
-                if all(is_less_max)
-                    [~,split_dim] = max(lengths);
-                else
-                    lengths(is_less_max) = 0;
-                    [~,split_dim] = max(lengths);
-                end
-                
-                delta = 0.5*(1+PUWeights.overlap)*...
-                    (obj.Out_Domain(split_dim,2)-obj.Out_Domain(split_dim,1));
-                
-                domain1 = obj.Out_Domain;
-                domain2 = obj.Out_Domain;
-                
-                domain1(split_dim,:) = [obj.Out_Domain(split_dim,1) obj.Out_Domain(split_dim,1)+delta];
-                domain2(split_dim,:) = [obj.Out_Domain(split_dim,2)-delta obj.Out_Domain(split_dim,2)];
-                
-                overlap_in = [obj.Out_Domain(split_dim,2)-delta obj.Out_Domain(split_dim,1)+delta];
-                
-                %We first figure out if the the subdomains sit entirely in the domain itself.
-                %In this case, we would just use a standard chebyshev
-                %tensor product approximation.
-                x1 = chebpts(16,domain1(1,:))';
-                y1 = chebpts(16,domain1(2,:))';
-                [X1,Y1] = ndgrid(x1,y1);
-                XP1 = [X1(:),Y1(:)];
-                
-                x2 = chebpts(16,domain2(1,:))';
-                y2 = chebpts(16,domain2(2,:))';
-                [X2,Y2] = ndgrid(x2,y2);
-                XP2 = [X2(:),Y2(:)];
-                
-                
-                
-                if all(obj.domain.Interior(XP1)) 
-                    %The square is in the domain. Set the child to a
-                    %standard Chebpatch
-                    children{1} = ChebPatch(domain1,obj.degs);
-                else
-                    %The square is not in the domain. Set the child to a
-                    %least square patch
-                    children{1} = LSPatch2D(obj.domain,domain1,obj.degs,obj.max_lengths);
-                end
-                
-                if all(obj.domain.Interior(XP2))
-                    %The square is in the domain. Set the child to a
-                    %standard Chebpatch
-                    children{2} = ChebPatch(domain2,obj.degs);
-                else
-                    %The square is not in the domain. Set the child to a
-                    %least square patch
-                    children{2} = LSPatch2D(obj.domain,domain2,obj.degs,obj.max_lengths);
-                end
-                
-                x = chebpts(16,obj.Out_Domain(1,:))';
-                y = chebpts(16,obj.Out_Domain(2,:))';
-                
-                [X,Y] = ndgrid(x,y);
-                
-                XP = [X(:),Y(:)];
-                
-                ind = obj.domain.Interior(XP);
-                
-                XP = XP(ind,:);
-                
-                ind11 = XP(:,split_dim)<=domain1(split_dim,2);
-                ind22 = XP(:,split_dim)>=domain2(split_dim,1);
-                
-                
-                if all(ind11)
-                     %The domain sits entirely in the first child
-                    Child = children{1};
-                    
-                elseif all(ind22)
-                    
-                    %The domain sits entirely in the second child
-                    Child = children{2};
-                else
-                    %Return the PUPatch with the new children
-                    Child = PUPatch(obj.Out_Domain,overlap_in,length(children{1})+length(children{2}),children,split_dim,obj.index);
+                %The domain sits entirely in the second child
+                Child = children{2};
+            else
+                %Return the PUPatch with the new children
+                Child = PUPatch(obj.domain,obj.zone,length(children{1})+length(children{2}),children,split_dim,obj.index);
+            end
+            
+            if set_vals
+                for k=1:2
+                    Child.children{k}.sample(obj.evalfGrid(Child.children{k}.leafGrids()));
                 end
             end
         end
         
-        function sample(obj,f)
+        
+        function max_val = sample(obj,f,grid_opt)
+            
+            if(nargin==2)
+                grid_opt = false;
+            end
+            
             if obj.is_geometric_refined
                 
-                x = chebpts(obj.cheblength*2,obj.Out_Domain(1,:));
-                y = chebpts(obj.cheblength*2,obj.Out_Domain(2,:));
+                x = chebpts(obj.cheblength*2,obj.domain(1,:));
+                y = chebpts(obj.cheblength*2,obj.domain(2,:));
                 
-                x1 = chebpts(obj.cheblength*2,obj.Out_Domain(1,:),1);
-                y1 = chebpts(obj.cheblength*2,obj.Out_Domain(2,:),1);
+                x1 = chebpts(obj.cheblength*2,obj.domain(1,:),1);
+                y1 = chebpts(obj.cheblength*2,obj.domain(2,:),1);
                 
                 [X,Y] = ndgrid(x,y);
                 
@@ -208,8 +258,8 @@ classdef LSPatch2D<LeafPatch
                 
                 XP1 = [X1(:) Y1(:)];
                 
-                ind = obj.domain.Interior(XP);
-                ind1 = obj.domain.Interior(XP1);
+                ind = obj.in_domain.Interior(XP);
+                ind1 = obj.in_domain.Interior(XP1);
                 
                 XP = XP(ind,:);
                 
@@ -232,20 +282,11 @@ classdef LSPatch2D<LeafPatch
                 E = E(:) - f(XP1);
                 E = E(ind1);
                 
-                %This is used to determin
+                %This is used to determin the point wise error
                 obj.mid_values_err = max(abs(E(:)));
+                
+                max_val = inf;
             end
         end
-        
-        
-        function plotdomain(obj)
-            hold on;
-            lengths = [diff(obj.Out_Domain(1,:));diff(obj.Out_Domain(2,:))];
-            rectangle('position',[obj.Out_Domain(:,1)' lengths'],'LineWidth',2);
-            hold off;
-        end
-        
-        
     end
 end
-
