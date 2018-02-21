@@ -119,15 +119,23 @@ classdef LSPatch2D<LeafPatch
             
             if ~obj.is_geometric_refined || obj.mid_values_err>obj.tol
                 
-                Child = obj;
-                %Go through and split in each unresolved direction
-                for k=1:obj.dim
-                    if Child.is_leaf
-                        Child = split(obj,k);
-                    else
-                        Child.split(k);
-                    end
-                end
+                ind = 1:obj.dim;
+                ind = ind(obj.split_flag);
+                
+                [~,split_dim] = max(diff(obj.domain(obj.split_flag,:).',1));
+                split_dim = ind(split_dim);
+                
+                Child = split(obj,split_dim);
+
+%                 Child = obj;
+%                 %Go through and split in each unresolved direction
+%                 for k=1:obj.dim
+%                     if Child.is_leaf
+%                         Child = split(obj,k);
+%                     else
+%                         Child.split(k);
+%                     end
+%                 end
             else
                 Child = obj;
                 Child.is_refined = true;
@@ -242,6 +250,8 @@ classdef LSPatch2D<LeafPatch
                 grid_opt = false;
             end
             
+            max_val = inf;
+            
             if obj.is_geometric_refined
                 
                 x = chebpts(obj.cheblength*2,obj.domain(1,:));
@@ -269,14 +279,17 @@ classdef LSPatch2D<LeafPatch
 %                     obj.pinvM = pinv(M(ind,:));
 %                 end
 
-                Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
-                M = kron(Mx,Mx);
-                M = M(ind,:);
+               % Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
+               % M = kron(Mx,Mx);
+               % M = M(ind,:);
                 
-                P = M*M'-eye(length(XP));
-                y = pinv(P*M)*P*f(XP);
-                z = M'*(f(XP)-M*y);
-                obj.coeffs = reshape(y+z,[obj.cheblength obj.cheblength]);
+                %P = M*M'-eye(length(XP));
+                %y = pinv(P*M)*P*f(XP);
+                %z = M'*(f(XP)-M*y);
+                %obj.coeffs = reshape(y+z,[obj.cheblength obj.cheblength]);
+                
+                %obj.coeffs = reshape(pinv(M)*f(XP),[obj.cheblength obj.cheblength]);
+                obj.coeffs = zeros([obj.cheblength obj.cheblength]);
                 
                 E = obj.evalfGrid({x1,y1},1,0);
                 E = E(:) - f(XP1);
@@ -285,7 +298,7 @@ classdef LSPatch2D<LeafPatch
                 %This is used to determin the point wise error
                 obj.mid_values_err = max(abs(E(:)));
                 
-                max_val = inf;
+                
             end
         end
     end
