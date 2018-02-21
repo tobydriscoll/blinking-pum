@@ -119,23 +119,24 @@ classdef LSPatch2D<LeafPatch
             
             if ~obj.is_geometric_refined || obj.mid_values_err>obj.tol
                 
-                ind = 1:obj.dim;
-                ind = ind(obj.split_flag);
-                
-                [~,split_dim] = max(diff(obj.domain(obj.split_flag,:).',1));
-                split_dim = ind(split_dim);
-                
-                Child = split(obj,split_dim);
+%                 ind = 1:obj.dim;
+%                 ind = ind(obj.split_flag);
+%                 
+%                 [~,split_dim] = max(diff(obj.domain(obj.split_flag,:).',1));
+%                 split_dim = ind(split_dim);
+%                 
+%                 Child = split(obj,split_dim);
 
-%                 Child = obj;
-%                 %Go through and split in each unresolved direction
-%                 for k=1:obj.dim
-%                     if Child.is_leaf
-%                         Child = split(obj,k);
-%                     else
-%                         Child.split(k);
-%                     end
-%                 end
+                Child = obj;
+                %Go through and split in each unresolved direction
+                for k=1:obj.dim
+                    if Child.is_leaf
+                        Child = split(Child,k);
+                    else
+                        Child.split(k);
+                    end
+                end
+
             else
                 Child = obj;
                 Child.is_refined = true;

@@ -318,7 +318,7 @@ f(x,y)=\arctan(250(\cos(t)x+\sin(t)y))
 \end{equation}
 for $t \in [0,\pi/4]$. We plot the results in Figure~\ref{tan_rotate_2D}. As we rotate the interface, we would expect the numerical rank of $f(x,y)$ to increase as $t \to \pi/4$; this is observed in the time increase of the Chebfun2 construction in Figure~\ref{tan_rotate_2D}. The construction for the PU method however remains relatively constant despite the rotation.
 
-We preform a similar experiment, but record the time to add and multiply $\arctan(250x)$ with (\ref{rotate_func_2D}) for $t \to \pi/2$, the results of which can be seen in Figure~\ref{TAN_ADD_MULT}. We first observe that the time combine different PU approximations does not heavily depend on how the splittings of the different approximations align (we expect the splittings of $f(x,y)$ and $g(x,y)$ to differ as we rotate $f(x,y)$). We also see that the PU method out preforms except in cases where the sum or product is a low rank approximation itself.
+We preform a similar experiment, but record the time to add and multiply $\arctan(250x)$ with (\ref{rotate_func_2D}) for $t \in [0,\pi/2]$, the results of which can be seen in Figure~\ref{TAN_ADD_MULT}. We first observe that the time to combine different PU approximations does not heavily depend on how the splittings of the different approximations align (we expect the splittings of $f(x,y)$ and $g(x,y)$ to differ as we rotate $f(x,y)$). We also see that the PU method out preforms except in cases where the sum or product is a low rank approximation itself.
 
 
 \begin{table}[!htb]
