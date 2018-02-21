@@ -134,6 +134,20 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
             
         end
         
+        function isGeoRefined = IsGeometricallyRefined(obj)
+            
+            if obj.is_leaf
+                isGeoRefined = IsLeafGeometricallyRefined(obj);
+                obj.is_geometric_refined = isGeoRefined;
+            else
+                isGeoRefined = true;
+                for k=1:2
+                    isGeoRefined = isGeoRefined && IsGeometricallyRefined(obj.children{k});
+                end
+            end
+            
+        end
+        
         
         
         

@@ -21,9 +21,9 @@ classdef PUFun2DLS < handle
             
             if nargin < 7
                 grid_opt = false;
-                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain);
+                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain,deg_in,true(dim,1),tol);
             elseif nargin < 8
-                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain);
+                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain,deg_in,true(dim,1),tol);
             else
                 obj.ChebRoot = ChebRoot;
             end
@@ -52,8 +52,10 @@ classdef PUFun2DLS < handle
                 grid_opt = false;
             end
             
+            
             while ~obj.ChebRoot.is_refined
                 
+                obj.ChebRoot.IsGeometricallyRefined();
                 obj.ChebRoot.sample(f,grid_opt);
                 
                 if obj.ChebRoot.is_leaf
@@ -74,6 +76,5 @@ classdef PUFun2DLS < handle
             obj.ChebRoot.clean();
             
         end
-        
     end
 end

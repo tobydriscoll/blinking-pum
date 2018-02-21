@@ -11,7 +11,7 @@ classdef LSPatch2D<LeafPatch
         pinvM %Store the pseudoInverse
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
         deg_in
-        cheblength = 5;
+        cheblength = 17;
     end
     
     properties (Access = protected)
@@ -89,7 +89,7 @@ classdef LSPatch2D<LeafPatch
             
             for k=1:2
                 %Shift the points to the domain [-1 1]x[-1 1]
-                X{k} = obj.invf(X{k},obj.domain(:,k));
+                X{k} = obj.invf(X{k},obj.domain(k,:));
                 
                 %Evaluate the points at the Chebyshev polynomials
                 F = clenshaw(X{k},eye(obj.cheblength));
@@ -103,7 +103,7 @@ classdef LSPatch2D<LeafPatch
         end
         
         
-        function IsGeometricallyRefined = IsGeometricallyRefined(obj)
+        function IsGeometricallyRefined = IsLeafGeometricallyRefined(obj)
             
             lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
             
@@ -192,7 +192,7 @@ classdef LSPatch2D<LeafPatch
             if all(obj.in_domain.Interior(XP1))
                 %The square is in the domain. Set the child to a
                 %standard Chebpatch
-                children{1} = ChebPatch(domain0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+                children{1} = ChebPatch(domain0,zone0,obj.outerbox,obj.deg_in,true(obj.dim,1),obj.tol,obj.cdeg_in);
             else
                 %The square is not in the domain. Set the child to a
                 %least square patch
@@ -202,7 +202,7 @@ classdef LSPatch2D<LeafPatch
             if all(obj.in_domain.Interior(XP2))
                 %The square is in the domain. Set the child to a
                 %standard Chebpatch
-                children{2} = ChebPatch(domain1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+                children{2} = ChebPatch(domain1,zone1,obj.outerbox,obj.deg_in,true(obj.dim,1),obj.tol,obj.cdeg_in);
             else
                 %The square is not in the domain. Set the child to a
                 %least square patch
@@ -274,23 +274,23 @@ classdef LSPatch2D<LeafPatch
                 
                 XP = XP(ind,:);
                 
-%                 if ~obj.is_refined   
-%                     Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
-%                     M = kron(Mx,Mx);
-%                     obj.pinvM = pinv(M(ind,:));
-%                 end
-
-               % Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
-               % M = kron(Mx,Mx);
-               % M = M(ind,:);
+                %                 if ~obj.is_refined
+                %                     Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
+                %                     M = kron(Mx,Mx);
+                %                     obj.pinvM = pinv(M(ind,:));
+                %                 end
                 
-                %P = M*M'-eye(length(XP));
-                %y = pinv(P*M)*P*f(XP);
-                %z = M'*(f(XP)-M*y);
-                %obj.coeffs = reshape(y+z,[obj.cheblength obj.cheblength]);
+                Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
+                M = kron(Mx,Mx);
+                M = M(ind,:);
                 
-                %obj.coeffs = reshape(pinv(M)*f(XP),[obj.cheblength obj.cheblength]);
-                obj.coeffs = zeros([obj.cheblength obj.cheblength]);
+%                 P = M*M'-eye(length(XP));
+%                 y = pinv(P*M)*P*f(XP);
+%                 z = M'*(f(XP)-M*y);
+%                 obj.coeffs = reshape(y+z,[obj.cheblength obj.cheblength]);
+                
+%                obj.coeffs = reshape(pinv(M)*f(XP),[obj.cheblength obj.cheblength]);
+                obj.coeffs = reshape(M\f(XP),[obj.cheblength obj.cheblength]);
                 
                 E = obj.evalfGrid({x1,y1},1,0);
                 E = E(:) - f(XP1);

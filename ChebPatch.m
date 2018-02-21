@@ -567,7 +567,7 @@ classdef ChebPatch<LeafPatch
             str = strcat(str,sprintf(' length %d', obj.length));
         end
         
-        function IsGeometricallyRefined = IsGeometricallyRefined(obj)
+        function IsGeometricallyRefined = IsLeafGeometricallyRefined(obj)
             IsGeometricallyRefined = true;
         end
         
