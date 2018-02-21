@@ -292,6 +292,16 @@ We compute partial derivatives of a PU approximation $s(\vect{x}) = \sum_{k=1}^m
 \end{equation}
 Here it is important that each $\frac{\partial s_k(\vect{x})}{\partial x}$ approximates $\frac{\partial f(\vect{x})}{\partial x}$ locally since (\ref{PU_diff}) is not the derivative of the PU approximation itself.
 
+\subsection{Integration}
+With our method, the simplest approach for integration is to do so along the zones of the patches (that is, the non-overlapping domains). This is because for a set of patches $\{ \nu_k \}_{k=1}^{M}$
+\begin{equation}
+\int_{D} f(\vect{x}) d\vect{x} = \sum_{k=1}^{M} \int_{\text{zone($\nu_k$)}} f(\vect{x}) d\vect{x}.
+\end{equation}
+Thus if we have approximations respective approximations $\{ s_k(\vect{x}) \}_{k=1}^{M}$ for the patches, then
+\begin{equation}
+\int_{D} f(\vect{x}) d\vect{x} \approx \sum_{k=1}^{M} \int_{\text{zone($\nu_k$)}} s_k(\vect{x}) d\vect{x}.
+\end{equation}
+For each $s_k(\vect{x})$, we interpolate the approximation to a Chebyshev grid on zone($\nu_k$) and use Clenshaw-Curtis quadrature to approximate the local integrals \cite{mason2002chebyshev}.
 \section{Numerical Experiments}
 \label{numerical_experiments}
 
