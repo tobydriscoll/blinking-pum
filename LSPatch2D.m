@@ -11,7 +11,6 @@ classdef LSPatch2D<LeafPatch
         pinvM %Store the pseudoInverse
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
         deg_in
-        cheblength = 17;
     end
     
     properties (Access = protected)
@@ -67,6 +66,7 @@ classdef LSPatch2D<LeafPatch
             end
             
             obj.degs = obj.standard_degs(obj.deg_in);
+            obj.cheb_length = prod(obj.degs);
             
         end
         

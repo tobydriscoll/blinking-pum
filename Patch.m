@@ -108,7 +108,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
                     obj.domain(i,:) = [min(obj.children{1}.domain(i,1),min(obj.children{2}.domain(i,1))) max(obj.children{1}.domain(i,2),min(obj.children{2}.domain(i,2)))];
                 end
                 
-                obj.cheb_length = obj.children{1}.cheb_length()+obj.children{2}.cheb_length();
+                obj.cheb_length = obj.children{1}.cheb_length+obj.children{2}.cheb_length;
             end
         end
         

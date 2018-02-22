@@ -73,7 +73,7 @@ classdef PUFun2DLS < handle
                 obj.leafArray = {obj.ChebRoot};
             end
             
-            obj.ChebRoot.clean();
+            %obj.ChebRoot.clean();
             
         end
     end
