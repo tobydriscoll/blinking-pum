@@ -315,7 +315,7 @@ classdef LSPatch2D<LeafPatch
                 grid_opt = false;
             end
             
-            max_val = inf;
+            max_val = 0;
             
             if obj.is_geometric_refined
                 
@@ -357,7 +357,12 @@ classdef LSPatch2D<LeafPatch
                 
                 %                obj.coeffs = reshape(pinv(M)*f(XP),[obj.cheblength obj.cheblength]);
                 warning('off','all');
-                obj.coeffs = reshape(M\f(XP),[obj.degs(1) obj.degs(2)]);
+                
+                
+                F = f(XP);
+                
+                max_val = max(abs(F));
+                obj.coeffs = reshape(M\F,[obj.degs(1) obj.degs(2)]);
                 warning('on','all');
                 
                 E = obj.evalfGrid({x1,y1},1,0);

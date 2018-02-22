@@ -61,7 +61,7 @@ classdef PUFun2DLS < handle
                 if obj.ChebRoot.is_leaf
                     obj.ChebRoot = obj.ChebRoot.splitleaf(Max);
                 else
-                    obj.ChebRoot.PUsplit(inf);
+                    obj.ChebRoot.PUsplit(Max);
                 end
             end
             
