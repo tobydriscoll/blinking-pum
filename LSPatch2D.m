@@ -66,6 +66,8 @@ classdef LSPatch2D<LeafPatch
                 obj.tol = tol;
             end
             
+            obj.degs = obj.standard_degs(obj.deg_in);
+            
         end
         
         % TODO. Figure out what to do here!
@@ -92,7 +94,7 @@ classdef LSPatch2D<LeafPatch
                 X{k} = obj.invf(X{k},obj.domain(k,:));
                 
                 %Evaluate the points at the Chebyshev polynomials
-                F = clenshaw(X{k},eye(obj.cheblength));
+                F = clenshaw(X{k},eye(obj.degs(k)));
                 
                 %Multiply the coefficients with F
                 G = chebfun3t.txm(G, F, k);
@@ -115,18 +117,9 @@ classdef LSPatch2D<LeafPatch
         end
         
         function Child = splitleaf(obj,Max,set_vals)
-            obj.is_geometric_refined = IsGeometricallyRefined(obj);
             
             if ~obj.is_geometric_refined || obj.mid_values_err>obj.tol
                 
-%                 ind = 1:obj.dim;
-%                 ind = ind(obj.split_flag);
-%                 
-%                 [~,split_dim] = max(diff(obj.domain(obj.split_flag,:).',1));
-%                 split_dim = ind(split_dim);
-%                 
-%                 Child = split(obj,split_dim);
-
                 Child = obj;
                 %Go through and split in each unresolved direction
                 for k=1:obj.dim
@@ -136,11 +129,82 @@ classdef LSPatch2D<LeafPatch
                         Child.split(k);
                     end
                 end
-
+                
             else
                 Child = obj;
                 Child.is_refined = true;
             end
+            
+%             vscale = Max;
+%             
+%             loc_tol = obj.tol^(7/8);
+%             
+%             local_max = Max;
+%             
+%             
+%             for k=1:obj.dim
+%                 
+%                 if obj.split_flag(k)
+%                     
+%                     colChebtech = chebfun3t.unfold(obj.coeffs, k);
+%                     colChebtech = sum(abs(colChebtech),2);
+%                     fCol = chebtech2({[],colChebtech});
+%                     hscale = diff(obj.domain(k,:));
+%                     
+%                     tol = loc_tol*max(vscale./local_max,hscale);
+%                     cutoff = length(simplify(fCol, tol))+1;
+%                     
+%                     if cutoff<obj.degs(k)
+%                         obj.split_flag(k) = false;
+%                         j = find(cutoff<=obj.standard_degs,1);
+%                         obj.deg_in(k) = j;
+%                         obj.degs(k) = obj.standard_degs(j);
+%                         
+%                         if k==1
+%                             obj.coeffs = obj.coeffs(1:obj.degs(k),:);
+%                         else
+%                             obj.coeffs = obj.coeffs(:,1:obj.degs(k));
+%                         end
+%                     end
+%                 end
+%                 
+%             end
+%             
+%             
+%             
+%             
+%             
+%             if ~any(obj.split_flag)
+%                 %The leaf is refined, so return it.
+%                 obj.is_refined = true;
+%                 obj.cheb_length = prod(obj.degs);
+%                 Child = obj;
+%             else
+%                 
+%                 %                 ind = 1:obj.dim;
+%                 %                 ind = ind(obj.split_flag);
+%                 %
+%                 %                 [~,split_dim] = max(diff(obj.domain(obj.split_flag,:).',1));
+%                 %                 split_dim = ind(split_dim);
+%                 %
+%                 %                 Child = split(obj,split_dim,set_vals);
+%                 
+%                 
+%                 Child = obj;
+%                 %Go through and split in each unresolved direction
+%                 for k=1:obj.dim
+%                     if obj.split_flag(k)
+%                         if Child.is_leaf
+%                             Child = split(Child,k);
+%                         else
+%                             Child.split(k);
+%                         end
+%                     end
+%                 end
+%                 
+%                 
+%                 
+%             end
         end
         
                 % The method determines will split a child into along
@@ -255,11 +319,11 @@ classdef LSPatch2D<LeafPatch
             
             if obj.is_geometric_refined
                 
-                x = chebpts(obj.cheblength*2,obj.domain(1,:));
-                y = chebpts(obj.cheblength*2,obj.domain(2,:));
+                x = chebpts(obj.degs(1)*2,obj.domain(1,:));
+                y = chebpts(obj.degs(2)*2,obj.domain(2,:));
                 
-                x1 = chebpts(obj.cheblength*2,obj.domain(1,:),1);
-                y1 = chebpts(obj.cheblength*2,obj.domain(2,:),1);
+                x1 = chebpts(obj.degs(1)*2,obj.domain(1,:),1);
+                y1 = chebpts(obj.degs(2)*2,obj.domain(2,:),1);
                 
                 [X,Y] = ndgrid(x,y);
                 
@@ -280,17 +344,21 @@ classdef LSPatch2D<LeafPatch
                 %                     obj.pinvM = pinv(M(ind,:));
                 %                 end
                 
-                Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
-                M = kron(Mx,Mx);
+                Mx = clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
+                My = clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
+                
+                M = kron(My,Mx);
                 M = M(ind,:);
                 
-%                 P = M*M'-eye(length(XP));
-%                 y = pinv(P*M)*P*f(XP);
-%                 z = M'*(f(XP)-M*y);
-%                 obj.coeffs = reshape(y+z,[obj.cheblength obj.cheblength]);
+                %                 P = M*M'-eye(length(XP));
+                %                 y = pinv(P*M)*P*f(XP);
+                %                 z = M'*(f(XP)-M*y);
+                %                 obj.coeffs = reshape(y+z,[obj.cheblength obj.cheblength]);
                 
-%                obj.coeffs = reshape(pinv(M)*f(XP),[obj.cheblength obj.cheblength]);
-                obj.coeffs = reshape(M\f(XP),[obj.cheblength obj.cheblength]);
+                %                obj.coeffs = reshape(pinv(M)*f(XP),[obj.cheblength obj.cheblength]);
+                warning('off','all');
+                obj.coeffs = reshape(M\f(XP),[obj.degs(1) obj.degs(2)]);
+                warning('on','all');
                 
                 E = obj.evalfGrid({x1,y1},1,0);
                 E = E(:) - f(XP1);

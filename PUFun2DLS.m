@@ -56,10 +56,10 @@ classdef PUFun2DLS < handle
             while ~obj.ChebRoot.is_refined
                 
                 obj.ChebRoot.IsGeometricallyRefined();
-                obj.ChebRoot.sample(f,grid_opt);
+                Max = obj.ChebRoot.sample(f,grid_opt);
                 
                 if obj.ChebRoot.is_leaf
-                    obj.ChebRoot = obj.ChebRoot.splitleaf();
+                    obj.ChebRoot = obj.ChebRoot.splitleaf(Max);
                 else
                     obj.ChebRoot.PUsplit(inf);
                 end

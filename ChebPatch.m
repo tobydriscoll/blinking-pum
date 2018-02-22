@@ -363,6 +363,7 @@ classdef ChebPatch<LeafPatch
                 end
             end
             Max = max(abs(obj.values(:)));
+            
         end
         
         % The method determines if a splitting is needed, and creates
