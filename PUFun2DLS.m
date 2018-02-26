@@ -7,31 +7,32 @@ classdef PUFun2DLS < handle
         Errs
         Nums
         deg_in
+        cheb_deg_in
         tol
         domain
     end
     
     methods
         
-        function obj = PUFun2DLS(domain,in_domain,deg_in,max_lengths,f,tol,grid_opt,ChebRoot)
+        function obj = PUFun2DLS(domain,in_domain,deg_in,cheb_deg_in,max_lengths,f,tol,grid_opt,ChebRoot)
             obj.domain = domain;
             obj.deg_in = deg_in;
+            obj.cheb_deg_in = cheb_deg_in;
             [dim,~] = size(domain);
             obj.tol = tol;
             
-            if nargin < 7
+            if nargin < 8
                 grid_opt = false;
-                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain,deg_in,true(dim,1),tol);
-            elseif nargin < 8
-                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain,deg_in,true(dim,1),tol);
+                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain,deg_in,cheb_deg_in,true(dim,1),tol);
+            elseif nargin < 9
+                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain,deg_in,cheb_deg_in,true(dim,1),tol);
             else
                 obj.ChebRoot = ChebRoot;
             end
             
-            if nargin<7
+            if nargin<9
                 refine(obj,f,grid_opt);
             else
-                obj.TreeGrid = obj.ChebRoot.leafGrids();
                 
                 obj.leafArray = obj.ChebRoot.collectLeaves();
                 
@@ -73,7 +74,7 @@ classdef PUFun2DLS < handle
                 obj.leafArray = {obj.ChebRoot};
             end
             
-            %obj.ChebRoot.clean();
+            obj.ChebRoot.clean();
             
         end
     end

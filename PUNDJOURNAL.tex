@@ -582,7 +582,7 @@ for $c \in [3,4.5]$. Figure~\ref{region_circ} shows the region with $c=3.5$. We 
 
 \section{Over determined least squares method with rank deficient matrices}
 
-When use a collocation matrix $A$ for a subset $\Omega$ on the square $[-1,1] \times [-1,1]$ we often find that $A$ is rank deficient. This is unsurprising since we are not specifying function values outside of $\Omega$. Suppose that $A$ has rank $r$. Then $A$ has a QR decomposition of the form where
+When we  use a collocation matrix $A \in \C^{m \times n}$ for a subset $\Omega$ on the square $[-1,1] \times [-1,1]$ we often find that $A$ is rank deficient. This is unsurprising since we are not specifying function values outside of $\Omega$. Suppose that $A$ has rank $r$. Then $A$ has a QR decomposition where
 \begin{align}
 R = \begin{pmatrix}
  R_{11} & R_{12} \\
@@ -590,10 +590,10 @@ R = \begin{pmatrix}
  \end{pmatrix}
  \begin{array}{l}
  \} r \\
- \} m-r
+ \} n-r
  \end{array}
 \end{align}
- with $R_{11}$ nonsingular. In this case, the least squares solution to
+ with $R_{11}$ nonsingular. In this case
  \begin{align}
  \argmin_{x \in \C^n} \left \| Ax-b\right \|_2
  \end{align}

@@ -11,6 +11,7 @@ classdef LSPatch2D<LeafPatch
         pinvM %Store the pseudoInverse
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
         deg_in
+        cheb_deg_in
     end
     
     properties (Access = protected)
@@ -26,7 +27,7 @@ classdef LSPatch2D<LeafPatch
     end
     
     methods
-        function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
+        function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,cheb_deg_in,split_flag,tol,cdeg_in)
             
             %Call superclass constructor
             obj = obj@LeafPatch(domain,zone,outerbox);
@@ -35,30 +36,45 @@ classdef LSPatch2D<LeafPatch
             
             if nargin < 6
                 obj.deg_in = zeros(1,obj.dim);
+                obj.cheb_deg_in = zeros(1,obj.dim);
                 obj.cdeg_in = zeros(1,obj.dim);
-                obj.deg_in(:) = 7;
+                obj.deg_in(:) = 4;
                 obj.cdeg_in(:) = 3;
+                obj.cheb_deg_in(:) = 7;
                 obj.split_flag = true(obj.dim,1);
                 obj.tol = 1e-12;
             elseif nargin < 7
                 obj.deg_in = deg_in;
+                obj.cheb_deg_in = zeros(1,obj.dim);
                 obj.cdeg_in = zeros(1,obj.dim);
                 obj.cdeg_in(:) = 3;
+                obj.cheb_deg_in(:) = 7;
                 obj.split_flag = true(obj.dim,1);
                 obj.tol = 1e-12;
             elseif nargin < 8
                 obj.deg_in = deg_in;
+                obj.cheb_deg_in = cheb_deg_in;
+                obj.cdeg_in = zeros(1,obj.dim);
+                obj.cdeg_in(:) = 3;
+                obj.cheb_deg_in(:) = 7;
+                obj.split_flag = true(obj.dim,1);
+                obj.tol = 1e-12;
+            elseif nargin < 9
+                obj.deg_in = deg_in;
+                obj.cheb_deg_in = cheb_deg_in;
                 obj.cdeg_in = zeros(1,obj.dim);
                 obj.cdeg_in(:) = 3;
                 obj.split_flag = split_flag;
                 obj.tol = 1e-12;
-            elseif nargin < 9
+            elseif nargin < 10
                 obj.deg_in = deg_in;
+                obj.cheb_deg_in = cheb_deg_in;
                 obj.cdeg_in = zeros(1,obj.dim);
                 obj.cdeg_in(:) = 3;
                 obj.split_flag = split_flag;
                 obj.tol = tol;
-            elseif nargin < 10
+            elseif nargin < 11
+                obj.cheb_deg_in = cheb_deg_in;
                 obj.deg_in = deg_in;
                 obj.cdeg_in = cdeg_in;
                 obj.split_flag = split_flag;
@@ -256,21 +272,21 @@ classdef LSPatch2D<LeafPatch
             if all(obj.in_domain.Interior(XP1))
                 %The square is in the domain. Set the child to a
                 %standard Chebpatch
-                children{1} = ChebPatch(domain0,zone0,obj.outerbox,obj.deg_in,true(obj.dim,1),obj.tol,obj.cdeg_in);
+                children{1} = ChebPatch(domain0,zone0,obj.outerbox,obj.cheb_deg_in,true(obj.dim,1),obj.tol,obj.cdeg_in);
             else
                 %The square is not in the domain. Set the child to a
                 %least square patch
-                children{1} = LSPatch2D(obj.in_domain,obj.max_lengths,domain0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+                children{1} = LSPatch2D(obj.in_domain,obj.max_lengths,domain0,zone0,obj.outerbox,obj.deg_in,obj.cheb_deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
             end
             
             if all(obj.in_domain.Interior(XP2))
                 %The square is in the domain. Set the child to a
                 %standard Chebpatch
-                children{2} = ChebPatch(domain1,zone1,obj.outerbox,obj.deg_in,true(obj.dim,1),obj.tol,obj.cdeg_in);
+                children{2} = ChebPatch(domain1,zone1,obj.outerbox,obj.cheb_deg_in,true(obj.dim,1),obj.tol,obj.cdeg_in);
             else
                 %The square is not in the domain. Set the child to a
                 %least square patch
-                children{2} = LSPatch2D(obj.in_domain,obj.max_lengths,domain1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+                children{2} = LSPatch2D(obj.in_domain,obj.max_lengths,domain1,zone1,obj.outerbox,obj.deg_in,obj.cheb_deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
             end
             
             x = chebpts(16,obj.domain(1,:))';
@@ -338,11 +354,6 @@ classdef LSPatch2D<LeafPatch
                 
                 XP = XP(ind,:);
                 
-                %                 if ~obj.is_refined
-                %                     Mx = clenshaw(chebpts(obj.cheblength*2),eye(obj.cheblength));
-                %                     M = kron(Mx,Mx);
-                %                     obj.pinvM = pinv(M(ind,:));
-                %                 end
                 
                 Mx = clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
                 My = clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
@@ -350,24 +361,22 @@ classdef LSPatch2D<LeafPatch
                 M = kron(My,Mx);
                 M = M(ind,:);
                 
-                %                 P = M*M'-eye(length(XP));
-                %                 y = pinv(P*M)*P*f(XP);
-                %                 z = M'*(f(XP)-M*y);
-                %                 obj.coeffs = reshape(y+z,[obj.cheblength obj.cheblength]);
-                
-                %                obj.coeffs = reshape(pinv(M)*f(XP),[obj.cheblength obj.cheblength]);
                 warning('off','all');
-                
-                
+
                 F = f(XP);
                 
                 max_val = max(abs(F));
+                
                 obj.coeffs = reshape(M\F,[obj.degs(1) obj.degs(2)]);
+                
+%                obj.coeffs = reshape(ResitrictedLS(M,F,eye(prod(obj.degs))),[obj.degs(1) obj.degs(2)]);
+
                 warning('on','all');
                 
-                E = obj.evalfGrid({x1,y1},1,0);
-                E = E(:) - f(XP1);
-                E = E(ind1);
+                E = obj.evalfGrid({x,y},1,0);
+                E = E(ind);
+                E = E(:) - F;
+                %E = E(ind1);
                 
                 %This is used to determin the point wise error
                 obj.mid_values_err = max(abs(E(:)));

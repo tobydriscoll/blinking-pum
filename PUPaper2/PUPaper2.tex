@@ -293,7 +293,7 @@ We compute partial derivatives of a PU approximation $s(\vect{x}) = \sum_{k=1}^m
 Here it is important that each $\frac{\partial s_k(\vect{x})}{\partial x}$ approximates $\frac{\partial f(\vect{x})}{\partial x}$ locally since (\ref{PU_diff}) is not the derivative of the PU approximation itself.
 
 \subsection{Integration}
-With our method, the simplest approach for integration is to do so along the zones of the patches (that is, the non-overlapping domains). This is because for a set of patches $\{ \nu_k \}_{k=1}^{M}$
+With our method, the simplest approach for integration is to do so along the zones of the patches (that is, the non-overlapping domains). This is because for a set of patches $\{ \nu_k \}_{k=1}^{M}$ we have
 \begin{equation}
 \int_{D} f(\vect{x}) d\vect{x} = \sum_{k=1}^{M} \int_{\text{zone($\nu_k$)}} f(\vect{x}) d\vect{x}.
 \end{equation}
