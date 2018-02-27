@@ -1,0 +1,12 @@
+*-eps-converted-to.pdf
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.thm
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+PUPaper2.pdf
+auto/*
