@@ -334,6 +334,12 @@ classdef ChebPatch<LeafPatch
                 grid_opt = false;
             end
             
+            f_dim = nargin(f);
+            
+            if f_dim~=obj.dim
+                error('Function does not have correct number of inputs');
+            end
+            
             %Just assume we sample f for right now.
             if ~isnumeric(f)
                 
@@ -341,7 +347,8 @@ classdef ChebPatch<LeafPatch
                     if obj.dim==1
                         obj.values = f(obj.points());
                     else
-                        obj.values = reshape(f(obj.points()),obj.degs);
+                        points = num2cell(obj.points(),1);
+                        obj.values = reshape(f(points{:}),obj.degs);
                     end
                 else
                     %If a function is more efficient on a grid, evaluate it
