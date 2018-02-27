@@ -1,5 +1,35 @@
 classdef PUFun < handle & matlab.mixin.Copyable
-    % This is the class for the PU approximation on squares and cubes.  
+% PUFun   PUFun class for representing n-d functions on lines, rectangles
+% and cuboids.
+% 
+% This class represents smooth multivariate functions on hypercubes up to 
+% dimension 3 with a partition of unity approximation. This class 
+% automatically finds a set of overlapping domains that are adapted to the 
+% features of the function, and the blends locally defined Chebyshev 
+% approximations on the domains with a partition of unity.
+% 
+% PUFun(f) constructs a partition of unity approximation representing f on 
+% the domain [-1 1]^k, where k is the number of variables of f 
+% (i.e. the dimension of the domain of f). Functions must be vectorized.
+% 
+% PUFun(f,[a_1 b_1;a_2 b_2;...;a_d b_d]) constructs a partition of unity 
+% approximation representing f on the domain [a_1 b_1;a_2 b_2;...;a_d b_d]. 
+% Functions must be vectorized. 
+% 
+% PUFun(f,varargin) constructs a partition of unity approximation 
+% representing f, based on the options passed into with varargin; that is 
+% PUFun(f,?perf1?,perf1,?pref2?,pref2,..) is called. This preferences that 
+% can be set are:
+% 
+% *The domain of the function: ?domain? , [a_1 b_1;a_2 b_2;...;a_d b_d]
+% 
+% *The degree indices from the standard degrees in each dimension : 
+% ?degreeIndex?, [ind_1,ind_2, ? ind_d]. 
+% 
+% Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
+% So if ?degreeIndex?, [5 5 5], the max degree of any approximate will be 
+% 33 in each direction. 
+
     properties
         ChebRoot
         TreeGrid
