@@ -27,6 +27,7 @@
 
 %%%%% custom commands for this paper
 \newcommand{\nmax}{n_{\text{max}}}
+\newcommand{\bigo}{\mathcal{O}}
 \newcommand{\child}[1]{c\textsubscript{#1}}
 \newcommand{\weight}[1]{w\textsubscript{#1}}
 %%%%%
@@ -88,49 +89,126 @@ We are doing adaptive multivariate approximations, and it works pretty well. Thi
 
 \section{Multivariate partition of unity adaptation}
 \label{recurse}
-Here we describe a recursive bisection algorithm that builds an adaptive partition of unity approximation using overlapping domains. Let $\Omega = \{ \vect{x} \in \R^n: \vect{x}_i \in [a_i,b_i]\}$ (i.e. an $n$th dimensional hypercuboid), and suppose we wish to approximate $f:\Omega \to \R$. We build our overlapping covering by first partitioning $\Omega$ into a set of nonoverlapping cuboids $\{Z_k\}_{k=1}^{M}$, which we refer to as zones. The nonoverlapping zones are extended into overlapping domains $\Omega_k$ by expanding them by amounts proportional to their dimensional widths. Specifically as an example, if $Z_k = [a_{k1},b_{k2}] \times [a_{k2},b_{k2}]$ and $\Omega = [a_1,b_1] \times [a_2,b_2]$ then if $\delta_{kj} =  \frac{b_{kj}-a_{kj}}{2}(1+t)$ where $j=1,2$ we let $\Omega_k = [c_{k1},d_{k1}] \times [c_{k2},d_{k2}]$ where for $k=1,2$
+Here we describe a recursive bisection algorithm that builds an adaptive partition of unity approximation using overlapping domains. Let $\Omega = \{ \vect{x} \in \R^d: \vect{x}_i \in [a_i,b_i]\}$ (i.e. an $n$-dimensional hyperrectangle), and suppose we wish to approximate $f:\Omega \to \R$. We build our overlapping covering by first partitioning $\Omega$ into a set of nonoverlapping hyperrectangles $\{Z_k\}_{k=1}^{M}$, which we refer to as \emph{zones}. The nonoverlapping zones are extended into overlapping domains $\{\Omega_k\}_{k=1}^{M}$ by expanding them by amounts proportional to their dimensional widths. Specifically, suppose $\Omega = \prod_{j=1}^d [a_j,b_j]$ and $Z_k = \prod_{j=1}^d [a_{kj},b_{kj}]$. Choose parameter $t>0$ and let
 \begin{equation}
-c_{kj} = \max(a_k,b_{kj}-\delta_{kj}) \quad d_{kj} = \min(a_{kj}+\delta_{kj},b_k).
-\label{zone_extend}
+  \label{eq:overlap}
+  \delta_{kj} =  \frac{b_{kj}-a_{kj}}{2}(1+t),\quad j=1,\ldots,d.
 \end{equation}
-We assign each domain $\Omega_k$ an infinitely smooth function $\psi_k(\vect{x}):\Omega \to \R$ whose support is $\Omega_k$, and define a partition of unity $\{w_k (\vect{x})\}$ via Shepard's method \cite{wendland2004scattered}, where
+Then $\Omega_k = \prod_j [\bar{a}_{kj},\bar{b}_{kj}]$, where
 \begin{equation}
-w_k(\vect{x}) = \frac{\psi_k(\vect{x})}{\sum_{j=1}^M \psi_j(\vect{x})}.
-\end{equation}
-If each domain $\Omega_k$ has an approximation $s_k(\vect{x})$, the partition of unity approximation is
-\begin{equation}
-s(\vect{x}) = \sum_{k=1}^M w_k(\vect{x})s_k(\vect{x}).
-\label{PU_APPROX_EQ}	
+  \bar{a}_{kj} = \max(a_k,b_{kj}-\delta_{kj}), \quad \bar{b}_{kj} = \min(a_{kj}+\delta_{kj},b_k).
+  \label{eq:zone_extend}
 \end{equation}
 
-The zones are determined by a $k$d-tree on $\Omega$, where each splitting of the tree splits the zone of the node in half with a hyperplane. We define a binary tree $T$ with each node $\nu$ having the following properties:
+
+We assign each overlapping subdomain $\Omega_k$ a $C^\infty$ function $\psi_k(\vect{x}):\Omega_k \to \R$ whose support is $\Omega_k$, constructed as follows. Define
+\begin{align}
+  \label{eq:basic-cinf}
+  \psi_0(x) = \begin{cases}
+    \exp \lp  1 - \frac{1}{1-x^2}\rp & |x| \leq 1, \\
+    0 & |x| > 1,
+  \end{cases}
+\end{align}
+and let
+\begin{equation}
+  \label{eq:affine}
+  \ell(x;a,b) = 2\frac{x-a}{b-a} - 1
+\end{equation}
+be the affine map from $[a,b]$ to $[-1,1]$. Then
+\begin{equation}
+  \label{eq:bump-functions}
+  \psi_k(\vect{x}) = \prod_{j=1}^d \psi_0\bigl( \ell(x_j;\bar{a}_{kj},\bar{b}_{kj}) \bigr).
+\end{equation}
+From these we use Shepard's method~\cite{wendland2004scattered} to define a partition of unity $\{w_k (\vect{x})\}$:
+\begin{equation}
+  w_k(\vect{x}) = \frac{\psi_k(\vect{x})}{\sum_{m=1}^M \psi_m(\vect{x})}.
+\end{equation}
+If each domain $\Omega_k$ has an approximant $s_k(\vect{x})$, the global partition of unity approximation is
+\begin{equation}
+  s(\vect{x}) = \sum_{k=1}^M w_k(\vect{x})s_k(\vect{x}).
+  \label{eq:pu-approx}	
+\end{equation}
+
+The zones $Z_k$ are chosen to adapt to a particular function through an approach that recursively bisects a zone by a hyperplane whose normal dimension cycles through 1 to $d$ (similar to a $k$d-tree). We define a binary tree $T$ with each node $\nu$ having the following properties:
 \begin{itemize}
-\item zone($\nu$):=zone of the patch
-\item domain($\nu$):=domain of the patch
-\item \child{0}($\nu$),\child{1}($\nu$):=respective left and right subtrees of $\nu$ (if split)
-\item splitDim($\nu$):= the dimension $\nu$ is immediately split in (if split)
-\item overlap($\nu$):= overlap percentage for two children (if split)
-\item bump($\nu$):= compactly supported function used for the partition of unity if $\nu$ is a leaf
-\item interpolant($\nu$):=Chebyshev tensor product interpolant on domain($\nu$) if $\nu$ is a leaf
-\item values($\nu$):=values of the function we are approximating at the Chebyshev tensor product grid of $\nu$ if $\nu$ is a leaf
-\item unfinished($\nu$):=array of boolean values of length $n$, where $\text{unfinished}_k$ indicates if we can split in the $kth$ dimension
-\item dim($\nu$):=dimension of domain($\nu$)
+\item zone($\nu$): zone associated with $\nu$ (i.e., some $Z_k$)
+\item domain($\nu$): domain associated with $\nu$ (i.e., some $\Omega_k$)
+\item left($\nu$),right($\nu$): respective left and right subtrees (children) of $\nu$ (empty if $\nu$ is a leaf)
+\item isdone($\nu$): $n$-vector of boolean values, where $\text{finished}_j$ indicates whether the domain is determined to be sufficiently resolved in the $j$th dimension
+\item splitDim($\nu$): the dimension in which $\nu$ is split
+\end{itemize}
+A leaf node has the following additional properties:
+\begin{itemize}
+\item grid($\nu$): tensor-product grid of Chebyshev 2nd-kind points mapped to $\Omega$
+\item values($\nu$): function values at grid($\nu$)
+\item interpolant($\nu$): polynomial interpolant of values($\nu$) on grid($\nu$)
 \end{itemize}
 
+Let $f$ be a scalar-valued function on $\Omega$ that we wish to approximate. A key task is to compute, for a given leaf node $\nu$, the polynomial interpolant($\nu$), and determine whether $f$ is sufficiently well approximated on domain($\nu$) by it. First we sample $f$ at a Chebyshev grid of size $\nmax^d$ on domain($\nu$). This leads to the interpolating polynomial
+\begin{equation}
+  \label{eq:full-interp}
+  \tilde{p}(\vect{x}) = \sum_{i_1=0}^{\nmax-1} \cdots \sum_{i_d=0}^{\nmax-1}  C_{i_1,\ldots,i_d} T_{i_1}(x_1)\cdots T_{i_n}(x_n),
+\end{equation}
+where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\bigo(\nmax (\log \nmax)^d)$ time~\cite{??}. Following the practice of Chebfun3t \cite{hashemi2017chebfun}, for each $j=1,\ldots,d$, we define a scalar sequence $\gamma^{(j)}$ by summing $|C_{i_1,\ldots,i_d}|$ over all dimensions except the $j$th. To each of these sequences we apply Chebfun's {\tt StandardChop}  algorithm, which attempts to measure decay in the coefficients in a suitably robust sense~\cite{Aurentz:2017:CCS:3034774.2998442}. Let the output of {\tt StandardChop} for sequence $\gamma^{(j)}$ be $n_j$; this is the degree that {\tt StandardChop} deems to be sufficient for resolution.    If $n_j<\nmax$ we say that the function is resolved in dimension $j$ on $\nu$. If $f$ is resolved in all dimensions on $\nu$, then we truncate the interpolant~(\ref{eq:full-interp}) at the degrees $n_j$ and store the samples of $f$ on the corresponding smaller tensor-product grid. (Does this resampling actually take place??)
 
+\begin{algorithm}
+\caption{splitleaves($\nu$,$\nmax$,$t$)}
+\label{alg:splitleaves}
+\begin{algorithmic}
+  \IF{$\nu$ is a leaf}
+    \STATE Sample $f$ on grid($\nu$)
+    \STATE Determine chopping degrees $n_1,\ldots,n_d$
+    \FOR{each $j$ with isdone($\nu$)$_j=$ FALSE}
+      \IF{$n_j<\nmax$}
+        \STATE isdone($\nu$)$_j$ := TRUE
+      \ELSE
+        \STATE split($\nu$,$j$,t)
+      \ENDIF
+    \ENDFOR
+    \IF{all isdone($\nu$) are TRUE}
+      \STATE Truncate~(\ref{eq:full-interp}) at degrees $n_1,\ldots,n_d$ to define grid($\nu$), values($\nu$), interpolant($\nu$)
+    \ENDIF
+  \ELSE
+    \STATE splitleaves(left($\nu$),$\nmax$,$t$)      
+    \STATE splitleaves(right($\nu$),$\nmax$,$t$)
+    \STATE domain($\nu$):=smallest hyperrectangle containing domains of left($\nu$) and right($\nu$)
+  \ENDIF
+\end{algorithmic}
+\end{algorithm}
 
-Suppose we have a leaf $\nu$ with Chebyshev grids $X^1, \dots, X^n$ of length $d_1, \dots, d_n$  defined on the intervals $[a_1,b_1], \dots [a_n,b_n]$. We sample on the grid $X = X^1 \times X^2 \times \dots \times X^n$ to define a Chebyshev tensor product approximation $s(\vect{x})$. Let $C \in \C^{d_1 \times d_2 \times \dots \times d_n}$ be the Chebyshev coefficients corresponding to $s(\vect{x})$. To determine if $s(\vect{x})$ is refined in the $x$-direction, we use Chebfun's {\tt StandardChop}  algorithm for coefficients
-$$
-s_j = \sum_{k_2=1}^{d_2} \sum_{k_3=1}^{d_3} \dots \sum_{k_n=1}^{d_n} |C_{j,k_2,\dots,k_n}|,
-$$
-for $j=1,\dots,d_1$ \cite{Aurentz:2017:CCS:3034774.2998442}. This is an idea borrowed from Chebfun3t \cite{hashemi2017chebfun}. This provides a simple way of eliminating the other variables, and is more efficient than applying {\tt StandardChop} to each row of $C$ in higher dimensions.
+The recursive adaptation procedure is described by Algorithm~\ref{alg:splitleaves}, which calls on Algorithm~\ref{alg:split} as well. For a node that is currently a leaf of the tree, the function is sampled and chopping is used in each unfinished dimension to determine whether to split in that dimension. Each dimension that is deemed to be resolved is marked as finished. If all dimensions are found to be finished, then the interpolant is chopped to the minimum necessary length in each dimension, and the node will remain a leaf. Otherwise, the node is split in all unfinished dimensions. Note that the descendants of the splitting(s) inherit the isdone property that marks which dimensions have been finished, so no future splits are possible in such dimensions in this branch. 
+
+\begin{algorithm}
+\caption{split($\nu$,$j$,$t$)}
+\label{alg:split}
+\begin{algorithmic}
+\IF{$\nu$ is a leaf}
+\STATE splitDim($\nu$)=$j$
+\STATE Define new nodes $\nu_0$, $\nu_1$
+\STATE $[a_1,b_1],[a_2,b_2],\dots,[a_n,b_n]$ be the subintervals from zone($\nu$)
+\STATE Let $m:= \frac{b_j+a_j}{2}$
+\STATE Let zone($\nu_0$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [a_{j},m] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
+\STATE Let zone($\nu_1$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [m,b_{j}] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
+\FOR{$k=0,1$}
+\STATE Define domain($\nu_k$) from zone($\nu_k$) with parameter $t$ as in (\ref{eq:zone_extend})
+\STATE Define grid($\nu_k$) as Chebyshev tensor-product grid of size $\nmax^d$ in domain($\nu_k$)
+\STATE Let isdone($\nu_k$):= isdone($\nu$)
+\ENDFOR
+\ELSE
+\STATE split(left($\nu$),$k$,$t$)
+\STATE split(right($\nu$),$k$,$t$)
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+% Given a tree node $\nu$, we define a procedure sample($\nu$,$f$) as follows. Let $X^1, \dots, X^n$ be Chebyshev grids of length $d_1, \dots, d_n$  mapped to the intervals $[\bar{a}_1,\bar{b}_1], \dots [\bar{a}_n,\bar{b}_n]$ that define domain($\nu$). 
 
 %Chebfun includes a splitting algorithm to create piecewise polynomial approximations \cite{pachon2010piecewise}. Here, the tolerance {\tt chebfuneps} used in {\tt StandardChop} is set to 
 %\begin{equation}\text{{\tt chebfuneps*max(vscaleGlobal/vscaleLocal,hscale)}}, 	
 %\end{equation}
 %where {\tt vscaleGlobal},{ \tt vscaleLocal} and {\tt hscale} are estimates of the scales of the global function, local function, and interval width respectively \cite{Aurentz:2017:CCS:3034774.2998442}. We utilize this by keeping track of the scales. For example suppose we are testing in the first dimension. In our method {\tt vscaleGlobal} is set to the global sampled absolute maximum sampled value over the whole tree (which is kept track of when sampling), {\tt vscaleLocal} to the maximum absolute value locally sampled, and {\tt hscale} is set to the length of the domain of the dimension we are testing in (i.e. {\tt hscale}=$b_1-a_1$ if testing along the $x$-direction).
 
- If the function is determined to be fully resolved on node $\nu$ in a dimension $j$, then the $j$th element of the array unfinished($\nu$) is set to false. This property is inherited by all the descendants of $\nu$, on the assumption that dimension $j$ will remain resolved in all future splittings of $\nu$. We keep track of this with the unfinished($\nu$) array where we set $\text{unfinished($\nu$)}_k$ to FALSE if the interpolant for $\nu$ can be refined in dimension $k$. We set unfinished(root($T$)) to an array of all TRUE values, and when splitting a leaf $\nu$ passes unfinished($\nu$) to the children of $\nu$. 
+ % If the function is determined to be fully resolved on node $\nu$ in a dimension $j$, then the $j$th element of the array unfinished($\nu$) is set to false. This property is inherited by all the descendants of $\nu$, on the assumption that dimension $j$ will remain resolved in all future splittings of $\nu$. We keep track of this with the unfinished($\nu$) array where we set $\text{unfinished($\nu$)}_k$ to FALSE if the interpolant for $\nu$ can be refined in dimension $k$. We set unfinished(root($T$)) to an array of all TRUE values, and when splitting a leaf $\nu$ passes unfinished($\nu$) to the children of $\nu$. 
 
 %We choose to split in the dimension $j$ of greatest length of the cuboid, excluding dimensions that have been determined to be refined for itself or any of the leaf's ancestors in the tree. For a leaf $\nu$, we keep track of this with the unfinished($\nu$) array where we set $\text{unfinished($\nu$)}_k$ to FALSE if the interpolant for $\nu$ can be refined in dimension $k$. We set unfinished(root($T$)) to an array of all TRUE values, and when splitting a leaf $\nu$ passes unfinished($\nu$) to the children of $\nu$. Thus we split in the the dimension $j$ where
 %\begin{equation}
@@ -138,82 +216,19 @@ for $j=1,\dots,d_1$ \cite{Aurentz:2017:CCS:3034774.2998442}. This is an idea bor
 %\end{equation}
 %as seen in Algorithm~\ref{alg2}.
 
-\begin{algorithm}[!h]
-\caption{splitleaves($\nu$,$\nmax$,$t$)}
-\label{alg2}
-\begin{algorithmic}
-\IF{$\nu$ is a leaf and for some $k$ $\text{unfinished($\nu$)}_k=\text{TRUE}$}
-\FOR{$j=1:\text{dim}(\nu)$}
-\IF{$\nu$ is a leaf and $f(\vect{x})$ can be resolved by interpolant($\nu$) in the $jth$ direction and $\text{unfinished($\nu$)}_j=\text{TRUE}$}
-\STATE $\text{unfinished($\nu$)}_j=\text{FALSE}$
-\ENDIF
-\ENDFOR
-\FOR{$j=1:\text{dim}(\nu)$}
-\IF{$\text{unfinished($\nu$)}_j=\text{TRUE}$}
-\STATE split($\nu$,$j$,t)
-\ENDIF
-\ENDFOR
-\ELSIF{$\nu$ is a leaf and $f(\vect{x})$ can be resolved by a Chebyshev tensor product interpolant with degree less than $\nmax$ in each dimension}
-\STATE interpolant($\nu$):=minimum degree interpolant $f(\vect{x})$ can be resolved by \ARP 
-as determined by Chebfun
-\ELSE
-\FOR{$k=0,1$}
-\STATE splitleaves(\child{k}($\nu$),$\nmax$,$t$)
-\STATE domain($\nu$):=smallest hypercuboid containing \child{1}($\nu$) and \child{2}($\nu$).
-\ENDFOR
-\ENDIF
-\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}[!h]
-\caption{split($\nu$,$k$,$t$)}
-\label{alg9}
-\begin{algorithmic}
-\IF{$\nu$ is a leaf}
-\STATE splitDim($\nu$)=k
-\STATE Define new nodes $\nu_0$, $\nu_1$.
-\STATE $[a_1,b_1],[a_2,b_2],\dots,[a_n,b_n]$ be the subintervals from zone($\nu$)
-\STATE $m:= \frac{b_k+a_k}{2}$
-\STATE zone($\nu_0$) $= [a_1,b_1] \times \dots \times [a_{k-1},b_{k-1}] \times [a_{k},m_k] \times [a_{k+1},b_{k+1}] \times \dots \times [a_{n},b_{n}] $
-\STATE zone($\nu_1$) $= [a_1,b_1] \times \dots \times [a_{k-1},b_{k-1}] \times [m_k,b_{k}] \times [a_{k+1},b_{k+1}] \times \dots \times [a_{n},b_{n}] $
-\STATE domain($\nu_0$),domain($\nu_1$) are defined with parameter $t$ using zone($\nu_0$),zone($\nu_1$) as in (\ref{zone_extend}).
-\STATE define $C^{\infty}$ bump functions $\psi_0$, $\psi_1$ that have support in domain($\nu_0$),domain($\nu_1$).
-\STATE bump($\nu_0$):=$\psi_0$
-\STATE bump($\nu_1$):=$\psi_1$
-\STATE Define interpolant($\nu_1$), interpolant($\nu_1$) for domain($\nu_0$),domain($\nu_1$).	
-\FOR{$k=0,1$}
-\STATE $\text{unfinished(\child{k}($\nu$))} = \text{unfinished($\nu$)}$
-\STATE \child{k}($\nu$) := $\nu_k$
-\ENDFOR
-\ELSE
-\FOR{$k=0,1$}
-\STATE split(\child{k}($\nu$),$k$,$t$)
-\ENDFOR
-\ENDIF
-\end{algorithmic}
-\end{algorithm}
 
 
-If there are one or more unfinished dimensions which are found to be unresolved, node $\nu$ is split in each unfinished dimension, where we first split the node in the first unfinished dimension, and recursively split the children of $\nu$ in the subsequent unfinished dimensions as seen in Algorithm~\ref{alg2}. When we split a leaf $\nu$ to \child{0}($\nu$) and \child{1}($\nu$), the zones of the children are formed by splitting the zone($\nu$) in half along a dimension by a hyperplane; this is demonstrated in Algorithm~\ref{alg9}. 
+
+% If there are one or more unfinished dimensions which are found to be unresolved, node $\nu$ is split in each unfinished dimension, where we first split the node in the first unfinished dimension, and recursively split the children of $\nu$ in the subsequent unfinished dimensions as seen in Algorithm~\ref{alg2}. When we split a leaf $\nu$ to \child{0}($\nu$) and \child{1}($\nu$), the zones of the children are formed by splitting the zone($\nu$) in half along a dimension by a hyperplane; this is demonstrated in Algorithm~\ref{alg9}. 
 
 
-This process is recursively  repeated on the leaves until every leaf is determined to be resolved in every dimension. When recursing, we redefine the domains of non-leaf nodes $\nu$ to be the smallest hypercuboid that contains the domains of \child{0}($\nu$) and \child{1}($\nu$). In Algorithm~\ref{alg2} we show formally how we split the leaves. The binary tree representing the approximation is formed with Algorithm~\ref{alg3}, where sample($\nu$,$f(\vect{x})$) samples $f(\vect{x})$ on the Chebyshev tensor product grids at the leaves of $\nu$.
+% This process is recursively  repeated on the leaves until every leaf is determined to be resolved in every dimension. When recursing, we redefine the domains of non-leaf nodes $\nu$ to be the smallest hypercuboid that contains the domains of \child{0}($\nu$) and \child{1}($\nu$). In Algorithm~\ref{alg2} we show formally how we split the leaves. The binary tree representing the approximation is formed with Algorithm~\ref{alg3}, where sample($\nu$,$f(\vect{x})$) samples $f(\vect{x})$ on the Chebyshev tensor product grids at the leaves of $\nu$.
 
-\begin{algorithm}[!h]
-\caption{refine($\nu$,$\nmax$,$t$,$f(x)$)}
-\label{alg3}
-\begin{algorithmic}
-\WHILE{$\nu$ has unresolved leaves}
-\STATE sample($\nu$,$f(x)$)
-\STATE splitleaves(root($\nu$),$\nmax$,$t$)
-\ENDWHILE
-\end{algorithmic}
-\end{algorithm}
 
 \section{Numerical Computation}
 
 \subsection{approximation}
-We can use the tree to quickly evaluate the PU approximation. We have that the PU approximation (\ref{PU_APPROX_EQ}) with the Shepards PU weights can be rearranged to
+We can use the tree to quickly evaluate the PU approximation. We have that the PU approximation (\ref{eq:pu-approx}) with the Shepards PU weights can be rearranged to
 \begin{equation}
 s(\vect{x}) = \sum_{k=1}^M \frac{\psi_k(\vect{x}) s_k(\vect{x})}{\sum_{j=1}^{M} \psi_j(\vect{x})} = \frac{1}{\sum_{j=1}^{M} \psi_j(\vect{x})}\sum_{k=1}^{M} \psi_k(\vect{x})s_k(\vect{x}),
 \label{new_eq}
@@ -471,7 +486,8 @@ $(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 4.07E-10 & 0.038 & 0.143 & 4 \\[5pt]
 $\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 7.77E-16 & 0.047 & 0.144 & 1 \\[5pt]
 $1/(\cosh(5(x+y+z)))^2$ & 3.69E-13 & 80.666 & 0.398 & 93 \\
 $\arctan(5(x+y)+z)$ & 4.69e-13 & 89.957 & 0.104 & 110 \\
-\end{tabular}\caption{Table for Chebfun3 tested with a $200^3$ grid with recorded error, construction time, time to interpolate, and numerical rank. Here $u=[0.75,0.25,-0.75]$, $a=[25,25,25]$.}	
+\end{tabular}
+\caption{Table for Chebfun3 tested with a $200^3$ grid with recorded error, construction time, time to interpolate, and numerical rank. Here $u=[0.75,0.25,-0.75]$, $a=[25,25,25]$.}	
 \label{chb3table}
 \end{table}
 
