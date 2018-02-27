@@ -167,6 +167,8 @@ where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\b
     \ENDFOR
     \IF{all isdone($\nu$) are TRUE}
       \STATE Truncate~(\ref{eq:full-interp}) at degrees $n_1,\ldots,n_d$ to define grid($\nu$), values($\nu$), interpolant($\nu$)
+    \ELSE
+      \STATE splitleaves($\nu$,$\nmax$,$t$)
     \ENDIF
   \ELSE
     \STATE splitleaves(left($\nu$),$\nmax$,$t$)      
