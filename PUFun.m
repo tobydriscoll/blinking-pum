@@ -8,37 +8,67 @@ classdef PUFun < handle & matlab.mixin.Copyable
         Nums
         deg_in
         tol
-        domain
+        domain = [];
         grid_opt = false;
     end
     
     methods
         
-        %function obj = PUFun(domain,deg_in,f,tol,grid_opt,ChebRoot)
-         function obj = PUFun(varargin)
+        %function obj = PUFun(domain,deg_in,f,tol,grid_opt)
+        function obj = PUFun(varargin)
             
+            if length(varargin)==1
+                varargin = varargin{:};
+            end
             
             if isstruct(varargin)
                 obj.grid_opt = varargin.grid_opt;
                 f = varargin.op;
+                obj.domain = varagin.domain;
+                obj.deg_in = varagin.deg_in;
+                obj.tol = varagin.tol;
+                
+                obj.ChebRoot = ChebPatch('domain',obj.domain,'degreeIndex',obj.deg_in,'tol',obj.tol);
+                
             else
-                f = varargin{1};
-                varargin(1) = [];
-                args = varargin;
-                while ( ~isempty(args) )
-                    if strcmpi(args{1}, 'gridOption')
-                        obj.grid_opt = args{2};
-                        args{1:2} = [];   
+                if length(varargin)==1
+                    f = varargin;
+                    obj.domain = repmat([-1 1],nargin(f),1);
+                    obj.ChebRoot = ChebPatch('domain',obj.domain);
+                    
+                elseif length(varargin)==2
+                    f = varargin{1};
+                    obj.domain = varargin{2};
+                    obj.ChebRoot = ChebPatch('domain',obj.domain);
+                    
+                else
+                    f = varargin{1};
+                    varargin(1) = [];
+                    args = varargin;
+                    while ( ~isempty(args) )
+                        if strcmpi(args{1}, 'gridOption')
+                            obj.grid_opt = args{2};
+                        elseif strcmpi(args{1}, 'domain')
+                            obj.domain = args{2};
+                        elseif strcmpi(args{1}, 'degreeIndex')
+                            obj.deg_in = args{2};
+                        end
+                        args(1:2) = [];
                     end
-                    args(1:2) = [];
+                    
+                    
+                    if isempty(obj.domain)
+                        obj.domain = repmat([-1 1],nargin(f),1);
+                        varargin = {varargin{:} , 'domain',obj.domain};
+                    end
+                    
+                    obj.ChebRoot = ChebPatch(varargin);
+                    
                 end
             end
             
-           obj.ChebRoot = ChebPatch(varargin);
-            
-           refine(obj,f);
-            
-            
+            refine(obj,f);
+
         end
         
         % refine(obj,f,grid_opt)

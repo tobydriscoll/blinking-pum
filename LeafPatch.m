@@ -18,9 +18,11 @@ classdef LeafPatch<Patch
             end
             
             if isstruct(varargin)
+                
+                obj.domain = varargin.domain;
                 obj.outerbox = varargin.outerbox;
                 obj.zone = varargin.zone;
-                obj.domain = varargin.domain;
+                
             else
                 
                 args = varargin;
