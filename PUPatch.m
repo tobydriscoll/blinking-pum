@@ -24,18 +24,16 @@ classdef PUPatch<Patch
         % splitting_dim: dimension the patch is split in.
         %         index: array indicating patch from root to patch (1 left,
         %         right left).
-        function obj = PUPatch(domain,zone,cheb_length,children,splitting_dim,index)
+        function obj = PUPatch(domain,zone,children,splitting_dim)
             obj.outerbox = children{1}.outerbox;
             obj.zone = zone;
             obj.domain = domain;
             [obj.dim,~] = size(obj.domain);
-            obj.cheb_length = cheb_length;
+            obj.cheb_length = children{1}.length()+children{2}.length();
             obj.children = children;
             obj.splitting_dim = splitting_dim;
             obj.is_leaf = false;
             obj.is_refined = false;
-            obj.children{1}.index = [index 1];
-            obj.children{2}.index = [index 2];
             obj.split_flag = obj.children{1}.split_flag | obj.children{2}.split_flag;
         end
         

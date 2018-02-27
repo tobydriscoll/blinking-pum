@@ -9,34 +9,34 @@ classdef PUFun < handle & matlab.mixin.Copyable
         deg_in
         tol
         domain
+        grid_opt = false;
     end
     
     methods
         
-        function obj = PUFun(domain,deg_in,f,tol,grid_opt,ChebRoot)
+        %function obj = PUFun(domain,deg_in,f,tol,grid_opt,ChebRoot)
+         function obj = PUFun(varargin)
             
-            obj.domain = domain;
-            obj.deg_in = deg_in;
-            [dim,~] = size(domain);
-            obj.tol = tol;
             
-            if nargin < 5
-                grid_opt = false;
-                obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,true(1,dim),obj.tol);
-            elseif nargin < 6
-                obj.ChebRoot = ChebPatch(domain,domain,domain,deg_in,true(1,dim),obj.tol);
+            if isstruct(varargin)
+                obj.grid_opt = varargin.grid_opt;
+                f = varargin.op;
             else
-                obj.ChebRoot = ChebRoot;
+                f = varargin{1};
+                varargin(1) = [];
+                args = varargin;
+                while ( ~isempty(args) )
+                    if strcmpi(args{1}, 'gridOption')
+                        obj.grid_opt = args{2};
+                        args{1:2} = [];   
+                    end
+                    args(1:2) = [];
+                end
             end
             
-            if nargin<6
-                refine(obj,f,grid_opt);
-            else
-                obj.TreeGrid = obj.ChebRoot.leafGrids();
-                
-                obj.leafArray = obj.ChebRoot.collectLeaves();
-                
-            end
+           obj.ChebRoot = ChebPatch(varargin);
+            
+           refine(obj,f);
             
             
         end
@@ -48,15 +48,12 @@ classdef PUFun < handle & matlab.mixin.Copyable
         %   grid_opt   : boolean value indicating if
         %                function is evaluated for grids;
         %                must take cell array of grids
-        function refine(obj,f,grid_opt)
+        function refine(obj,f)
             
-            if nargin<3
-                grid_opt = false;
-            end
             
             while ~obj.ChebRoot.is_refined
                 
-                Max = obj.ChebRoot.sample(f,grid_opt);
+                Max = obj.ChebRoot.sample(f,obj.grid_opt);
                 
                 if obj.ChebRoot.is_leaf
                     obj.ChebRoot = obj.ChebRoot.splitleaf(Max);

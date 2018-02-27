@@ -41,43 +41,58 @@ classdef ChebPatch<LeafPatch
         %                       [3 5 9 17 33 65 129].
         % split_flag: (dim x 1) boolean array indicating if the patch can
         %                       be split in any given dimension.
-        function obj = ChebPatch(domain,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
-            
+        %function obj = ChebPatch(domain,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
+        function obj = ChebPatch(varargin)
             %Call superclass constructor
-            obj = obj@LeafPatch(domain,zone,outerbox);
             
-            if nargin < 4
-                obj.deg_in = zeros(1,obj.dim);
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.deg_in(:) = 7;
-                obj.cdeg_in(:) = 3;
-                obj.split_flag = true(obj.dim,1);
-                obj.tol = 1e-12;
-            elseif nargin < 5
-                obj.deg_in = deg_in;
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.cdeg_in(:) = 3;
-                obj.split_flag = true(obj.dim,1);
-                obj.tol = 1e-12;
-            elseif nargin < 6
-                obj.deg_in = deg_in;
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.cdeg_in(:) = 3;
-                obj.split_flag = split_flag;
-                obj.tol = 1e-12;
-            elseif nargin < 7
-                obj.deg_in = deg_in;
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.cdeg_in(:) = 3;
-                obj.split_flag = split_flag;
-                obj.tol = tol;
-            elseif nargin < 8
-                obj.deg_in = deg_in;
-                obj.cdeg_in = cdeg_in;
-                obj.split_flag = split_flag;
-                obj.tol = tol;
+            if length(varargin)==1
+                varargin = varargin{:};
             end
             
+            obj = obj@LeafPatch(varargin);
+            
+            obj.tol = 1e-12;
+            obj.deg_in = zeros(obj.dim,1);
+            obj.deg_in(:) = 7;
+            
+            obj.cdeg_in = zeros(obj.dim,1);
+            obj.cdeg_in(:) = 3;
+            obj.split_flag = true(obj.dim,1);
+            
+            if isstruct(varargin)
+                
+                obj.deg_in = varargin.deg_in;
+                obj.split_flag = varargin.split_flag;
+                obj.tol = varargin.tol;
+                obj.cdeg_in = varargin.cdeg_in;
+                
+            else
+                
+                
+                args = varargin;
+                
+                while ( ~isempty(args) )
+                    if strcmpi(args{1}, 'degreeIndex')
+                        if numel(args{2})==1
+                            obj.degs_in = zeros(1,obj.dim);
+                        else
+                            obj.degs_in = args{2};
+                        end
+                    elseif strcmpi(args{1}, 'canSplit')
+                        obj.split_flag = args{2};
+                    elseif strcmpi(args{1}, 'tol')
+                        obj.tol = obj.tol;
+                    elseif strcmpi(args{1}, 'coarseDegreeIndex')
+                        if numel(args{2})==1
+                            obj.cdegs_in = zeros(1,obj.dim);
+                        else
+                            obj.cdegs_in = args{2};
+                        end
+                    end
+                    args(1:2) = [];
+                end
+                
+            end
             obj.degs = obj.standard_degs(obj.deg_in);
             obj.cdegs = obj.standard_degs(obj.cdeg_in);
             
@@ -87,9 +102,18 @@ classdef ChebPatch<LeafPatch
             obj.cheb_length = prod(obj.degs);
             obj.is_refined = false;
             obj.is_geometric_refined = true;
-            
         end
-        
+            
+        %Returns structure of parameters
+        function p_struct = params(obj)
+            p_struct.outerbox = obj.outerbox;
+            p_struct.zone = obj.zone;
+            p_struct.domain = obj.domain;
+            p_struct.deg_in = obj.deg_in;
+            p_struct.split_flag = obj.split_flag;
+            p_struct.tol = obj.tol;
+            p_struct.cdeg_in = obj.cdeg_in;
+        end
         
         % Construct for the ChebPatch
         %
@@ -531,8 +555,15 @@ classdef ChebPatch<LeafPatch
             region1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
             
             
-            Children{1} = ChebPatch(region0,zone0,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
-            Children{2} = ChebPatch(region1,zone1,obj.outerbox,obj.deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+            struct0 = obj.params;
+            struct0.domain = region0; struct0.zone = zone0;
+            
+            struct1 = obj.params;
+            struct1.domain = region1; struct1.zone = zone1;
+            
+            
+            Children{1} = ChebPatch(struct0);
+            Children{2} = ChebPatch(struct1);
             
             Children{1}.orig_degs = obj.orig_degs;
             Children{1}.orig_deg_in = obj.orig_deg_in;
@@ -540,12 +571,12 @@ classdef ChebPatch<LeafPatch
             Children{2}.orig_degs = obj.orig_degs;
             Children{2}.orig_deg_in = obj.orig_deg_in;
             
-            domain = obj.domain;
+            pu_domain = obj.domain;
             
-            domain(split_dim,:) = [region0(split_dim,1) region1(split_dim,2)];
+            pu_domain(split_dim,:) = [region0(split_dim,1) region1(split_dim,2)];
             
             %Return the PUPatch with the new children
-            Child = PUPatch(domain,obj.zone,length(Children{1})+length(Children{2}),Children,split_dim,obj.index);
+            Child = PUPatch(pu_domain,obj.zone,Children,split_dim);
             
             if set_vals
                 for k=1:2

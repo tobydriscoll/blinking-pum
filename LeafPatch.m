@@ -11,10 +11,44 @@ classdef LeafPatch<Patch
     end
     
     methods
-        function obj = LeafPatch(domain,zone,outerbox)
-            obj.outerbox = outerbox;
-            obj.zone = zone;
-            obj.domain = domain;
+        function obj = LeafPatch(varargin)
+            
+            if length(varargin)==1
+                varargin = varargin{:};
+            end
+            
+            if isstruct(varargin)
+                obj.outerbox = varargin.outerbox;
+                obj.zone = varargin.zone;
+                obj.domain = varargin.domain;
+            else
+                
+                args = varargin;
+                while (~isempty(args))
+                    if strcmpi(args{1}, 'domain')
+                        obj.domain = args{2};
+                        [obj.dim,~] = size(obj.domain);
+                    elseif strcmpi(args{1}, 'zone')
+                        obj.zone = args{2};
+                    elseif strcmpi(args{1}, 'outerbox')
+                        obj.outerbox = args{2};
+                    end
+                    args(1:2) = [];
+                end
+            end
+            
+            if isempty(obj.domain)
+                error('You need a domain!');
+            end
+            
+            if isempty(obj.zone)
+                obj.zone = obj.domain;
+            end
+            
+            if isempty(obj.outerbox)
+                obj.outerbox = obj.domain;
+            end
+            
             obj.is_geometric_refined = true; %square is always geometrically refined
             [obj.dim,~] = size(obj.domain);
             obj.is_leaf = true;
