@@ -1,5 +1,35 @@
 classdef PUFun2DLS < handle
-    
+% PUFun2DLS PUFun class for representing n-d functions on non-square domains.
+%
+% This class represents smooth multivariate functions on non-square domains
+% with a partition of unity approximation. This class 
+% automatically finds a set of overlapping domains that are adapted to the 
+% features of the function, and the blends locally defined Chebyshev 
+% approximations on the domains with a partition of unity.
+% 
+% PUFun2DLS(f,domain_in,domain_out) constructs a partition of unity 
+% approximation representing f on the non square domain_in, such that
+% domain_in lies in the rectangle domain_out. Functions must be vectorized.
+% 
+% 
+% PUFun2DLS(f,domain_in,domain_out,'perf1',perf1,'pref2',pref2,..) constructs a
+% partition of unity approximation representing f, based on the options 
+% passed into with varargin; that is PUFun(f,'perf1',perf1,'pref2',pref2,..) 
+% is called. This preferences that can be set are:
+% 
+% The max lengths of the patches before sampling is to occur:
+% 'MaxLengths', [d_1 d_2]
+%
+% *The degree indices from the standard degrees in each dimension for non 
+% square domains : 'degreeIndex', [ind_1,ind_2]. 
+% 
+% *The degree indices from the standard degrees in each dimension for
+% square domains : 'ChebDegreeIndex', [ind_1,ind_2]. 
+%
+% Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
+% So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
+% 33 in each direction. 
+
     properties
         ChebRoot
         TreeGrid
@@ -16,7 +46,6 @@ classdef PUFun2DLS < handle
     
     methods
         
-        %function obj = PUFun2DLS(domain,in_domain,deg_in,cheb_deg_in,max_lengths,f,tol,grid_opt,ChebRoot)
         function obj = PUFun2DLS(varargin)
             
             if length(varargin)==1
@@ -48,9 +77,7 @@ classdef PUFun2DLS < handle
                     varargin(1:3) = [];
                     args = varargin;
                     while ( ~isempty(args) )
-                        if strcmpi(args{1}, 'gridOption')
-                            obj.grid_opt = args{2};
-                        elseif strcmpi(args{1}, 'degreeIndex')
+                        if strcmpi(args{1}, 'degreeIndex')
                             obj.deg_in = args{2};
                         elseif strcmpi(args{1}, 'ChebDegreeIndex')
                             obj.cheb_deg_in = args{2};

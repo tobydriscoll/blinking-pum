@@ -1,7 +1,14 @@
 classdef PUPatch<Patch
-    % This class is represents a tree with two Patch Children.
-    % Children can be any Patch class, including PUPatch and
-    % LeafPatch.
+% LSPatch2D PUFun class for representing a patch with a single splitting.
+
+% This class is used as part of a recursively defined tree, where
+% objects at the leaves are represented with the LeafPatch.m class.
+%
+% LSPatch2D(domain,zone,children,splitting_dim) will construct the
+% PUPatch. Here the domain is the overlaping domain (tyically the bounding
+% box of the domains of the children), zone is the nonoverlapping domain
+% from the partition, children is an cell array of the two children, and
+% splitting_dim is the dimension the patch is split in.
     properties
         children
         splitting_dim

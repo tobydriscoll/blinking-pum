@@ -1,7 +1,8 @@
 classdef (Abstract) Patch < handle & matlab.mixin.Copyable
-    %UNTITLED Summary of this class goes here
-    %   Detailed explanation goes here
-    
+% Patch PUFun abstract class for representing a patch. Here a patch is
+% defined to be either a PU approximation or a single tensor product
+% polynomial.
+
     properties
         domain
         zone

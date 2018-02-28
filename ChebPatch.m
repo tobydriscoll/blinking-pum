@@ -1,6 +1,49 @@
 classdef ChebPatch<LeafPatch
-    % This class handles the operations for a Chebyshev grid interpolation on a hypercube.
-    
+% ChebPatch PUFun class for representing n-d functions on lines, rectangles, and hyperectangles.
+%
+% This class represents a single tensor product polynomial The coefficients 
+% are found through FFT.
+ 
+% ChebPatch(varargin) constructs a  tensor product approximation 
+% representing f, based on the options passed into with varargin; that is 
+% PUFun(f,'perf1',perf1,'pref2',pref2,..) is called. This preferences that 
+% can be set are:
+% 
+%
+% *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d]
+%
+% *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d]
+%
+% *The domain of the root of the tree: 'outerbox', [a,b;c,d]
+%
+% *An array of boolean indicies indicating if the approximation can be
+% split in a given dimension: 'canSplit', [bool_1,bool2]
+%
+% *The tolerance used for refinement: 'tol', 1e-b
+%
+% *The degree indices from the standard degrees in each dimension for non 
+% square domains : 'degreeIndex', [ind_1,ind_2]. 
+% 
+% *The coarse degree to be used (if applicable) 
+% : 'coarseDegreeIndex', [ind_1,ind_2]. 
+% 
+% *The degree indices from the standard degrees in each dimension for
+% square domains : 'ChebDegreeIndex', [ind_1,ind_2]. 
+%
+% Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
+% So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
+% 33 in each direction.
+%
+% ChebPatch(struct) will construct an approximation with a structure
+% struct. Here struct must contain the following fields:
+% outerbox : domain of the outerbox
+% zone : domain of the zone
+% domain : square domain of the polynomial
+% deg_in : indicies of degree for polynomials representing non square domains
+% cheb_deg_in : indicies of degree for polynomials representing square domains
+% cdeg_in : indicies of coarse degree
+% split_flag : boolean array indiciating to split in a dimension or not
+% tol : tolerance used for refinement
     properties
         degs %array of degrees along the dimensions
         values %grid of values to be used for interpolation

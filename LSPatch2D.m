@@ -1,7 +1,61 @@
 classdef LSPatch2D<LeafPatch
-    %UNTITLED3 Summary of this class goes here
-    %   Detailed explanation goes here
-    
+% LSPatch2D PUFun class for representing n-d functions on non-square domains.
+%
+% This class represents a single tensor product polynomial, where the
+% domain of the Chebyshev polynomial bounds the domain of the function to
+% be approximated. The coefficients are found by solving a rank deficient 
+% least square problem that minimizes the l_2 norm between a given function
+% f and the Chebyshev polynomial for a set of points inside the domain of
+% f.
+ 
+% LSPatch2D(varargin) constructs a tensor product approximation
+% representing a function, based on the options passed into with varargin; 
+% that is PUFun(f,'perf1',perf1,'pref2',pref2,..) is called. This 
+% preferences that can be set are:
+% 
+% The max lengths of the patches before sampling is to occur:
+% 'MaxLengths', [d_1 d_2]
+%
+% *The non square domain: 'InnerDomain', domain object
+%
+% *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d]
+%
+% *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d]
+%
+% *The domain of the root of the tree: 'outerbox', [a,b;c,d]
+%
+% *An array of boolean indicies indicating if the approximation can be
+% split in a given dimension: 'canSplit', [bool_1,bool2]
+%
+% *The tolerance used for refinement: 'tol', 1e-b
+%
+% *The degree indices from the standard degrees in each dimension for non 
+% square domains : 'degreeIndex', [ind_1,ind_2]. 
+% 
+% *The coarse degree to be used (if applicable) 
+% : 'coarseDegreeIndex', [ind_1,ind_2]. 
+% 
+% *The degree indices from the standard degrees in each dimension for
+% square domains : 'ChebDegreeIndex', [ind_1,ind_2]. 
+%
+% Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
+% So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
+% 33 in each direction. 
+%
+% LSPatch2D(struct) will construct an approximation with a structure
+% struct. Here struct must contain the following fields:
+% in_domain : inner non square domain
+% outerbox : domain of the outerbox
+% zone : domain of the zone
+% domain : square domain of the polynomial
+% deg_in : indicies of degree for polynomials representing non square domains
+% cheb_deg_in : indicies of degree for polynomials representing square domains
+% cdeg_in : indicies of coarse degree
+% split_flag : boolean array indiciating to split in a dimension or not
+% max_lengths : obj.max_lengths: The max lengths of the patches before sampling is to occur
+% tol : tolerance used for refinement
+
+           
     properties
         degs %array of degrees along the dimensions
         cdegs
@@ -9,7 +63,6 @@ classdef LSPatch2D<LeafPatch
         in_domain
         max_lengths %Max lengths of patch
         values
-        pinvM %Store the pseudoInverse
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
         deg_in
         cheb_deg_in
@@ -62,7 +115,6 @@ classdef LSPatch2D<LeafPatch
                obj.cdeg_in = varargin.cdeg_in;
                
            else
-               
                
                args = varargin;
                

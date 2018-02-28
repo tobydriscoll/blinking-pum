@@ -1,7 +1,23 @@
 classdef LeafPatch<Patch
     % This is the abstract class for a leaf object. This is used with the
     % PUPatch object.
-    
+ 
+% LeafPatch(varargin) serves as the base constructor for a leafPatch
+% object. Here PUFun(f,'perf1',perf1,'pref2',pref2,..) is called, with
+% options:
+% 
+%
+% *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d]
+%
+% *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d]
+%
+% *The domain of the root of the tree: 'outerbox', [a,b;c,d]
+%
+% LeafPatch(struct) will construct an approximation with a structure
+% struct. Here struct must contain the following fields:
+% outerbox : domain of the outerbox
+% zone : domain of the zone
+% domain : square domain of the polynomial
     properties
         index = [];
         chebweights = [];
