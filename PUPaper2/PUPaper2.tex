@@ -147,7 +147,7 @@ A leaf node has the following additional properties:
 Let $f$ be a scalar-valued function on $\Omega$ that we wish to approximate. A key task is to compute, for a given leaf node $\nu$, the polynomial interpolant($\nu$), and determine whether $f$ is sufficiently well approximated on domain($\nu$) by it. First we sample $f$ at a Chebyshev grid of size $\nmax^d$ on domain($\nu$). This leads to the interpolating polynomial
 \begin{equation}
   \label{eq:full-interp}
-  \tilde{p}(\vect{x}) = \sum_{i_1=0}^{\nmax-1} \cdots \sum_{i_d=0}^{\nmax-1}  C_{i_1,\ldots,i_d} T_{i_1}(x_1)\cdots T_{i_n}(x_n),
+  \tilde{p}(\vect{x}) = \sum_{i_1=0}^{\nmax-1} \cdots \sum_{i_d=0}^{\nmax-1}  C_{i_1,\ldots,i_d} T_{i_1}(x_1)\cdots T_{i_d}(x_d),
 \end{equation}
 where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\bigo(\nmax (\log \nmax)^d)$ time~\cite{??}. Following the practice of Chebfun3t \cite{hashemi2017chebfun}, for each $j=1,\ldots,d$, we define a scalar sequence $\gamma^{(j)}$ by summing $|C_{i_1,\ldots,i_d}|$ over all dimensions except the $j$th. To each of these sequences we apply Chebfun's {\tt StandardChop}  algorithm, which attempts to measure decay in the coefficients in a suitably robust sense~\cite{Aurentz:2017:CCS:3034774.2998442}. Let the output of {\tt StandardChop} for sequence $\gamma^{(j)}$ be $n_j$; this is the degree that {\tt StandardChop} deems to be sufficient for resolution.    If $n_j<\nmax$ we say that the function is resolved in dimension $j$ on $\nu$. If $f$ is resolved in all dimensions on $\nu$, then we truncate the interpolant~(\ref{eq:full-interp}) at the degrees $n_j$ and store the samples of $f$ on the corresponding smaller tensor-product grid. (Does this resampling actually take place??)
 
