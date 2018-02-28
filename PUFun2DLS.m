@@ -10,33 +10,65 @@ classdef PUFun2DLS < handle
         cheb_deg_in
         tol
         domain
+        grid_opt = false;
     end
     
     methods
         
-        function obj = PUFun2DLS(domain,in_domain,deg_in,cheb_deg_in,max_lengths,f,tol,grid_opt,ChebRoot)
-            obj.domain = domain;
-            obj.deg_in = deg_in;
-            obj.cheb_deg_in = cheb_deg_in;
-            [dim,~] = size(domain);
-            obj.tol = tol;
+        %function obj = PUFun2DLS(domain,in_domain,deg_in,cheb_deg_in,max_lengths,f,tol,grid_opt,ChebRoot)
+        function obj = PUFun2DLS(varargin)
             
-            if nargin < 8
-                grid_opt = false;
-                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain,deg_in,cheb_deg_in,true(dim,1),tol);
-            elseif nargin < 9
-                obj.ChebRoot = LSPatch2D(in_domain,max_lengths,domain,domain,domain,deg_in,cheb_deg_in,true(dim,1),tol);
-            else
-                obj.ChebRoot = ChebRoot;
+            if length(varargin)==1
+                varargin = varargin{:};
             end
             
-            if nargin<9
-                refine(obj,f,grid_opt);
+            if isstruct(varargin)
+                obj.grid_opt = varargin.grid_opt;
+                f = varargin.op;
+                obj.domain = varagin.domain;
+                obj.deg_in = varagin.deg_in;
+                obj.tol = varagin.tol;
+                
+                obj.ChebRoot = ChebPatch('domain',obj.domain,'degreeIndex',obj.deg_in,'tol',obj.tol);
+                
             else
-                
-                obj.leafArray = obj.ChebRoot.collectLeaves();
-                
+                if length(varargin)==1
+                    f = varargin;
+                    obj.domain = repmat([-1 1],nargin(f),1);
+                    obj.ChebRoot = ChebPatch('domain',obj.domain);
+                    
+                elseif length(varargin)==2
+                    f = varargin{1};
+                    obj.domain = varargin{2};
+                    obj.ChebRoot = ChebPatch('domain',obj.domain);
+                    
+                else
+                    f = varargin{1};
+                    varargin(1) = [];
+                    args = varargin;
+                    while ( ~isempty(args) )
+                        if strcmpi(args{1}, 'gridOption')
+                            obj.grid_opt = args{2};
+                        elseif strcmpi(args{1}, 'domain')
+                            obj.domain = args{2};
+                        elseif strcmpi(args{1}, 'degreeIndex')
+                            obj.deg_in = args{2};
+                        end
+                        args(1:2) = [];
+                    end
+                    
+                    
+                    if isempty(obj.domain)
+                        obj.domain = repmat([-1 1],nargin(f),1);
+                        varargin = {varargin{:} , 'domain',obj.domain};
+                    end
+                    
+                    obj.ChebRoot = ChebPatch(varargin);
+                    
+                end
             end
+            
+            refine(obj,f);
             
         end
         

@@ -75,6 +75,7 @@ classdef ChebPatch<LeafPatch
                     if strcmpi(args{1}, 'degreeIndex')
                         if numel(args{2})==1
                             obj.degs_in = zeros(1,obj.dim);
+                            obj.deg_in(:) = args{2};
                         else
                             obj.degs_in = args{2};
                         end
@@ -85,6 +86,7 @@ classdef ChebPatch<LeafPatch
                     elseif strcmpi(args{1}, 'coarseDegreeIndex')
                         if numel(args{2})==1
                             obj.cdegs_in = zeros(1,obj.dim);
+                            obj.cdeg_in(:) = args{2};
                         else
                             obj.cdegs_in = args{2};
                         end

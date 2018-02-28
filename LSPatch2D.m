@@ -27,68 +27,111 @@ classdef LSPatch2D<LeafPatch
     end
     
     methods
-        function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,cheb_deg_in,split_flag,tol,cdeg_in)
+       % function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,cheb_deg_in,split_flag,tol,cdeg_in)
+       function obj = LSPatch2D(varargin)
+           
+           if length(varargin)==1
+               varargin = varargin{:};
+           end
+           
+           %Call superclass constructor
+           obj = obj@LeafPatch(varargin);
+           
             
-            %Call superclass constructor
-            obj = obj@LeafPatch(domain,zone,outerbox);
-            obj.in_domain = in_domain;
-            obj.max_lengths = max_lengths;
+            obj.tol = 1e-6;
+            obj.deg_in = zeros(obj.dim,1);
+            obj.deg_in(:) = 4;
             
-            if nargin < 6
-                obj.deg_in = zeros(1,obj.dim);
-                obj.cheb_deg_in = zeros(1,obj.dim);
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.deg_in(:) = 4;
-                obj.cdeg_in(:) = 3;
-                obj.cheb_deg_in(:) = 7;
-                obj.split_flag = true(obj.dim,1);
-                obj.tol = 1e-12;
-            elseif nargin < 7
-                obj.deg_in = deg_in;
-                obj.cheb_deg_in = zeros(1,obj.dim);
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.cdeg_in(:) = 3;
-                obj.cheb_deg_in(:) = 7;
-                obj.split_flag = true(obj.dim,1);
-                obj.tol = 1e-12;
-            elseif nargin < 8
-                obj.deg_in = deg_in;
-                obj.cheb_deg_in = cheb_deg_in;
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.cdeg_in(:) = 3;
-                obj.cheb_deg_in(:) = 7;
-                obj.split_flag = true(obj.dim,1);
-                obj.tol = 1e-12;
-            elseif nargin < 9
-                obj.deg_in = deg_in;
-                obj.cheb_deg_in = cheb_deg_in;
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.cdeg_in(:) = 3;
-                obj.split_flag = split_flag;
-                obj.tol = 1e-12;
-            elseif nargin < 10
-                obj.deg_in = deg_in;
-                obj.cheb_deg_in = cheb_deg_in;
-                obj.cdeg_in = zeros(1,obj.dim);
-                obj.cdeg_in(:) = 3;
-                obj.split_flag = split_flag;
-                obj.tol = tol;
-            elseif nargin < 11
-                obj.cheb_deg_in = cheb_deg_in;
-                obj.deg_in = deg_in;
-                obj.cdeg_in = cdeg_in;
-                obj.split_flag = split_flag;
-                obj.tol = tol;
-            end
+            obj.cheb_deg_in = zeros(obj.dim,1);
+            obj.cheb_deg_in(:) = 6;
             
-            obj.degs = obj.standard_degs(obj.deg_in);
-            obj.cheb_length = prod(obj.degs);
+            obj.cdeg_in = zeros(obj.dim,1);
+            obj.cdeg_in(:) = 3;
+            obj.split_flag = true(obj.dim,1);
             
-        end
+           if isstruct(varargin)
+               
+               obj.deg_in = varargin.deg_in;
+               obj.cheb_deg_in = varargin.cheb_deg_in
+               obj.in_domain = varargin.in_domain;
+               obj.split_flag = varargin.split_flag;
+               obj.max_lengths = varargin.max_lengths;
+               obj.tol = varargin.tol;
+               obj.cdeg_in = varargin.cdeg_in;
+               
+           else
+               
+               
+               args = varargin;
+               
+               while ( ~isempty(args) )
+                   if strcmpi(args{1}, 'degreeIndex')
+                       if numel(args{2})==1
+                           obj.degs_in = zeros(1,obj.dim);
+                           obj.deg_in(:) = args{2};
+                       else
+                           obj.degs_in = args{2};
+                       end
+                   elseif strcmpi(args{1}, 'canSplit')
+                       obj.split_flag = args{2};
+                   elseif strcmpi(args{1}, 'tol')
+                       obj.tol = obj.tol;
+                   elseif strcmpi(args{1}, 'coarseDegreeIndex')
+                       if numel(args{2})==1
+                           obj.cdegs_in = zeros(1,obj.dim);
+                       else
+                           obj.cdegs_in = args{2};
+                           obj.cdeg_in(:) = args{2};
+                       end
+                   elseif strcmpi(args{1}, 'MaxLengths')
+                       if numel(args{2})==1
+                           obj.max_lengths = zeros(1,obj.dim);
+                           obj.max_lengths(:) = args{2};
+                       else
+                           obj.max_lengths = args{2};
+                       end
+                   elseif strcmpi(args{1}, 'ChebDegreeIndex')
+                       if numel(args{2})==1
+                           obj.cheb_deg_in = zeros(1,obj.dim);
+                           obj.cheb_deg_in(:) = args{2};
+                       else
+                           obj.cheb_deg_in = args{2};
+                       end
+                   elseif strcmpi(args{1}, 'domain')
+                       obj.domain_in = args{2};
+                   elseif strcmpi(args{1}, 'boundingbox')
+                       obj.domain = args{2};
+                   end
+                   args(1:2) = [];
+               end
+               
+           end
+           
+           obj.in_domain = in_domain;
+           obj.max_lengths = max_lengths;
+           
+           
+           obj.degs = obj.standard_degs(obj.deg_in);
+           obj.cdegs = obj.standard_degs(obj.cdeg_in);
+           
+           obj.cheb_length = prod(obj.degs);
+           
+       end
+        
+       %Returns structure of parameters
+       function p_struct = params(obj) 
+           p_struct.deg_in = obj.deg_in;
+           p_struct.cheb_deg_in = obj.cheb_deg_in;
+           p_struct.in_domain = obj.in_domain;
+           p_struct.split_flag = obj.split_flag;
+           p_struct.max_lengths = obj.max_lengths;
+           p_struct.tol = obj.tol;
+           p_struct.cdeg_in = obj.cdeg_in;
+       end
         
         % TODO. Figure out what to do here!
         function ln=length(obj)
-            ln = 0;
+            ln = prod(obj.degs);
         end
         
         % TODO. Figure out what to do here!
@@ -151,76 +194,6 @@ classdef LSPatch2D<LeafPatch
                 Child.is_refined = true;
             end
             
-%             vscale = Max;
-%             
-%             loc_tol = obj.tol^(7/8);
-%             
-%             local_max = Max;
-%             
-%             
-%             for k=1:obj.dim
-%                 
-%                 if obj.split_flag(k)
-%                     
-%                     colChebtech = chebfun3t.unfold(obj.coeffs, k);
-%                     colChebtech = sum(abs(colChebtech),2);
-%                     fCol = chebtech2({[],colChebtech});
-%                     hscale = diff(obj.domain(k,:));
-%                     
-%                     tol = loc_tol*max(vscale./local_max,hscale);
-%                     cutoff = length(simplify(fCol, tol))+1;
-%                     
-%                     if cutoff<obj.degs(k)
-%                         obj.split_flag(k) = false;
-%                         j = find(cutoff<=obj.standard_degs,1);
-%                         obj.deg_in(k) = j;
-%                         obj.degs(k) = obj.standard_degs(j);
-%                         
-%                         if k==1
-%                             obj.coeffs = obj.coeffs(1:obj.degs(k),:);
-%                         else
-%                             obj.coeffs = obj.coeffs(:,1:obj.degs(k));
-%                         end
-%                     end
-%                 end
-%                 
-%             end
-%             
-%             
-%             
-%             
-%             
-%             if ~any(obj.split_flag)
-%                 %The leaf is refined, so return it.
-%                 obj.is_refined = true;
-%                 obj.cheb_length = prod(obj.degs);
-%                 Child = obj;
-%             else
-%                 
-%                 %                 ind = 1:obj.dim;
-%                 %                 ind = ind(obj.split_flag);
-%                 %
-%                 %                 [~,split_dim] = max(diff(obj.domain(obj.split_flag,:).',1));
-%                 %                 split_dim = ind(split_dim);
-%                 %
-%                 %                 Child = split(obj,split_dim,set_vals);
-%                 
-%                 
-%                 Child = obj;
-%                 %Go through and split in each unresolved direction
-%                 for k=1:obj.dim
-%                     if obj.split_flag(k)
-%                         if Child.is_leaf
-%                             Child = split(Child,k);
-%                         else
-%                             Child.split(k);
-%                         end
-%                     end
-%                 end
-%                 
-%                 
-%                 
-%             end
         end
         
                 % The method determines will split a child into along
@@ -269,24 +242,30 @@ classdef LSPatch2D<LeafPatch
             [X2,Y2] = ndgrid(x2,y2);
             XP2 = [X2(:),Y2(:)];
             
+            struct0 = obj.params;
+            struct0.domain = region0; struct0.zone = zone0;
+            
+            struct1 = obj.params;
+            struct1.domain = region1; struct1.zone = zone1;
+            
             if all(obj.in_domain.Interior(XP1))
                 %The square is in the domain. Set the child to a
                 %standard Chebpatch
-                children{1} = ChebPatch(domain0,zone0,obj.outerbox,obj.cheb_deg_in,true(obj.dim,1),obj.tol,obj.cdeg_in);
+                children{1} = ChebPatch(struct0);
             else
                 %The square is not in the domain. Set the child to a
                 %least square patch
-                children{1} = LSPatch2D(obj.in_domain,obj.max_lengths,domain0,zone0,obj.outerbox,obj.deg_in,obj.cheb_deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+                children{1} = LSPatch2D(struct0);
             end
             
             if all(obj.in_domain.Interior(XP2))
                 %The square is in the domain. Set the child to a
                 %standard Chebpatch
-                children{2} = ChebPatch(domain1,zone1,obj.outerbox,obj.cheb_deg_in,true(obj.dim,1),obj.tol,obj.cdeg_in);
+                children{2} = ChebPatch(struct1);
             else
                 %The square is not in the domain. Set the child to a
                 %least square patch
-                children{2} = LSPatch2D(obj.in_domain,obj.max_lengths,domain1,zone1,obj.outerbox,obj.deg_in,obj.cheb_deg_in,obj.split_flag,obj.tol,obj.cdeg_in);
+                children{2} = LSPatch2D(struct1);
             end
             
             x = chebpts(16,obj.domain(1,:))';
@@ -314,7 +293,7 @@ classdef LSPatch2D<LeafPatch
                 Child = children{2};
             else
                 %Return the PUPatch with the new children
-                Child = PUPatch(obj.domain,obj.zone,length(children{1})+length(children{2}),children,split_dim,obj.index);
+                Child = PUPatch(obj.domain,obj.zone,children,split_dim);
             end
             
             if set_vals
@@ -337,23 +316,14 @@ classdef LSPatch2D<LeafPatch
                 
                 x = chebpts(obj.degs(1)*2,obj.domain(1,:));
                 y = chebpts(obj.degs(2)*2,obj.domain(2,:));
-                
-                x1 = chebpts(obj.degs(1)*2,obj.domain(1,:),1);
-                y1 = chebpts(obj.degs(2)*2,obj.domain(2,:),1);
-                
+
                 [X,Y] = ndgrid(x,y);
-                
-                [X1,Y1] = ndgrid(x1,y1);
                 
                 XP = [X(:) Y(:)];
                 
-                XP1 = [X1(:) Y1(:)];
-                
                 ind = obj.in_domain.Interior(XP);
-                ind1 = obj.in_domain.Interior(XP1);
                 
                 XP = XP(ind,:);
-                
                 
                 Mx = clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
                 My = clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
@@ -363,20 +333,19 @@ classdef LSPatch2D<LeafPatch
                 
                 warning('off','all');
 
-                F = f(XP);
+                F = f(num2cell(XP,1));
                 
                 max_val = max(abs(F));
                 
                 obj.coeffs = reshape(M\F,[obj.degs(1) obj.degs(2)]);
                 
-%                obj.coeffs = reshape(ResitrictedLS(M,F,eye(prod(obj.degs))),[obj.degs(1) obj.degs(2)]);
+                %obj.coeffs = reshape(ResitrictedLS(M,F,eye(prod(obj.degs))),[obj.degs(1) obj.degs(2)]);
 
                 warning('on','all');
                 
                 E = obj.evalfGrid({x,y},1,0);
                 E = E(ind);
                 E = E(:) - F;
-                %E = E(ind1);
                 
                 %This is used to determin the point wise error
                 obj.mid_values_err = max(abs(E(:)));

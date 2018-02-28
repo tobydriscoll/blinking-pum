@@ -21,10 +21,10 @@ classdef PUFun < handle & matlab.mixin.Copyable
 % PUFun(f,'perf1',perf1,'pref2',pref2,..) is called. This preferences that 
 % can be set are:
 % 
-% *The domain of the function: ?domain? , [a_1 b_1;a_2 b_2;...;a_d b_d]
+% *The domain of the function: 'domain' , [a_1 b_1;a_2 b_2;...;a_d b_d]
 % 
 % *The degree indices from the standard degrees in each dimension : 
-% 'degreeIndex', [ind_1,ind_2, ? ind_d]. 
+% 'degreeIndex', [ind_1,ind_2, ... ind_d]. 
 % 
 % Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
 % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
