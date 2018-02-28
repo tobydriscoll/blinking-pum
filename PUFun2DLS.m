@@ -8,6 +8,7 @@ classdef PUFun2DLS < handle
         Nums
         deg_in
         cheb_deg_in
+        domain_in
         tol
         domain
         grid_opt = false;
@@ -23,47 +24,42 @@ classdef PUFun2DLS < handle
             end
             
             if isstruct(varargin)
+                
                 obj.grid_opt = varargin.grid_opt;
                 f = varargin.op;
                 obj.domain = varagin.domain;
+                obj.domain_in = varagin.domain_in;
                 obj.deg_in = varagin.deg_in;
+                obj.cheb_deg_in = varagin.cheb_deg_in;
                 obj.tol = varagin.tol;
                 
-                obj.ChebRoot = ChebPatch('domain',obj.domain,'degreeIndex',obj.deg_in,'tol',obj.tol);
+                obj.ChebRoot = LSPatch2D('domain',obj.domain_in,'boundingbox',obj.domain,'degreeIndex',obj.deg_in,'ChebDegreeIndex',obj.cheb_deg_in,'tol',obj.tol);
                 
             else
-                if length(varargin)==1
-                    f = varargin;
-                    obj.domain = repmat([-1 1],nargin(f),1);
-                    obj.ChebRoot = ChebPatch('domain',obj.domain);
-                    
-                elseif length(varargin)==2
+                if length(varargin)==3
                     f = varargin{1};
-                    obj.domain = varargin{2};
-                    obj.ChebRoot = ChebPatch('domain',obj.domain);
-                    
+                    obj.domain_in = varargin{2};
+                    obj.domain = varargin{3};
+                    obj.ChebRoot = LSPatch2D('InnerDomain',obj.domain_in,'domain',obj.domain);
                 else
                     f = varargin{1};
-                    varargin(1) = [];
+                    obj.domain_in = varargin{2};
+                    obj.domain = varargin{3};
+                    varargin(1:3) = [];
                     args = varargin;
                     while ( ~isempty(args) )
                         if strcmpi(args{1}, 'gridOption')
                             obj.grid_opt = args{2};
-                        elseif strcmpi(args{1}, 'domain')
-                            obj.domain = args{2};
                         elseif strcmpi(args{1}, 'degreeIndex')
                             obj.deg_in = args{2};
+                        elseif strcmpi(args{1}, 'ChebDegreeIndex')
+                            obj.cheb_deg_in = args{2};
                         end
                         args(1:2) = [];
                     end
-                    
-                    
-                    if isempty(obj.domain)
-                        obj.domain = repmat([-1 1],nargin(f),1);
-                        varargin = {varargin{:} , 'domain',obj.domain};
-                    end
-                    
-                    obj.ChebRoot = ChebPatch(varargin);
+
+                    varargin = {varargin{:},'InnerDomain',obj.domain_in,'domain',obj.domain};
+                    obj.ChebRoot = LSPatch2D(varargin);
                     
                 end
             end

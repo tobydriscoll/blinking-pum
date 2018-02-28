@@ -4,6 +4,7 @@ classdef LSPatch2D<LeafPatch
     
     properties
         degs %array of degrees along the dimensions
+        cdegs
         coeffs %grid of values to be used for interpolation
         in_domain
         max_lengths %Max lengths of patch
@@ -43,16 +44,17 @@ classdef LSPatch2D<LeafPatch
             obj.deg_in(:) = 4;
             
             obj.cheb_deg_in = zeros(obj.dim,1);
-            obj.cheb_deg_in(:) = 6;
+            obj.cheb_deg_in(:) = 7;
             
             obj.cdeg_in = zeros(obj.dim,1);
             obj.cdeg_in(:) = 3;
             obj.split_flag = true(obj.dim,1);
+            obj.max_lengths = inf(obj.dim,1);
             
            if isstruct(varargin)
-               
+
                obj.deg_in = varargin.deg_in;
-               obj.cheb_deg_in = varargin.cheb_deg_in
+               obj.cheb_deg_in = varargin.cheb_deg_in;
                obj.in_domain = varargin.in_domain;
                obj.split_flag = varargin.split_flag;
                obj.max_lengths = varargin.max_lengths;
@@ -75,7 +77,7 @@ classdef LSPatch2D<LeafPatch
                    elseif strcmpi(args{1}, 'canSplit')
                        obj.split_flag = args{2};
                    elseif strcmpi(args{1}, 'tol')
-                       obj.tol = obj.tol;
+                       obj.tol = args{2};
                    elseif strcmpi(args{1}, 'coarseDegreeIndex')
                        if numel(args{2})==1
                            obj.cdegs_in = zeros(1,obj.dim);
@@ -97,18 +99,15 @@ classdef LSPatch2D<LeafPatch
                        else
                            obj.cheb_deg_in = args{2};
                        end
+                   elseif strcmpi(args{1}, 'InnerDomain')
+                       obj.in_domain = args{2};
                    elseif strcmpi(args{1}, 'domain')
-                       obj.domain_in = args{2};
-                   elseif strcmpi(args{1}, 'boundingbox')
                        obj.domain = args{2};
                    end
                    args(1:2) = [];
                end
                
            end
-           
-           obj.in_domain = in_domain;
-           obj.max_lengths = max_lengths;
            
            
            obj.degs = obj.standard_degs(obj.deg_in);
@@ -120,6 +119,10 @@ classdef LSPatch2D<LeafPatch
         
        %Returns structure of parameters
        function p_struct = params(obj) 
+           
+           p_struct.outerbox = obj.outerbox;
+           p_struct.zone = obj.zone;
+           p_struct.domain = obj.domain;
            p_struct.deg_in = obj.deg_in;
            p_struct.cheb_deg_in = obj.cheb_deg_in;
            p_struct.in_domain = obj.in_domain;
@@ -243,10 +246,10 @@ classdef LSPatch2D<LeafPatch
             XP2 = [X2(:),Y2(:)];
             
             struct0 = obj.params;
-            struct0.domain = region0; struct0.zone = zone0;
+            struct0.domain = domain0; struct0.zone = zone0;
             
             struct1 = obj.params;
-            struct1.domain = region1; struct1.zone = zone1;
+            struct1.domain = domain1; struct1.zone = zone1;
             
             if all(obj.in_domain.Interior(XP1))
                 %The square is in the domain. Set the child to a
@@ -333,7 +336,8 @@ classdef LSPatch2D<LeafPatch
                 
                 warning('off','all');
 
-                F = f(num2cell(XP,1));
+                XPC = num2cell(XP,1);
+                F = f(XPC{:});
                 
                 max_val = max(abs(F));
                 

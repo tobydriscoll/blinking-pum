@@ -82,7 +82,7 @@ classdef ChebPatch<LeafPatch
                     elseif strcmpi(args{1}, 'canSplit')
                         obj.split_flag = args{2};
                     elseif strcmpi(args{1}, 'tol')
-                        obj.tol = obj.tol;
+                        obj.tol = args{2};
                     elseif strcmpi(args{1}, 'coarseDegreeIndex')
                         if numel(args{2})==1
                             obj.cdegs_in = zeros(1,obj.dim);
