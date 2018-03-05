@@ -88,8 +88,11 @@ We are doing adaptive multivariate approximations, and it works pretty well. Thi
 \end{AMS}
 
 \section{Introduction}
+\label{sec:introduction}
 
-\section{Multivariate partition of unity adaptation}
+\section{Adaptive construction}
+\label{sec:construction}
+
 \label{recurse}
 Here we describe a recursive bisection algorithm that builds an adaptive partition of unity approximation using overlapping domains. Let $\Omega = \{ \vect{x} \in \R^d: \vect{x}_i \in [a_i,b_i]\}$ (i.e. an $n$-dimensional hyperrectangle), and suppose we wish to approximate $f:\Omega \to \R$. We build our overlapping covering by first partitioning $\Omega$ into a set of nonoverlapping hyperrectangles $\{Z_k\}_{k=1}^{M}$, which we refer to as \emph{zones}. The nonoverlapping zones are extended into overlapping domains $\{\Omega_k\}_{k=1}^{M}$ by expanding them by amounts proportional to their dimensional widths. Specifically, suppose $\Omega = \prod_{j=1}^d [a_j,b_j]$ and $Z_k = \prod_{j=1}^d [a_{kj},b_{kj}]$. Choose parameter $t>0$ and let
 \begin{equation}
@@ -103,7 +106,7 @@ Then $\Omega_k = \prod_j [\bar{a}_{kj},\bar{b}_{kj}]$, where
 \end{equation}
 
 
-We assign each overlapping subdomain $\Omega_k$ a $C^\infty$ function $\psi_k(\vect{x}):\Omega_k \to \R$ whose support is $\Omega_k$, constructed as follows. Define
+We assign to each subdomain $\Omega_k$ a $C^\infty$ function $\psi_k(\vect{x}):\Omega_k \to \R$ whose support is $\Omega_k$, constructed as follows. Define
 \begin{align}
   \label{eq:basic-cinf}
   \psi_0(x) = \begin{cases}
@@ -230,9 +233,15 @@ Algorithm~\ref{alg:splitleaves}  describes a recursive adaptation procedure for 
 % This process is recursively  repeated on the leaves until every leaf is determined to be resolved in every dimension. When recursing, we redefine the domains of non-leaf nodes $\nu$ to be the smallest hypercuboid that contains the domains of \child{0}($\nu$) and \child{1}($\nu$). In Algorithm~\ref{alg2} we show formally how we split the leaves. The binary tree representing the approximation is formed with Algorithm~\ref{alg3}, where sample($\nu$,$f(\vect{x})$) samples $f(\vect{x})$ on the Chebyshev tensor product grids at the leaves of $\nu$.
 
 
-\section{Numerical Computation}
+\section{Basic computations with the tree representations}
+\label{sec:operations}
 
-\subsection{approximation}
+The goal of representing a multivariate function $f$ with the approximation tree as described in section~\ref{sec:construction} is to use it as a proxy for $f$ in common numerical operations. In this section we outline efficient algorithms for evaluation of the approximant, basic binary arithmetic operations on functions, differentiation, and integration. 
+
+\subsection{Evaluation}
+Suppose an approximation tree $T$ has been constructed for $f$ on hyperrectangle $\Omega$ as described in section~\ref{sec:construction}. Each leaf node $\nu$ has an associated polynomial \prop{interpolant}{$\nu$} for the function values on its grid. 
+
+
 We can use the tree to quickly evaluate the PU approximation. We have that the PU approximation (\ref{eq:pu-approx}) with the Shepards PU weights can be rearranged to
 \begin{equation}
 s(\vect{x}) = \sum_{k=1}^M \frac{\psi_k(\vect{x}) s_k(\vect{x})}{\sum_{j=1}^{M} \psi_j(\vect{x})} = \frac{1}{\sum_{j=1}^{M} \psi_j(\vect{x})}\sum_{k=1}^{M} \psi_k(\vect{x})s_k(\vect{x}),
