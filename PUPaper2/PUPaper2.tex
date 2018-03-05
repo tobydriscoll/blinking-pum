@@ -30,7 +30,7 @@
 %%%%% custom commands for this paper
 \newcommand{\nmax}{N}
 \newcommand{\bigo}{\mathcal{O}}
-\newcommand{\child}[1]{c\textsubscript{#1}}
+\newcommand{\child}[1]{child\textsubscript{#1}}
 \newcommand{\weight}[1]{w\textsubscript{#1}}
 %%%%%
 
@@ -93,72 +93,48 @@ We are doing adaptive multivariate approximations, and it works pretty well. Thi
 \section{Adaptive construction}
 \label{sec:construction}
 
-\label{recurse}
-Here we describe a recursive bisection algorithm that builds an adaptive partition of unity approximation using overlapping domains. Let $\Omega = \{ \vect{x} \in \R^d: \vect{x}_i \in [a_i,b_i]\}$ (i.e. an $n$-dimensional hyperrectangle), and suppose we wish to approximate $f:\Omega \to \R$. We build our overlapping covering by first partitioning $\Omega$ into a set of nonoverlapping hyperrectangles $\{Z_k\}_{k=1}^{M}$, which we refer to as \emph{zones}. The nonoverlapping zones are extended into overlapping domains $\{\Omega_k\}_{k=1}^{M}$ by expanding them by amounts proportional to their dimensional widths. Specifically, suppose $\Omega = \prod_{j=1}^d [a_j,b_j]$ and $Z_k = \prod_{j=1}^d [a_{kj},b_{kj}]$. Choose parameter $t>0$ and let
+Let $\Omega = \{ \vect{x} \in \R^d: x_i \in [a_i,b_i], i=1,\ldots,d\}$ be a hyperrectangle, and suppose we wish to approximate $f:\Omega \to \R$. Our strategy is to cover $\Omega$ with overlapping subdomains, on each of which $f$ is well-approximated by a multivariate polynomial, and use a partition of unity to construct a global approximation. We defer a description of the partition of unity scheme to section~\ref{sec:operations}. In this section we describe an adaptive procedure for obtaining the overlapping domains. 
+
+The domains are constructed from recursive bisections of $\Omega$ into nonoverlapping hyperrectangular \emph{zones}. Let $t>0$ be a parameter. Given a zone $\prod_{j=1}^d [\alpha_{j},\beta_{j}]$, we extend it to a larger domain $\prod_{j=1}^d [\bar{\alpha}_{j},\bar{\beta}_{j}]$ by fixing a parameter $t>0$, defining
 \begin{equation}
   \label{eq:overlap}
-  \delta_{kj} =  \frac{b_{kj}-a_{kj}}{2}(1+t),\quad j=1,\ldots,d.
+  \delta_{j} =  \frac{\beta_{j}-\alpha_{j}}{2}(1+t),\quad j=1,\ldots,d,
 \end{equation}
-Then $\Omega_k = \prod_j [\bar{a}_{kj},\bar{b}_{kj}]$, where
+and then setting
 \begin{equation}
-  \bar{a}_{kj} = \max(a_k,b_{kj}-\delta_{kj}), \quad \bar{b}_{kj} = \min(a_{kj}+\delta_{kj},b_k).
+  \bar{\alpha}_{j} = \max\{a_j,\beta_{j}-\delta_{j}\}, \quad \bar{\beta}_{j} = \min\{\alpha_{j}+\delta_{j},b_j\}.
   \label{eq:zone_extend}
 \end{equation}
+In words, the zone is extended on all sides by an amount proportional to its width in each dimension, up to the boundary of the global domain $\Omega$. 
 
 
-We assign to each subdomain $\Omega_k$ a $C^\infty$ function $\psi_k(\vect{x}):\Omega_k \to \R$ whose support is $\Omega_k$, constructed as follows. Define
-\begin{align}
-  \label{eq:basic-cinf}
-  \psi_0(x) = \begin{cases}
-    \exp \lp  1 - \frac{1}{1-x^2}\rp & |x| \leq 1, \\
-    0 & |x| > 1,
-  \end{cases}
-\end{align}
-and let
-\begin{equation}
-  \label{eq:affine}
-  \ell(x;a,b) = 2\frac{x-a}{b-a} - 1
-\end{equation}
-be the affine map from $[a,b]$ to $[-1,1]$. Then
-\begin{equation}
-  \label{eq:bump-functions}
-  \psi_k(\vect{x}) = \prod_{j=1}^d \psi_0\bigl( \ell(x_j;\bar{a}_{kj},\bar{b}_{kj}) \bigr).
-\end{equation}
-From these we use Shepard's method~\cite{wendland2004scattered} to define a partition of unity $\{w_k (\vect{x})\}$:
-\begin{equation}
-  w_k(\vect{x}) = \frac{\psi_k(\vect{x})}{\sum_{m=1}^M \psi_m(\vect{x})}.
-\end{equation}
-If each domain $\Omega_k$ has an approximant $s_k(\vect{x})$, the global partition of unity approximation is
-\begin{equation}
-  s(\vect{x}) = \sum_{k=1}^M w_k(\vect{x})s_k(\vect{x}).
-  \label{eq:pu-approx}	
-\end{equation}
-
-The zones $Z_k$ are chosen to adapt to a particular function through an approach that recursively bisects a zone by a hyperplane whose normal dimension cycles through 1 to $d$ (similar to a $k$d-tree). We define a binary tree $T$ with each node $\nu$ having the following properties:
+We define a binary tree $T$ with each node $\nu$ having the following properties:
 \begin{itemize}
-\item \prop{zone}{$\nu$}: zone associated with $\nu$ (i.e., some $Z_k$)
-\item \textsf{domain}($\nu$): domain associated with $\nu$ (i.e., some $\Omega_k$)
+\item \prop{zone}{$\nu$}: zone associated with $\nu$
+\item \textsf{domain}($\nu$): domain associated with $\nu$
 \item \textsf{isdone}($\nu$): $n$-vector of boolean values, where $\textsf{isdone}_j$ indicates whether the domain is determined to be sufficiently resolved in the $j$th dimension
-\item \textsf{left}($\nu$),\textsf{right}($\nu$): left and right subtrees (children) of $\nu$ (empty for a leaf)
+\item \child{0}($\nu$),\child{1}($\nu$): left and right subtrees of $\nu$ (empty for a leaf)
 \item \textsf{splitdim}($\nu$): the dimension in which $\nu$ is split (empty for a leaf)
 \end{itemize}
 
 \noindent A leaf node has the following additional properties:
 \begin{itemize}
-\item \textsf{grid}($\nu$): tensor-product grid of Chebyshev 2nd-kind points mapped to 
+\item \textsf{grid}($\nu$): tensor-product grid of Chebyshev 2nd-kind points mapped to \prop{domain}{$\nu$}
 \item \textsf{values}($\nu$): function values at \textsf{grid}($\nu$)
 \item \textsf{interpolant}($\nu$): polynomial interpolant of \textsf{values}($\nu$) on \textsf{grid}($\nu$)
 \end{itemize}
 
-Let $f$ be a scalar-valued function on $\Omega$ that we wish to approximate. A key task is to compute, for a given leaf node $\nu$, the polynomial \textsf{interpolant}($\nu$), and determine whether $f$ is sufficiently well approximated on \textsf{domain}($\nu$) by it. First we sample $f$ at a Chebyshev grid of size $\nmax^d$ on \textsf{domain}($\nu$). This leads to the interpolating polynomial
+\noindent If $\nu$ is a leaf, its domain is constructed by extending \prop{zone}{$\nu$} as in~(\ref{eq:zone_extend}). Otherwise, \prop{domain}{$\nu$} is the smallest hyperrectangle containing the domains of its children. 
+
+Let $f$ be the scalar-valued function on $\Omega$ that we wish to approximate. A key task is to compute, for a given leaf node $\nu$, the polynomial \textsf{interpolant}($\nu$), and determine whether $f$ is sufficiently well approximated on \textsf{domain}($\nu$) by it. First we sample $f$ at a Chebyshev grid of size $\nmax^d$ on \textsf{domain}($\nu$). This leads to the interpolating polynomial
 \begin{equation}
   \label{eq:full-interp}
   \tilde{p}(\vect{x}) = \sum_{i_1=0}^{\nmax-1} \cdots \sum_{i_d=0}^{\nmax-1}  C_{i_1,\ldots,i_d} T_{i_1}(x_1)\cdots T_{i_d}(x_d),
 \end{equation}
-where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\bigo(\nmax^d \log \nmax)$ time~\cite{??}. Following the practice of Chebfun3t \cite{hashemi2017chebfun}, for each $j=1,\ldots,d$, we define a scalar sequence $\gamma^{(j)}$ by summing $|C_{i_1,\ldots,i_d}|$ over all dimensions except the $j$th. To each of these sequences we apply Chebfun's {\tt StandardChop}  algorithm, which attempts to measure decay in the coefficients in a suitably robust sense~\cite{Aurentz:2017:CCS:3034774.2998442}. Let the output of {\tt StandardChop} for sequence $\gamma^{(j)}$ be $n_j$; this is the degree that {\tt StandardChop} deems to be sufficient for resolution at a user-set tolerance.  If $n_j<\nmax$ we say that the function is resolved in dimension $j$ on $\nu$. If $f$ is resolved in all dimensions on $\nu$, then we truncate the interpolant sums in~(\ref{eq:full-interp}) at the degrees $n_j$ and store the samples of $f$ on the corresponding smaller tensor-product grid. (Does this resampling actually take place??)
+where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\bigo(\nmax^d \log \nmax)$ time~\cite{??}. Following the practice of Chebfun3t \cite{hashemi2017chebfun}, for each $j=1,\ldots,d$, we define a scalar sequence $\gamma^{(j)}$ by summing $|C_{i_1,\ldots,i_d}|$ over all dimensions except the $j$th. To each of these sequences we apply Chebfun's {\tt StandardChop}  algorithm, which attempts to measure decay in the coefficients in a suitably robust sense~\cite{Aurentz:2017:CCS:3034774.2998442}. Let the output of {\tt StandardChop} for sequence $\gamma^{(j)}$ be $n_j$; this is the degree that {\tt StandardChop} deems to be sufficient for resolution at a user-set tolerance.  If $n_j<\nmax$ we say that the function is resolved in dimension $j$ on $\nu$. If $f$ is resolved in all dimensions on $\nu$, then we truncate the interpolant sums in~(\ref{eq:full-interp}) at the degrees $n_j$ and store the samples of $f$ on the corresponding smaller tensor-product grid. 
 
 \begin{algorithm}
-\caption{splitleaves($\nu$,$\nmax$,$t$)}
+\caption{splitleaves($\nu$,$f$,$\nmax$,$t$)}
 \label{alg:splitleaves}
 \begin{algorithmic}
   \IF{$\nu$ is a leaf}
@@ -177,9 +153,8 @@ where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\b
       \STATE splitleaves($\nu$,$\nmax$,$t$)
     \ENDIF
   \ELSE
-    \STATE splitleaves(\textsf{left}($\nu$),$\nmax$,$t$)      
-    \STATE splitleaves(\textsf{right}($\nu$),$\nmax$,$t$)
-    \STATE \textsf{domain}($\nu$):=smallest hyperrectangle containing domains of \textsf{left}($\nu$) and \textsf{right}($\nu$)
+    \STATE splitleaves(\child{0}($\nu$),$\nmax$,$t$)      
+    \STATE splitleaves(\child{1}($\nu$),$\nmax$,$t$)
   \ENDIF
 \end{algorithmic}
 \end{algorithm}
@@ -198,13 +173,13 @@ Algorithm~\ref{alg:splitleaves}  describes a recursive adaptation procedure for 
 \STATE Let \textsf{zone}($\nu_0$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [a_{j},m] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
 \STATE Let \textsf{zone}($\nu_1$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [m,b_{j}] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
 \FOR{$k=0,1$}
-\STATE Define \textsf{domain}($\nu_k$) from \textsf{zone}($\nu_k$) with parameter $t$ as in (\ref{eq:zone_extend})
+\STATE Define \textsf{domain}($\nu_k$) from \textsf{zone}($\nu_k$) with parameter $t$ as in~(\ref{eq:zone_extend})
 \STATE Define \textsf{grid}($\nu_k$) as Chebyshev tensor-product grid of size $\nmax^d$ in \textsf{domain}($\nu_k$)
 \STATE Let \textsf{isdone}($\nu_k$):= \textsf{isdone}($\nu$)
 \ENDFOR
 \ELSE
-\STATE split(\textsf{left}($\nu$),$k$,$t$)
-\STATE split(\textsf{right}($\nu$),$k$,$t$)
+\STATE split(\child{0}($\nu$),$k$,$t$)
+\STATE split(\child{1}($\nu$),$k$,$t$)
 \ENDIF
 \end{algorithmic}
 \end{algorithm}
@@ -233,40 +208,66 @@ Algorithm~\ref{alg:splitleaves}  describes a recursive adaptation procedure for 
 % This process is recursively  repeated on the leaves until every leaf is determined to be resolved in every dimension. When recursing, we redefine the domains of non-leaf nodes $\nu$ to be the smallest hypercuboid that contains the domains of \child{0}($\nu$) and \child{1}($\nu$). In Algorithm~\ref{alg2} we show formally how we split the leaves. The binary tree representing the approximation is formed with Algorithm~\ref{alg3}, where sample($\nu$,$f(\vect{x})$) samples $f(\vect{x})$ on the Chebyshev tensor product grids at the leaves of $\nu$.
 
 
-\section{Basic computations with the tree representations}
+\section{Computations with the tree representation}
 \label{sec:operations}
 
-The goal of representing a multivariate function $f$ with the approximation tree as described in section~\ref{sec:construction} is to use it as a proxy for $f$ in common numerical operations. In this section we outline efficient algorithms for evaluation of the approximant, basic binary arithmetic operations on functions, differentiation, and integration. 
+The procedure of the preceding section constructs a binary tree $T$ whose leaves each hold an accurate representation of $f$ over a subdomain. These subdomains overlap, and constructing a global partition of unity approximation from them is straightforward.
+
+Define the $C^\infty$ function
+\begin{align}
+  \label{eq:basic-cinf}
+  \psi_0(x) = \begin{cases}
+    \exp \lp  1 - \frac{1}{1-x^2}\rp & |x| \leq 1, \\
+    0 & |x| > 1,
+  \end{cases}
+\end{align}
+and let
+\begin{equation}
+  \label{eq:affine}
+  \ell(x;a,b) = 2\frac{x-a}{b-a} - 1
+\end{equation}
+be the affine map from $[a,b]$ to $[-1,1]$. Suppose $\nu$ is a leaf of $T$ with domain $\Omega_\nu = \prod [\bar{\alpha}_j,\bar{\beta}_j]$. Then we can define the smoothed-indicator or bump function
+\begin{equation}
+  \label{eq:bump-functions}
+  \psi_\nu(\vect{x}) = \prod_{j=1}^d \psi_0\bigl( \ell(x_j;\bar{\alpha}_{j},\bar{\beta}_{j}) \bigr).
+\end{equation}
+Next we use Shepard's method~\cite{wendland2004scattered} to define a partition of unity $\{w_\nu (\vect{x})\}$, indexed by the leaves of $T$:
+\begin{equation}
+  \label{eq:pu-weight}
+  w_\nu(\vect{x}) = \frac{\psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(T)} \psi_\mu(\vect{x})}.
+\end{equation}
+Let $s_\nu$ be the polynomial interpolant of $f$ over the domain of node $\nu$. Then the global approximant is
+\begin{equation}
+  s(\vect{x}) = \sum_{\nu\in \text{leaves}(T)} w_\nu(\vect{x})s_\nu(\vect{x}).
+  \label{eq:pu-approx}	
+\end{equation}
+
+Next we describe efficient algorithms using the tree representation of the global approximant to perform common numerical operations such as evaluation at points, basic binary arithmetic operations on functions, differentiation, and integration.
 
 \subsection{Evaluation}
-Suppose an approximation tree $T$ has been constructed for $f$ on hyperrectangle $\Omega$ as described in section~\ref{sec:construction}. Each leaf node $\nu$ has an associated polynomial \prop{interpolant}{$\nu$} for the function values on its grid. 
 
-
-We can use the tree to quickly evaluate the PU approximation. We have that the PU approximation (\ref{eq:pu-approx}) with the Shepards PU weights can be rearranged to
+Note that (\ref{eq:pu-weight})--~(\ref{eq:pu-approx}) can be rearranged into
 \begin{equation}
-s(\vect{x}) = \sum_{k=1}^M \frac{\psi_k(\vect{x}) s_k(\vect{x})}{\sum_{j=1}^{M} \psi_j(\vect{x})} = \frac{1}{\sum_{j=1}^{M} \psi_j(\vect{x})}\sum_{k=1}^{M} \psi_k(\vect{x})s_k(\vect{x}),
-\label{new_eq}
+  s(\vect{x}) = \sum_{\nu\in \text{leaves}(T)} \frac{s_\nu(\vect{x}) \psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(T)} \psi_\mu(\vect{x})}
+  = \frac{\displaystyle\sum_{\nu\in \text{leaves}(T)} s_\nu(\vect{x}) \psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(T)} \psi_\mu(\vect{x})}.
+  \label{eq:pu-alt}
 \end{equation}
-where $s_k(\vect{x})$ and $\psi_{k}(\vect{x})$ are the approximation and bump function for the $k$th leaf from a tree $T$ produced by Algorithm~\ref{alg3}. To evaluate at a point $\vect{x}$, we need to:
-\begin{enumerate}
-\item Determine which patches $\vect{x}$ belongs to.
-\item Calculate $\sum_{j=1}^{M} \psi_j(\vect{x})$ and $\sum_{k=1}^M \psi_k(\vect{x}) s_k(\vect{x})$.
-\item Use $\sum_{j=1}^{M} \psi_j(\vect{x})$ and $\sum_{k=1}^M \psi_k(\vect{x}) s_k(\vect{x})$ to evaluate $s(\vect{x})$.
-\end{enumerate}
-We can use $T$ to quickly determine which patches $\vect{x}$ belongs to and recursively calculate $\sum_{j=1}^{M} \psi_j(\vect{x})$ and $\sum_{k=1}^M \psi_k(\vect{x}) s_k(\vect{x})$ from which we can determine $s(\vect{x})$, as seen in Algorithms~\ref{alg4}-\ref{alg5}; this makes determining how patches neighbor with each other unnecessary. This recursive algorithm is similar to that in \cite{tobor2006reconstructing}. These algorithms can easily be vectorized to evaluate $s(\vect{x})$ at a set of points. 
+This formula suggests a recursive approach to evaluating the numerator and denominator, presented in Algorithm~\ref{alg:numden}. Using it, only leaves containing $\vect{x}$ and their ancestors are ever visited. A similar approach was described in~\cite{tobor2006reconstructing}.
 
-\begin{algorithm}[h!]
-\caption{[$S$,$P$]=evaluateSumProd($\nu$,$\vect{x}$)}
-\label{alg4}
+These algorithms can easily be vectorized to evaluate $s(\vect{x})$ at a set of points. (How is it easy?? And what is special about the case of evaluating on a grid??)
+
+\begin{algorithm}
+\caption{[$S$,$P$]=numden($\nu$,$\vect{x}$)}
+\label{alg:numden}
 \begin{algorithmic}
 \STATE $S=0$, $P=0$
 \IF{$\nu$ is a leaf}
-\STATE $S=\text{bump}(\nu)(\vect{x})$
+\STATE $S=\psi_\nu(\vect{x})$
 \STATE $P = S \cdot \text{interpolant}(\nu)(\vect{x})$
 \ELSE
 \FOR{$k=0,1$}
 \IF{$\vect{x} \in \text{\textsf{domain}(\child{k}}(\nu))$}
-\STATE $[S_k,P_k]$ = evaluateSumProd(\child{k}($\nu$),$\vect{x}$) 
+\STATE $[S_k,P_k]$ = numden(\child{k}($\nu$),$\vect{x}$) 
 \STATE $S = S + S_k$
 \STATE $P = P + P_k$
 \ENDIF
@@ -275,18 +276,14 @@ We can use $T$ to quickly determine which patches $\vect{x}$ belongs to and recu
 \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[h!]
-\caption{[$F$]=evaluate($\nu$,$\vect{x}$)}
-\label{alg5}
-\begin{algorithmic}
-\STATE $[S,P]$=evaluateSumProd($\nu$,$\vect{x}$).
-\STATE $F = P/S$.
-\end{algorithmic}
-\end{algorithm}
 
-\subsection{addition, subtraction, multiplication and division}
+\subsection{Binary arithmetic operations}
 
-Suppose we have two PU approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $T_1$ and $T_2$ respectively. The simplest approach to building a PU approximation of $sum(\vect{x})=\hat{s}_1(\vect{x})+\hat{s}_2(\vect{x})$ is to add patch by patch if $T_1$ and $T_2$ share the same leaves, or use Algorithm~\ref{alg3} with $sum(\vect{x})$ otherwise. The cost of sampling $sum(\vect{x})$ can be expensive though; to evaluate an $n^{d}$ grid with a $d$-dimensional Chebyshev interpolant of max degree $n$ requires $O(n^{d+1})$ computations (while taking advantage of the grid structure). Thus by predetermining the needed splitting to approximate $sum(\vect{x})$, we can greatly reduce the cost of the numerical addition. As an example we build approximations for
+Suppose we have two approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $T_1$ and $T_2$ respectively, and we want to construct a tree approximation for $\hat{s}_1 \circ \hat{s}_2$, where $\circ$ is one of the operators $+$, $-$, $\times$, or $\div$. If $T_1$ and $T_2$ have identical tree structures, then we simply operate leafwise on the polynomial approximations. Failing this, we are free to use the algorithms of section~\ref{sec:construction} to construct an approximation by sampling values of $\hat{s}_1 \circ \hat{s}_2$. 
+
+
+
+The simplest approach to building an approximation of $sum(\vect{x})=\hat{s}_1(\vect{x})+\hat{s}_2(\vect{x})$ is to add patch by patch if $T_1$ and $T_2$ share the same leaves, or use Algorithm~\ref{alg3} with $sum(\vect{x})$ otherwise. The cost of sampling $sum(\vect{x})$ can be expensive though; to evaluate an $n^{d}$ grid with a $d$-dimensional Chebyshev interpolant of max degree $n$ requires $O(n^{d+1})$ computations (while taking advantage of the grid structure). Thus by predetermining the needed splitting to approximate $sum(\vect{x})$, we can greatly reduce the cost of the numerical addition. As an example we build approximations for
 \begin{equation}
 f_1(x,y) = \arctan(100(x^2+y)), \quad f_2(x,y) = \arctan(100(x+y^2)),
 \end{equation}
@@ -745,7 +742,7 @@ where with $T_1$ and $T_2$ we have $nextsplit=\text{\textsf{splitdim}($T_1$)}$. 
 %\end{equation}
 %where $f(x,y),b(x,y)$ are chosen so that 
 %\begin{equation}
-%u(x,y) = \arctan \\textsf{left}(100 \lp \sqrt{(x+1)^2+(y+1)^2}-1 \rp \right)
+%u(x,y) = \arctan \\prop{child$_0$}(100 \lp \sqrt{(x+1)^2+(y+1)^2}-1 \rp \right)
 %\label{boundary_layer_sol_2}
 %\end{equation}
 %and the solution has a wave front \cite{mitchell2013collection}. The PDE was solved using Algorithm~\ref{alg8} with parameters $t=0.1$, $tol=10^{-8}$ and $\nmax=33$. Our method took 205 second to adapt, and had a max absolute error of $1.6 \times 10^{-8}$. The number of GMRES iterations needed during the domain adaptation is shown in Figure 7.
@@ -780,7 +777,7 @@ where with $T_1$ and $T_2$ we have $nextsplit=\text{\textsf{splitdim}($T_1$)}$. 
 %\end{equation}
 %where $f(x,y),b(x,y)$ are chosen so that 
 %\begin{equation}
-%u(x,y) = \\textsf{left}(1-e^{\frac{x-1}{\epsilon }}\right) \\textsf{left}(1-e^{\frac{y-1}{\epsilon }}\right) \cos (\pi  (x+y)).
+%u(x,y) = \\prop{child$_0$}(1-e^{\frac{x-1}{\epsilon }}\right) \\prop{child$_0$}(1-e^{\frac{y-1}{\epsilon }}\right) \cos (\pi  (x+y)).
 %\label{boundary_layer_sol}
 %\end{equation}
 %This solution has boundary layers at $x=1,y=1$ when $\varepsilon \ll 1$. We use Algorithm~\ref{alg8} to solve (\ref{peterbed_bvp}) with $\varepsilon=5\times10^{-3}$, $t=0.1$, $tol=10^{-8}$ and $\nmax=33$. The solution and subsequent domains are plotted in Figure~\ref{bound_plot_1}. Our method took 74 seconds to solve the BVP, with a max error of $3.12\times 10^{-8}$ as sampled on a $100 \times 100$ grid. As this problem is convection-dominated, the preconditioner is only moderately effective, but the number of GMRES iterations levels off as the number of subdomains increases, as seen in Figure 5. The number of GMRES iterations per adaptive step can be seen in Figure~\ref{bound_gmres_it}.
