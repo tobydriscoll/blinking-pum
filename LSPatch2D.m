@@ -10,7 +10,7 @@ classdef LSPatch2D<LeafPatch
  
 % LSPatch2D(varargin) constructs a tensor product approximation
 % representing a function, based on the options passed into with varargin; 
-% that is PUFun(f,'perf1',perf1,'pref2',pref2,..) is called. This 
+% that is PUFun('perf1',perf1,'pref2',pref2,..) is called. This 
 % preferences that can be set are:
 % 
 % The max lengths of the patches before sampling is to occur:
@@ -124,7 +124,7 @@ classdef LSPatch2D<LeafPatch
                            obj.degs_in = zeros(1,obj.dim);
                            obj.deg_in(:) = args{2};
                        else
-                           obj.degs_in = args{2};
+                           obj.deg_in = args{2};
                        end
                    elseif strcmpi(args{1}, 'canSplit')
                        obj.split_flag = args{2};
