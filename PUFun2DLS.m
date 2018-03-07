@@ -62,7 +62,13 @@ classdef PUFun2DLS < handle
                 obj.cheb_deg_in = varagin.cheb_deg_in;
                 obj.tol = varagin.tol;
                 
-                obj.ChebRoot = LSPatch2D('domain',obj.domain_in,'boundingbox',obj.domain,'degreeIndex',obj.deg_in,'ChebDegreeIndex',obj.cheb_deg_in,'tol',obj.tol);
+                dim = nargin(f);
+                
+                if(dim==2)
+                    obj.ChebRoot = LSPatch2D('domain',obj.domain_in,'boundingbox',obj.domain,'degreeIndex',obj.deg_in,'ChebDegreeIndex',obj.cheb_deg_in,'tol',obj.tol);
+                else
+                    obj.ChebRoot = LSPatch3D('domain',obj.domain_in,'boundingbox',obj.domain,'degreeIndex',obj.deg_in,'ChebDegreeIndex',obj.cheb_deg_in,'tol',obj.tol);
+                end
                 
             else
                 if length(varargin)==3

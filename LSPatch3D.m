@@ -1,4 +1,4 @@
-classdef LSPatch2D < LSPatch
+classdef LSPatch3D < LSPatch
 % LSPatch2D PUFun class for representing n-d functions on non-square domains.
 %
 % This class represents a single tensor product polynomial, where the
@@ -64,11 +64,9 @@ classdef LSPatch2D < LSPatch
         swap_deg_in
     end
     
-
-    
     methods
        % function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,cheb_deg_in,split_flag,tol,cdeg_in)
-       function obj = LSPatch2D(varargin)
+       function obj = LSPatch3D(varargin)
            
            if length(varargin)==1
                varargin = varargin{:};
@@ -98,7 +96,7 @@ classdef LSPatch2D < LSPatch
         
         function IsGeometricallyRefined = IsLeafGeometricallyRefined(obj)
             
-            lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
+            lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:));diff(obj.domain(3,:))];
             
             is_less_max = lengths<=obj.max_lengths;
             
@@ -129,7 +127,6 @@ classdef LSPatch2D < LSPatch
         end
         
         
-        
         function max_val = sample(obj,f,grid_opt)
             
             if(nargin==2)
@@ -142,7 +139,8 @@ classdef LSPatch2D < LSPatch
                 
                 x = chebpts(obj.degs(1)*2,obj.domain(1,:));
                 y = chebpts(obj.degs(2)*2,obj.domain(2,:));
-
+                z = chebpts(obj.degs(2)*2,obj.domain(3,:));
+                
                 [X,Y] = ndgrid(x,y);
                 
                 XP = [X(:) Y(:)];
@@ -151,14 +149,15 @@ classdef LSPatch2D < LSPatch
                 
                 Mx = clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
                 My = clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
+                Mz = clenshaw(chebpts(obj.degs(3)*2),eye(obj.degs(3)));
                 
-                M = kron(My,Mx);
+                M = kron(Mz,kron(My,Mx));
                 M = M(ind,:);
                 
                 if~ grid_opt
-                    F = f(X(ind),Y(ind));
+                    F = f(X(ind),Y(ind),Z(ind));
                 else
-                    F = f({x,y});
+                    F = f({x,y,z});
                     F = F(ind);
                 end
                 
@@ -168,7 +167,7 @@ classdef LSPatch2D < LSPatch
                 obj.coeffs = reshape(M\F,obj.degs);
                 warning('on','all');
                 
-                E = obj.evalfGrid({x,y});
+                E = obj.evalfGrid({x,y,z});
                 E = E(ind);
                 E = E(:) - F;
                 
