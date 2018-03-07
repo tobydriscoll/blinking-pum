@@ -30,7 +30,7 @@
 %%%%% custom commands for this paper
 \newcommand{\nmax}{N}
 \newcommand{\bigo}{\mathcal{O}}
-\newcommand{\child}[1]{child\textsubscript{#1}}
+\newcommand{\child}[1]{\textsf{child}$_{#1}$}
 \newcommand{\weight}[1]{w\textsubscript{#1}}
 %%%%%
 
@@ -254,8 +254,6 @@ Note that (\ref{eq:pu-weight})--~(\ref{eq:pu-approx}) can be rearranged into
 \end{equation}
 This formula suggests a recursive approach to evaluating the numerator and denominator, presented in Algorithm~\ref{alg:numden}. Using it, only leaves containing $\vect{x}$ and their ancestors are ever visited. A similar approach was described in~\cite{tobor2006reconstructing}.
 
-These algorithms can easily be vectorized to evaluate $s(\vect{x})$ at a set of points. (How is it easy?? And what is special about the case of evaluating on a grid??)
-
 \begin{algorithm}
 \caption{[$S$,$P$]=numden($\nu$,$\vect{x}$)}
 \label{alg:numden}
@@ -276,21 +274,23 @@ These algorithms can easily be vectorized to evaluate $s(\vect{x})$ at a set of 
 \end{algorithmic}
 \end{algorithm}
 
+Algorithm~\ref{alg:numden} can easily be vectorized to evaluate $s(\vect{x})$ at multiple points, by recursively calling each leaf with all values of $\vect{x}$ that lie within its domain. In the particular case when the evaluation is to be done at all points in a Cartesian grid, it is worth noting that the leaf-level interpolant in~(\ref{eq:full-interp}) can be evaluated by a process that yields significant speedup over a naive approach. As a notationally streamlined example, say that the desired values of $\vect{x}$ are $(\xi_{j_1},\ldots,\xi_{j_d})$, where each $j_k$ is drawn from $\{1,\ldots,M\}$, and that the array of polynomial coefficients is of full size $O(N^d)$. Express~(\ref{eq:full-interp}) as
+\begin{multline}
+  \label{eq:grid-eval}
+  \sum_{i_1=0}^{\nmax-1} \cdots \sum_{i_d=0}^{\nmax-1}  C_{i_1,\ldots,i_d} T_{i_1}(\xi_{j_1})\cdots T_{i_d}(\xi_{j_d})
+  \\ = \sum_{i_1=0}^{\nmax-1} T_{i_1}(\xi_{j_1}) \sum_{i_2=0}^{\nmax-1} T_{i_2}(\xi_{j_2}) \cdots \sum_{i_d=0}^{\nmax-1}  C_{i_1,\ldots,i_d} T_{i_d}(\xi_{j_d}).
+\end{multline}
+The innermost sum yields $N^{d-1}M$ unique values, each taking $\bigo(N)$ time to compute. At the next level there are $N^{d-2}M^2$ values, and so on, finally leading to the computation of all $M^d$ interpolant values. This takes $\bigo(MN(M+N)^{d-1})$ operations, as opposed to $\bigo(M^dN^d)$ when done naively. 
+
+
 
 \subsection{Binary arithmetic operations}
 
-Suppose we have two approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $T_1$ and $T_2$ respectively, and we want to construct a tree approximation for $\hat{s}_1 \circ \hat{s}_2$, where $\circ$ is one of the operators $+$, $-$, $\times$, or $\div$. If $T_1$ and $T_2$ have identical tree structures, then we simply operate leafwise on the polynomial approximations. Failing this, we are free to use the algorithms of section~\ref{sec:construction} to construct an approximation by sampling values of $\hat{s}_1 \circ \hat{s}_2$. 
+Suppose we have two approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $T_1$ and $T_2$ respectively, and we want to construct a tree approximation for $\hat{s}_1 \circ \hat{s}_2$, where $\circ$ is one of the operators $+$, $-$, $\times$, or $\div$. If $T_1$ and $T_2$ have identical tree structures, then we simply operate leafwise on the polynomial approximations. Otherwise, we are free to use the algorithms of section~\ref{sec:construction} to construct an approximation by sampling values of $\hat{s}_1 \circ \hat{s}_2$.
 
+However, the tree of $\hat{s}_1 \circ \hat{s}_2$ likely shares refinement structure with both $T_1$ and $T_2$. For example, Figure~\ref{zone_tan} shows the refined zones of the trees for $\arctan(100(x^2+y))$, $\arctan(100(x+y^2))$, and their sum. Thus in practice we merge the trees $T_1$ and $T_2$ using Algorithm~\ref{alg:merge}, shown in Appendix~\ref{sec:merge}. The merged tree, which is constructed to have function values on the leaf nodes, may be adaptively refined further using Algorithm~\ref{alg:split}, if necessary.
 
-
-The simplest approach to building an approximation of $sum(\vect{x})=\hat{s}_1(\vect{x})+\hat{s}_2(\vect{x})$ is to add patch by patch if $T_1$ and $T_2$ share the same leaves, or use Algorithm~\ref{alg3} with $sum(\vect{x})$ otherwise. The cost of sampling $sum(\vect{x})$ can be expensive though; to evaluate an $n^{d}$ grid with a $d$-dimensional Chebyshev interpolant of max degree $n$ requires $O(n^{d+1})$ computations (while taking advantage of the grid structure). Thus by predetermining the needed splitting to approximate $sum(\vect{x})$, we can greatly reduce the cost of the numerical addition. As an example we build approximations for
-\begin{equation}
-f_1(x,y) = \arctan(100(x^2+y)), \quad f_2(x,y) = \arctan(100(x+y^2)),
-\end{equation}
-as well as $f_1(x,y)+f_2(x,y)$. It can readily be observed that the splitting of $f_1(x,y)+f_2(x,y)$ is a merging of that of $f_1(x,y)$ and $f_2(x,y)$. Algorithm~\ref{addition3} adds the approximations by first producing a tree $T_{\text{add}}$ with a merged splitting of the different approximations; at the initial call of Algorithm~\ref{addition3}, $T_{\text{add}}$ is a single leaf. Multiplication works similarly, but we sample the product on the full grid at the leaves, and split if necessary using Algorithm~\ref{alg3}. A more in depth explanation of the merging algorithm can be seen in Appendix~\ref{AdditionAlgorithm}.
-
-
-\begin{figure}[!htb]
+\begin{figure}
 \centering
 \subfloat[Zone plot of $f_1(x,y)$]{
 \includegraphics[scale = 0.3]{tan_100_1.eps}
@@ -513,9 +513,9 @@ $\arctan(5(x+y)+z)$ & 4.69e-13 & 89.957 & 0.104 & 110 \\
 
 \begin{appendices}
 
-\section{Addition algorithm}
-\label{AdditionAlgorithm}
-If $T_1$, $T_2$ are trees with 1D splittings, only the first four cases of Algorithm~\ref{addition3} are needed and it is clear that $T_{\text{add}}$ is a tree with a merged splitting of $T_1$ and $T_2$; since we are splitting by bisection, if $T_1$ and $T_2$ have the same zones, so do their children (if both are split). This isn't necessarily true with splittings in higher dimensions though. For instance, suppose $T_1$ and $T_2$ produce zones as seen in Figures~\ref{zone_tan_1}-\ref{zone_tan_2}. Here we have that \textsf{splitdim}($T_1$)=$x$, \textsf{splitdim}($T_2$)=$y$ and that the zones of the children of $T_1$ and $T_2$ are not equal. But we do have that $T_2$ only splits in $y$; this gives us that all leaves of $T_2$ are needed for the sum in \child{1}($T_1$),\child{2}($T_1$). In Algorithm~\ref{addition3} we would split $T_{\text{add}}$ in the $x$-direction, and call add(\child{k}($T_1$),$T_2$,\child{k}($T_{\mbox{add}}$)) for $k=0,1$. Even though \textsf{zone}(\child{k}($T_{\text{add}}$)) does not match \textsf{zone}($T_2$) along the $x$ dimension, it still matches along the $y$-dimension. We can thus inductively argue that this will remain true with future splittings of $T_{\text{add}}$ where \textsf{splitdim}($T_1$) and \textsf{splitdim}($T_2$) differ (if $T_2$ does not split in $y$ at all, neither does its children).
+\section{Merging trees}
+\label{sec:merge}
+If $T_1$, $T_2$ are trees with 1D splittings, only the first four cases of Algorithm~\ref{addition3} are needed and it is clear that $T_{\text{merge}}$ is a tree with a merged splitting of $T_1$ and $T_2$; since we are splitting by bisection, if $T_1$ and $T_2$ have the same zones, so do their children (if both are split). This isn't necessarily true with splittings in higher dimensions though. For instance, suppose $T_1$ and $T_2$ produce zones as seen in Figures~\ref{zone_tan_1}-\ref{zone_tan_2}. Here we have that \textsf{splitdim}($T_1$)=$x$, \textsf{splitdim}($T_2$)=$y$ and that the zones of the children of $T_1$ and $T_2$ are not equal. But we do have that $T_2$ only splits in $y$; this gives us that all leaves of $T_2$ are needed for the sum in \child{1}($T_1$),\child{2}($T_1$). In Algorithm~\ref{addition3} we would split $T_{\text{merge}}$ in the $x$-direction, and call add(\child{k}($T_1$),$T_2$,\child{k}($T_{\mbox{merge}}$)) for $k=0,1$. Even though \textsf{zone}(\child{k}($T_{\text{merge}}$)) does not match \textsf{zone}($T_2$) along the $x$ dimension, it still matches along the $y$-dimension. We can thus inductively argue that this will remain true with future splittings of $T_{\text{merge}}$ where \textsf{splitdim}($T_1$) and \textsf{splitdim}($T_2$) differ (if $T_2$ does not split in $y$ at all, neither does its children).
 
 It is in fact the case that when \textsf{splitdim}($T_1$) and \textsf{splitdim}($T_2$) differ in Algorithm~\ref{addition3}, one tree stops splitting in the splitting dimension of the other as seen in Lemma ~\ref{split_theorem}. This is true for arbitrary dimensions.  A key fact of this proof is that for our trees
 \begin{enumerate}
@@ -524,7 +524,7 @@ It is in fact the case that when \textsf{splitdim}($T_1$) and \textsf{splitdim}(
 \end{enumerate} 
 Thus if we have a tree $T$ where \textsf{splitdim}($T$)=$d_1$ and \textsf{splitdim}(\child{0}($T$))=$d_k$, we then know that $T$ skipped dimensions $d_2,\dots,d_{k-1}$; this means that \child{0}($T$) can not split in these dimensions at all. 
 
-\begin{figure}[!htbp]
+\begin{figure}
 \centering
 \subfloat[]{
 \includegraphics[scale = 0.3]{split_x.eps}
@@ -586,37 +586,31 @@ where with $T_1$ and $T_2$ we have $nextsplit=\text{\textsf{splitdim}($T_1$)}$. 
 %The only case left is where $T_1$ and $T_2$ are not leaves, but \textsf{splitdim}($T_1$) and \textsf{splitdim}($T_2$) differ. Suppose that in this case $nextsplit$=\textsf{splitdim}($T_1$) in Algorithm~\ref{addition3}. We then call add(\child{k}($T_1$),$T_2$,\child{k}($T_{\mbox{add}}$),$nextsplit$). The induction hypothesis holds for \child{k}($T_1$) and \child{k}($T_{\mbox{add}}$) for similar reasons as before. Given that \child{k}($T_{\mbox{add}}$) is changed only in \textsf{splitdim}($T_1$), the induction hypothesis holds for $T_2$ and \child{k}($T_{\mbox{add}}$) for all dimensions except possibly \textsf{splitdim}($T_1$). But by Lemma~\ref{split_theorem}, we have $T_2$ does not split in \textsf{splitdim}($T_1$) so the induction hypothesis holds for $T_2$ and \child{k}($T_{\mbox{add}}$).
 %\end{proof}
 
-
+\newcommand{\op}{\ensuremath{\circ}}
 \begin{algorithm}[!h]
-\caption{add($T_1$,$T_2$,$T_{\mbox{add}}$,$LastSplit$)}
-\label{addition3}
+\caption{merge(\op,$T_1$,$T_2$,$T_{\text{merge}}$)}
+\label{alg:merge}
 \begin{algorithmic}
 \IF{$T_1$ and $T_2$ are leaves}
-\STATE \textsf{interpolant}($T_{\mbox{add}}$)=\textsf{interpolant}($T_1$)+\textsf{interpolant}($T_2$) on \textsf{domain}($T_{\mbox{add}}$).
-\ELSIF{$T_1$ is a leaf while $T_2$ is not}
-\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_2$.overlap)
-\STATE add($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_2$.splitDim)
-\STATE add($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_2$.splitDim)
-\ELSIF{$T_1$ is not a leaf while $T_2$ is}
-\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
-\STATE add(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
-\STATE add(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
-\ELSIF{$T_1$.splitDim=$T_2$.splitDim}
-\STATE split($T_{\mbox{add}}$,$T_1$.splitDim,$T_1$.overlap)
-\STATE add(\child{0}($T_1$),\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$T_1$.splitDim)
-\STATE add(\child{1}($T_1$),\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$T_1$.splitDim)
+\STATE \textsf{values}($T_{\text{merge}}$):= \textsf{values}($T_1$) $\op$ \textsf{values}($T_2$)
+\ELSIF{$T_1$ is a leaf \AND $T_2$ is not a leaf}
+\STATE split($T_{\text{merge}}$,\prop{splitdim}{$T_1$})
+\STATE merge(\op,$T_1$,\child{0}($T_2$),\child{0}($T_{\text{merge}}$),\prop{splitdim}{$T_2$})
+\STATE merge(\op,$T_1$,\child{1}($T_2$),\child{1}($T_{\text{merge}}$),\prop{splitdim}{$T_2$})
+\ELSIF{$T_1$ is not a leaf \AND $T_2$ is a leaf}
+\STATE split($T_{\text{merge}}$,\prop{splitdim}{$T_1$})
+\STATE merge(\child{0}($T_1$),$T_2$,\child{0}($T_{\text{merge}}$),\prop{splitdim}{$T_1$})
+\STATE merge(\child{1}($T_1$),$T_2$,\child{1}($T_{\text{merge}}$),\prop{splitdim}{$T_1$})
 \ELSE
-\STATE $nextsplit=(LastSplit \mod \text{dim($T_1$)}) +1$
-\WHILE{$T_1$.splitDim $\neq nextsplit$ and $T_2$.splitDim $\neq nextsplit$}
-\STATE $nextsplit=(nextsplit \mod \text{dim($T_1$)}) +1$
-\ENDWHILE
-\STATE split($T_{\mbox{add}}$,$nextsplit$,$T_2$.overlap)
-\IF{$T_1$.splitDim=$nextsplit$}
-\STATE add(\child{0}($T_1$),$T_2$,\child{0}($T_{\mbox{add}}$),$nextsplit$)
-\STATE add(\child{1}($T_1$),$T_2$,\child{1}($T_{\mbox{add}}$),$nextsplit$)
+\IF{\prop{splitdim}{$T_1$}=\prop{splitdim}{$T_2$}}
+\STATE split($T_{\text{merge}}$,\prop{splitdim}{$T_1$})
+\STATE merge(\op,\child{0}($T_1$),\child{0}($T_2$),\child{0}($T_{\text{merge}}$),\prop{splitdim}{$T_1$})
+\STATE merge(\op,\child{1}($T_1$),\child{1}($T_2$),\child{1}($T_{\text{merge}}$),\prop{splitdim}{$T_1$})
 \ELSE
-\STATE add($T_1$,\child{0}($T_2$),\child{0}($T_{\mbox{add}}$),$nextsplit$)
-\STATE add($T_1$,\child{1}($T_2$),\child{1}($T_{\mbox{add}}$),$nextsplit$)
+\STATE Renumber if necessary so that \prop{splitdim}{$T_1$} $<$ \prop{splitdim}{$T_2$}
+\STATE split($T_{\text{merge}}$,\prop{splitdim}{$T_1$})
+\STATE merge(\op,\child{0}($T_1$),$T_2$,\child{0}($T_{\text{merge}}$))
+\STATE merge(\op,\child{1}($T_1$),$T_2$,\child{1}($T_{\text{merge}}$))
 \ENDIF
 \ENDIF
 \end{algorithmic}
