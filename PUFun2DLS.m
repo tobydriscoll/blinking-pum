@@ -64,7 +64,7 @@ classdef PUFun2DLS < handle
                 
                 dim = nargin(f);
                 
-                if(dim==2)
+                if dim==2
                     obj.ChebRoot = LSPatch2D('domain',obj.domain_in,'boundingbox',obj.domain,'degreeIndex',obj.deg_in,'ChebDegreeIndex',obj.cheb_deg_in,'tol',obj.tol);
                 else
                     obj.ChebRoot = LSPatch3D('domain',obj.domain_in,'boundingbox',obj.domain,'degreeIndex',obj.deg_in,'ChebDegreeIndex',obj.cheb_deg_in,'tol',obj.tol);
@@ -73,11 +73,20 @@ classdef PUFun2DLS < handle
             else
                 if length(varargin)==3
                     f = varargin{1};
+                    
                     obj.domain_in = varargin{2};
                     obj.domain = varargin{3};
-                    obj.ChebRoot = LSPatch2D('InnerDomain',obj.domain_in,'domain',obj.domain);
+                    
+                    dim = nargin(f);
+                    
+                    if dim==2
+                        obj.ChebRoot = LSPatch2D('InnerDomain',obj.domain_in,'domain',obj.domain);
+                    else
+                        obj.ChebRoot = LSPatch3D('InnerDomain',obj.domain_in,'domain',obj.domain);
+                    end
                 else
                     f = varargin{1};
+                    
                     obj.domain_in = varargin{2};
                     obj.domain = varargin{3};
                     varargin(1:3) = [];
@@ -90,9 +99,17 @@ classdef PUFun2DLS < handle
                         end
                         args(1:2) = [];
                     end
-
+    
+                    
                     varargin = {varargin{:},'InnerDomain',obj.domain_in,'domain',obj.domain};
-                    obj.ChebRoot = LSPatch2D(varargin);
+                    
+                    dim = nargin(f);
+                    
+                    if dim==2
+                        obj.ChebRoot = LSPatch2D(varargin);
+                    else
+                        obj.ChebRoot = LSPatch3D(varargin);
+                    end
                     
                 end
             end

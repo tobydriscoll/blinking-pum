@@ -141,9 +141,9 @@ classdef LSPatch3D < LSPatch
                 y = chebpts(obj.degs(2)*2,obj.domain(2,:));
                 z = chebpts(obj.degs(2)*2,obj.domain(3,:));
                 
-                [X,Y] = ndgrid(x,y);
+                [X,Y,Z] = ndgrid(x,y,z);
                 
-                XP = [X(:) Y(:)];
+                XP = [X(:) Y(:) Z(:)];
                 
                 ind = obj.domain_in.Interior(XP);
                 
@@ -174,6 +174,119 @@ classdef LSPatch3D < LSPatch
                 %This is used to determin the point wise error
                 obj.mid_values_err = max(abs(E(:)));  
                 
+            end
+        end
+        
+                % The method determines will split a child into along
+        % a dimension.
+        %
+        %     Input:
+        %   overlap: overlap intended to be used for the splitting
+        %
+        %    Output:
+        %     Child: the PUPatch with the two new children.
+        function Child = split(obj,split_dim,set_vals)
+            
+            if nargin == 2
+                set_vals = false;
+            end
+            
+            children = cell(1,2);
+            
+            %The width of the overlap
+            delta = 0.5*obj.overlap*diff(obj.zone(split_dim,:));
+            
+            zone0 = obj.zone;
+            zone1 = obj.zone;
+            
+            domain0 = obj.domain;
+            domain1 = obj.domain;
+            
+            m = sum(obj.zone(split_dim,:))/2;
+            
+            zone0(split_dim,:) = [obj.zone(split_dim,1) m];
+            zone1(split_dim,:) = [m obj.zone(split_dim,2)];
+            
+            domain0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
+            domain1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
+            
+            %We first figure out if the the subdomains sit entirely in the domain itself.
+            %In this case, we would just use a standard chebyshev
+            %tensor product approximation.
+            x1 = chebpts(16,domain0(1,:))';
+            y1 = chebpts(16,domain0(2,:))';
+            z1 = chebpts(16,domain0(3,:))';
+            
+            [X1,Y1,Z1] = ndgrid(x1,y1,z1);
+            XP1 = [X1(:),Y1(:) Z1(:)];
+            
+            x2 = chebpts(16,domain1(1,:))';
+            y2 = chebpts(16,domain1(2,:))';
+            z2 = chebpts(16,domain1(3,:))';
+            
+            [X2,Y2,Z2] = ndgrid(x2,y2,z2);
+            
+            XP2 = [X2(:),Y2(:),Z2(:)];
+            
+            struct0 = obj.params;
+            struct0.domain = domain0; struct0.zone = zone0;
+            
+            struct1 = obj.params;
+            struct1.domain = domain1; struct1.zone = zone1;
+            
+            if all(obj.domain_in.Interior(XP1))
+                %The square is in the domain. Set the child to a
+                %standard Chebpatch
+                children{1} = ChebPatch(struct0);
+            else
+                %The square is not in the domain. Set the child to a
+                %least square patch
+                children{1} = LSPatch2D(struct0);
+            end
+            
+            if all(obj.domain_in.Interior(XP2))
+                %The square is in the domain. Set the child to a
+                %standard Chebpatch
+                children{2} = ChebPatch(struct1);
+            else
+                %The square is not in the domain. Set the child to a
+                %least square patch
+                children{2} = LSPatch2D(struct1);
+            end
+            
+            x = chebpts(16,obj.domain(1,:))';
+            y = chebpts(16,obj.domain(2,:))';
+            z = chebpts(16,obj.domain(3,:))';
+            
+            [X,Y,Z] = ndgrid(x,y,z);
+            
+            XP = [X(:),Y(:),Z(:)];
+            
+            ind = obj.domain_in.Interior(XP);
+            
+            XP = XP(ind,:);
+            
+            ind11 = XP(:,split_dim)<=domain0(split_dim,2);
+            ind22 = XP(:,split_dim)>=domain1(split_dim,1);
+            
+            
+            if all(ind11)
+                %The domain sits entirely in the first child
+                Child = children{1};
+                
+            elseif all(ind22)
+                
+                %The domain sits entirely in the second child
+                Child = children{2};
+            else
+                %Return the PUPatch with the new children
+                Child = PUPatch(obj.domain,obj.zone,children,split_dim);
+            end
+            
+            if set_vals
+                for k=1:2
+                    Child.children{k}.sample(obj.evalfGrid(Child.children{k}.leafGrids()));
+                end
             end
         end
     end
