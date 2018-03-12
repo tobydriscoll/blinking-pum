@@ -58,6 +58,8 @@ classdef LSPatch2D < LSPatch
            
     properties
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
+        Tikhonov_param = 1e-5;
+        
     end
     
     properties (Access = protected)
@@ -92,6 +94,8 @@ classdef LSPatch2D < LSPatch
            p_struct.max_lengths = obj.max_lengths;
            p_struct.tol = obj.tol;
            p_struct.cdeg_in = obj.cdeg_in;
+           p_struct.Tikhonov_param = obj.Tikhonov_param;
+           
        end
         
         
@@ -164,8 +168,9 @@ classdef LSPatch2D < LSPatch
                 
                 max_val = max(abs(F));
                 
-                warning('off','all');
-                obj.coeffs = reshape(M\F,obj.degs);
+                M2 = [obj.Tikhonov_param*eye(prod(obj.degs));M];
+                F2 = [zeros(prod(obj.degs),1);F];
+                obj.coeffs = reshape(M2\F2,obj.degs);
                 warning('on','all');
                 
                 E = obj.evalfGrid({x,y});

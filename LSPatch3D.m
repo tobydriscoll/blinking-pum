@@ -14,15 +14,15 @@ classdef LSPatch3D < LSPatch
 % preferences that can be set are:
 % 
 % The max lengths of the patches before sampling is to occur:
-% 'MaxLengths', [d_1 d_2]
+% 'MaxLengths', [d_1 d_2 d_3]
 %
 % *The non square domain: 'InnerDomain', domain object
 %
-% *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d]
+% *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d;e,f]
 %
-% *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d]
+% *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d;e,f]
 %
-% *The domain of the root of the tree: 'outerbox', [a,b;c,d]
+% *The domain of the root of the tree: 'outerbox', [a,b;c,d;e,f]
 %
 % *An array of boolean indicies indicating if the approximation can be
 % split in a given dimension: 'canSplit', [bool_1,bool2]
@@ -30,13 +30,13 @@ classdef LSPatch3D < LSPatch
 % *The tolerance used for refinement: 'tol', 1e-b
 %
 % *The degree indices from the standard degrees in each dimension for non 
-% square domains : 'degreeIndex', [ind_1,ind_2]. 
+% square domains : 'degreeIndex', [ind_1,ind_2 ind_3]. 
 % 
 % *The coarse degree to be used (if applicable) 
-% : 'coarseDegreeIndex', [ind_1,ind_2]. 
+% : 'coarseDegreeIndex', [ind_1,ind_2 ind_3]. 
 % 
 % *The degree indices from the standard degrees in each dimension for
-% square domains : 'ChebDegreeIndex', [ind_1,ind_2]. 
+% square domains : 'ChebDegreeIndex', [ind_1,ind_2 ind_3]. 
 %
 % Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
 % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
@@ -241,7 +241,7 @@ classdef LSPatch3D < LSPatch
             else
                 %The square is not in the domain. Set the child to a
                 %least square patch
-                children{1} = LSPatch2D(struct0);
+                children{1} = LSPatch3D(struct0);
             end
             
             if all(obj.domain_in.Interior(XP2))
@@ -251,7 +251,7 @@ classdef LSPatch3D < LSPatch
             else
                 %The square is not in the domain. Set the child to a
                 %least square patch
-                children{2} = LSPatch2D(struct1);
+                children{2} = LSPatch3D(struct1);
             end
             
             x = chebpts(16,obj.domain(1,:))';
