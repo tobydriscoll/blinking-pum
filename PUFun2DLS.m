@@ -1,35 +1,35 @@
-classdef PUFun2DLS < handle
-% PUFun2DLS PUFun class for representing n-d functions on non-square domains.
-%
-% This class represents smooth multivariate functions on non-square domains
-% with a partition of unity approximation. This class 
-% automatically finds a set of overlapping domains that are adapted to the 
-% features of the function, and the blends locally defined Chebyshev 
-% approximations on the domains with a partition of unity.
-% 
-% PUFun2DLS(f,domain_in,domain_out) constructs a partition of unity 
-% approximation representing f on the non square domain_in, such that
-% domain_in lies in the rectangle domain_out. Functions must be vectorized.
-% 
-% 
-% PUFun2DLS(f,domain_in,domain_out,'perf1',perf1,'pref2',pref2,..) constructs a
-% partition of unity approximation representing f, based on the options 
-% passed into with varargin; that is PUFun(f,'perf1',perf1,'pref2',pref2,..) 
-% is called. This preferences that can be set are:
-% 
-% The max lengths of the patches before sampling is to occur:
-% 'MaxLengths', [d_1 d_2]
-%
-% *The degree indices from the standard degrees in each dimension for non 
-% square domains : 'degreeIndex', [ind_1,ind_2]. 
-% 
-% *The degree indices from the standard degrees in each dimension for
-% square domains : 'ChebDegreeIndex', [ind_1,ind_2]. 
-%
-% Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
-% So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
-% 33 in each direction. 
-
+classdef PUFun2DLS < handle & matlab.mixin.Copyable
+    % PUFun2DLS PUFun class for representing n-d functions on non-square domains.
+    %
+    % This class represents smooth multivariate functions on non-square domains
+    % with a partition of unity approximation. This class
+    % automatically finds a set of overlapping domains that are adapted to the
+    % features of the function, and the blends locally defined Chebyshev
+    % approximations on the domains with a partition of unity.
+    %
+    % PUFun2DLS(f,domain_in,domain_out) constructs a partition of unity
+    % approximation representing f on the non square domain_in, such that
+    % domain_in lies in the rectangle domain_out. Functions must be vectorized.
+    %
+    %
+    % PUFun2DLS(f,domain_in,domain_out,'perf1',perf1,'pref2',pref2,..) constructs a
+    % partition of unity approximation representing f, based on the options
+    % passed into with varargin; that is PUFun(f,'perf1',perf1,'pref2',pref2,..)
+    % is called. This preferences that can be set are:
+    %
+    % The max lengths of the patches before sampling is to occur:
+    % 'MaxLengths', [d_1 d_2]
+    %
+    % *The degree indices from the standard degrees in each dimension for non
+    % square domains : 'degreeIndex', [ind_1,ind_2].
+    %
+    % *The degree indices from the standard degrees in each dimension for
+    % square domains : 'ChebDegreeIndex', [ind_1,ind_2].
+    %
+    % Here the degrees can be chosen from the set [3 5 9 17 33 65 129].
+    % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be
+    % 33 in each direction.
+    
     properties
         ChebRoot
         TreeGrid
@@ -99,7 +99,7 @@ classdef PUFun2DLS < handle
                         end
                         args(1:2) = [];
                     end
-    
+                    
                     
                     varargin = {varargin{:},'InnerDomain',obj.domain_in,'domain',obj.domain};
                     
@@ -115,6 +115,24 @@ classdef PUFun2DLS < handle
             end
             
             refine(obj,f);
+            
+        end
+        
+        % diff_Tree = diff(obj,diff_dim,order)
+        % This method computes thd approximation of the derivative
+        %Input:
+        %Output:
+        %   diff_Tree  : PU approximation of derivative
+        function diff_Tree = diff(obj,diff_dim,order)
+            diff_Tree = copy(obj);
+            
+            for i=1:length(obj.leafArray)
+                if isa(diff_Tree.leafArray{i},'LSPatch')
+                    diff_Tree.leafArray{i}.coeffs = Diff(obj.leafArray{i},diff_dim,order);
+                else
+                    diff_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},diff_dim,order);
+                end
+            end
             
         end
         
@@ -156,4 +174,17 @@ classdef PUFun2DLS < handle
             
         end
     end
+    
+    methods(Access = protected)
+        % Override copyElement method:
+        function cpObj = copyElement(obj)
+            % Make a shallow copy of all properties
+            cpObj = copyElement@matlab.mixin.Copyable(obj);
+            
+            cpObj.ChebRoot = obj.ChebRoot.copy();
+            
+            cpObj.leafArray = cpObj.ChebRoot.collectLeaves();
+        end
+    end
+    
 end

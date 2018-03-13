@@ -5,7 +5,7 @@ fine_degs = [65 65];
 
 B_n = 65;
 
-tau1 = 1e-4;
+tau1 = 1e-5;
 
 Dx = ChebDiff(degs(1));
 Dy = ChebDiff(degs(2));
@@ -75,7 +75,7 @@ b(grid_sq_ind_b,:) = bound(XPf(grid_sq_ind_b,1),XPf(grid_sq_ind_b,2));
 bf = bound(XPf(:,1),XPf(:,2));
 bfdx = fdx(XPf(:,1),XPf(:,2));
 
-A2 = [1e-5*eye(prod(degs));A];
+A2 = [tau1*eye(prod(degs));A];
 b2 = [zeros(prod(degs),1);b];
 tic;
 V = A2\b2;
