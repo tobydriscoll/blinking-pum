@@ -1,32 +1,29 @@
-clear all;
-Nx = 35;
-Ny = 35;
+domain = [-1 1;-1 1];
+in_domain = Disk(2,[0 0]);
+degs = [33 33];
+fine_degs = [65 65];
 
-Nxf = 2*Nx;
-Nyf = 2*Ny;
+B_n = 65;
 
-Dx = diffmat(Nx);
-Dy = diffmat(Ny);
+tau1 = 1e-4;
 
-DX = kron(eye(Ny),Dx);
-DXX = kron(eye(Ny),Dx^2);
-DYY = kron(Dy^2,eye(Nx));
+Dx = ChebDiff(degs(1));
+Dy = ChebDiff(degs(2));
 
-B_n = Nx*Nx;
+DX = kron(eye(degs(2)),Dx);
+DXX = kron(eye(degs(2)),Dx^2);
+DYY = kron(Dy^2,eye(degs(1)));
 
 tol = 1e-14;
 
-x = chebpts(Nx);
-y = chebpts(Ny);
-
+x = chebpts(degs(1));
+y = chebpts(degs(2));
 [X,Y] = ndgrid(x,y);
 
-x_f = chebpts(Nxf)';
-y_f = chebpts(Nyf)';
+x_f = chebpts(fine_degs(1))';
+y_f = chebpts(fine_degs(2))';
 
 [Xf,Yf] = ndgrid(x_f,y_f);
-
-XP = [X(:) Y(:)];
 
 XPf = [Xf(:) Yf(:)];
 
@@ -42,12 +39,11 @@ theta = linspace(pi,3*pi/2,B_n)';
 B = [2*sin(theta)+1 2*cos(theta)+1]; 
 XPf = [XPf;B];
 
-Mx = barymat(XPf(:,1),x);
-My = barymat(XPf(:,2),y);
-
+Mx = clenshaw(XPf(:,1),eye(degs(1)));
+My = clenshaw(XPf(:,2),eye(degs(2)));
 
 %Construct Interp matrix for boundary points
-M = zeros(length(XPf),length(XP));
+M = zeros(length(XPf),prod(degs));
 
 for i=1:length(XPf)
 M(i,:) = kron(My(i,:),Mx(i,:));
@@ -62,7 +58,7 @@ num_in_circ = sum(grid_sq_ind);
 % 1) restricts the points in the grid inside
 %    the domain to there function values
 % 2) enforces values at the boundary
-A = zeros(length(XPf),length(XP));
+A = zeros(length(XPf),prod(degs));
 
 A(grid_sq_ind_in,:) = M(grid_sq_ind_in,:)*(DXX+DYY);
 A(grid_sq_ind_b,:) = M(grid_sq_ind_b,:);
@@ -79,15 +75,21 @@ b(grid_sq_ind_b,:) = bound(XPf(grid_sq_ind_b,1),XPf(grid_sq_ind_b,2));
 bf = bound(XPf(:,1),XPf(:,2));
 bfdx = fdx(XPf(:,1),XPf(:,2));
 
+A2 = [1e-5*eye(prod(degs));A];
+b2 = [zeros(prod(degs),1);b];
 tic;
-V = A\b;
+V = A2\b2;
 toc
+
+% tic;
+% V = A\b;
+% toc
 
 norm(A*V-b,inf)
 norm(M*V-bf,inf)
 norm(M*DX*V-bfdx,inf)
 
-V1 = reshape(V,Nx,Ny);
+V1 = chebfun2.coeffs2vals(reshape(V,degs));
 
 surf(X,Y,V1);
 hold on;
