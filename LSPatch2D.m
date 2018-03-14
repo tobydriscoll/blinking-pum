@@ -128,7 +128,7 @@ classdef LSPatch2D < LSPatch
                 end
                 
             else
-                Chop(obj);
+                %Chop(obj);
                 Child = obj;
                 Child.is_refined = true;
             end
@@ -158,6 +158,13 @@ classdef LSPatch2D < LSPatch
                 
                 ind = obj.domain_in.Interior(XP);
                 
+%                 D_x = ChebDiff(obj.degs(1));
+%                 D_y = ChebDiff(obj.degs(2));
+%                 D_xx = ChebDiff(obj.degs(1))^2;
+%                 D_yy = ChebDiff(obj.degs(2))^2;
+                
+               % Lap = kron(D_yy,eye(obj.degs(1)))+kron(eye(obj.degs(2)),D_xx)+2*kron(D_y,D_x);
+                
                 Mx = clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
                 My = clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
                 
@@ -175,13 +182,15 @@ classdef LSPatch2D < LSPatch
                 
                 obj.LocalMax = max_val;
                 
-%                 M2 = [obj.Tikhonov_param*eye(prod(obj.degs));M];
-%                 F2 = [zeros(prod(obj.degs),1);F];
-%                 obj.coeffs = reshape(M2\F2,obj.degs);
+                %M2 = [obj.Tikhonov_param*Lap;M];
+                %F2 = [zeros(prod(obj.degs),1);F];
+                %warning('off','all');
+                %obj.coeffs = reshape(M2\F2,obj.degs);
+                %warning('on','all');
                 
-                warning('off','all');
-                obj.coeffs = reshape(M\F,obj.degs);
-                warning('on','all');
+                 warning('off','all');
+                 obj.coeffs = reshape(M\F,obj.degs);
+                 warning('on','all');
                 
                 E = obj.evalfGrid({x,y});
                 E = E(ind);

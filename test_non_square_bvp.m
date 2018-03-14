@@ -5,12 +5,13 @@ fine_degs = [65 65];
 
 B_n = 65;
 
-tau1 = 1e-5;
+tau1 = 1e-7;
 
 Dx = ChebDiff(degs(1));
 Dy = ChebDiff(degs(2));
 
 DX = kron(eye(degs(2)),Dx);
+DXY = kron(Dy,Dx);
 DXX = kron(eye(degs(2)),Dx^2);
 DYY = kron(Dy^2,eye(degs(1)));
 
@@ -75,15 +76,19 @@ b(grid_sq_ind_b,:) = bound(XPf(grid_sq_ind_b,1),XPf(grid_sq_ind_b,2));
 bf = bound(XPf(:,1),XPf(:,2));
 bfdx = fdx(XPf(:,1),XPf(:,2));
 
-A2 = [tau1*eye(prod(degs));A];
-b2 = [zeros(prod(degs),1);b];
-tic;
-V = A2\b2;
-toc
+lap = DXX+DYY+2*DXY;
 
+%tikhonov regularization
+% A2 = [tau1*lap;A];
+% b2 = [zeros(prod(degs),1);b];
 % tic;
-% V = A\b;
+% V = A2\b2;
 % toc
+
+%basic solution
+tic;
+V = A\b;
+toc
 
 norm(A*V-b,inf)
 norm(M*V-bf,inf)
