@@ -12,9 +12,9 @@ domain = [-1 1;-1 1];
 
 ang = linspace(0,pi/2,NT);
 
-k = 2.5e1;
+k = 2.5e2;
 
-g2t = @(x,y) atan(k*(x));
+g2t = @(x,y) atan(k*(x+y));
 gt = @(x) g2t(x(:,1),x(:,2));
 
 f2t = @(x,y,t) atan(k*(cos(t)*x+sin(t)*y));

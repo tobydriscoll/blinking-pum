@@ -96,6 +96,7 @@ classdef ChebPatch<LeafPatch
             
             obj.tol = 1e-12;
             obj.deg_in = zeros(obj.dim,1);
+            
             obj.deg_in(:) = 7;
             
             obj.cdeg_in = zeros(obj.dim,1);
@@ -120,7 +121,7 @@ classdef ChebPatch<LeafPatch
                             obj.degs_in = zeros(1,obj.dim);
                             obj.deg_in(:) = args{2};
                         else
-                            obj.degs_in = args{2};
+                            obj.deg_in = args{2};
                         end
                     elseif strcmpi(args{1}, 'canSplit')
                         obj.split_flag = args{2};

@@ -2,8 +2,8 @@ clear;
 
 c = 0.2;
 
-NT = 10;
-NP = 10;
+NT = 20;
+NP = 20;
 
 
 AVT = 1;
@@ -29,19 +29,19 @@ for i=1:NT
     
     for j=1:AVT
         tic;
-        TREE = PUFun(domain,degs,@(x)ft(x,ang_t(i),ang_p(k)),1e-12);
+        TREE = PUchebfun(@(x,y,z)f2t(x,y,z,ang_t(i),ang_p(k)),'domain',domain,'degreeIndex',degs);
         AV(j)=toc;
     end
     
     TIMES1(i,k) = mean(AV);
     
-%     for j=1:AVT
-%         tic;
-%         F = chebfun3(@(x,y,z)f2t(x,y,z,ang_t(i),ang_p(k)));
-%         AV(j)=toc;
-%     end
-%     
-%     TIMES2(i,k) = mean(AV);
+    for j=1:AVT
+        tic;
+        F = chebfun3(@(x,y,z)f2t(x,y,z,ang_t(i),ang_p(k)));
+        AV(j)=toc;
+    end
+    
+    TIMES2(i,k) = mean(AV);
     a=1;
     end
 end
