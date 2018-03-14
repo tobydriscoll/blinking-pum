@@ -20,6 +20,7 @@
 
 
 \newcommand{\prop}[2]{\textsf{#1}(#2)}
+\newcommand{\pp}[2]{\frac{\partial #1}{\partial #2}}
 
 \newcommand{\vect}[1]{\mathbf{#1}}
 \newcommand{\plotwidth}{0.45}
@@ -286,9 +287,9 @@ The innermost sum yields $N^{d-1}M$ unique values, each taking $\bigo(N)$ time t
 
 \subsection{Binary arithmetic operations}
 
-Suppose we have two approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $T_1$ and $T_2$ respectively, and we want to construct a tree approximation for $\hat{s}_1 \circ \hat{s}_2$, where $\circ$ is one of the operators $+$, $-$, $\times$, or $\div$. If $T_1$ and $T_2$ have identical tree structures, then we simply operate leafwise on the polynomial approximations. Otherwise, we are free to use the algorithms of section~\ref{sec:construction} to construct an approximation by sampling values of $\hat{s}_1 \circ \hat{s}_2$.
+Suppose we have two approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $T_1$ and $T_2$ respectively, and we want to construct a tree approximation for $\hat{s}_1 \circ \hat{s}_2$, where $\circ$ is one of the operators $+$, $-$, $\times$, or $\div$. If $T_1$ and $T_2$ have identical tree structures, then it is straightforward to operate leafwise on the polynomial approximations. In the cases of multiplication and division, the resulting tree have to be refined further using Algorithm~\ref{alg:split}, since these operations typically result in polynomials of degree greater than the operands. 
 
-However, the tree of $\hat{s}_1 \circ \hat{s}_2$ likely shares refinement structure with both $T_1$ and $T_2$. For example, Figure~\ref{zone_tan} shows the refined zones of the trees for $\arctan(100(x^2+y))$, $\arctan(100(x+y^2))$, and their sum. Thus in practice we merge the trees $T_1$ and $T_2$ using Algorithm~\ref{alg:merge}, shown in Appendix~\ref{sec:merge}. In the case of multiplication and division, the production of two approximations from leaves may have to be refined further; the max degree of the product of two polynomials $p_1,p_2$ may be greater than the max max degree of $p_1,p_2$. In this case we may adaptively refine further using Algorithm~\ref{alg:split}, if necessary.
+If the trees $T_1$ and $T_2$ are not structurally identical, we are free to use Algorithm~\ref{alg:split} to construct an approximation by sampling values of $\hat{s}_1 \circ \hat{s}_2$. However, the tree of $\hat{s}_1 \circ \hat{s}_2$ likely shares refinement structure with both $T_1$ and $T_2$. For example, Figure~\ref{zone_tan} shows the refined zones of the trees for $\arctan(100(x^2+y))$, $\arctan(100(x+y^2))$, and their sum. Thus in practice we merge the trees $T_1$ and $T_2$ using Algorithm~\ref{alg:merge}, presented in Appendix~\ref{sec:merge}. The merged tree, whose leaves contain sampled values of the result, may then be refined further if chopping tests then reveal that the result is not fully resolved. 
 
 \begin{figure}
 \centering
@@ -310,103 +311,84 @@ However, the tree of $\hat{s}_1 \circ \hat{s}_2$ likely shares refinement struct
 \end{figure}
  
 
+
+
+
 \subsection{Differentiation}
-We compute partial derivatives of a PU approximation $s(\vect{x}) = \sum_{k=1}^m w_k(\vect{x}) s_k(\vect{x})$ patch by patch. For example if each $s_k(\vect{x})$ approximates $f(\vect{x})$, the the PU approximation of $\frac{\partial f(\vect{x})}{\partial x}$ we use is
+
+Differentiation of the global approximant~(\ref{eq:pu-approx}) results in two groups of terms:
 \begin{equation}
-	\frac{\partial f(\vect{x})}{\partial x} \approx \sum_{k=1}^m w_k(\vect{x})\frac{\partial s_k(\vect{x})}{\partial x}.
-	\label{PU_diff} 
+  \pp{}{x_j} s(\vect{x}) = \sum_{\nu\in \text{leaves}(T)} w_\nu(\vect{x}) \pp{}{x_j} s_\nu(\vect{x}) + \sum_{\nu\in \text{leaves}(T)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x}).
+  \label{eq:pu-deriv}	
 \end{equation}
-Here it is important that each $\frac{\partial s_k(\vect{x})}{\partial x}$ approximates $\frac{\partial f(\vect{x})}{\partial x}$ locally since (\ref{PU_diff}) is not the derivative of the PU approximation itself.
+The first sum is a partition of unity approximation of leafwise differentiated interpolants. That is, we simply apply standard spectral differentiation to the data stored in the leaves of $T$.
+
+For the second sum, note that the weight function derivatives are nonzero only at values of $\vect{x}$ that lie in the domains of more than one leaf; elsewhere the weight functions are identically one or zero. If the values of all the leafwise interpolants agree perfectly at such $\vect{x}$, then
+\begin{equation}
+  \label{eq:pu-weight-deriv}
+  \sum_{\nu\in \text{leaves}(T)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x})
+  = s_\nu(\vect{x}) \pp{}{x_j}  \sum_{\nu\in \text{leaves}(T)} w_\nu(\vect{x}) = 0,
+\end{equation}
+since the weights are a partition of unity. Thus this term essentially contributes an amount on the order of the local interpolation accuracy times the gradients of the weights. These are inversely proportional to the overlap widths, which are themselves proportional to the zone widths (see~(\ref{eq:overlap}). At most, then, they contribute an amount that is $\bigo(2^m)$ larger than the original local error on a leaf that is at depth $m$ in the tree. As a practical issue, we are unlikely to be able to cope anyway with a tree of depth great enough to incur a factor as large as two full orders of magnitude---which we would need only to resolve features at a scale much less than 1\% of the original domain width. Hence we feel justified ignoring this contribution. 
+
 
 \subsection{Integration}
-With our method, the simplest approach for integration is to do so along the zones of the patches (that is, the non-overlapping domains). This is because for a set of patches $\{ \nu_k \}_{k=1}^{M}$
+
+The simplest and seemingly most efficient approach to integrating over the domain is to do so piecewise over the nonoverlapping zones,
 \begin{equation}
-\int_{D} f(\vect{x}) d\vect{x} = \sum_{k=1}^{M} \int_{\text{\textsf{zone}($\nu_k$)}} f(\vect{x}) d\vect{x}.
+  \label{eq:integration}
+  \int_{\Omega} f(\vect{x}) d\vect{x} = \sum_{\nu\in \text{leaves}(T)} \int_{\text{\textsf{zone}($\nu$)}} f(\vect{x}) d\vect{x}.
 \end{equation}
-Thus if we have approximations respective approximations $\{ s_k(\vect{x}) \}_{k=1}^{M}$ for the patches, then
-\begin{equation}
-\int_{D} f(\vect{x}) d\vect{x} \approx \sum_{k=1}^{M} \int_{\text{\textsf{zone}($\nu_k$)}} s_k(\vect{x}) d\vect{x}.
-\end{equation}
-For each $s_k(\vect{x})$, we interpolate the approximation to a Chebyshev grid on \textsf{zone}($\nu_k$) and use Clenshaw-Curtis quadrature to approximate the local integrals \cite{mason2002chebyshev}.
-\section{Numerical Experiments}
-\label{numerical_experiments}
+Since the leaf interpolants are defined natively over the overlapping domains, they must be resampled at Chebyshev grids on the zones, after which Clenshaw-Curtis quadrature is applied.
+
+\section{Numerical experiments}
+\label{sec:numerical_experiments}
+
+All the following experiments were performed on a computer with a 2.6 GHz Intel Core i5 processor in version 2017a of MATLAB. Our code, which uses a serial object-oriented recursive implementation of the algorithms, is available for download at ??.
 
 \subsection{2D experiments}
-All our experiments were performed on a computer with a 2.6 GHz Intel core i5 processor in version 2017a of Matlab. We first test the 2D functions $\log(1+(x^2+y^4)/10^{-5})$, $\arctan((x+y^2)/10^{-2})$, $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$, Franke's function \cite{franke1979critical}, and the smooth functions from the Genz family test package \cite{genz1987package}. For each function we record the time of construction, the time to evaluate on a 200x200 grid, and the max error on this grid. 
+
+We first test the 2D functions $\log(1+(x^2+y^4)/10^{-5})$, $\arctan((x+y^2)/10^{-2})$, $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$, Franke's function \cite{franke1979critical}, and the smooth functions from the Genz family test package \cite{genz1987package}. For each function we record the time of construction, the time to evaluate on a 200x200 grid, and the max observed error on this grid. 
+
+Table~\ref{putable} shows the results for the new method. For comparison, Table~\ref{chb2table} shows the results for Chebfun2~\cite{townsend2013extension} using version 5.5.0 of Chebfun. For the low-rank test cases, the methods are comparable, with neither showing a consistent advantage; most importantly, both methods are fast. In the tests of high-rank functions, our method enjoys a clear advantage in both construction and evaluation times. Moreover, the method remains fast enough for interactive computing even as the total number of nodes exceeds 1.6 million.  We present plots of the functions and adaptively generated subdomains for the first three test functions in Figures~\ref{TANFUN1}-\ref{rungeFUN1}.
 
 
-Table~\ref{putable} shows the results for the adaptive PU method. For comparison, Table~\ref{chb2table} shows the results for Chebfun 2 \cite{townsend2013extension}, using version 5.5.0 of Chebfun. For the low-rank test cases, the methods are comparable, with neither showing a consistent advantage; most importantly, both methods are fast. In the tests of high-rank functions, the adaptive PU method enjoys a clear advantage in both construction and evaluation times. Moreover, the method remains fast enough for interactive computing even as the total number of nodes exceeds 1.6 million.  We include plots of the functions and adaptively generated subdomains for the first three test functions in Figures~\ref{TANFUN1}-\ref{rungeFUN1}.
 
-As a simple experiment, we examine how the construction time changes with respect to rotation. We use the function
-\begin{equation}
-f(x,y)=\arctan(250(\cos(t)x+\sin(t)y))
-\label{rotate_func_2D}	
-\end{equation}
-for $t \in [0,\pi/4]$. We plot the results in Figure~\ref{tan_rotate_2D}. As we rotate the interface, we would expect the numerical rank of $f(x,y)$ to increase as $t \to \pi/4$; this is observed in the time increase of the Chebfun2 construction in Figure~\ref{tan_rotate_2D}. The construction for the PU method however remains relatively constant despite the rotation.
-
-We preform a similar experiment, but record the time to add and multiply $\arctan(250x)$ with (\ref{rotate_func_2D}) for $t \in [0,\pi/2]$, the results of which can be seen in Figure~\ref{TAN_ADD_MULT}. We first observe that the time to combine different PU approximations does not heavily depend on how the splittings of the different approximations align (we expect the splittings of $f(x,y)$ and $g(x,y)$ to differ as we rotate $f(x,y)$). We also see that the PU method out preforms except in cases where the sum or product is a low rank approximation itself.
-
-
-\begin{table}[!htb]
+\begin{table}[p]
 
 \begin{tabular}{r|c|c|c|c}
-& error & construct time & interp time & points \\[5pt] \hline
-$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$ & 1.05e-13 & 0.6403 & 0.063 & 110496 \\[5pt]
-$\arctan(\frac{x_1+x_2^2}{10^{-2}})$ & 2.15e-12 & 2.9690 & 0.3138 & 1553816 \\[5pt]
-$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$ & 1.01e-11 & 0.7298 & 0.1087 & 145280 \\[2pt]
-franke & 4.22E-15 & 0.0116 & 0.0045 & 16641 \\[2pt]
-$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 2.65e-14 & 0.0127 & 0.0025 & 1089 \\[5pt]
-$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 5.00e-12 & 0.0555 & 0.016 & 29283 \\[2pt]
-$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 2.27e-12 & 0.0119 & 8.97e-04 & 25 \\[5pt]
-$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 1.65E-14 & 0.0130 & 0.0026 & 2145 \\
+& error & construct time & eval time & points \\[5pt] \hline
+$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$ & 1.05$\times 10^{-13}$ & 0.6403 & 0.063 & 110496 \\[5pt]
+$\arctan(\frac{x_1+x_2^2}{10^{-2}})$ & 2.15$\times 10^{-12}$ & 2.9690 & 0.3138 & 1553816 \\[5pt]
+$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$ & 1.01$\times 10^{-11}$ & 0.7298 & 0.1087 & 145280 \\[2pt]
+franke & 4.22$\times 10^{-15}$ & 0.0116 & 0.0045 & 16641 \\[2pt]
+$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 2.65$\times 10^{-14}$ & 0.0127 & 0.0025 & 1089 \\[5pt]
+$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 5.00$\times 10^{-12}$ & 0.0555 & 0.016 & 29283 \\[2pt]
+$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 2.27$\times 10^{-12}$ & 0.0119 & 8.97$\times 10^{-4}$ & 25 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 1.65$\times 10^{-14}$ & 0.0130 & 0.0026 & 2145 \\
 \end{tabular}
-\caption{Table for our method tested with a 200x200 grid with recorded error, construction time, time to interpolate, and number of interpolation points used for the method. Here the target tolerance is set to $10^{-12}$, and $\nmax=129$. Here $u=[0.75,0.25]$, $a=[5,10]$.}
+\caption{Observed error and wall-clock time for the tree method to construct a tree approximation with target tolerance $10^{-12}$ and $\nmax=129$, and to evaluate it on a 200x200 uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree. Here $u=[0.75,0.25]$, and $a=[5,10]$.}
 \label{putable}
 \end{table}
 
-\begin{figure}[!htb]
-\centering
 
-\includegraphics[scale = 0.5]{tan_rotatate_2D.eps}
-
-\caption{Plot of construction time of $\arctan(250(\cos(t)x+\sin(t)y))$ for $t \in [0,\pi/4]$ for the partition of unity method and Chebfun2.}
-\label{tan_rotate_2D}
-\end{figure}
-
-
-
-
-\begin{figure}[!htbp]
-\centering
-\subfloat[Plot of $\arctan \lp (x+y^2)/0.01 \rp$.]{
-\includegraphics[scale = 0.34]{tan_add2D_1.eps}
-   \label{add_plot_1}
- }
-\subfloat[Plot of subdomains.]{
-\includegraphics[scale = 0.34]{tan_mult2D_1.eps}
-   \label{mult_plot_1}
- }
-\caption{Plot of $\arctan \lp (x+y^2)/0.01 \rp$ and the subdomains formed from the partition of unity method.}
-\label{TAN_ADD_MULT}
-\end{figure}
-
-\begin{table}[!htb]
+\begin{table}[p]
 \begin{tabular}{r|c|c|c|c}
-& obsd error & time & interp time & rank \\[5pt] \hline
-$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$ & 1.14E-06 & 2.2997 & 0.1045 & 30 \\[5pt]
-$\arctan(\frac{x_1+x_2^2}{10^{-2}})$ & 7.09E-12 & 150.2228 & 4.979 & 816 \\[5pt]
-$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$ & 5.44E-15 & 0.0493 & 0.0037 & 1 \\[5pt]
-franke & 1.33E-15 & 0.0198 & 0.0024 & 4 \\[5pt]
-$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 4.47E-14 & 0.0155 & 0.002 & 2 \\[5pt]
-$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 1.59E-12 & 0.0203 & 0.0022 & 1 \\[5pt]
-$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 2.27E-12 & 0.0117 & 0.0021 & 4 \\[5pt]
-$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 4.44E-16 & 0.0149 & 0.0022 & 1 \\[5pt]
-\end{tabular}\caption{Table for Chebfun2 tested with a 200x200 grid with recorded error, construction time, time to interpolate, and numerical rank. Here the target tolerance is set to $10^{-12}$, and $\nmax=129$. Here $u=[0.75,0.25]$, $a=[5,10]$.}	
+& error & time & eval time & rank \\[5pt] \hline
+$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$ & 1.14$\times 10^{-6}$ & 2.2997 & 0.1045 & 30 \\[5pt]
+$\arctan(\frac{x_1+x_2^2}{10^{-2}})$ & 7.09$\times 10^{-12}$ & 150.2228 & 4.979 & 816 \\[5pt]
+$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$ & 5.44$\times 10^{-15}$ & 0.0493 & 0.0037 & 1 \\[5pt]
+franke & 1.33$\times 10^{-15}$ & 0.0198 & 0.0024 & 4 \\[5pt]
+$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 4.47$\times 10^{-14}$ & 0.0155 & 0.002 & 2 \\[5pt]
+$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 1.59$\times 10^{-12}$ & 0.0203 & 0.0022 & 1 \\[5pt]
+$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 2.27$\times 10^{-12}$ & 0.0117 & 0.0021 & 4 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 4.44$\times 10^{-16}$ & 0.0149 & 0.0022 & 1 \\[5pt]
+\end{tabular}
+\caption{Observed error and wall-clock time for Chebfun2 using target tolerance $10^{-12}$ to construct an approximation and evaluate it on a 200x200 uniform grid. Also shown is the computed rank of the function, which greatly affects computation time. tested with a 200x200 grid with recorded error, construction time, time to interpolate, and numerical rank. Here $u=[0.75,0.25]$ and $a=[5,10]$.}	
 \label{chb2table}
 \end{table}
 
-
-\begin{figure}[!htbp]
+\begin{figure}
 \centering
 \subfloat[Plot of $\arctan \lp (x+y^2)/0.01 \rp$.]{
 \includegraphics[scale = 0.34]{tan2Dplot.eps}
@@ -420,21 +402,7 @@ $\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 4.44E-16 & 0.0149 & 0.0022 & 1 \\[5pt]
 \label{TANFUN1}
 \end{figure}
 
-\begin{figure}[!htbp]
-\centering
-\subfloat[Plot of $\log(1+(x^2+y^4)/10^{-5})$.]{
-\includegraphics[scale = 0.34]{log2Dplot.eps}
-   \label{logfunplot}
- }
-\subfloat[Plot of subdomains.]{
-\includegraphics[scale = 0.34]{log2Dsubdomains.eps}
-   \label{logfundomains}
- }
-\caption{Plot of $\log(1+(x^2+y^4)/10^{-5})$ and the subdomains formed from the partition of unity method.}
-\label{logFUN1}
-\end{figure}
-
-\begin{figure}[!htbp]
+\begin{figure}
 \centering
 \subfloat[Plot of $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$.]{
 \includegraphics[scale = 0.34]{runge2Dplot.eps}
@@ -448,17 +416,101 @@ $\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 4.44E-16 & 0.0149 & 0.0022 & 1 \\[5pt]
 \label{rungeFUN1}
 \end{figure}
 
-\subsection{3D experiments} We next test the 3D functions $1/(\cosh(5(x+y+z)))^2$, $\arctan(5(x+y)+z)$ and the smooth functions from the Genz family test package again, but in 3D. We similarly record the construction time, time to evaluate on a $200\times 200 \times 200$ grid and the max error on the grid.
 
-We have the results for the PU method and Chebfun3 \cite{hashemi2017chebfun} in Tables~\ref{putable3D},\ref{chb3table}. We see that Chebfun3 preforms well for low rank functions \footnote{In Chebfun3, functions are approximated in a compressed splice-Tucker decomposition, a variant of a multivariate adaptive cross approximation \cite{bebendorf2011adaptive}. Here the rank refers to the so called tucker rank. }, and out preforms when there are sharp singularities as seen with the Genz function with the Runge singularities. For high rank functions there is an evident advantage in construction times, and evaluation times are comparable. For $\arctan(5(x+y)+z)$ we see a dramatic difference in the construction time; this is because the PU method stops splitting in the $z$-direction early as seen in Figure~\ref{tan_not_z}.
+One important aspect of low-rank approximation is that it is inherently nonisotropic. Consider the 2D ``plane wave bump'' 
+\begin{equation}
+f(x,y)=\arctan(250(\cos(t)x+\sin(t)y))
+\label{rotate_func_2D}	
+\end{equation}
+whose normal makes an angle $t$ with the positive $x$-axis. 
+for. We compare the construction times of our method to Chebfun2 for $t \in [0,\pi/4]$ in Figure~\ref{tan_rotate_2D}. We observe the execution time of Chebfun2 varying over nearly three orders of magnitude. While our method is also responsive to the angle of the wave, the variation in time is about half an order of magnitude, and our codes are faster in all but the rank-one case $t=0$ (for which both methods are fast). 
 
-We preform a rotation experiment with the function
+
+\begin{figure}
+\centering
+\includegraphics[scale = 0.5]{tan_rotatate_2D.eps}
+\caption{Plot of construction time of $\arctan(250(\cos(t)x+\sin(t)y))$ for $t \in [0,\pi/4]$ for the partition of unity method and Chebfun2.}
+\label{tan_rotate_2D}
+\end{figure}
+
+
+Our next experiment is to add and multiply the rank-one function $\arctan(250x)$ to the plane wave in~(\ref{rotate_func_2D}). The construction time results are compared for $t \in [0,\pi/2]$ in Figure~\ref{TAN_ADD_MULT}. Here the dependence of Chebfun2 on the angle is less severe than in the simple construction, though it is still more pronounced than for our method. More importantly, the absolute numbers for addition in particular with Chebfun2 would probably be considered unacceptable for interactive computation, while our method takes one second at most. 
+
+\begin{figure}
+\centering
+\subfloat[Plot of $\arctan \lp (x+y^2)/0.01 \rp$.]{
+\includegraphics[scale = 0.34]{tan_add2D_1.eps}
+   \label{add_plot_1}
+ }
+\subfloat[Plot of subdomains.]{
+\includegraphics[scale = 0.34]{tan_mult2D_1.eps}
+   \label{mult_plot_1}
+ }
+\caption{Plot of $\arctan \lp (x+y^2)/0.01 \rp$ and the overlapping subdomains formed by the leaves of the adaptive tree approximation.}
+\label{TAN_ADD_MULT}
+\end{figure}
+
+
+
+% \begin{figure}
+% \centering
+% \subfloat[Plot of $\log(1+(x^2+y^4)/10^{-5})$.]{
+% \includegraphics[scale = 0.34]{log2Dplot.eps}
+%    \label{logfunplot}
+%  }
+% \subfloat[Plot of subdomains.]{
+% \includegraphics[scale = 0.34]{log2Dsubdomains.eps}
+%    \label{logfundomains}
+%  }
+% \caption{Plot of $\log(1+(x^2+y^4)/10^{-5})$ and the subdomains formed from the partition of unity method.}
+% \label{logFUN1}
+% \end{figure}
+
+
+\subsection{3D experiments}
+
+We next test the 3D functions $1/(\cosh(5(x+y+z)))^2$, $\arctan(5(x+y)+z)$, and 3D versions of the smooth functions from the Genz family test package. We similarly record the construction time, time to evaluate on a $200\times 200 \times 200$ grid and the max error on the grid.
+
+Results for the tree-based method and Chebfun3~\cite{hashemi2017chebfun} are presented in Tables~\ref{putable3D}--\ref{chb3table}. We see that Chebfun3 performs well for low-rank functions,\footnote{In Chebfun3, functions are approximated in a compressed splice-Tucker decomposition, a variant of a multivariate adaptive cross approximation \cite{bebendorf2011adaptive}. Here rank refers to the so-called Tucker rank.}, outperforming the tree-based method in construction time in those cases, with more mixed results for evaluation times. However, the tree-based method is still operating within acceptable interactive speed in these cases. We also note that in case, both methods failed to get close to the targeted accuracy.
+
+For the two higher-rank examples, the story is very different. The tree-based method is able to perform all the tests in under a second, while Chebfun3 requires over 80 seconds to construct these cases. Once Chebfun3 finds the approximation, its evaluation time is also under a second.  
+
+
+\begin{table}[p]
+\begin{tabular}{r|c|c|c|c}
+& error & construct time & eval time & points \\[5pt] \hline
+$\cos(u_1\pi + \sum_{i=1}^3 a_i x_i)$ & 22.71$\times 10^{-14}$ & 0.151 & 0.118 & 275000 \\ [5pt]
+$\prod_{i=1}^3 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 1.52$\times 10^{-5}$ & 7.204 & 1.312 & 10400000 \\[2pt]
+$(1+\sum_{i=1}^3 a_i x_i)^{-3}$ & 4.66$\times 10^{-10}$ & 0.16555 & 0.033 & 125 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 3.11$\times 10^{-15}$ & 0.0818 & 0.078 & 275000  \\[5pt]
+$1/(\cosh(5(x+y+z)))^2$ & 1.14$\times 10^{-14}$ & 0.706 & 0.545 & 2200000 \\
+$\arctan(5(x+y)+z)$ & 7.60$\times 10^{-13}$ & 0.7512 & 0.030 & 549153 \\
+\end{tabular}
+\caption{Observed error and wall-clock time for the tree method to construct a tree approximation with target tolerance $10^{-12}$ and $\nmax=65$, and to evaluate it on a 200$^3$ uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree. Here $u=[0.75,0.25,-0.75]$ and $a=[25,25,25]$.}
+\label{putable3D}
+\end{table}
+
+\begin{table}[p]
+\begin{tabular}{r|c|c|c|c}
+& error & construct time & eval time & rank \\[5pt] \hline
+$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 2.16$\times 10^{-14}$ & 0.061 & 0.150 & 2  \\[5pt]
+$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 5.66$\times 10^{-7}$ & 0.057 & 0.137 & 1 \\[5pt]
+$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 4.07$\times 10^{-10}$ & 0.038 & 0.143 & 4 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 7.77$\times 10^{-16}$ & 0.047 & 0.144 & 1 \\[5pt]
+$1/(\cosh(5(x+y+z)))^2$ & 3.69$\times 10^{-13}$ & 80.666 & 0.398 & 93 \\
+$\arctan(5(x+y)+z)$ & 4.69$\times 10^{-13}$ & 89.957 & 0.104 & 110 \\
+\end{tabular}
+\caption{Observed error and wall-clock time for Chebfun3 using default settings to construct an approximation and evaluate it on a 200$^3$ uniform grid. Also shown is the computed rank of the function. Here $u=[0.75,0.25,-0.75]$ and $a=[25,25,25]$.}	
+\label{chb3table}
+\end{table}
+
+We repeat our experiment testing the importance of axes alignment using the function
 \begin{equation}
 \arctan(5(\sin(p)\cos(t)x+\sin(p)\sin(t)y+\cos(p)z))
 \end{equation}
-for $p,t \in [0,\pi/4]$ where we record the construction time for our method and Chebfun3. The results can be seen in Figure~\ref{tan3D}. We see that slight changes in $t,p$ can dramatically increase the construction time, where rotations have a slight effect with the PU method.
+for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{tan3D}. As in 2D, the Chebfun low-rank technique shows wide variation depending on the angles, and a large region of long times. The tree-based method is much less sensitive and faster (by as much as two orders of magnitude) except for the purely axes-aligned cases. 
 
-\begin{figure}[!htbp]
+\begin{figure}
 \centering
 \subfloat[PU method]{
 \includegraphics[scale = 0.34]{TAN_3D_PU.eps}
@@ -474,42 +526,12 @@ for $p,t \in [0,\pi/4]$ where we record the construction time for our method and
 
 
 
-\begin{table}
-\begin{tabular}{r|c|c|c|c}
-& error & construct time & interp time & points \\[5pt] \hline
-$\cos(u_1\pi + \sum_{i=1}^3 a_i x_i)$ & 22.71E-14 & 0.151 & 0.118 & 275000 \\ [5pt]
-$\prod_{i=1}^3 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 1.52E-05 & 7.204 & 1.312 & 10400000 \\[2pt]
-$(1+\sum_{i=1}^3 a_i x_i)^{-3}$ & 4.66E-10 & 0.16555 & 0.033 & 125 \\[5pt]
-$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 3.11E-15 & 0.0818 & 0.078 & 275000  \\[5pt]
-$1/(\cosh(5(x+y+z)))^2$ & 1.14E-14 & 0.706 & 0.545 & 2200000 \\
-$\arctan(5(x+y)+z)$ & 7.60e-13 & 0.7512 & 0.030 & 549153 \\
-\end{tabular}
-\caption{Table for our method tested with a $200^3$ grid with recorded error, construction time, time to interpolate, and number of interpolation points used for the method. Here the target tolerance is set to $10^{-12}$, and $\nmax=65$. Here $u=[0.75,0.25,-0.75]$, $a=[25,25,25]$.}
-\label{putable3D}
-\end{table}
-
-\begin{table}
-\begin{tabular}{r|c|c|c|c}
-& error & construct time & interp time & rank \\[5pt] \hline
-$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 2.16E-14 & 0.061 & 0.150 & 2  \\[5pt]
-$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 5.66E-07 & 0.057 & 0.137 & 1 \\[5pt]
-$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 4.07E-10 & 0.038 & 0.143 & 4 \\[5pt]
-$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 7.77E-16 & 0.047 & 0.144 & 1 \\[5pt]
-$1/(\cosh(5(x+y+z)))^2$ & 3.69E-13 & 80.666 & 0.398 & 93 \\
-$\arctan(5(x+y)+z)$ & 4.69e-13 & 89.957 & 0.104 & 110 \\
-\end{tabular}
-\caption{Table for Chebfun3 tested with a $200^3$ grid with recorded error, construction time, time to interpolate, and numerical rank. Here $u=[0.75,0.25,-0.75]$, $a=[25,25,25]$.}	
-\label{chb3table}
-\end{table}
-
-\begin{figure}[!htb]
-\centering
-
-\includegraphics[scale = 0.5]{tan_not_z.eps}
-
-\caption{Plot of zones for $\arctan(5(x+y)+z)$.}
-\label{tan_not_z}
-\end{figure}
+% \begin{figure}
+% \centering
+% \includegraphics[scale = 0.5]{tan_not_z.eps}
+% \caption{Plot of zones for $\arctan(5(x+y)+z)$.}
+% \label{tan_not_z}
+% \end{figure}
 
 \begin{appendices}
 
