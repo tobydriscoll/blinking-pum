@@ -103,7 +103,7 @@ classdef LSPatch2D < LSPatch
         function Child = splitleafGeom(obj)
             
             Child = obj;
-            
+            obj.is_geometric_refined = true;
                 
                 lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
                 
@@ -118,10 +118,10 @@ classdef LSPatch2D < LSPatch
                     splitx = mean(obj.domain(1,:));
                     splity = mean(obj.domain(2,:));
                     
-                    subdomain{1} = [obj.domain(1,1) splitx;obj.domain(2,:)];
-                    subdomain{2} = [splitx obj.domain(1,2);obj.domain(2,:)];
-                    subdomain{3} = [obj.domain(1,:);splity obj.domain(2,2)];
-                    subdomain{4} = [obj.domain(1,:);obj.domain(2,1) splity];
+                    subdomain{1} = [obj.domain(1,1) splitx;obj.domain(2,1) splity];
+                    subdomain{2} = [obj.domain(1,1) splitx;splity obj.domain(2,2)];
+                    subdomain{3} = [splitx obj.domain(1,2);obj.domain(2,1) splity];
+                    subdomain{4} = [splitx obj.domain(1,2);splity obj.domain(2,2)];
                     
                     for i=1:4
                         c_subdom = subdomain{i};
@@ -133,15 +133,11 @@ classdef LSPatch2D < LSPatch
                         
                         XP = [X(:) Y(:)];
                         
-                        in_sub(i) = sum(obj.domain_in.Interior(XP))>20;
+                        in_sub(i) = sum(obj.domain_in.Interior(XP))>30;
                     end
                 end
                 
-                obj.is_geometric_refined = is_less_max & sum(in_sub)>=3;
-                
-                if(sum(in_sub)<3)
-                    a=1;
-                end
+                obj.is_geometric_refined = is_less_max & sum(in_sub)>=2;
                     
                 Child = obj;
                 if ~obj.is_geometric_refined

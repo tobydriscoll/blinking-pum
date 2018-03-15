@@ -1,4 +1,4 @@
-classdef PUFun2DLS < handle & matlab.mixin.Copyable
+classdef PUFunLS < handle & matlab.mixin.Copyable
     % PUFun2DLS PUFun class for representing n-d functions on non-square domains.
     %
     % This class represents smooth multivariate functions on non-square domains
@@ -46,7 +46,7 @@ classdef PUFun2DLS < handle & matlab.mixin.Copyable
     
     methods
         
-        function obj = PUFun2DLS(varargin)
+        function obj = PUFunLS(varargin)
             
             if length(varargin)==1
                 varargin = varargin{:};
@@ -115,6 +115,8 @@ classdef PUFun2DLS < handle & matlab.mixin.Copyable
             end
             
             refine(obj,f);
+            
+            obj.ChebRoot.clean();
             
         end
         

@@ -94,36 +94,9 @@ classdef LSPatch3D < LSPatch
         
         
         
-        function IsGeometricallyRefined = IsLeafGeometricallyRefined(obj)
-            
-            lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:));diff(obj.domain(3,:))];
-            
-            is_less_max = lengths<=obj.max_lengths;
-            
-            %IsGeometricallyRefined = all(is_less_max) && any(obj.domain.Interior(outer_points));
-            IsGeometricallyRefined = all(is_less_max);
-            obj.is_geometric_refined = IsGeometricallyRefined;
-        end
-        
-        function Child = splitleaf(obj,Max,set_vals)
-            
-            if ~obj.is_geometric_refined || obj.mid_values_err>obj.tol
-                
-                Child = obj;
-                %Go through and split in each unresolved direction
-                for k=1:obj.dim
-                    if Child.is_leaf
-                        Child = split(Child,k);
-                    else
-                        Child.split(k);
-                    end
-                end
-                
-            else
-                Child = obj;
-                Child.is_refined = true;
-            end
-            
+        function Child = splitleafGeom(obj)
+            Child = obj;
+            obj.is_geometric_refined = true;
         end
         
         
