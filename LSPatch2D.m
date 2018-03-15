@@ -100,22 +100,66 @@ classdef LSPatch2D < LSPatch
         
         
         
-        function IsGeometricallyRefined = IsLeafGeometricallyRefined(obj)
+        function Child = splitleafGeom(obj)
             
-            lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
+            Child = obj;
             
-            is_less_max = lengths<=obj.max_lengths;
-            
-            %IsGeometricallyRefined = all(is_less_max) && any(obj.domain.Interior(outer_points));
-            IsGeometricallyRefined = all(is_less_max);
-            obj.is_geometric_refined = IsGeometricallyRefined;
+                
+                lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
+                
+                is_less_max = lengths<=obj.max_lengths;
+                
+                is_less_max = all(is_less_max);
+                
+                in_sub = false(4,1);
+                
+                if is_less_max
+                    
+                    splitx = mean(obj.domain(1,:));
+                    splity = mean(obj.domain(2,:));
+                    
+                    subdomain{1} = [obj.domain(1,1) splitx;obj.domain(2,:)];
+                    subdomain{2} = [splitx obj.domain(1,2);obj.domain(2,:)];
+                    subdomain{3} = [obj.domain(1,:);splity obj.domain(2,2)];
+                    subdomain{4} = [obj.domain(1,:);obj.domain(2,1) splity];
+                    
+                    for i=1:4
+                        c_subdom = subdomain{i};
+                        
+                        x = chebpts(16,c_subdom(1,:))';
+                        y = chebpts(16,c_subdom(2,:))';
+                        
+                        [X,Y] = ndgrid(x,y);
+                        
+                        XP = [X(:) Y(:)];
+                        
+                        in_sub(i) = sum(obj.domain_in.Interior(XP))>20;
+                    end
+                end
+                
+                obj.is_geometric_refined = is_less_max & sum(in_sub)>=3;
+                
+                if(sum(in_sub)<3)
+                    a=1;
+                end
+                    
+                Child = obj;
+                if ~obj.is_geometric_refined
+                    for k=1:obj.dim
+                        if Child.is_leaf
+                            Child = split(Child,k);
+                        else
+                            Child.split(k);
+                        end
+                    end
+                end 
         end
         
         function Child = splitleaf(obj,Max,set_vals)
             
             obj.GlobalMax = Max;
             
-            if ~obj.is_geometric_refined || obj.mid_values_err>obj.tol
+            if obj.mid_values_err>obj.tol
                 
                 Child = obj;
                 %Go through and split in each unresolved direction
@@ -127,7 +171,7 @@ classdef LSPatch2D < LSPatch
                     end
                 end
                 
-            else
+            else 
                 %Chop(obj);
                 Child = obj;
                 Child.is_refined = true;
@@ -262,6 +306,7 @@ classdef LSPatch2D < LSPatch
                 %The square is not in the domain. Set the child to a
                 %least square patch
                 children{1} = LSPatch2D(struct0);
+                children{1}.is_geometric_refined = false;
             end
             
             if all(obj.domain_in.Interior(XP2))
@@ -272,6 +317,7 @@ classdef LSPatch2D < LSPatch
                 %The square is not in the domain. Set the child to a
                 %least square patch
                 children{2} = LSPatch2D(struct1);
+                children{2}.is_geometric_refined = false;
             end
             
             x = chebpts(16,obj.domain(1,:))';
@@ -300,8 +346,11 @@ classdef LSPatch2D < LSPatch
             else
                 %Return the PUPatch with the new children
                 Child = PUPatch(obj.domain,obj.zone,children,split_dim);
+                
+                Child.is_geometric_refined = false;
             end
             
+
             if set_vals
                 for k=1:2
                     Child.children{k}.sample(obj.evalfGrid(Child.children{k}.leafGrids()));

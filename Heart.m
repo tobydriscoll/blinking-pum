@@ -7,8 +7,7 @@ classdef Heart
     end
     
     methods
-        function obj = Heart(mult)
-            obj.mult = mult;
+        function obj = Heart()
         end
         
         function ind = Interior(obj,pts)

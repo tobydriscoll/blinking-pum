@@ -665,9 +665,13 @@ classdef ChebPatch<LeafPatch
             obj.deg_in = obj.orig_deg_in;
             obj.split_flag = ones(obj.dim,1);
         end
-        
+       
+        function Child = splitleafGeom(obj)
+            Child = obj;
+        end
     end
     
+
     methods (Static)
         %This method slices an array along a certain dimension
         function out = slice(A, ix, dim)

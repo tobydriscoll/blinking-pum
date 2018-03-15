@@ -149,10 +149,12 @@ classdef PUFun2DLS < handle & matlab.mixin.Copyable
                 grid_opt = false;
             end
             
-            
             while ~obj.ChebRoot.is_refined
                 
-                obj.ChebRoot.IsGeometricallyRefined();
+                %split to get satisfactory covering before sampling
+                obj.Geomrefine();
+                
+                %then sample;
                 Max = obj.ChebRoot.sample(f,grid_opt);
                 
                 if obj.ChebRoot.is_leaf
@@ -173,7 +175,25 @@ classdef PUFun2DLS < handle & matlab.mixin.Copyable
             obj.ChebRoot.clean();
             
         end
+        
+                % refine(obj,f,grid_opt)
+        % This method refines the tree by f(x).
+        %Input:
+        %   f          : the function to split on
+        %   grid_opt   : boolean value indicating if
+        %                function is evaluated for grids;
+        %                must take cell array of grids
+        function Geomrefine(obj)
+            while ~obj.ChebRoot.is_geometric_refined
+                if obj.ChebRoot.is_leaf
+                    obj.ChebRoot = obj.ChebRoot.splitleafGeom();
+                else
+                    obj.ChebRoot.PUsplitGeom();
+                end
+            end
+        end
     end
+    
     
     methods(Access = protected)
         % Override copyElement method:

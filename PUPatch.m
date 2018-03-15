@@ -82,24 +82,46 @@ classdef PUPatch<Patch
             end
             
             is_refined = true;
-            is_geometric_refined = true;
+            is_geom_refined = true;
             
             for k=1:2
-                
                 if ~obj.children{k}.is_refined
                     if obj.children{k}.is_leaf
                         obj.children{k} = obj.children{k}.splitleaf(Max,set_vals);
-                        is_refined = is_refined && obj.children{k}.is_refined;
-                        is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
+                        is_refined = obj.children{k}.is_refined && is_refined;
+                        is_geom_refined = obj.children{k}.is_geometric_refined && is_geom_refined;
                     else
-                        is_refined = is_refined && obj.children{k}.PUsplit(Max,set_vals);
-                        is_geometric_refined = is_geometric_refined && obj.children{k}.is_geometric_refined;
+                        obj.children{k}.PUsplit(Max,set_vals);
+                        is_refined = is_refined && obj.children{k}.is_refined;
+                        is_geom_refined = is_geom_refined && obj.children{k}.is_geometric_refined;
                     end
                 end
             end
-            
+            obj.is_geometric_refined = is_geom_refined;
             obj.is_refined = is_refined;
+        end
+        
+                % Will split the children of the patch if they are unrefined.
+        %
+        %     Output:
+        % is_refined: returns if the patch is refined.
+        function is_geometric_refined = PUsplitGeom(obj)
+            
+            
+            is_geometric_refined = true;
+            
+            for k=1:2
+                if obj.children{k}.is_leaf
+                    obj.children{k} = obj.children{k}.splitleafGeom();
+                    is_geometric_refined = obj.children{k}.is_geometric_refined && is_geometric_refined;
+                else
+                    obj.children{k}.PUsplitGeom();
+                    is_geometric_refined =  obj.children{k}.is_geometric_refined && is_geometric_refined;
+                end
+            end
+            
             obj.is_geometric_refined = is_geometric_refined;
+            
         end
         
         % This method samples the leaves of the patch.
@@ -739,11 +761,11 @@ classdef PUPatch<Patch
             LEAVES = collectLeaves_recurse(obj,{});
         end
         
-        function IsGeometricallyRefined = IsGeometricallyRefined(obj)
-            G1 = obj.children{1}.IsGeometricallyRefined();
-            G2 = obj.children{2}.IsGeometricallyRefined();
-            IsGeometricallyRefined = G1 & G2;
-        end
+%         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
+%             G1 = obj.children{1}.IsGeometricallyRefined();
+%             G2 = obj.children{2}.IsGeometricallyRefined();
+%             IsGeometricallyRefined = G1 & G2;
+%         end
         
         % Plots the domains of the children.
         function plotdomain(obj)
