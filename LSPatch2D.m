@@ -104,51 +104,95 @@ classdef LSPatch2D < LSPatch
             
             Child = obj;
             obj.is_geometric_refined = true;
-                
-                lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
-                
-                is_less_max = lengths<=obj.max_lengths;
-                
-                is_less_max = all(is_less_max);
-                
-                in_sub = false(4,1);
-                
-                if is_less_max
-                    
-                    splitx = mean(obj.domain(1,:));
-                    splity = mean(obj.domain(2,:));
-                    
-                    subdomain{1} = [obj.domain(1,1) splitx;obj.domain(2,1) splity];
-                    subdomain{2} = [obj.domain(1,1) splitx;splity obj.domain(2,2)];
-                    subdomain{3} = [splitx obj.domain(1,2);obj.domain(2,1) splity];
-                    subdomain{4} = [splitx obj.domain(1,2);splity obj.domain(2,2)];
-                    
-                    for i=1:4
-                        c_subdom = subdomain{i};
+            
+               x = chebpts(32,obj.zone(1,:))';
+               y = chebpts(32,obj.zone(2,:))';
+               
+               [X,Y] = ndgrid(x,y);
                         
-                        x = chebpts(16,c_subdom(1,:))';
-                        y = chebpts(16,c_subdom(2,:))';
+               XP = [X(:) Y(:)];
                         
-                        [X,Y] = ndgrid(x,y);
-                        
-                        XP = [X(:) Y(:)];
-                        
-                        in_sub(i) = sum(obj.domain_in.Interior(XP))>30;
-                    end
-                end
-                
-                obj.is_geometric_refined = is_less_max & sum(in_sub)>=2;
-                    
-                Child = obj;
-                if ~obj.is_geometric_refined
-                    for k=1:obj.dim
-                        if Child.is_leaf
-                            Child = split(Child,k);
-                        else
-                            Child.split(k);
-                        end
-                    end
-                end 
+               ind = obj.domain_in.Interior(XP);
+               
+               XP = XP(ind,:);
+               
+               new_zone = zeros(2,2);
+               
+               new_zone(:,1) = min(XP);
+               
+               new_zone(:,2) = max(XP);
+               
+               %pudge out zone a bit
+               deltax = 0.25*0.1*diff(obj.zone(1,:));
+                %The width of the overlap
+               deltay = 0.25*0.1*diff(obj.zone(1,:));       
+               
+               new_zone(1,1) = max(new_zone(1,1)-deltax,obj.zone(1,1));
+               new_zone(1,2) = min(new_zone(1,2)+deltax,obj.zone(1,2));
+               
+               new_zone(2,1) = max(new_zone(2,1)-deltay,obj.zone(2,1));
+               new_zone(2,2) = min(new_zone(2,2)+deltay,obj.zone(2,2));
+               
+               %The width of the overlap
+               deltax = 0.25*obj.overlap*diff(obj.zone(1,:));
+                %The width of the overlap
+               deltay = 0.25*obj.overlap*diff(obj.zone(1,:));
+
+               obj.zone = new_zone;
+               
+               new_zone(1,1) = max(new_zone(1,1)-deltax,obj.outerbox(1,1));
+               new_zone(1,2) = min(new_zone(1,2)+deltax,obj.outerbox(1,2));
+               
+               new_zone(2,1) = max(new_zone(2,1)-deltay,obj.outerbox(2,1));
+               new_zone(2,2) = min(new_zone(2,2)+deltay,obj.outerbox(2,2));
+               
+               obj.domain = new_zone;
+
+               
+%                 lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
+%                 
+%                 is_less_max = lengths<=obj.max_lengths;
+%                 
+%                 is_less_max = all(is_less_max);
+%                 
+%                 in_sub = false(4,1);
+%                 
+%                 if is_less_max
+%                     
+%                     splitx = mean(obj.domain(1,:));
+%                     splity = mean(obj.domain(2,:));
+%                     
+%                     subdomain{1} = [obj.domain(1,1) splitx;obj.domain(2,1) splity];
+%                     subdomain{2} = [obj.domain(1,1) splitx;splity obj.domain(2,2)];
+%                     subdomain{3} = [splitx obj.domain(1,2);obj.domain(2,1) splity];
+%                     subdomain{4} = [splitx obj.domain(1,2);splity obj.domain(2,2)];
+%                     
+%                     for i=1:4
+%                         c_subdom = subdomain{i};
+%                         
+%                         x = chebpts(16,c_subdom(1,:))';
+%                         y = chebpts(16,c_subdom(2,:))';
+%                         
+%                         [X,Y] = ndgrid(x,y);
+%                         
+%                         XP = [X(:) Y(:)];
+%                         
+%                         in_sub(i) = sum(obj.domain_in.Interior(XP))>40;
+%                     end
+%                 end
+%                 
+%                 obj.is_geometric_refined = is_less_max & sum(in_sub)>=2;
+%                     
+%                 Child = obj;
+%                 if ~obj.is_geometric_refined
+%                     for k=1:obj.dim
+%                         if Child.is_leaf
+%                             Child = split(Child,k);
+%                         else
+%                             Child.split(k);
+%                         end
+%                     end
+%                 end 
         end
         
         function Child = splitleaf(obj,Max,set_vals)
