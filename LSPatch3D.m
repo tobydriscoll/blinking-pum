@@ -1,61 +1,61 @@
 classdef LSPatch3D < LSPatch
-% LSPatch2D PUFun class for representing n-d functions on non-square domains.
-%
-% This class represents a single tensor product polynomial, where the
-% domain of the Chebyshev polynomial bounds the domain of the function to
-% be approximated. The coefficients are found by solving a rank deficient 
-% least square problem that minimizes the l_2 norm between a given function
-% f and the Chebyshev polynomial for a set of points inside the domain of
-% f.
- 
-% LSPatch2D(varargin) constructs a tensor product approximation
-% representing a function, based on the options passed into with varargin; 
-% that is PUFun('perf1',perf1,'pref2',pref2,..) is called. This 
-% preferences that can be set are:
-% 
-% The max lengths of the patches before sampling is to occur:
-% 'MaxLengths', [d_1 d_2 d_3]
-%
-% *The non square domain: 'InnerDomain', domain object
-%
-% *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d;e,f]
-%
-% *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d;e,f]
-%
-% *The domain of the root of the tree: 'outerbox', [a,b;c,d;e,f]
-%
-% *An array of boolean indicies indicating if the approximation can be
-% split in a given dimension: 'canSplit', [bool_1,bool2]
-%
-% *The tolerance used for refinement: 'tol', 1e-b
-%
-% *The degree indices from the standard degrees in each dimension for non 
-% square domains : 'degreeIndex', [ind_1,ind_2 ind_3]. 
-% 
-% *The coarse degree to be used (if applicable) 
-% : 'coarseDegreeIndex', [ind_1,ind_2 ind_3]. 
-% 
-% *The degree indices from the standard degrees in each dimension for
-% square domains : 'ChebDegreeIndex', [ind_1,ind_2 ind_3]. 
-%
-% Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
-% So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
-% 33 in each direction. 
-%
-% LSPatch2D(struct) will construct an approximation with a structure
-% struct. Here struct must contain the following fields:
-% in_domain : inner non square domain
-% outerbox : domain of the outerbox
-% zone : domain of the zone
-% domain : square domain of the polynomial
-% deg_in : indicies of degree for polynomials representing non square domains
-% cheb_deg_in : indicies of degree for polynomials representing square domains
-% cdeg_in : indicies of coarse degree
-% split_flag : boolean array indiciating to split in a dimension or not
-% max_lengths : obj.max_lengths: The max lengths of the patches before sampling is to occur
-% tol : tolerance used for refinement
-
-           
+    % LSPatch2D PUFun class for representing n-d functions on non-square domains.
+    %
+    % This class represents a single tensor product polynomial, where the
+    % domain of the Chebyshev polynomial bounds the domain of the function to
+    % be approximated. The coefficients are found by solving a rank deficient
+    % least square problem that minimizes the l_2 norm between a given function
+    % f and the Chebyshev polynomial for a set of points inside the domain of
+    % f.
+    
+    % LSPatch2D(varargin) constructs a tensor product approximation
+    % representing a function, based on the options passed into with varargin;
+    % that is PUFun('perf1',perf1,'pref2',pref2,..) is called. This
+    % preferences that can be set are:
+    %
+    % The max lengths of the patches before sampling is to occur:
+    % 'MaxLengths', [d_1 d_2 d_3]
+    %
+    % *The non square domain: 'InnerDomain', domain object
+    %
+    % *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d;e,f]
+    %
+    % *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d;e,f]
+    %
+    % *The domain of the root of the tree: 'outerbox', [a,b;c,d;e,f]
+    %
+    % *An array of boolean indicies indicating if the approximation can be
+    % split in a given dimension: 'canSplit', [bool_1,bool2]
+    %
+    % *The tolerance used for refinement: 'tol', 1e-b
+    %
+    % *The degree indices from the standard degrees in each dimension for non
+    % square domains : 'degreeIndex', [ind_1,ind_2 ind_3].
+    %
+    % *The coarse degree to be used (if applicable)
+    % : 'coarseDegreeIndex', [ind_1,ind_2 ind_3].
+    %
+    % *The degree indices from the standard degrees in each dimension for
+    % square domains : 'ChebDegreeIndex', [ind_1,ind_2 ind_3].
+    %
+    % Here the degrees can be chosen from the set [3 5 9 17 33 65 129].
+    % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be
+    % 33 in each direction.
+    %
+    % LSPatch2D(struct) will construct an approximation with a structure
+    % struct. Here struct must contain the following fields:
+    % in_domain : inner non square domain
+    % outerbox : domain of the outerbox
+    % zone : domain of the zone
+    % domain : square domain of the polynomial
+    % deg_in : indicies of degree for polynomials representing non square domains
+    % cheb_deg_in : indicies of degree for polynomials representing square domains
+    % cdeg_in : indicies of coarse degree
+    % split_flag : boolean array indiciating to split in a dimension or not
+    % max_lengths : obj.max_lengths: The max lengths of the patches before sampling is to occur
+    % tol : tolerance used for refinement
+    
+    
     properties
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
     end
@@ -65,38 +65,95 @@ classdef LSPatch3D < LSPatch
     end
     
     methods
-       % function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,cheb_deg_in,split_flag,tol,cdeg_in)
-       function obj = LSPatch3D(varargin)
-           
-           if length(varargin)==1
-               varargin = varargin{:};
-           end
-           
-           %Call superclass constructor
-           obj = obj@LSPatch(varargin);
-           
-       end
+        % function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,cheb_deg_in,split_flag,tol,cdeg_in)
+        function obj = LSPatch3D(varargin)
+            
+            if length(varargin)==1
+                varargin = varargin{:};
+            end
+            
+            %Call superclass constructor
+            obj = obj@LSPatch(varargin);
+            
+        end
         
-       %Returns structure of parameters
-       function p_struct = params(obj) 
-           
-           p_struct.outerbox = obj.outerbox;
-           p_struct.zone = obj.zone;
-           p_struct.domain = obj.domain;
-           p_struct.deg_in = obj.deg_in;
-           p_struct.cheb_deg_in = obj.cheb_deg_in;
-           p_struct.domain_in = obj.domain_in;
-           p_struct.split_flag = obj.split_flag;
-           p_struct.max_lengths = obj.max_lengths;
-           p_struct.tol = obj.tol;
-           p_struct.cdeg_in = obj.cdeg_in;
-       end
+        %Returns structure of parameters
+        function p_struct = params(obj)
+            
+            p_struct.outerbox = obj.outerbox;
+            p_struct.zone = obj.zone;
+            p_struct.domain = obj.domain;
+            p_struct.deg_in = obj.deg_in;
+            p_struct.cheb_deg_in = obj.cheb_deg_in;
+            p_struct.domain_in = obj.domain_in;
+            p_struct.split_flag = obj.split_flag;
+            p_struct.max_lengths = obj.max_lengths;
+            p_struct.tol = obj.tol;
+            p_struct.cdeg_in = obj.cdeg_in;
+        end
         
         
         
         function Child = splitleafGeom(obj)
             Child = obj;
             obj.is_geometric_refined = true;
+            
+            x = chebpts(32,obj.zone(1,:))';
+            y = chebpts(32,obj.zone(2,:))';
+            z = chebpts(32,obj.zone(3,:))';
+            
+            [X,Y,Z] = ndgrid(x,y,z);
+            
+            XP = [X(:) Y(:) Z(:)];
+            
+            ind = obj.domain_in.Interior(XP);
+            
+            XP = XP(ind,:);
+            
+            new_zone = zeros(3,2);
+            
+            new_zone(:,1) = min(XP);
+            
+            new_zone(:,2) = max(XP);
+            
+            
+            %pudge out zone a bit
+            deltax = 0.1*obj.overlap*diff(obj.zone(1,:));
+            %The width of the overlap
+            deltay = 0.1*obj.overlap*diff(obj.zone(2,:));
+            
+            deltaz = 0.1*obj.overlap*diff(obj.zone(3,:));
+            
+            
+            new_zone(1,1) = max(new_zone(1,1)-deltax,obj.zone(1,1));
+            new_zone(1,2) = min(new_zone(1,2)+deltax,obj.zone(1,2));
+            
+            new_zone(2,1) = max(new_zone(2,1)-deltay,obj.zone(2,1));
+            new_zone(2,2) = min(new_zone(2,2)+deltay,obj.zone(2,2));
+            
+            new_zone(3,1) = max(new_zone(3,1)-deltaz,obj.zone(3,1));
+            new_zone(3,2) = min(new_zone(3,2)+deltaz,obj.zone(3,2));
+            
+            %The width of the overlap
+            deltax = 0.25*obj.overlap*diff(obj.zone(1,:));
+            %The width of the overlap
+            deltay = 0.25*obj.overlap*diff(obj.zone(2,:));
+            %The width of the overlap
+            deltaz = 0.25*obj.overlap*diff(obj.zone(3,:));
+            
+            obj.zone = new_zone;
+            
+            new_zone(1,1) = max(new_zone(1,1)-deltax,obj.outerbox(1,1));
+            new_zone(1,2) = min(new_zone(1,2)+deltax,obj.outerbox(1,2));
+            
+            new_zone(2,1) = max(new_zone(2,1)-deltay,obj.outerbox(2,1));
+            new_zone(2,2) = min(new_zone(2,2)+deltay,obj.outerbox(2,2));
+            
+            new_zone(3,1) = max(new_zone(3,1)-deltaz,obj.outerbox(3,1));
+            new_zone(3,2) = min(new_zone(3,2)+deltaz,obj.outerbox(3,2));
+            
+            obj.domain = new_zone;
+            
         end
         
         
@@ -145,12 +202,37 @@ classdef LSPatch3D < LSPatch
                 E = E(:) - F;
                 
                 %This is used to determin the point wise error
-                obj.mid_values_err = max(abs(E(:)));  
+                obj.mid_values_err = max(abs(E(:)));
                 
             end
         end
         
-                % The method determines will split a child into along
+        function Child = splitleaf(obj,Max,set_vals)
+            
+            obj.GlobalMax = Max;
+            
+            if obj.mid_values_err>obj.tol
+                
+                Child = obj;
+                %Go through and split in each unresolved direction
+                for k=1:obj.dim
+                    if Child.is_leaf
+                        Child = split(Child,k);
+                    else
+                        Child.split(k);
+                    end
+                end
+                
+            else
+                %Chop(obj);
+                Child = obj;
+                Child.is_refined = true;
+            end
+            
+        end
+        
+        
+        % The method determines will split a child into along
         % a dimension.
         %
         %     Input:

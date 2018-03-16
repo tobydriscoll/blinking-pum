@@ -123,9 +123,9 @@ classdef LSPatch2D < LSPatch
                new_zone(:,2) = max(XP);
                
                %pudge out zone a bit
-               deltax = 0.25*0.1*diff(obj.zone(1,:));
+               deltax = 0.25*obj.overlap*diff(obj.zone(1,:));
                 %The width of the overlap
-               deltay = 0.25*0.1*diff(obj.zone(1,:));       
+               deltay = 0.25*obj.overlap*diff(obj.zone(2,:));       
                
                new_zone(1,1) = max(new_zone(1,1)-deltax,obj.zone(1,1));
                new_zone(1,2) = min(new_zone(1,2)+deltax,obj.zone(1,2));
@@ -136,7 +136,7 @@ classdef LSPatch2D < LSPatch
                %The width of the overlap
                deltax = 0.25*obj.overlap*diff(obj.zone(1,:));
                 %The width of the overlap
-               deltay = 0.25*obj.overlap*diff(obj.zone(1,:));
+               deltay = 0.25*obj.overlap*diff(obj.zone(2,:));
 
                obj.zone = new_zone;
                
