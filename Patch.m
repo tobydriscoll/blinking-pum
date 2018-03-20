@@ -14,9 +14,12 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
         is_geometric_refined = false
         dim
         tol
-        overlap = 0.08;
         outerbox
         split_flag %array indicating if we will split along a dimension
+    end
+    
+    properties (Constant)
+        overlap = 0.1;
     end
     
     methods (Abstract)

@@ -84,7 +84,7 @@ classdef LSPatch < LeafPatch
     methods (Abstract)
         Max = sample(obj,f,grid_opt)
         Child = splitleaf(obj,Max,set_vals)
-        Child = splitleafGeom(obj)
+        %[zone,domain] = splitleafGeom(zone,outerbox)
         Child = split(obj,split_dim,set_vals)
     end
     
@@ -98,7 +98,7 @@ function obj = LSPatch(varargin)
            
            %Call superclass constructor
            obj = obj@LeafPatch(varargin);
-           obj.is_geometric_refined = false;
+           obj.is_geometric_refined = true;
             
             obj.tol = 1e-6;
             obj.deg_in = zeros(obj.dim,1);

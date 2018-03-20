@@ -154,7 +154,7 @@ classdef PUFunLS < handle & matlab.mixin.Copyable
             while ~obj.ChebRoot.is_refined
                 
                 %split to get satisfactory covering before sampling
-                obj.Geomrefine();
+                %obj.Geomrefine();
                 
                 %then sample;
                 Max = obj.ChebRoot.sample(f,grid_opt);

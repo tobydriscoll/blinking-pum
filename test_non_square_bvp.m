@@ -79,16 +79,16 @@ bfdx = fdx(XPf(:,1),XPf(:,2));
 lap = DXX+DYY+2*DXY;
 
 %tikhonov regularization
-% A2 = [tau1*lap;A];
-% b2 = [zeros(prod(degs),1);b];
-% tic;
-% V = A2\b2;
-% toc
+A2 = [tau1*lap;A];
+b2 = [zeros(prod(degs),1);b];
+tic;
+V = A2\b2;
+toc
 
 %basic solution
-tic;
-V = A\b;
-toc
+% tic;
+% V = A\b;
+% toc
 
 norm(A*V-b,inf)
 norm(M*V-bf,inf)

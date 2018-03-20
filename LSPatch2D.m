@@ -59,6 +59,7 @@ classdef LSPatch2D < LSPatch
     properties
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
         Tikhonov_param = 1e-7;
+        mid_values_err1 = inf;
         
     end
     
@@ -72,13 +73,61 @@ classdef LSPatch2D < LSPatch
         % function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,cheb_deg_in,split_flag,tol,cdeg_in)
         function obj = LSPatch2D(varargin)
             
+            
             if length(varargin)==1
                 varargin = varargin{:};
             end
             
-            %Call superclass constructor
+            if isstruct(varargin)
+                [new_zone,new_domain] = LSPatch2D.splitleafGeom(varargin.zone,varargin.outerbox,varargin.domain_in);
+                varargin.zone = new_zone;
+                varargin.domain = new_domain;
+            else
+                
+                args = varargin;
+                domain = [];
+                zone = [];
+                outerbox = [];
+                
+                current_i = 1;
+                
+                for i=1:2:length(args)-1
+                    if strcmpi(args{i}, 'domain')
+                        domain = args{i+1};
+                        varargin(current_i:current_i+1) = [];
+                    elseif strcmpi(args{i}, 'zone')
+                        zone = args{i+1};
+                        varargin(current_i:current_i+1) = [];
+                    elseif strcmpi(args{i}, 'outerbox')
+                        outerbox = args{i+1};
+                        varargin(i:i+1) = [];
+                    elseif strcmpi(args{i}, 'InnerDomain')
+                        domain_in = args{i+1};
+                        varargin(current_i:current_i+1) = [];
+                    else
+                        current_i = current_i+2;
+                    end
+                end
+                
+                
+                if(isempty(zone))
+                    zone = domain;
+                end
+                
+                if (isempty(outerbox))
+                    outerbox = domain;
+                end
+                
+                [new_zone,new_domain] = LSPatch2D.splitleafGeom(zone,outerbox,domain_in);
+                
+                varargin = {varargin{:},'InnerDomain',new_domain,'domain',new_zone,'InnerDomain',domain_in};
+                %Call superclass constructor
+                
+            end
+            
             obj = obj@LSPatch(varargin);
             
+            obj.is_geometric_refined = true;
         end
         
         %Returns structure of parameters
@@ -100,106 +149,13 @@ classdef LSPatch2D < LSPatch
         
         
         
-        function Child = splitleafGeom(obj)
-            
-            Child = obj;
-            obj.is_geometric_refined = true;
-            
-               x = chebpts(32,obj.zone(1,:))';
-               y = chebpts(32,obj.zone(2,:))';
-               
-               [X,Y] = ndgrid(x,y);
-                        
-               XP = [X(:) Y(:)];
-                        
-               ind = obj.domain_in.Interior(XP);
-               
-               XP = XP(ind,:);
-               
-               new_zone = zeros(2,2);
-               
-               new_zone(:,1) = min(XP);
-               
-               new_zone(:,2) = max(XP);
-               
-               %pudge out zone a bit
-               deltax = 0.25*obj.overlap*diff(obj.zone(1,:));
-                %The width of the overlap
-               deltay = 0.25*obj.overlap*diff(obj.zone(2,:));       
-               
-               new_zone(1,1) = max(new_zone(1,1)-deltax,obj.zone(1,1));
-               new_zone(1,2) = min(new_zone(1,2)+deltax,obj.zone(1,2));
-               
-               new_zone(2,1) = max(new_zone(2,1)-deltay,obj.zone(2,1));
-               new_zone(2,2) = min(new_zone(2,2)+deltay,obj.zone(2,2));
-               
-               %The width of the overlap
-               deltax = 0.25*obj.overlap*diff(obj.zone(1,:));
-                %The width of the overlap
-               deltay = 0.25*obj.overlap*diff(obj.zone(2,:));
 
-               obj.zone = new_zone;
-               
-               new_zone(1,1) = max(new_zone(1,1)-deltax,obj.outerbox(1,1));
-               new_zone(1,2) = min(new_zone(1,2)+deltax,obj.outerbox(1,2));
-               
-               new_zone(2,1) = max(new_zone(2,1)-deltay,obj.outerbox(2,1));
-               new_zone(2,2) = min(new_zone(2,2)+deltay,obj.outerbox(2,2));
-               
-               obj.domain = new_zone;
-
-               
-%                 lengths = [diff(obj.domain(1,:));diff(obj.domain(2,:))];
-%                 
-%                 is_less_max = lengths<=obj.max_lengths;
-%                 
-%                 is_less_max = all(is_less_max);
-%                 
-%                 in_sub = false(4,1);
-%                 
-%                 if is_less_max
-%                     
-%                     splitx = mean(obj.domain(1,:));
-%                     splity = mean(obj.domain(2,:));
-%                     
-%                     subdomain{1} = [obj.domain(1,1) splitx;obj.domain(2,1) splity];
-%                     subdomain{2} = [obj.domain(1,1) splitx;splity obj.domain(2,2)];
-%                     subdomain{3} = [splitx obj.domain(1,2);obj.domain(2,1) splity];
-%                     subdomain{4} = [splitx obj.domain(1,2);splity obj.domain(2,2)];
-%                     
-%                     for i=1:4
-%                         c_subdom = subdomain{i};
-%                         
-%                         x = chebpts(16,c_subdom(1,:))';
-%                         y = chebpts(16,c_subdom(2,:))';
-%                         
-%                         [X,Y] = ndgrid(x,y);
-%                         
-%                         XP = [X(:) Y(:)];
-%                         
-%                         in_sub(i) = sum(obj.domain_in.Interior(XP))>40;
-%                     end
-%                 end
-%                 
-%                 obj.is_geometric_refined = is_less_max & sum(in_sub)>=2;
-%                     
-%                 Child = obj;
-%                 if ~obj.is_geometric_refined
-%                     for k=1:obj.dim
-%                         if Child.is_leaf
-%                             Child = split(Child,k);
-%                         else
-%                             Child.split(k);
-%                         end
-%                     end
-%                 end 
-        end
         
         function Child = splitleaf(obj,Max,set_vals)
             
             obj.GlobalMax = Max;
             
-            if obj.mid_values_err>obj.tol
+            if obj.mid_values_err1>obj.tol
                 
                 Child = obj;
                 %Go through and split in each unresolved direction
@@ -231,16 +187,25 @@ classdef LSPatch2D < LSPatch
             
             max_val = 0;
             
-            if obj.is_geometric_refined
+            if true
                 
                 x = chebpts(obj.degs(1)*2,obj.domain(1,:));
                 y = chebpts(obj.degs(2)*2,obj.domain(2,:));
                 
+                x1 = chebpts(obj.degs(1)*2,obj.domain(1,:),1);
+                y1 = chebpts(obj.degs(2)*2,obj.domain(2,:),1);
+                
                 [X,Y] = ndgrid(x,y);
+                
+                [X1,Y1] = ndgrid(x1,y1);
                 
                 XP = [X(:) Y(:)];
                 
+                XP1 = [X1(:) Y1(:)];
+                
                 ind = obj.domain_in.Interior(XP);
+                
+                ind1 = obj.domain_in.Interior(XP1);
                 
 %                 D_x = ChebDiff(obj.degs(1));
 %                 D_y = ChebDiff(obj.degs(2));
@@ -280,8 +245,13 @@ classdef LSPatch2D < LSPatch
                 E = E(ind);
                 E = E(:) - F;
                 
+                E1 = obj.evalfGrid({x1,y1});
+                E1 = E1 - f(X1,Y1);
+                E1 = E1(ind1);
+                
                 %This is used to determin the point wise error
                 obj.mid_values_err = max(abs(E(:)));
+                obj.mid_values_err1 = max(abs(E1(:)));
                 
             end
         end
@@ -434,5 +404,54 @@ classdef LSPatch2D < LSPatch
             
         end
         
+    end
+    
+    methods (Static)
+                function [new_zone,new_domain] = splitleafGeom(zone,outerbox,domain_in)
+            
+              obj.is_geometric_refined = true;
+            
+               x = chebpts(120,zone(1,:))';
+               y = chebpts(120,zone(2,:))';
+               
+               [X,Y] = ndgrid(x,y);
+                        
+               XP = [X(:) Y(:)];
+                        
+               ind = domain_in.Interior(XP);
+               
+               XP = XP(ind,:);
+               
+               new_zone = zeros(2,2);
+               
+               new_zone(:,1) = min(XP);
+               
+               new_zone(:,2) = max(XP);
+               
+               %pudge out zone a bit
+               deltax = 0.25*Patch.overlap*diff(zone(1,:));
+                %The width of the overlap
+               deltay = 0.25*Patch.overlap*diff(zone(2,:));       
+               
+               new_zone(1,1) = max(new_zone(1,1)-deltax,zone(1,1));
+               new_zone(1,2) = min(new_zone(1,2)+deltax,zone(1,2));
+               
+               new_zone(2,1) = max(new_zone(2,1)-deltay,zone(2,1));
+               new_zone(2,2) = min(new_zone(2,2)+deltay,zone(2,2));
+               
+               %The width of the overlap
+               deltax = 0.25*Patch.overlap*diff(zone(1,:));
+                %The width of the overlap
+               deltay = 0.25*Patch.overlap*diff(zone(2,:));
+
+               
+               new_domain(1,1) = max(new_zone(1,1)-deltax,outerbox(1,1));
+               new_domain(1,2) = min(new_zone(1,2)+deltax,outerbox(1,2));
+               
+               new_domain(2,1) = max(new_zone(2,1)-deltay,outerbox(2,1));
+               new_domain(2,2) = min(new_zone(2,2)+deltay,outerbox(2,2));
+               
+               
+        end
     end
 end
