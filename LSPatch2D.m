@@ -156,7 +156,7 @@ classdef LSPatch2D < LSPatch
             
             obj.GlobalMax = Max;
             
-            if obj.mid_values_err>obj.tol
+            if obj.mid_values_err1>obj.tol
                 
                 Child = obj;
                 %Go through and split in each unresolved direction

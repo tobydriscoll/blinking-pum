@@ -1,9 +1,9 @@
 %DOMAIN = Disk(1,[0 0]);
 %DOMAIN = Astroid(pi/4);
 DOMAIN = DoubleAstroid();
-delta = 0.1;
+delta = 0;
 OUTERBOX = [-(1+delta) 1+delta;-(1+delta) 1+delta];
-%f = @(x,y)1./(((x-1.1).^2).*(y-1.1).^2).^2;
+f = @(x,y)1./(((x-1.1).^2)+(y-1.1).^2).^2;
 %f = @(x,y) exp(x+y);
 %f = @(x,y) cos(24*x - 32*y).*sin(21*x - 28*y);
 %f = @(x,y) abs(x.*y);

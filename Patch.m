@@ -19,7 +19,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
     end
     
     properties (Constant)
-        overlap = 0.1;
+        overlap = 0.08;
     end
     
     methods (Abstract)
