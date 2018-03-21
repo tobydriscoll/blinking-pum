@@ -1,11 +1,11 @@
 domain = [-1 1;-1 1];
 in_domain = Disk(2,[0 0]);
-degs = [33 33];
-fine_degs = [65 65];
+degs = [17 17];
+fine_degs = 4*degs;
 
 B_n = 65;
 
-tau1 = 1e-7;
+tau1 = 1e-5;
 
 Dx = ChebDiff(degs(1));
 Dy = ChebDiff(degs(2));

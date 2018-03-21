@@ -34,17 +34,17 @@ classdef Astroid
             ind = true(size(pts,1),1);
             
             ind(TH1) = R(TH1)<=R1;
-            ind(TH2) = R(TH2)<=R2;
-            ind(TH3) = R(TH3)<=R3;
-            ind(TH4) = R(TH4)<=R4;
+            ind(TH2) = ind(TH2) & R(TH2)<=R2;
+            ind(TH3) = ind(TH3) & R(TH3)<=R3;
+            ind(TH4) = ind(TH4) & R(TH4)<=R4;
             
             
         end
         
         function plot(obj)
             
-            Nxf = 120;
-            Nyf = 120;
+            Nxf = 200;
+            Nyf = 200;
             
             x_f = chebpts(Nxf,[-1 1])';
             y_f = chebpts(Nyf,[-1 1])';

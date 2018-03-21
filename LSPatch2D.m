@@ -60,6 +60,7 @@ classdef LSPatch2D < LSPatch
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
         Tikhonov_param = 1e-7;
         mid_values_err1 = inf;
+        mult;
         
     end
     
@@ -155,7 +156,7 @@ classdef LSPatch2D < LSPatch
             
             obj.GlobalMax = Max;
             
-            if obj.mid_values_err1>obj.tol
+            if obj.mid_values_err>obj.tol
                 
                 Child = obj;
                 %Go through and split in each unresolved direction
@@ -189,23 +190,35 @@ classdef LSPatch2D < LSPatch
             
             if true
                 
-                x = chebpts(obj.degs(1)*2,obj.domain(1,:));
-                y = chebpts(obj.degs(2)*2,obj.domain(2,:));
+                for i=2:1:10
+                    
+                    mult = i;
+                    
+                    x = chebpts(obj.degs(1)*mult,obj.domain(1,:));
+                    y = chebpts(obj.degs(2)*mult,obj.domain(2,:));
+                    
+                    x1 = chebpts(obj.degs(1)*mult,obj.domain(1,:),1);
+                    y1 = chebpts(obj.degs(2)*mult,obj.domain(2,:),1);
+                    
+                    [X,Y] = ndgrid(x,y);
+                    
+                    [X1,Y1] = ndgrid(x1,y1);
+                    
+                    XP = [X(:) Y(:)];
+                    
+                    XP1 = [X1(:) Y1(:)];
+                    
+                    ind = obj.domain_in.Interior(XP);
+                    
+                    ind1 = obj.domain_in.Interior(XP1);
+                    
+                    if sum(ind1)/prod(obj.degs)>=4
+                        break;
+                    end
+                end
                 
-                x1 = chebpts(obj.degs(1)*2,obj.domain(1,:),1);
-                y1 = chebpts(obj.degs(2)*2,obj.domain(2,:),1);
-                
-                [X,Y] = ndgrid(x,y);
-                
-                [X1,Y1] = ndgrid(x1,y1);
-                
-                XP = [X(:) Y(:)];
-                
-                XP1 = [X1(:) Y1(:)];
-                
-                ind = obj.domain_in.Interior(XP);
-                
-                ind1 = obj.domain_in.Interior(XP1);
+                obj.mult = mult;
+              
                 
 %                 D_x = ChebDiff(obj.degs(1));
 %                 D_y = ChebDiff(obj.degs(2));
@@ -214,8 +227,8 @@ classdef LSPatch2D < LSPatch
                 
                % Lap = kron(D_yy,eye(obj.degs(1)))+kron(eye(obj.degs(2)),D_xx)+2*kron(D_y,D_x);
                 
-                Mx = clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
-                My = clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
+                Mx = clenshaw(chebpts(obj.degs(1)*mult),eye(obj.degs(1)));
+                My = clenshaw(chebpts(obj.degs(2)*mult),eye(obj.degs(2)));
                 
                 M = kron(My,Mx);
                 M = M(ind,:);
@@ -241,17 +254,19 @@ classdef LSPatch2D < LSPatch
                  obj.coeffs = reshape(M\F,obj.degs);
                  warning('on','all');
                 
+                F1 = f(X1,Y1);
+                
                 E = obj.evalfGrid({x,y});
                 E = E(ind);
                 E = E(:) - F;
                 
                 E1 = obj.evalfGrid({x1,y1});
-                E1 = E1 - f(X1,Y1);
+                E1 = E1 - F1;
                 E1 = E1(ind1);
                 
                 %This is used to determin the point wise error
-                obj.mid_values_err = max(abs(E(:)));
-                obj.mid_values_err1 = max(abs(E1(:)));
+                obj.mid_values_err = max(abs(E(:)))./max(abs(F));
+                obj.mid_values_err1 = max(abs(E1(:)))./max(abs(F1(ind1)));
                 
             end
         end
