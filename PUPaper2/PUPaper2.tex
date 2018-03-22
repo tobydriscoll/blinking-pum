@@ -527,7 +527,7 @@ for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{fig:tan3D}. A
 \section{Merging trees}
 \label{sec:merge}
 
-Algorithm~\ref{alg:merge} describes a recursive method for merging two trees $\ct_1$ and $ct_2$, representing functions $f_1$ and $f_2$, into a tree representation for $f_1\circ f_2$, with $\circ$ as $+$, $-$, $\times$, or $\div$. The input arguments to the algorithm are the operation, corresponding nodes of $\ct_1$, $\ct_2$, and the merged tree, and the number $r$, which is the dimension that was most recently split in the merged tree. Initially the algorithm is called with root nodes representing the entire original domain, and $r=0$. 
+Algorithm~\ref{alg:merge} describes a recursive method for merging two trees $\ct_1$ and $\ct_2$, representing functions $f_1$ and $f_2$, into a tree representation for $f_1\circ f_2$, with $\circ$ as $+$, $-$, $\times$, or $\div$. The input arguments to the algorithm are the operation, corresponding nodes of $\ct_1$, $\ct_2$, and the merged tree, and the number $r$, which is the dimension that was most recently split in the merged tree. Initially the algorithm is called with root nodes representing the entire original domain, and $r=0$. 
 
 We assume an important relationship among the input nodes. Suppose that \prop{zone}{$\nu_k$}=$\prod_{j=1}^d [\alpha_{kj},\beta_{kj}]$ for $k=1,2$, and that \prop{zone}{$\Tm$}=$\prod_{j=1}^d [A_{j},B_{j}]$. Then we require for $k=1,2$ that
 \begin{equation}
