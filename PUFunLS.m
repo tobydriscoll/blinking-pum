@@ -152,18 +152,18 @@ classdef PUFunLS < handle & matlab.mixin.Copyable
                 grid_opt = false;
             end
             
-            h = figure();
-            
-            obj.ChebRoot.plotzone; hold on; plot(obj.domain_in);
-            
-           
-            frame = getframe(h);
-            im = frame2im(frame);
-            [imind,cm] = rgb2ind(im,256);
-            
-            imwrite(imind,cm,'cool_mov.gif','gif', 'Loopcount',inf); 
-            
-            close all
+%             h = figure();
+%             
+%             obj.ChebRoot.plotzone; hold on; plot(obj.domain_in);
+%             
+%            
+%             frame = getframe(h);
+%             im = frame2im(frame);
+%             [imind,cm] = rgb2ind(im,256);
+%             
+%             imwrite(imind,cm,'cool_mov.gif','gif', 'Loopcount',inf); 
+%             
+%             close all
             
             while ~obj.ChebRoot.is_refined
                 
@@ -173,11 +173,7 @@ classdef PUFunLS < handle & matlab.mixin.Copyable
                 %then sample;
                 Max = obj.ChebRoot.sample(f,grid_opt);
                 
-                obj.ChebRoot.plotzone; hold on; plot(obj.domain_in);
-                
-                frame = getframe(gca); 
-                im = frame2im(frame); 
-                [imind,cm] = rgb2ind(im,256); 
+                 
                 
                 if obj.ChebRoot.is_leaf
                     obj.ChebRoot = obj.ChebRoot.splitleaf(Max);
@@ -186,17 +182,17 @@ classdef PUFunLS < handle & matlab.mixin.Copyable
                 end
                 
             
-            h = figure();
-            
-            obj.ChebRoot.plotzone; hold on; plot(obj.domain_in); hold off;
-            
-            frame = getframe(h);
-            im = frame2im(frame);
-            [imind,cm] = rgb2ind(im,256);
-                
-            imwrite(imind,cm,'cool_mov.gif','gif','WriteMode','append'); 
-            
-            close all
+%             h = figure();
+%             
+%             obj.ChebRoot.plotzone; hold on; plot(obj.domain_in); hold off;
+%             
+%             frame = getframe(h);
+%             im = frame2im(frame);
+%             [imind,cm] = rgb2ind(im,256);
+%                 
+%             imwrite(imind,cm,'cool_mov.gif','gif','WriteMode','append'); 
+%             
+%             close all
             end
             
             

@@ -3,9 +3,9 @@
 DOMAIN = DoubleAstroid();
 delta = 0;
 OUTERBOX = [-(1+delta) 1+delta;-(1+delta) 1+delta];
-f = @(x,y)1./(((x-1.1).^2)+(y-1.1).^2).^2;
+%f = @(x,y)1./(((x-1.1).^2)+(y-1.1).^2).^2;
 %f = @(x,y) exp(x+y);
-%f = @(x,y) cos(24*x - 32*y).*sin(21*x - 28*y);
+f = @(x,y) cos(24*x - 32*y).*sin(21*x - 28*y);
 %f = @(x,y) abs(x.*y);
 % fx = @(x,y) (2*x)./(-1.1 + x.^2 + y.^2);
 % 
@@ -21,14 +21,14 @@ f = @(x,y)1./(((x-1.1).^2)+(y-1.1).^2).^2;
 %OUTERBOX = [-1 1;-1 1;-1 1];
 %f = @(x,y,z) atan(3*(x+y+z));
 
-tic,TREELS = PUFunLS(f,DOMAIN,OUTERBOX,'degreeIndex',[4 4],'ChebDegreeIndex',[6 6],'tol',1e-12);toc
+tic,TREELS = PUFunLS(f,DOMAIN,OUTERBOX,'degreeIndex',[4 4],'ChebDegreeIndex',[6 6],'tol',1e-6);toc
 plotdomain(TREELS.ChebRoot);hold on;plot(DOMAIN);
 
 %x = OUTERBOX(1,1) + diff(OUTERBOX(1,:))*rand(200,1);
 %y = OUTERBOX(2,1) + diff(OUTERBOX(2,:))*rand(200,1);
 
-x = linspace(-1,1,1000)';
-y = linspace(-1,1,1000)';
+x = linspace(-1,1,200)';
+y = linspace(-1,1,200)';
 
 [X,Y] = ndgrid(x,y);
 V = TREELS.ChebRoot.evalfGrid({x y});
