@@ -15,6 +15,9 @@
 \newcommand{\Q}{\mathbb{Q}}
 \newcommand{\C}{\mathbb{C}}
 \newcommand\supp{\mathop{\rm supp}}
+\newcommand{\ct}{\mathcal{T}}
+\newcommand{\Tm}{\ensuremath{\nu_\text{merge}}}
+\newcommand{\num}{\ensuremath{\nu_\text{merge}}}
 
 %%
 
@@ -109,7 +112,7 @@ and then setting
 In words, the zone is extended on all sides by an amount proportional to its width in each dimension, up to the boundary of the global domain $\Omega$. 
 
 
-We define a binary tree $T$ with each node $\nu$ having the following properties:
+We define a binary tree $\ct$ with each node $\nu$ having the following properties:
 \begin{itemize}
 \item \prop{zone}{$\nu$}: zone associated with $\nu$
 \item \textsf{domain}($\nu$): domain associated with $\nu$
@@ -160,7 +163,7 @@ where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\b
 \end{algorithmic}
 \end{algorithm}
 
-Algorithm~\ref{alg:splitleaves}  describes a recursive adaptation procedure for building the binary tree $T$, beginning with a root node whose zone and domain are both the original hyperrectangle $\Omega$. For a non-leaf input, the algorithm is simply called recursively on the children. For an input node that is currently a leaf of the tree, the function $f$ is sampled, and chopping is used in each unfinished dimension to determine whether sufficient resolution has been achieved. Each dimension that is deemed to be resolved is marked as finished. If all dimensions are found to be finished, then the interpolant is chopped to the minimum necessary length in each dimension, and the node will remain a leaf. Otherwise, the node is split in all unfinished dimensions using Algorithm~\ref{alg:split}, and Algorithm~\ref{alg:splitleaves} is applied recursively. Note that the descendants of the splitting(s) inherit the \textsf{isdone} property that marks which dimensions have been finished, so no future splits are possible in such dimensions within this branch. 
+Algorithm~\ref{alg:splitleaves}  describes a recursive adaptation procedure for building the binary tree $\ct$, beginning with a root node whose zone and domain are both the original hyperrectangle $\Omega$. For a non-leaf input, the algorithm is simply called recursively on the children. For an input node that is currently a leaf of the tree, the function $f$ is sampled, and chopping is used in each unfinished dimension to determine whether sufficient resolution has been achieved. Each dimension that is deemed to be resolved is marked as finished. If all dimensions are found to be finished, then the interpolant is chopped to the minimum necessary length in each dimension, and the node will remain a leaf. Otherwise, the node is split in all unfinished dimensions using Algorithm~\ref{alg:split}, and Algorithm~\ref{alg:splitleaves} is applied recursively. Note that the descendants of the splitting(s) inherit the \textsf{isdone} property that marks which dimensions have been finished, so no future splits are possible in such dimensions within this branch. 
 
 \begin{algorithm}
 \caption{split($\nu$,$j$,$t$)}
@@ -212,7 +215,7 @@ Algorithm~\ref{alg:splitleaves}  describes a recursive adaptation procedure for 
 \section{Computations with the tree representation}
 \label{sec:operations}
 
-The procedure of the preceding section constructs a binary tree $T$ whose leaves each hold an accurate representation of $f$ over a subdomain. These subdomains overlap, and constructing a global partition of unity approximation from them is straightforward.
+The procedure of the preceding section constructs a binary tree $\ct$ whose leaves each hold an accurate representation of $f$ over a subdomain. These subdomains overlap, and constructing a global partition of unity approximation from them is straightforward.
 
 Define the $C^\infty$ function
 \begin{align}
@@ -235,11 +238,11 @@ be the affine map from $[a,b]$ to $[-1,1]$. Suppose $\nu$ is a leaf of $T$ with 
 Next we use Shepard's method~\cite{wendland2004scattered} to define a partition of unity $\{w_\nu (\vect{x})\}$, indexed by the leaves of $T$:
 \begin{equation}
   \label{eq:pu-weight}
-  w_\nu(\vect{x}) = \frac{\psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(T)} \psi_\mu(\vect{x})}.
+  w_\nu(\vect{x}) = \frac{\psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(\ct)} \psi_\mu(\vect{x})}.
 \end{equation}
 Let $s_\nu$ be the polynomial interpolant of $f$ over the domain of node $\nu$. Then the global approximant is
 \begin{equation}
-  s(\vect{x}) = \sum_{\nu\in \text{leaves}(T)} w_\nu(\vect{x})s_\nu(\vect{x}).
+  s(\vect{x}) = \sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x})s_\nu(\vect{x}).
   \label{eq:pu-approx}	
 \end{equation}
 
@@ -249,8 +252,8 @@ Next we describe efficient algorithms using the tree representation of the globa
 
 Note that (\ref{eq:pu-weight})--~(\ref{eq:pu-approx}) can be rearranged into
 \begin{equation}
-  s(\vect{x}) = \sum_{\nu\in \text{leaves}(T)} \frac{s_\nu(\vect{x}) \psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(T)} \psi_\mu(\vect{x})}
-  = \frac{\displaystyle\sum_{\nu\in \text{leaves}(T)} s_\nu(\vect{x}) \psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(T)} \psi_\mu(\vect{x})}.
+  s(\vect{x}) = \sum_{\nu\in \text{leaves}(\ct)} \frac{s_\nu(\vect{x}) \psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(\ct)} \psi_\mu(\vect{x})}
+  = \frac{\displaystyle\sum_{\nu\in \text{leaves}(\ct)} s_\nu(\vect{x}) \psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(\ct)} \psi_\mu(\vect{x})}.
   \label{eq:pu-alt}
 \end{equation}
 This formula suggests a recursive approach to evaluating the numerator and denominator, presented in Algorithm~\ref{alg:numden}. Using it, only leaves containing $\vect{x}$ and their ancestors are ever visited. A similar approach was described in~\cite{tobor2006reconstructing}.
@@ -287,9 +290,9 @@ The innermost sum yields $N^{d-1}M$ unique values, each taking $\bigo(N)$ time t
 
 \subsection{Binary arithmetic operations}
 
-Suppose we have two approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $T_1$ and $T_2$ respectively, and we want to construct a tree approximation for $\hat{s}_1 \circ \hat{s}_2$, where $\circ$ is one of the operators $+$, $-$, $\times$, or $\div$. If $T_1$ and $T_2$ have identical tree structures, then it is straightforward to operate leafwise on the polynomial approximations. In the cases of multiplication and division, the resulting tree have to be refined further using Algorithm~\ref{alg:split}, since these operations typically result in polynomials of degree greater than the operands. 
+Suppose we have two approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $\ct_1$ and $\ct_2$ respectively, and we want to construct a tree approximation for $\hat{s}_1 \circ \hat{s}_2$, where $\circ$ is one of the operators $+$, $-$, $\times$, or $\div$. If $\ct_1$ and $\ct_2$ have identical tree structures, then it is straightforward to operate leafwise on the polynomial approximations. In the cases of multiplication and division, the resulting tree have to be refined further using Algorithm~\ref{alg:split}, since these operations typically result in polynomials of degree greater than the operands. 
 
-If the trees $T_1$ and $T_2$ are not structurally identical, we are free to use Algorithm~\ref{alg:split} to construct an approximation by sampling values of $\hat{s}_1 \circ \hat{s}_2$. However, the tree of $\hat{s}_1 \circ \hat{s}_2$ likely shares refinement structure with both $T_1$ and $T_2$. For example, Figure~\ref{zone_tan} shows the refined zones of the trees for $\arctan(100(x^2+y))$, $\arctan(100(x+y^2))$, and their sum. Thus in practice we merge the trees $T_1$ and $T_2$ using Algorithm~\ref{alg:merge}, presented in Appendix~\ref{sec:merge}. The merged tree, whose leaves contain sampled values of the result, may then be refined further if chopping tests then reveal that the result is not fully resolved. 
+If the trees $\ct_1$ and $\ct_2$ are not structurally identical, we are free to use Algorithm~\ref{alg:split} to construct an approximation by sampling values of $\hat{s}_1 \circ \hat{s}_2$. However, the tree of $\hat{s}_1 \circ \hat{s}_2$ likely shares refinement structure with both $ct_1$ and $ct_2$. For example, Figure~\ref{zone_tan} shows the refined zones of the trees for $\arctan(100(x^2+y))$, $\arctan(100(x+y^2))$, and their sum. Thus in practice we merge the trees $\ct_1$ and $\ct_2$ using Algorithm~\ref{alg:merge}, presented in Appendix~\ref{sec:merge}. The merged tree, whose leaves contain sampled values of the result, may then be refined further if chopping tests then reveal that the result is not fully resolved. 
 
 \begin{figure}
 \centering
@@ -318,16 +321,16 @@ If the trees $T_1$ and $T_2$ are not structurally identical, we are free to use 
 
 Differentiation of the global approximant~(\ref{eq:pu-approx}) results in two groups of terms:
 \begin{equation}
-  \pp{}{x_j} s(\vect{x}) = \sum_{\nu\in \text{leaves}(T)} w_\nu(\vect{x}) \pp{}{x_j} s_\nu(\vect{x}) + \sum_{\nu\in \text{leaves}(T)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x}).
+  \pp{}{x_j} s(\vect{x}) = \sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) \pp{}{x_j} s_\nu(\vect{x}) + \sum_{\nu\in \text{leaves}(\ct)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x}).
   \label{eq:pu-deriv}	
 \end{equation}
-The first sum is a partition of unity approximation of leafwise differentiated interpolants. That is, we simply apply standard spectral differentiation to the data stored in the leaves of $T$.
+The first sum is a partition of unity approximation of leafwise differentiated interpolants. That is, we simply apply standard spectral differentiation to the data stored in the leaves of $\ct$.
 
 For the second sum, note that the weight function derivatives are nonzero only at values of $\vect{x}$ that lie in the domains of more than one leaf; elsewhere the weight functions are identically one or zero. If the values of all the leafwise interpolants agree perfectly at such $\vect{x}$, then
 \begin{equation}
   \label{eq:pu-weight-deriv}
-  \sum_{\nu\in \text{leaves}(T)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x})
-  = s_\nu(\vect{x}) \pp{}{x_j}  \sum_{\nu\in \text{leaves}(T)} w_\nu(\vect{x}) = 0,
+  \sum_{\nu\in \text{leaves}(\ct)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x})
+  = s_\nu(\vect{x}) \pp{}{x_j}  \sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) = 0,
 \end{equation}
 since the weights are a partition of unity. Thus this term essentially contributes an amount on the order of the local interpolation accuracy times the gradients of the weights. These are inversely proportional to the overlap widths, which are themselves proportional to the zone widths (see~(\ref{eq:overlap}). At most, then, they contribute an amount that is $\bigo(2^m)$ larger than the original local error on a leaf that is at depth $m$ in the tree. As a practical issue, we are unlikely to be able to cope anyway with a tree of depth great enough to incur a factor as large as two full orders of magnitude---which we would need only to resolve features at a scale much less than 1\% of the original domain width. Hence we feel justified ignoring this contribution. 
 
@@ -337,7 +340,7 @@ since the weights are a partition of unity. Thus this term essentially contribut
 The simplest and seemingly most efficient approach to integrating over the domain is to do so piecewise over the nonoverlapping zones,
 \begin{equation}
   \label{eq:integration}
-  \int_{\Omega} f(\vect{x}) d\vect{x} = \sum_{\nu\in \text{leaves}(T)} \int_{\text{\textsf{zone}($\nu$)}} f(\vect{x}) d\vect{x}.
+  \int_{\Omega} f(\vect{x}) d\vect{x} = \sum_{\nu\in \text{leaves}(\ct)} \int_{\text{\textsf{zone}($\nu$)}} f(\vect{x}) d\vect{x}.
 \end{equation}
 Since the leaf interpolants are defined natively over the overlapping domains, they must be resampled at Chebyshev grids on the zones, after which Clenshaw-Curtis quadrature is applied.
 
@@ -389,31 +392,31 @@ $\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 4.44$\times 10^{-16}$ & 0.0149 & 0.002
 \end{table}
 
 \begin{figure}
-\centering
-\subfloat[Plot of $\arctan \lp (x+y^2)/0.01 \rp$.]{
-\includegraphics[scale = 0.34]{tan2Dplot.eps}
-   \label{tanfunplot}
- }
-\subfloat[Plot of subdomains.]{
-\includegraphics[scale = 0.34]{tan2Dsubdomains.eps}
-   \label{tanfundomains}
- }
-\caption{Plot of $\arctan \lp (x+y^2)/0.01 \rp$ and the subdomains formed from the partition of unity method.}
-\label{TANFUN1}
+  \centering
+  \subfloat[$\arctan \lp (x+y^2)/0.01 \rp$]{
+    \includegraphics[scale = 0.34]{tan2Dplot}
+    \label{tanfunplot}
+  }
+  \subfloat[Overlapping subdomains]{
+    \includegraphics[scale = 0.34]{tan2Dsubdomains}
+    \label{tanfundomains}
+  }
+  \caption{Overlapping subdomains constructed by the adaptive tree method for a function with a nonlinear ``cliff.''}
+  \label{TANFUN1}
 \end{figure}
 
 \begin{figure}
-\centering
-\subfloat[Plot of $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$.]{
-\includegraphics[scale = 0.34]{runge2Dplot.eps}
-   \label{rungefunplot}
- }
-\subfloat[Plot of subdomains.]{
-\includegraphics[scale = 0.34]{rungesubdomains.eps}
-   \label{rungefundomains}
- }
-\caption{Plot of $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$ and the subdomains formed from the partition of unity method.}
-\label{rungeFUN1}
+  \centering
+  \subfloat[$\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$]{
+    \includegraphics[scale = 0.34]{runge2Dplot}
+    \label{rungefunplot}
+  }
+  \subfloat[Overlapping subdomains]{
+    \includegraphics[scale = 0.34]{rungesubdomains}
+    \label{rungefundomains}
+  }
+  \caption{Overlapping subdomains constructed by the adaptive tree method for a function with a sharp spike.}
+  \label{rungeFUN1}
 \end{figure}
 
 
@@ -428,8 +431,8 @@ for. We compare the construction times of our method to Chebfun2 for $t \in [0,\
 
 \begin{figure}
 \centering
-\includegraphics[scale = 0.5]{tan_rotatate_2D.eps}
-\caption{Plot of construction time of $\arctan(250(\cos(t)x+\sin(t)y))$ for $t \in [0,\pi/4]$ for the partition of unity method and Chebfun2.}
+\includegraphics[scale = 0.5]{tan_rotate_2D}
+\caption{Comparison of construction times for $\arctan(250(\cos(t)x+\sin(t)y))$ for $t \in [0,\pi/4]$.}
 \label{tan_rotate_2D}
 \end{figure}
 
@@ -438,8 +441,8 @@ Our next experiment is to add and multiply the rank-one function $\arctan(250x)$
 
 \begin{figure}
 \centering
-\includegraphics[scale = 0.5]{tan_rotatate_add_mult_2D.eps}
-\caption{Plot of time for multiplication and addition of $\arctan(250x)$ with $\arctan(250(\cos(t)x+\sin(t)y))$ for $t \in [0,\pi/4]$ for the partition of unity method and Chebfun2.}
+\includegraphics[scale = 0.5]{tan_rotate_add_mult_2D}
+\caption{Comparison of execution times for multiplication and addition of $\arctan(250x)$ with $\arctan(250(\cos(t)x+\sin(t)y))$ for $t \in [0,\pi/4]$.}
 \label{TAN_ADD_MULT}
 \end{figure}
 
@@ -501,20 +504,13 @@ We repeat our experiment testing the importance of axes alignment using the func
 \begin{equation}
 \arctan(5(\sin(p)\cos(t)x+\sin(p)\sin(t)y+\cos(p)z))
 \end{equation}
-for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{tan3D}. As in 2D, the Chebfun low-rank technique shows wide variation depending on the angles, and a large region of long times. The tree-based method is much less sensitive and faster (by as much as two orders of magnitude) except for the purely axes-aligned cases. 
+for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{fig:tan3D}. As in 2D, the Chebfun low-rank technique shows wide variation depending on the angles, and a large region of long times. The tree-based method is much less sensitive and faster (by as much as two orders of magnitude) except for the purely axes-aligned cases. 
 
 \begin{figure}
-\centering
-\subfloat[PU method]{
-\includegraphics[scale = 0.34]{TAN_3D_PU.eps}
-   \label{tan3DPU}
- }
-\subfloat[Chebfun3]{
-\includegraphics[scale = 0.34]{TAN_3D_CHEB.eps}
-   \label{tan3DCheb}
- }
-\caption{Plot of construction time of $\arctan(5(\sin(p)\cos(t)x+\sin(p)\sin(t)y+\cos(p)z))$ for $t,p \in [0,\pi/4]$ for the PU method and Chebfun3.}
-\label{tan3D}
+  \centering
+  \includegraphics[width=\textwidth]{tan3d_comparison}
+  \caption{Construction time comparison for the 3D function $\arctan(5(\sin(p)\cos(t)x+\sin(p)\sin(t)y+\cos(p)z))$, with varying angles. Colors and contours correspond to the base-10 log of execution time in seconds.}
+  \label{fig:tan3D}
 \end{figure}
 
 
@@ -531,8 +527,7 @@ for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{tan3D}. As in
 \section{Merging trees}
 \label{sec:merge}
 
-\newcommand{\Tm}{\ensuremath{\nu_\text{merge}}}
-Algorithm~\ref{alg:merge} describes a recursive method for merging two trees $T_1$ and $T_2$, representing functions $f_1$ and $f_2$, into a tree representation for $f_1\circ f_2$, with $\circ$ as $+$, $-$, $\times$, or $\div$. The input arguments to the algorithm are the operation, corresponding nodes of $T_1$, $T_2$, and the merged tree, and the number $r$, which is the dimension that was most recently split in the merged tree. Initially the algorithm is called with root nodes representing the entire original domain, and $r=0$. 
+Algorithm~\ref{alg:merge} describes a recursive method for merging two trees $\ct_1$ and $ct_2$, representing functions $f_1$ and $f_2$, into a tree representation for $f_1\circ f_2$, with $\circ$ as $+$, $-$, $\times$, or $\div$. The input arguments to the algorithm are the operation, corresponding nodes of $\ct_1$, $\ct_2$, and the merged tree, and the number $r$, which is the dimension that was most recently split in the merged tree. Initially the algorithm is called with root nodes representing the entire original domain, and $r=0$. 
 
 We assume an important relationship among the input nodes. Suppose that \prop{zone}{$\nu_k$}=$\prod_{j=1}^d [\alpha_{kj},\beta_{kj}]$ for $k=1,2$, and that \prop{zone}{$\Tm$}=$\prod_{j=1}^d [A_{j},B_{j}]$. Then we require for $k=1,2$ that
 \begin{equation}
@@ -551,31 +546,31 @@ The only remaining case is that $\nu_1$ and $\nu_2$ are each split, but in diffe
 
 \newcommand{\op}{\ensuremath{\circ}}
 \begin{algorithm}[!h]
-\caption{merge(\op,$\nu_1$,$\nu_2$,$T_{\text{merge}}$,$r$)}
+\caption{merge(\op,$\nu_1$,$\nu_2$,$\num$,$r$)}
 \label{alg:merge}
 \begin{algorithmic}
 \IF{$\nu_1$ and $\nu_2$ are leaves}
-\STATE \textsf{values}($T_{\text{merge}}$):= \textsf{interpolant}($\nu_1$) $\op$ \textsf{interpolant}($\nu_2$), evaluated on \prop{grid}{$T_\text{merge}$}
+\STATE \textsf{values}($\num$):= \textsf{interpolant}($\nu_1$) $\op$ \textsf{interpolant}($\nu_2$), evaluated on \prop{grid}{$T_\text{merge}$}
 \ELSIF{$\nu_1$ is a leaf \AND $\nu_2$ is not a leaf}
-\STATE split($T_{\text{merge}}$,\prop{splitdim}{$\nu_1$})
-\STATE merge(\op,$\nu_1$,\child{0}($\nu_2$),\child{0}($T_{\text{merge}}$),\prop{splitdim}{$\nu_2$})
-\STATE merge(\op,$\nu_1$,\child{1}($\nu_2$),\child{1}($T_{\text{merge}}$),\prop{splitdim}{$\nu_2$})
+\STATE split($\num$,\prop{splitdim}{$\nu_1$})
+\STATE merge(\op,$\nu_1$,\child{0}($\nu_2$),\child{0}($\num$),\prop{splitdim}{$\nu_2$})
+\STATE merge(\op,$\nu_1$,\child{1}($\nu_2$),\child{1}($\num$),\prop{splitdim}{$\nu_2$})
 \ELSIF{$\nu_1$ is not a leaf \AND $\nu_2$ is a leaf}
-\STATE split($T_{\text{merge}}$,\prop{splitdim}{$\nu_1$})
-\STATE merge(\child{0}($\nu_1$),$\nu_2$,\child{0}($T_{\text{merge}}$),\prop{splitdim}{$\nu_1$})
-\STATE merge(\child{1}($\nu_1$),$\nu_2$,\child{1}($T_{\text{merge}}$),\prop{splitdim}{$\nu_1$})
+\STATE split($\num$,\prop{splitdim}{$\nu_1$})
+\STATE merge(\child{0}($\nu_1$),$\nu_2$,\child{0}($\num$),\prop{splitdim}{$\nu_1$})
+\STATE merge(\child{1}($\nu_1$),$\nu_2$,\child{1}($\num$),\prop{splitdim}{$\nu_1$})
 \ELSE
 \IF{\prop{splitdim}{$\nu_1$}=\prop{splitdim}{$\nu_2$}}
-\STATE split($T_{\text{merge}}$,\prop{splitdim}{$\nu_1$})
-\STATE merge(\op,\child{0}($\nu_1$),\child{0}($\nu_2$),\child{0}($T_{\text{merge}}$),\prop{splitdim}{$\nu_1$})
-\STATE merge(\op,\child{1}($\nu_1$),\child{1}($\nu_2$),\child{1}($T_{\text{merge}}$),\prop{splitdim}{$\nu_1$})
+\STATE split($\num$,\prop{splitdim}{$\nu_1$})
+\STATE merge(\op,\child{0}($\nu_1$),\child{0}($\nu_2$),\child{0}($\num$),\prop{splitdim}{$\nu_1$})
+\STATE merge(\op,\child{1}($\nu_1$),\child{1}($\nu_2$),\child{1}($\num$),\prop{splitdim}{$\nu_1$})
 \ELSE
 \STATE $r_1 = (\text{\prop{splitdim}{$\nu_1$}}-r-1) \mod d$
 \STATE $r_2 = (\text{\prop{splitdim}{$\nu_2$}}-r-1) \mod d$
 \STATE If $r_1>r_2$, swap $\nu_1$ and $\nu_2$
-\STATE split($T_{\text{merge}}$,\prop{splitdim}{$\nu_1$})
-\STATE merge(\op,\child{0}($\nu_1$),$\nu_2$,\child{0}($T_{\text{merge}}$),\prop{splitdim}{$\nu_1$})
-\STATE merge(\op,\child{1}($\nu_1$),$\nu_2$,\child{1}($T_{\text{merge}}$), \prop{splitdim}{$\nu_1$})
+\STATE split($\Tm$,\prop{splitdim}{$\nu_1$})
+\STATE merge(\op,\child{0}($\nu_1$),$\nu_2$,\child{0}($\num$),\prop{splitdim}{$\nu_1$})
+\STATE merge(\op,\child{1}($\nu_1$),$\nu_2$,\child{1}($\num$), \prop{splitdim}{$\nu_1$})
 \ENDIF
 \ENDIF
 \end{algorithmic}
