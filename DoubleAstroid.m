@@ -86,11 +86,11 @@ classdef DoubleAstroid
         
         function plot(obj)
             
-            Nxf = 120;
-            Nyf = 120;
+            Nxf = 240;
+            Nyf = 240;
             
-            x_f = chebpts(Nxf,[-1 1])';
-            y_f = chebpts(Nyf,[-1 1])';
+            x_f = linspace(-1,1,Nxf)';
+            y_f = linspace(-1,1,Nyf)';
             
             [Xf,Yf] = ndgrid(x_f,y_f);
             

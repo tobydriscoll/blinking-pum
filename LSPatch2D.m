@@ -426,8 +426,8 @@ classdef LSPatch2D < LSPatch
             
               obj.is_geometric_refined = true;
             
-               x = chebpts(120,zone(1,:))';
-               y = chebpts(120,zone(2,:))';
+               x = linspace(zone(1,1),zone(1,2),240)';
+               y = linspace(zone(2,1),zone(2,2),240)';
                
                [X,Y] = ndgrid(x,y);
                         
@@ -444,9 +444,9 @@ classdef LSPatch2D < LSPatch
                new_zone(:,2) = max(XP);
                
                %pudge out zone a bit
-               deltax = 0.25*Patch.overlap*diff(zone(1,:));
+               deltax = Patch.overlap*diff(zone(1,:));
                 %The width of the overlap
-               deltay = 0.25*Patch.overlap*diff(zone(2,:));       
+               deltay = Patch.overlap*diff(zone(2,:));       
                
                new_zone(1,1) = max(new_zone(1,1)-deltax,zone(1,1));
                new_zone(1,2) = min(new_zone(1,2)+deltax,zone(1,2));
@@ -455,9 +455,9 @@ classdef LSPatch2D < LSPatch
                new_zone(2,2) = min(new_zone(2,2)+deltay,zone(2,2));
                
                %The width of the overlap
-               deltax = 0.25*Patch.overlap*diff(zone(1,:));
+               deltax = Patch.overlap*diff(zone(1,:));
                 %The width of the overlap
-               deltay = 0.25*Patch.overlap*diff(zone(2,:));
+               deltay = Patch.overlap*diff(zone(2,:));
 
                
                new_domain(1,1) = max(new_zone(1,1)-deltax,outerbox(1,1));
