@@ -1,6 +1,6 @@
-%DOMAIN = Disk(1,[0 0]);
+DOMAIN = Disk(1,[0 0]);
 %DOMAIN = Astroid(0);
-DOMAIN = DoubleAstroid();
+%DOMAIN = DoubleAstroid();
 %DOMAIN = ParabRegion(-0.9);
 delta = 0;
 OUTERBOX = [-(1+delta) 1+delta;-(1+delta) 1+delta];
@@ -28,8 +28,8 @@ plot(DOMAIN);hold on; plotdomain(TREELS.ChebRoot); hold off;
 %x = OUTERBOX(1,1) + diff(OUTERBOX(1,:))*rand(200,1);
 %y = OUTERBOX(2,1) + diff(OUTERBOX(2,:))*rand(200,1);
 
-x = linspace(-1,1,100)';
-y = linspace(-1,1,100)';
+x = linspace(-1,1,200)';
+y = linspace(-1,1,200)';
 
 [X,Y] = ndgrid(x,y);
 V = TREELS.ChebRoot.evalfGrid({x y});

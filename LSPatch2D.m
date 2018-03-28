@@ -79,52 +79,52 @@ classdef LSPatch2D < LSPatch
                 varargin = varargin{:};
             end
             
-            if isstruct(varargin)
-                [new_zone,new_domain] = LSPatch2D.splitleafGeom(varargin.zone,varargin.outerbox,varargin.domain_in);
-                varargin.zone = new_zone;
-                varargin.domain = new_domain;
-            else
-                
-                args = varargin;
-                domain = [];
-                zone = [];
-                outerbox = [];
-                
-                current_i = 1;
-                
-                for i=1:2:length(args)-1
-                    if strcmpi(args{i}, 'domain')
-                        domain = args{i+1};
-                        varargin(current_i:current_i+1) = [];
-                    elseif strcmpi(args{i}, 'zone')
-                        zone = args{i+1};
-                        varargin(current_i:current_i+1) = [];
-                    elseif strcmpi(args{i}, 'outerbox')
-                        outerbox = args{i+1};
-                        varargin(i:i+1) = [];
-                    elseif strcmpi(args{i}, 'InnerDomain')
-                        domain_in = args{i+1};
-                        varargin(current_i:current_i+1) = [];
-                    else
-                        current_i = current_i+2;
-                    end
-                end
-                
-                
-                if(isempty(zone))
-                    zone = domain;
-                end
-                
-                if (isempty(outerbox))
-                    outerbox = domain;
-                end
-                
-                [new_zone,new_domain] = LSPatch2D.splitleafGeom(zone,outerbox,domain_in);
-                
-                varargin = {varargin{:},'InnerDomain',new_domain,'domain',new_zone,'InnerDomain',domain_in};
-                %Call superclass constructor
-                
-            end
+%             if isstruct(varargin)
+%                 [new_zone,new_domain] = LSPatch2D.splitleafGeom(varargin.zone,varargin.outerbox,varargin.domain_in);
+%                 varargin.zone = new_zone;
+%                 varargin.domain = new_domain;
+%             else
+%                 
+%                 args = varargin;
+%                 domain = [];
+%                 zone = [];
+%                 outerbox = [];
+%                 
+%                 current_i = 1;
+%                 
+%                 for i=1:2:length(args)-1
+%                     if strcmpi(args{i}, 'domain')
+%                         domain = args{i+1};
+%                         varargin(current_i:current_i+1) = [];
+%                     elseif strcmpi(args{i}, 'zone')
+%                         zone = args{i+1};
+%                         varargin(current_i:current_i+1) = [];
+%                     elseif strcmpi(args{i}, 'outerbox')
+%                         outerbox = args{i+1};
+%                         varargin(i:i+1) = [];
+%                     elseif strcmpi(args{i}, 'InnerDomain')
+%                         domain_in = args{i+1};
+%                         varargin(current_i:current_i+1) = [];
+%                     else
+%                         current_i = current_i+2;
+%                     end
+%                 end
+%                 
+%                 
+%                 if(isempty(zone))
+%                     zone = domain;
+%                 end
+%                 
+%                 if (isempty(outerbox))
+%                     outerbox = domain;
+%                 end
+%                 
+%                 [new_zone,new_domain] = LSPatch2D.splitleafGeom(zone,outerbox,domain_in);
+%                 
+%                 varargin = {varargin{:},'InnerDomain',new_domain,'domain',new_zone,'InnerDomain',domain_in};
+%                 %Call superclass constructor
+%                 
+%             end
             
             obj = obj@LSPatch(varargin);
             
@@ -150,7 +150,7 @@ classdef LSPatch2D < LSPatch
         
         
         
-
+        
         
         function Child = splitleaf(obj,Max,set_vals)
             
@@ -168,7 +168,7 @@ classdef LSPatch2D < LSPatch
                     end
                 end
                 
-            else 
+            else
                 %Chop(obj);
                 Child = obj;
                 Child.is_refined = true;
@@ -218,14 +218,14 @@ classdef LSPatch2D < LSPatch
                 end
                 
                 obj.mult = mult;
-              
                 
-%                 D_x = ChebDiff(obj.degs(1));
-%                 D_y = ChebDiff(obj.degs(2));
-%                 D_xx = ChebDiff(obj.degs(1))^2;
-%                 D_yy = ChebDiff(obj.degs(2))^2;
                 
-               % Lap = kron(D_yy,eye(obj.degs(1)))+kron(eye(obj.degs(2)),D_xx)+2*kron(D_y,D_x);
+                %                 D_x = ChebDiff(obj.degs(1));
+                %                 D_y = ChebDiff(obj.degs(2));
+                %                 D_xx = ChebDiff(obj.degs(1))^2;
+                %                 D_yy = ChebDiff(obj.degs(2))^2;
+                
+                % Lap = kron(D_yy,eye(obj.degs(1)))+kron(eye(obj.degs(2)),D_xx)+2*kron(D_y,D_x);
                 
                 Mx = clenshaw(chebpts(obj.degs(1)*mult),eye(obj.degs(1)));
                 My = clenshaw(chebpts(obj.degs(2)*mult),eye(obj.degs(2)));
@@ -250,9 +250,9 @@ classdef LSPatch2D < LSPatch
                 %obj.coeffs = reshape(M2\F2,obj.degs);
                 %warning('on','all');
                 
-                 warning('off','all');
-                 obj.coeffs = reshape(M\F,obj.degs);
-                 warning('on','all');
+                warning('off','all');
+                obj.coeffs = reshape(M\F,obj.degs);
+                warning('on','all');
                 
                 F1 = f(X1,Y1);
                 
@@ -303,6 +303,15 @@ classdef LSPatch2D < LSPatch
             
             domain0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
             domain1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
+            
+            [new_zone_fit0,new_domain_fit0] = LSPatch2D.splitleafGeom(zone0,domain0,obj.outerbox,obj.domain_in);
+            [new_zone_fit1,new_domain_fit1] = LSPatch2D.splitleafGeom(zone1,domain1,obj.outerbox,obj.domain_in);
+            
+            zone0 = new_zone_fit0;
+            domain0 = new_domain_fit0;
+            
+            zone1 = new_zone_fit1;
+            domain1 = new_domain_fit1;
             
             %We first figure out if the the subdomains sit entirely in the domain itself.
             %In this case, we would just use a standard chebyshev
@@ -375,7 +384,7 @@ classdef LSPatch2D < LSPatch
                 Child.is_geometric_refined = false;
             end
             
-
+            
             if set_vals
                 for k=1:2
                     Child.children{k}.sample(obj.evalfGrid(Child.children{k}.leafGrids()));
@@ -422,51 +431,63 @@ classdef LSPatch2D < LSPatch
     end
     
     methods (Static)
-                function [new_zone,new_domain] = splitleafGeom(zone,outerbox,domain_in)
+        function [new_zone,new_domain] = splitleafGeom(zone,domain,outerbox,domain_in)
             
-              obj.is_geometric_refined = true;
+            obj.is_geometric_refined = true;
             
-               x = linspace(zone(1,1),zone(1,2),240)';
-               y = linspace(zone(2,1),zone(2,2),240)';
-               
-               [X,Y] = ndgrid(x,y);
-                        
-               XP = [X(:) Y(:)];
-                        
-               ind = domain_in.Interior(XP);
-               
-               XP = XP(ind,:);
-               
-               new_zone = zeros(2,2);
-               
-               new_zone(:,1) = min(XP);
-               
-               new_zone(:,2) = max(XP);
-               
-               %pudge out zone a bit
-               deltax = Patch.overlap*diff(zone(1,:));
-                %The width of the overlap
-               deltay = Patch.overlap*diff(zone(2,:));       
-               
-               new_zone(1,1) = max(new_zone(1,1)-deltax,zone(1,1));
-               new_zone(1,2) = min(new_zone(1,2)+deltax,zone(1,2));
-               
-               new_zone(2,1) = max(new_zone(2,1)-deltay,zone(2,1));
-               new_zone(2,2) = min(new_zone(2,2)+deltay,zone(2,2));
-               
-               %The width of the overlap
-               deltax = Patch.overlap*diff(zone(1,:));
-                %The width of the overlap
-               deltay = Patch.overlap*diff(zone(2,:));
-
-               
-               new_domain(1,1) = max(new_zone(1,1)-deltax,outerbox(1,1));
-               new_domain(1,2) = min(new_zone(1,2)+deltax,outerbox(1,2));
-               
-               new_domain(2,1) = max(new_zone(2,1)-deltay,outerbox(2,1));
-               new_domain(2,2) = min(new_zone(2,2)+deltay,outerbox(2,2));
-               
-               
+            x = linspace(domain(1,1),domain(1,2),240)';
+            y = linspace(domain(2,1),domain(2,2),240)';
+            
+            [X,Y] = ndgrid(x,y);
+            
+            XP = [X(:) Y(:)];
+            
+            ind = domain_in.Interior(XP);
+            
+            XP = XP(ind,:);
+            
+            new_domain = zeros(2,2);
+            
+            new_domain(:,1) = min(XP);
+            
+            new_domain(:,2) = max(XP);
+            
+            %pudge out zone a bit
+            deltax = 0.5*Patch.overlap*diff(zone(1,:));
+            %The width of the overlap
+            deltay = 0.5*Patch.overlap*diff(zone(2,:));
+            
+            new_domain(1,1) = max(new_domain(1,1)-deltax,domain(1,1));
+            new_domain(1,2) = min(new_domain(1,2)+deltax,domain(1,2));
+            
+            new_domain(2,1) = max(new_domain(2,1)-deltay,domain(2,1));
+            new_domain(2,2) = min(new_domain(2,2)+deltay,domain(2,2));
+           
+            new_zone = zone;
+            
+            if abs(new_domain(1,1)-domain(1,1))>1e-10
+                new_zone(1,1) = new_domain(1,1);
+            end
+            
+            if abs(new_domain(1,2)-domain(1,2))>1e-10
+                new_zone(1,2) = new_domain(1,2);
+            end
+            
+            if abs(new_domain(2,1)-domain(2,1))>1e-10
+                new_zone(2,1) = new_domain(2,1);
+            end
+            
+            if abs(new_domain(2,2)-domain(2,2))>1e-10
+                new_zone(2,2) = new_domain(2,2);
+            end
+            
+%             new_domain(1,1) = max(new_zone(1,1)-deltax,outerbox(1,1));
+%             new_domain(1,2) = min(new_zone(1,2)+deltax,outerbox(1,2));
+%             
+%             new_domain(2,1) = max(new_zone(2,1)-deltay,outerbox(2,1));
+%             new_domain(2,2) = min(new_zone(2,2)+deltay,outerbox(2,2));
+            
+            
         end
     end
 end
