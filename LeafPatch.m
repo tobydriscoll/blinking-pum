@@ -2,22 +2,16 @@ classdef LeafPatch<Patch
     % This is the abstract class for a leaf object. This is used with the
     % PUPatch object.
  
-% LeafPatch(varargin) serves as the base constructor for a leafPatch
-% object. Here PUFun(f,'perf1',perf1,'pref2',pref2,..) is called, with
-% options:
+% LeafPatch(var_struct) serves as the base constructor for a leafPatch
+% object, where var_struct is a structure with fields:
 % 
+% *var_struct.domain, the domain used for the Chebyshev polynomial.
 %
-% *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d]
+% *var_struct.zone, the zone (non overlapping part from partition). If the
+% zone is undefined, the zone is set to obj.domain.
 %
-% *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d]
-%
-% *The domain of the root of the tree: 'outerbox', [a,b;c,d]
-%
-% LeafPatch(struct) will construct an approximation with a structure
-% struct. Here struct must contain the following fields:
-% outerbox : domain of the outerbox
-% zone : domain of the zone
-% domain : square domain of the polynomial
+% *var_struct.outerbox, the domain of the function. If the outerbox is
+% undefined, the outerbox is set to obj.domain.
     properties
         index = [];
         chebweights = [];
@@ -26,45 +20,26 @@ classdef LeafPatch<Patch
     end
     
     methods
-        function obj = LeafPatch(varargin)
+        function obj = LeafPatch(var_struct)
             
-            if length(varargin)==1
-                varargin = varargin{:};
-            end
-            
-            if isstruct(varargin)
-                
-                obj.domain = varargin.domain;
-                obj.outerbox = varargin.outerbox;
-                obj.zone = varargin.zone;
-                
+            if isfield(var_struct, 'domain')
+                obj.domain = var_struct.domain;
             else
-                
-                args = varargin;
-                while (~isempty(args))
-                    if strcmpi(args{1}, 'domain')
-                        obj.domain = args{2};
-                        [obj.dim,~] = size(obj.domain);
-                    elseif strcmpi(args{1}, 'zone')
-                        obj.zone = args{2};
-                    elseif strcmpi(args{1}, 'outerbox')
-                        obj.outerbox = args{2};
-                    end
-                    args(1:2) = [];
-                end
+                error('A domain needs to be specified.');
             end
             
-            if isempty(obj.domain)
-                error('You need a domain!');
+            if isfield(var_struct, 'outerbox')
+                obj.outerbox = var_struct.outerbox;
+            else
+                obj.outerbox = obj.domain;
             end
             
-            if isempty(obj.zone)
+            if isfield(var_struct, 'zone')
+                obj.zone = var_struct.zone;
+            else
                 obj.zone = obj.domain;
             end
             
-            if isempty(obj.outerbox)
-                obj.outerbox = obj.domain;
-            end
             
             obj.is_geometric_refined = true; %square is always geometrically refined
             [obj.dim,~] = size(obj.domain);
@@ -73,9 +48,9 @@ classdef LeafPatch<Patch
             obj.bump = cell(3,1);
             
             for k=1:obj.dim
-               % if isequal(obj.domain(k,:),obj.outerbox(k,:))
-               %     w = @(x) ones(size(x));
-               if obj.domain(k,1) == obj.outerbox(k,1)
+                % if isequal(obj.domain(k,:),obj.outerbox(k,:))
+                %     w = @(x) ones(size(x));
+                if obj.domain(k,1) == obj.outerbox(k,1)
                     w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
                 elseif obj.domain(k,2) == obj.outerbox(k,2)
                     w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))-1)/2);

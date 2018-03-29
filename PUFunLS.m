@@ -23,97 +23,70 @@ classdef PUFunLS < handle & matlab.mixin.Copyable
     % *The degree indices from the standard degrees in each dimension for non
     % square domains : 'degreeIndex', [ind_1,ind_2].
     %
+    % *The tolerance used for adaptation: 'tol', tol.
+    %
     % *The degree indices from the standard degrees in each dimension for
     % square domains : 'ChebDegreeIndex', [ind_1,ind_2].
+    %
     %
     % Here the degrees can be chosen from the set [3 5 9 17 33 65 129].
     % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be
     % 33 in each direction.
-    
     properties
         ChebRoot
-        TreeGrid
         leafArray
-        Errs
-        Nums
         deg_in
         cheb_deg_in
         domain_in
         tol
         domain
         grid_opt = false;
-        movie;
     end
     
     methods
         
         function obj = PUFunLS(varargin)
             
-            if length(varargin)==1
-                varargin = varargin{:};
+            f = varargin{1};
+            
+            obj.domain_in = varargin{2};
+            obj.domain = varargin{3};
+            
+            cheb_struct.domain_in = obj.domain_in;
+            cheb_struct.domain = obj.domain;
+            
+            
+            varargin(1:3) = [];
+            args = varargin;
+            
+            while ( ~isempty(args) )
+                if strcmpi(args{1}, 'degreeIndex')
+                    cheb_struct.deg_in = args{2};
+                elseif strcmpi(args{1}, 'ChebDegreeIndex')
+                    cheb_struct.cheb_deg_in = args{2};
+                elseif strcmpi(args{1}, 'MaxLengths')
+                    cheb_struct.max_lengths = args{2};
+                elseif strcmpi(args{1}, 'tol')
+                    cheb_struct.tol = args{2};
+                elseif strcmpi(args{1}, 'CourseDegreeIndex')
+                    cheb_struct.cdeg_in = args{2};
+                else
+                    error(strcat(args{1},' is not a valid parameter.'));
+                end
+                args(1:2) = [];
             end
             
-            if isstruct(varargin)
-                
-                obj.grid_opt = varargin.grid_opt;
-                f = varargin.op;
-                obj.domain = varagin.domain;
-                obj.domain_in = varagin.domain_in;
-                obj.deg_in = varagin.deg_in;
-                obj.cheb_deg_in = varagin.cheb_deg_in;
-                obj.tol = varagin.tol;
-                
-                dim = nargin(f);
-                
-                if dim==2
-                    obj.ChebRoot = LSPatch2D('domain',obj.domain_in,'boundingbox',obj.domain,'degreeIndex',obj.deg_in,'ChebDegreeIndex',obj.cheb_deg_in,'tol',obj.tol);
-                else
-                    obj.ChebRoot = LSPatch3D('domain',obj.domain_in,'boundingbox',obj.domain,'degreeIndex',obj.deg_in,'ChebDegreeIndex',obj.cheb_deg_in,'tol',obj.tol);
-                end
-                
+            dim = nargin(f);
+            
+            if dim==2
+                obj.ChebRoot = LSPatch2D(cheb_struct);
             else
-                if length(varargin)==3
-                    f = varargin{1};
-                    
-                    obj.domain_in = varargin{2};
-                    obj.domain = varargin{3};
-                    
-                    dim = nargin(f);
-                    
-                    if dim==2
-                        obj.ChebRoot = LSPatch2D('InnerDomain',obj.domain_in,'domain',obj.domain);
-                    else
-                        obj.ChebRoot = LSPatch3D('InnerDomain',obj.domain_in,'domain',obj.domain);
-                    end
-                else
-                    f = varargin{1};
-                    
-                    obj.domain_in = varargin{2};
-                    obj.domain = varargin{3};
-                    varargin(1:3) = [];
-                    args = varargin;
-                    while ( ~isempty(args) )
-                        if strcmpi(args{1}, 'degreeIndex')
-                            obj.deg_in = args{2};
-                        elseif strcmpi(args{1}, 'ChebDegreeIndex')
-                            obj.cheb_deg_in = args{2};
-                        end
-                        args(1:2) = [];
-                    end
-                    
-                    
-                    varargin = {varargin{:},'InnerDomain',obj.domain_in,'domain',obj.domain};
-                    
-                    dim = nargin(f);
-                    
-                    if dim==2
-                        obj.ChebRoot = LSPatch2D(varargin);
-                    else
-                        obj.ChebRoot = LSPatch3D(varargin);
-                    end
-                    
-                end
+                obj.ChebRoot = LSPatch3D(cheb_struct);
             end
+            
+            obj.cheb_deg_in = obj.ChebRoot.cheb_deg_in;
+            obj.deg_in = obj.ChebRoot.deg_in;
+            obj.tol = obj.ChebRoot.tol;
             
             refine(obj,f);
             
@@ -152,18 +125,18 @@ classdef PUFunLS < handle & matlab.mixin.Copyable
                 grid_opt = false;
             end
             
-            h = figure();
-            
-            plot(obj.domain_in); hold on; obj.ChebRoot.plotzone; hold off;
-            
-           
-            frame = getframe(h);
-            im = frame2im(frame);
-            [imind,cm] = rgb2ind(im,256);
-            
-            imwrite(imind,cm,'cool_mov.gif','gif', 'Loopcount',inf); 
-            
-            close all
+%             h = figure();
+%             
+%             plot(obj.domain_in); hold on; obj.ChebRoot.plotzone; hold off;
+%             
+%            
+%             frame = getframe(h);
+%             im = frame2im(frame);
+%             [imind,cm] = rgb2ind(im,256);
+%             
+%             imwrite(imind,cm,'cool_mov2.gif','gif', 'Loopcount',inf); 
+%             
+%             close all
             
             while ~obj.ChebRoot.is_refined
                 
@@ -182,17 +155,17 @@ classdef PUFunLS < handle & matlab.mixin.Copyable
                 end
                 
             
-            h = figure();
-            
-            plot(obj.domain_in); hold on; obj.ChebRoot.plotzone; hold off;
-            
-            frame = getframe(h);
-            im = frame2im(frame);
-            [imind,cm] = rgb2ind(im,256);
-                
-            imwrite(imind,cm,'cool_mov.gif','gif','WriteMode','append'); 
-            
-            close all
+%             h = figure();
+%             
+%             plot(obj.domain_in); hold on; obj.ChebRoot.plotzone; hold off;
+%             
+%             frame = getframe(h);
+%             im = frame2im(frame);
+%             [imind,cm] = rgb2ind(im,256);
+%                 
+%             imwrite(imind,cm,'cool_mov2.gif','gif','WriteMode','append'); 
+%             
+%             close all
             end
             
             

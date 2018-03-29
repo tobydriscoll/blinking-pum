@@ -39,7 +39,6 @@ test_funs = {@(x,y) log(1+10^5*(x.^2+y.^2));
 %f2 = @(x,y) atan((x+y.^2)/c);
 
 f2 = @(x,y) atan((x)/c).*atan((y)/c);
-f = @(x) f2(x(:,1),x(:,2));
 
 %f  = @(x) x(:,1).^3.*exp(3.5*pi*x(:,2));
 %f2 = @(x,y) x.^3.*exp(3.5*pi*y);
@@ -96,7 +95,7 @@ TIMES = zeros(NT,1);
 for i=1:NT
     
 tic;
-TREE = PUFun(domain,degs,f,1e-12);
+TREE = PUchebfun(f2);
 TIMES(i)=toc;
 
 end

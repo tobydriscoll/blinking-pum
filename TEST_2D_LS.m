@@ -1,6 +1,6 @@
-DOMAIN = Disk(1,[0 0]);
-%DOMAIN = Astroid(0);
-%DOMAIN = DoubleAstroid();
+%DOMAIN = Disk(1,[0 0]);
+%DOMAIN = Astroid(pi/4);
+DOMAIN = DoubleAstroid();
 %DOMAIN = ParabRegion(-0.9);
 delta = 0;
 OUTERBOX = [-(1+delta) 1+delta;-(1+delta) 1+delta];

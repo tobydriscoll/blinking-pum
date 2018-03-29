@@ -9,56 +9,10 @@ classdef LSPatch2D < LSPatch
     % f.
     
     % LSPatch2D(varargin) constructs a tensor product approximation
-    % representing a function, based on the options passed into with varargin;
-    % that is PUFun('perf1',perf1,'pref2',pref2,..) is called. This
-    % preferences that can be set are:
-    %
-    % The max lengths of the patches before sampling is to occur:
-    % 'MaxLengths', [d_1 d_2]
-    %
-    % *The non square domain: 'InnerDomain', domain object
-    %
-    % *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d]
-    %
-    % *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d]
-    %
-    % *The domain of the root of the tree: 'outerbox', [a,b;c,d]
-    %
-    % *An array of boolean indicies indicating if the approximation can be
-    % split in a given dimension: 'canSplit', [bool_1,bool2]
-    %
-    % *The tolerance used for refinement: 'tol', 1e-b
-    %
-    % *The degree indices from the standard degrees in each dimension for non
-    % square domains : 'degreeIndex', [ind_1,ind_2].
-    %
-    % *The coarse degree to be used (if applicable)
-    % : 'coarseDegreeIndex', [ind_1,ind_2].
-    %
-    % *The degree indices from the standard degrees in each dimension for
-    % square domains : 'ChebDegreeIndex', [ind_1,ind_2].
-    %
-    % Here the degrees can be chosen from the set [3 5 9 17 33 65 129].
-    % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be
-    % 33 in each direction.
-    %
-    % LSPatch2D(struct) will construct an approximation with a structure
-    % struct. Here struct must contain the following fields:
-    % in_domain : inner non square domain
-    % outerbox : domain of the outerbox
-    % zone : domain of the zone
-    % domain : square domain of the polynomial
-    % deg_in : indicies of degree for polynomials representing non square domains
-    % cheb_deg_in : indicies of degree for polynomials representing square domains
-    % cdeg_in : indicies of coarse degree
-    % split_flag : boolean array indiciating to split in a dimension or not
-    % max_lengths : obj.max_lengths: The max lengths of the patches before sampling is to occur
-    % tol : tolerance used for refinement
-    
-    
+    % representing a function, based on the options passed into with
+    % structure var_struct. The options are the same as LSPatch.m.
     properties
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
-        Tikhonov_param = 1e-7;
         mid_values_err1 = inf;
         mult;
         
@@ -72,61 +26,9 @@ classdef LSPatch2D < LSPatch
     
     methods
         % function obj = LSPatch2D(in_domain,max_lengths,domain,zone,outerbox,deg_in,cheb_deg_in,split_flag,tol,cdeg_in)
-        function obj = LSPatch2D(varargin)
+        function obj = LSPatch2D(var_struct)
             
-            
-            if length(varargin)==1
-                varargin = varargin{:};
-            end
-            
-%             if isstruct(varargin)
-%                 [new_zone,new_domain] = LSPatch2D.splitleafGeom(varargin.zone,varargin.outerbox,varargin.domain_in);
-%                 varargin.zone = new_zone;
-%                 varargin.domain = new_domain;
-%             else
-%                 
-%                 args = varargin;
-%                 domain = [];
-%                 zone = [];
-%                 outerbox = [];
-%                 
-%                 current_i = 1;
-%                 
-%                 for i=1:2:length(args)-1
-%                     if strcmpi(args{i}, 'domain')
-%                         domain = args{i+1};
-%                         varargin(current_i:current_i+1) = [];
-%                     elseif strcmpi(args{i}, 'zone')
-%                         zone = args{i+1};
-%                         varargin(current_i:current_i+1) = [];
-%                     elseif strcmpi(args{i}, 'outerbox')
-%                         outerbox = args{i+1};
-%                         varargin(i:i+1) = [];
-%                     elseif strcmpi(args{i}, 'InnerDomain')
-%                         domain_in = args{i+1};
-%                         varargin(current_i:current_i+1) = [];
-%                     else
-%                         current_i = current_i+2;
-%                     end
-%                 end
-%                 
-%                 
-%                 if(isempty(zone))
-%                     zone = domain;
-%                 end
-%                 
-%                 if (isempty(outerbox))
-%                     outerbox = domain;
-%                 end
-%                 
-%                 [new_zone,new_domain] = LSPatch2D.splitleafGeom(zone,outerbox,domain_in);
-%                 
-%                 varargin = {varargin{:},'InnerDomain',new_domain,'domain',new_zone,'InnerDomain',domain_in};
-%                 %Call superclass constructor
-%                 
-%             end
-            
-            obj = obj@LSPatch(varargin);
+            obj = obj@LSPatch(var_struct);
             
             obj.is_geometric_refined = true;
         end
@@ -212,7 +114,7 @@ classdef LSPatch2D < LSPatch
                     
                     ind1 = obj.domain_in.Interior(XP1);
                     
-                    if sum(ind1)/prod(obj.degs)>=5
+                    if sum(ind1)/prod(obj.degs)>=4
                         break;
                     end
                 end
@@ -304,14 +206,20 @@ classdef LSPatch2D < LSPatch
             domain0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
             domain1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
             
-            [new_zone_fit0,new_domain_fit0] = LSPatch2D.splitleafGeom(zone0,domain0,obj.outerbox,obj.domain_in);
-            [new_zone_fit1,new_domain_fit1] = LSPatch2D.splitleafGeom(zone1,domain1,obj.outerbox,obj.domain_in);
+           [new_zone_fit0,new_domain_fit0] = LSPatch2D.splitleafGeom(zone0,domain0,obj.outerbox,obj.domain_in);
+           [new_zone_fit1,new_domain_fit1] = LSPatch2D.splitleafGeom(zone1,domain1,obj.outerbox,obj.domain_in);
             
-            zone0 = new_zone_fit0;
-            domain0 = new_domain_fit0;
+            zone0(split_dim,:) = new_zone_fit0(split_dim,:);
+            domain0(split_dim,:) = new_domain_fit0(split_dim,:);
             
-            zone1 = new_zone_fit1;
-            domain1 = new_domain_fit1;
+            zone1(split_dim,:) = new_zone_fit1(split_dim,:);
+            domain1(split_dim,:) = new_domain_fit1(split_dim,:);
+            
+%             zone0 = new_zone_fit0;
+%             domain0 = new_domain_fit0;
+%             
+%             zone1 = new_zone_fit1;
+%             domain1 = new_domain_fit1;
             
             %We first figure out if the the subdomains sit entirely in the domain itself.
             %In this case, we would just use a standard chebyshev

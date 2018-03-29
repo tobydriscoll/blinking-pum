@@ -8,53 +8,37 @@ classdef LSPatch < LeafPatch
 % f and the Chebyshev polynomial for a set of points inside the domain of
 % f.
  
-% LSPatch2D(varargin) constructs a tensor product approximation
-% representing a function, based on the options passed into with varargin; 
-% that is PUFun('perf1',perf1,'pref2',pref2,..) is called. This 
-% preferences that can be set are:
+% LSPatch2D(var_struct) constructs a tensor product approximation
+% representing a function, based on the options passed with the structure
+% var_struct. The options are:
 % 
-% The max lengths of the patches before sampling is to occur:
-% 'MaxLengths', [d_1 d_2]
+% *var_struct.max_lengths, the max lengths of the patches before sampling 
+% is to occur:.
 %
-% *The non square domain: 'InnerDomain', domain object
+% *var_struct.domain_in, the non square domain
 %
-% *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d]
+% *var_struct.domain, the domain used for the Chebyshev polynomial.
 %
-% *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d]
+% *var_struct.zone ,the zone (non overlapping part from partition) used.
 %
-% *The domain of the root of the tree: 'outerbox', [a,b;c,d]
+% *var_struct.outerbox, the domain of the root of the tree: 'outerbox'.
 %
-% *An array of boolean indicies indicating if the approximation can be
-% split in a given dimension: 'canSplit', [bool_1,bool2]
+% *var_struct.split_flag, an array of boolean indicies indicating if the 
+% approximation can be split in a given dimension.
 %
-% *The tolerance used for refinement: 'tol', 1e-b
+% *var_struct.tol, the tolerance used for refinement: 'tol', 1e-b
 %
-% *The degree indices from the standard degrees in each dimension for non 
-% square domains : 'degreeIndex', [ind_1,ind_2]. 
+% *var_struct.deg_in, the degree indices from the standard degrees in each 
+% dimension for non square domains : 'degreeIndex'.
 % 
-% *The coarse degree to be used (if applicable) 
-% : 'coarseDegreeIndex', [ind_1,ind_2]. 
+% *var_struct.cdeg_in, the coarse degree to be used (if applicable) 
 % 
-% *The degree indices from the standard degrees in each dimension for
-% square domains : 'ChebDegreeIndex', [ind_1,ind_2]. 
+% *var_struct.cheb_deg_in ,the degree indices from the standard degrees in 
+% each dimension for square domains.
 %
 % Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
 % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
 % 33 in each direction. 
-%
-% LSPatch2D(struct) will construct an approximation with a structure
-% struct. Here struct must contain the following fields:
-% in_domain : inner non square domain
-% outerbox : domain of the outerbox
-% zone : domain of the zone
-% domain : square domain of the polynomial
-% deg_in : indicies of degree for polynomials representing non square domains
-% cheb_deg_in : indicies of degree for polynomials representing square domains
-% cdeg_in : indicies of coarse degree
-% split_flag : boolean array indiciating to split in a dimension or not
-% max_lengths : obj.max_lengths: The max lengths of the patches before sampling is to occur
-% tol : tolerance used for refinement
-
     properties
         ChebRoot
         TreeGrid
@@ -89,18 +73,13 @@ classdef LSPatch < LeafPatch
     end
     
     methods
-function obj = LSPatch(varargin)
-           
-           
-           if length(varargin)==1
-               varargin = varargin{:};
-           end
-           
-           %Call superclass constructor
-           obj = obj@LeafPatch(varargin);
-           obj.is_geometric_refined = true;
+        function obj = LSPatch(var_struct)
             
-            obj.tol = 1e-6;
+            %Call superclass constructor
+            obj = obj@LeafPatch(var_struct);
+            obj.is_geometric_refined = true;
+            
+            obj.tol = 1e-7;
             obj.deg_in = zeros(obj.dim,1);
             obj.deg_in(:) = 3;
             
@@ -115,70 +94,45 @@ function obj = LSPatch(varargin)
             obj.max_lengths = zeros(obj.dim,1);
             obj.max_lengths(:) = inf;
             
-           if isstruct(varargin)
-
-               obj.deg_in = varargin.deg_in;
-               obj.cheb_deg_in = varargin.cheb_deg_in;
-               obj.domain_in = varargin.domain_in;
-               obj.split_flag = varargin.split_flag;
-               obj.max_lengths = varargin.max_lengths;
-               obj.tol = varargin.tol;
-               obj.cdeg_in = varargin.cdeg_in;
-               
-           else
-               
-               args = varargin;
-               
-               while ( ~isempty(args) )
-                   if strcmpi(args{1}, 'degreeIndex')
-                       if numel(args{2})==1
-                           obj.degs_in = zeros(1,obj.dim);
-                           obj.deg_in(:) = args{2};
-                       else
-                           obj.deg_in = args{2};
-                       end
-                   elseif strcmpi(args{1}, 'canSplit')
-                       obj.split_flag = args{2};
-                   elseif strcmpi(args{1}, 'tol')
-                       obj.tol = args{2};
-                   elseif strcmpi(args{1}, 'coarseDegreeIndex')
-                       if numel(args{2})==1
-                           obj.cdegs_in = zeros(1,obj.dim);
-                       else
-                           obj.cdegs_in = args{2};
-                           obj.cdeg_in(:) = args{2};
-                       end
-                   elseif strcmpi(args{1}, 'MaxLengths')
-                       if numel(args{2})==1
-                           obj.max_lengths = zeros(1,obj.dim);
-                           obj.max_lengths(:) = args{2};
-                       else
-                           obj.max_lengths = args{2};
-                       end
-                   elseif strcmpi(args{1}, 'ChebDegreeIndex')
-                       if numel(args{2})==1
-                           obj.cheb_deg_in = zeros(1,obj.dim);
-                           obj.cheb_deg_in(:) = args{2};
-                       else
-                           obj.cheb_deg_in = args{2};
-                       end
-                   elseif strcmpi(args{1}, 'InnerDomain')
-                       obj.domain_in = args{2};
-                   elseif strcmpi(args{1}, 'domain')
-                       obj.domain = args{2};
-                   end
-                   args(1:2) = [];
-               end
-               
-           end
-           
-           
-           obj.degs = obj.standard_degs(obj.deg_in);
-           obj.cdegs = obj.standard_degs(obj.cdeg_in);
-           
-           obj.cheb_length = prod(obj.degs);
-           
-       end
+            
+            if isfield(var_struct, 'deg_in')
+                obj.deg_in = var_struct.deg_in;
+            end
+            
+            if isfield(var_struct, 'cheb_deg_in')
+                obj.deg_in = var_struct.deg_in;
+            end
+            
+            if isfield(var_struct,'split_flag')
+                obj.split_flag = var_struct.split_flag;
+            end
+            
+            if isfield(var_struct,'max_lengths')
+                obj.max_lengths = var_struct.max_lengths;
+            end
+            
+            if isfield(var_struct,'tol')
+                obj.tol = var_struct.tol;
+            end
+            
+            if isfield(var_struct,'cdeg_in')
+                obj.cdeg_in = var_struct.cdeg_in;
+            end
+            
+            if isfield(var_struct,'domain_in')
+                obj.domain_in = var_struct.domain_in;
+            else
+                error('An inner domain needs to be specified');
+            end
+            
+            
+            
+            obj.degs = obj.standard_degs(obj.deg_in);
+            obj.cdegs = obj.standard_degs(obj.cdeg_in);
+            
+            obj.cheb_length = prod(obj.degs);
+            
+        end
         
        %Returns structure of parameters
        function p_struct = params(obj) 

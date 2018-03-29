@@ -4,46 +4,29 @@ classdef ChebPatch<LeafPatch
 % This class represents a single tensor product polynomial The coefficients 
 % are found through FFT.
  
-% ChebPatch(varargin) constructs a  tensor product approximation 
-% representing f, based on the options passed into with varargin; that is 
-% PUFun(f,'perf1',perf1,'pref2',pref2,..) is called. This preferences that 
-% can be set are:
+% ChebPatch(var_struct) constructs a tensor product approximation 
+% representing a function f, based on the options passed the structure
+% var_struct.
+%
+% *var_struct.domain, the domain used for the Chebyshev polynomial.
+%
+% *var_struct.zone, the zone (non overlapping part from partition) used.
+%
+% *var_struct.outerbox the domain of the root of the tree.
+%
+% *var_struct.split_dim, an array of boolean indicies indicating if the 
+%  approximation can be split in a given dimension.
+%
+% *var_struct.tol, the tolerance used for refinement: 'tol', 1e-b.
 % 
-%
-% *The domain used for the Chebyshev polynomial: 'domain', [a,b;c,d]
-%
-% *The zone (non overlapping part from partition) used: 'zone', [a,b;c,d]
-%
-% *The domain of the root of the tree: 'outerbox', [a,b;c,d]
-%
-% *An array of boolean indicies indicating if the approximation can be
-% split in a given dimension: 'canSplit', [bool_1,bool2]
-%
-% *The tolerance used for refinement: 'tol', 1e-b
-%
-% *The degree indices from the standard degrees in each dimension for non 
-% square domains : 'degreeIndex', [ind_1,ind_2]. 
+% *var_struct.cdeg_in, the coarse degree to be used (if applicable) 
 % 
-% *The coarse degree to be used (if applicable) 
-% : 'coarseDegreeIndex', [ind_1,ind_2]. 
-% 
-% *The degree indices from the standard degrees in each dimension for
-% square domains : 'ChebDegreeIndex', [ind_1,ind_2]. 
-%
+% *var_struct.deg_in, the degree indices from the standard degrees in each 
+% dimension for non square domains : 'degreeIndex', [ind_1,ind_2]. 
+
 % Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
 % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
 % 33 in each direction.
-%
-% ChebPatch(struct) will construct an approximation with a structure
-% struct. Here struct must contain the following fields:
-% outerbox : domain of the outerbox
-% zone : domain of the zone
-% domain : square domain of the polynomial
-% deg_in : indicies of degree for polynomials representing non square domains
-% cheb_deg_in : indicies of degree for polynomials representing square domains
-% cdeg_in : indicies of coarse degree
-% split_flag : boolean array indiciating to split in a dimension or not
-% tol : tolerance used for refinement
     properties
         degs %array of degrees along the dimensions
         values %grid of values to be used for interpolation
@@ -85,14 +68,9 @@ classdef ChebPatch<LeafPatch
         % split_flag: (dim x 1) boolean array indicating if the patch can
         %                       be split in any given dimension.
         %function obj = ChebPatch(domain,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
-        function obj = ChebPatch(varargin)
+        function obj = ChebPatch(var_struct)
             %Call superclass constructor
-            
-            if length(varargin)==1
-                varargin = varargin{:};
-            end
-            
-            obj = obj@LeafPatch(varargin);
+            obj = obj@LeafPatch(var_struct);
             
             obj.tol = 1e-12;
             obj.deg_in = zeros(obj.dim,1);
@@ -103,42 +81,22 @@ classdef ChebPatch<LeafPatch
             obj.cdeg_in(:) = 3;
             obj.split_flag = true(obj.dim,1);
             
-            if isstruct(varargin)
-                
-                obj.deg_in = varargin.deg_in;
-                obj.split_flag = varargin.split_flag;
-                obj.tol = varargin.tol;
-                obj.cdeg_in = varargin.cdeg_in;
-                
-            else
-                
-                
-                args = varargin;
-                
-                while ( ~isempty(args) )
-                    if strcmpi(args{1}, 'degreeIndex')
-                        if numel(args{2})==1
-                            obj.degs_in = zeros(1,obj.dim);
-                            obj.deg_in(:) = args{2};
-                        else
-                            obj.deg_in = args{2};
-                        end
-                    elseif strcmpi(args{1}, 'canSplit')
-                        obj.split_flag = args{2};
-                    elseif strcmpi(args{1}, 'tol')
-                        obj.tol = args{2};
-                    elseif strcmpi(args{1}, 'coarseDegreeIndex')
-                        if numel(args{2})==1
-                            obj.cdegs_in = zeros(1,obj.dim);
-                            obj.cdeg_in(:) = args{2};
-                        else
-                            obj.cdegs_in = args{2};
-                        end
-                    end
-                    args(1:2) = [];
-                end
-                
+            if isfield(var_struct, 'deg_in')
+                obj.deg_in = var_struct.deg_in;
             end
+            
+            if isfield(var_struct, 'split_flag')
+                obj.split_flag = var_struct.split_flag;
+            end
+            
+            if isfield(var_struct, 'tol')
+                obj.tol = var_struct.tol;
+            end
+            
+            if isfield(var_struct, 'cdeg_in')
+                obj.cdeg_in = var_struct.cdeg_in;
+            end
+            
             obj.degs = obj.standard_degs(obj.deg_in);
             obj.cdegs = obj.standard_degs(obj.cdeg_in);
             

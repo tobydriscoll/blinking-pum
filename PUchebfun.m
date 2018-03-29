@@ -16,7 +16,7 @@ classdef PUchebfun < handle & matlab.mixin.Copyable
 % approximation representing f on the domain [a_1 b_1;a_2 b_2;...;a_d b_d]. 
 % Functions must be vectorized. 
 % 
-% PUFun(f,varargin) constructs a partition of unity approximation 
+% PUFun(f,[a_1 b_1;a_2 b_2;...;a_d b_d],varargin) constructs a partition of unity approximation 
 % representing f, based on the options passed into with varargin; that is 
 % PUFun(f,'perf1',perf1,'pref2',pref2,..) is called. This preferences that 
 % can be set are:
@@ -26,6 +26,9 @@ classdef PUchebfun < handle & matlab.mixin.Copyable
 % *The degree indices from the standard degrees in each dimension : 
 % 'degreeIndex', [ind_1,ind_2, ... ind_d]. 
 % 
+% % *The tolerance used for adaptation : 
+% 'tol', tol. 
+%
 % Here the degrees can be chosen from the set [3 5 9 17 33 65 129].  
 % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
 % 33 in each direction. 
@@ -47,59 +50,52 @@ classdef PUchebfun < handle & matlab.mixin.Copyable
         %function obj = PUFun(domain,deg_in,f,tol,grid_opt)
         function obj = PUchebfun(varargin)
             
-            if length(varargin)==1
-                varargin = varargin{:};
-            end
-            
-            if isstruct(varargin)
-                obj.grid_opt = varargin.grid_opt;
-                f = varargin.op;
-                obj.domain = varagin.domain;
-                obj.deg_in = varagin.deg_in;
-                obj.tol = varagin.tol;
                 
-                obj.ChebRoot = ChebPatch('domain',obj.domain,'degreeIndex',obj.deg_in,'tol',obj.tol);
-                
-            else
                 if length(varargin)==1
-                    f = varargin;
+                    f = varargin{1};
                     obj.domain = repmat([-1 1],nargin(f),1);
-                    obj.ChebRoot = ChebPatch('domain',obj.domain);
+                    cheb_struct.domain = obj.domain;
+                    obj.ChebRoot = ChebPatch(cheb_struct);
                     
                 elseif length(varargin)==2
                     f = varargin{1};
                     obj.domain = varargin{2};
-                    obj.ChebRoot = ChebPatch('domain',obj.domain);
+                    cheb_struct.domain = obj.domain;
+                    obj.ChebRoot = ChebPatch(cheb_struct);
                     
                 else
                     f = varargin{1};
-                    varargin(1) = [];
+                    obj.domain = varargin{2};
+                    cheb_struct.domain = obj.domain;
+                    varargin(1:2) = [];
                     args = varargin;
                     while ( ~isempty(args) )
                         if strcmpi(args{1}, 'gridOption')
                             obj.grid_opt = args{2};
-                        elseif strcmpi(args{1}, 'domain')
-                            obj.domain = args{2};
                         elseif strcmpi(args{1}, 'degreeIndex')
                             obj.deg_in = args{2};
+                            cheb_struct.deg_in = args{2};
+                        elseif strcmpi(args{1}, 'tol')
+                            obj.tol = args{2};
+                            cheb_struct.tol = args{2};
+                        elseif strcmpi(args{1}, 'CourseDegreeIndex')
+                            cheb_struct.cdeg_in = args{2};
+                        else
+                            error(strcat(args{1},' is not a valid parameter.'));
                         end
                         args(1:2) = [];
                     end
-                    
-                    
-                    if isempty(obj.domain)
-                        obj.domain = repmat([-1 1],nargin(f),1);
-                        varargin = {varargin{:} , 'domain',obj.domain};
-                    end
-                    
-                    obj.ChebRoot = ChebPatch(varargin);
-                    
                 end
-            end
+                
+                obj.cheb_deg_in = obj.ChebRoot.cheb_deg_in;
+                obj.deg_in = obj.ChebRoot.deg_in;
+                obj.tol = obj.ChebRoot.tol;
+                
+                obj.ChebRoot = ChebPatch(cheb_struct);
+                refine(obj,f);
+                
+    end
             
-            refine(obj,f);
-
-        end
         
         % refine(obj,f,grid_opt)
         % This method refines the tree by f(x).

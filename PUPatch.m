@@ -20,17 +20,13 @@ classdef PUPatch<Patch
     end
     
     methods
-        
         % Construct for the PUPatch
         %
         %        Input:
         %        domain: (dim x 2) array indiciating array for the domain.
         %          zone: (dim x 2) array indiciating array for the zone.
-        %   cheb_length: total number of interpolating points.
         %      children: (2 x 1) cell array of Patch objects;
         % splitting_dim: dimension the patch is split in.
-        %         index: array indicating patch from root to patch (1 left,
-        %         right left).
         function obj = PUPatch(domain,zone,children,splitting_dim)
             obj.outerbox = children{1}.outerbox;
             obj.zone = zone;
