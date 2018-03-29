@@ -17,7 +17,7 @@ zz = [];
 for k=1:length(LEAVES)
     cdim = LEAVES{k}.cdegs;
 
-    [out_border_c,~,in_border] = FindBoundaryIndex2DSides(cdim,LEAVES{k}.domain(),LEAVES{k}.outerbox); 
+    [out_border_c,~,in_border] = FindBoundaryIndex2DSides(cdim,LEAVES{k}.domain,LEAVES{k}.outerbox); 
     
     pointsl = LEAVES{k}.points();
     

@@ -46,8 +46,6 @@ classdef LSPatch2D < LSPatch
             p_struct.max_lengths = obj.max_lengths;
             p_struct.tol = obj.tol;
             p_struct.cdeg_in = obj.cdeg_in;
-            p_struct.Tikhonov_param = obj.Tikhonov_param;
-            
         end
         
         
@@ -209,17 +207,17 @@ classdef LSPatch2D < LSPatch
            [new_zone_fit0,new_domain_fit0] = LSPatch2D.splitleafGeom(zone0,domain0,obj.outerbox,obj.domain_in);
            [new_zone_fit1,new_domain_fit1] = LSPatch2D.splitleafGeom(zone1,domain1,obj.outerbox,obj.domain_in);
             
-            zone0(split_dim,:) = new_zone_fit0(split_dim,:);
-            domain0(split_dim,:) = new_domain_fit0(split_dim,:);
-            
-            zone1(split_dim,:) = new_zone_fit1(split_dim,:);
-            domain1(split_dim,:) = new_domain_fit1(split_dim,:);
-            
-%             zone0 = new_zone_fit0;
-%             domain0 = new_domain_fit0;
+%             zone0(split_dim,:) = new_zone_fit0(split_dim,:);
+%             domain0(split_dim,:) = new_domain_fit0(split_dim,:);
 %             
-%             zone1 = new_zone_fit1;
-%             domain1 = new_domain_fit1;
+%             zone1(split_dim,:) = new_zone_fit1(split_dim,:);
+%             domain1(split_dim,:) = new_domain_fit1(split_dim,:);
+            
+            zone0 = new_zone_fit0;
+            domain0 = new_domain_fit0;
+            
+            zone1 = new_zone_fit1;
+            domain1 = new_domain_fit1;
             
             %We first figure out if the the subdomains sit entirely in the domain itself.
             %In this case, we would just use a standard chebyshev
@@ -388,13 +386,6 @@ classdef LSPatch2D < LSPatch
             if abs(new_domain(2,2)-domain(2,2))>1e-10
                 new_zone(2,2) = new_domain(2,2);
             end
-            
-%             new_domain(1,1) = max(new_zone(1,1)-deltax,outerbox(1,1));
-%             new_domain(1,2) = min(new_zone(1,2)+deltax,outerbox(1,2));
-%             
-%             new_domain(2,1) = max(new_zone(2,1)-deltay,outerbox(2,1));
-%             new_domain(2,2) = min(new_zone(2,2)+deltay,outerbox(2,2));
-            
             
         end
     end

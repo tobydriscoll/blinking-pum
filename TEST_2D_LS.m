@@ -22,7 +22,7 @@ f = @(x,y)1./(((x-1.1).^2)+(y-1.1).^2).^2;
 %OUTERBOX = [-1 1;-1 1;-1 1];
 %f = @(x,y,z) atan(3*(x+y+z));
 
-tic,TREELS = PUFunLS(f,DOMAIN,OUTERBOX,'degreeIndex',[4 4],'ChebDegreeIndex',[6 6],'tol',1e-12);toc
+tic,TREELS = PUFunLS(f,DOMAIN,OUTERBOX,'degreeIndex',[4 4],'ChebDegreeIndex',[6 6],'tol',1e-7);toc
 plot(DOMAIN);hold on; plotdomain(TREELS.ChebRoot); hold off;
 
 %x = OUTERBOX(1,1) + diff(OUTERBOX(1,:))*rand(200,1);

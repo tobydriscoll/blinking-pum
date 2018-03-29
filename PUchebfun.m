@@ -87,7 +87,6 @@ classdef PUchebfun < handle & matlab.mixin.Copyable
                     end
                 end
                 
-                obj.cheb_deg_in = obj.ChebRoot.cheb_deg_in;
                 obj.deg_in = obj.ChebRoot.deg_in;
                 obj.tol = obj.ChebRoot.tol;
                 

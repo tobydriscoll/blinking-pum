@@ -60,7 +60,7 @@ msz = 8;       % MarkerSize
 
 xc = -1;
 yc = -1;
-alpha = 100;
+alpha = 20;
 r0 = 1;
 % 
 f2 = @(x,y) ((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(-1/2).*(alpha+alpha.^3.*( ...
@@ -71,9 +71,9 @@ r0.^2+(-1).*x.^2+2.*x.*xc+(-1).*xc.^2+(-1).*y.^2+2.*y.*yc+(-1).* ...
 
 f3 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
 
-c = sqrt(2);
-b = 20;
-d = 0.8;
+%c = sqrt(2);
+%b = 20;
+%d = 0.8;
 
 % f2 = @(x,y) 2.*b.*c.*(c.^2.*(1+b.^2.*d.^2)+(-2).*b.^2.*c.*d.*(x+y)+b.^2.*(x+y) ...
 %   .^2).^(-2).*((-1).*c.^2.*(1+b.^2.*d.^2).*((-1)+x+y).*((-1).*x+(-1) ...
@@ -108,14 +108,20 @@ d = 0.8;
 %f3 = @(x,y) (cosh(10*x)+cosh(10*y))/(2*cosh(10));
 
 %L = @(u,x,y,dx,dy,dxx,dyy) -ep*(dxx+dyy)+2*dx+dy;
+
 L = @(u,x,y,dx,dy,dxx,dyy) (dxx+dyy);
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u,@(u,x,y,dx,dy,dxx,dyy) u};
 force = @(x) f2(x(:,1),x(:,2));
 border = {@(x)f3(x(:,1),x(:,2)),@(x)f3(x(:,1),x(:,2)),@(x)f3(x(:,1),x(:,2)),@(x)f3(x(:,1),x(:,2))};
 
 
+cheb_struct.domain = domain;
+cheb_struct.deg_in = deg_in;
+cheb_struct.split_flag = split_flag;
+cheb_struct.cdeg_in = cdeg_in;
+cheb_struct.tol = tol;
 
-Tree = ChebPatch(domain,domain,domain,deg_in,split_flag,tol,cdeg_in);
+Tree = ChebPatch(cheb_struct);
 
 is_refined = false;
 
@@ -147,8 +153,8 @@ while ~is_refined
         Mat = CoarseASMat( Tree,L,B );
         
         A = @(sol) LaplacianForward(Tree,sol);
-%        M = @(rhs) ASPreconditioner(Tree,rhs);
-        M = @(rhs) CoarseCorrection(rhs,Tree,Mat);
+        M = @(rhs) ASPreconditioner(Tree,rhs);
+%        M = @(rhs) CoarseCorrection(rhs,Tree,Mat);
         
         [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],Tree.Getvalues);
         
@@ -161,12 +167,14 @@ while ~is_refined
         Tree.PUsplit(Max,true);
     end
     
+    Tree.clean();
+    
     x = linspace(domain(1,1),domain(1,2),100)';
     y = linspace(domain(2,1),domain(2,2),100)';
     [X,Y] = ndgrid(x,y);
     clf();
     
-    G = Tree.evalfZoneGrid({x y});
+    G = Tree.evalfGrid({x y});
     subplot(1,2,1);
     surf(X,Y,G);
     xlabel('x');

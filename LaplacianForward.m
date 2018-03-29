@@ -20,7 +20,7 @@ for k=1:length(LEAVES)
     
     lap = LEAVES{k}.linOp*sol_k;
     
-    [~,~,in_border,in_border_c,~] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain(),LEAVES{k}.outerbox);
+    [~,~,in_border,in_border_c,~] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain,LEAVES{k}.outerbox);
 %     
 %     for i=1:4
 %         if any(in_border_c{i})

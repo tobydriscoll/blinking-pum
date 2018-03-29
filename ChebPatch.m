@@ -362,11 +362,11 @@ classdef ChebPatch<LeafPatch
                 grid_opt = false;
             end
             
-            f_dim = nargin(f);
-            
-            if f_dim~=obj.dim
-                error('Function does not have correct number of inputs');
-            end
+%             f_dim = nargin(f);
+%             
+%             if f_dim~=obj.dim
+%                 error('Function does not have correct number of inputs');
+%             end
             
             %Just assume we sample f for right now.
             if ~isnumeric(f)

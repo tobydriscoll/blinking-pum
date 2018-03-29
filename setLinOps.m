@@ -19,7 +19,7 @@ for k=1:length(LEAVES)
     sol = force(points);
     dim = LEAVES{k}.degs;
     
-    [out_border_c,~,in_border,in_border_c,in_border_g] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain(),LEAVES{k}.outerbox);
+    [out_border_c,~,in_border,in_border_c,in_border_g] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain,LEAVES{k}.outerbox);
     
     
     Dx = kron(eye(dim(2)),diffmat(dim(1),1,LEAVES{k}.domain(1,:)));
