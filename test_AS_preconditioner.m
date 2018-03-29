@@ -60,7 +60,7 @@ msz = 8;       % MarkerSize
 
 xc = -1;
 yc = -1;
-alpha = 20;
+alpha = 10;
 r0 = 1;
 % 
 f2 = @(x,y) ((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(-1/2).*(alpha+alpha.^3.*( ...
@@ -153,8 +153,8 @@ while ~is_refined
         Mat = CoarseASMat( Tree,L,B );
         
         A = @(sol) LaplacianForward(Tree,sol);
-        M = @(rhs) ASPreconditioner(Tree,rhs);
-%        M = @(rhs) CoarseCorrection(rhs,Tree,Mat);
+%        M = @(rhs) ASPreconditioner(Tree,rhs);
+        M = @(rhs) CoarseCorrection(rhs,Tree,Mat);
         
         [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],Tree.Getvalues);
         
