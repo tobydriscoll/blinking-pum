@@ -28,10 +28,10 @@ for k=1:length(LEAVES)
 %         end
 %     end
     
-    lap(in_border) = lap(in_border)-LEAVES{k}.Binterp*sol;
+%    lap(in_border) = lap(in_border)-LEAVES{k}.Binterp*sol;
 
-%    points = LEAVES{k}.points();
-%    lap(in_border) = lap(in_border)-Tree.evalf(points(in_border,:));
+    points = LEAVES{k}.points();
+    lap(in_border) = lap(in_border)-Tree.evalf(points(in_border,:));
     
     output(step(k)+(1:length(LEAVES{k}))) = lap;
 end
