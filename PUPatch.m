@@ -127,7 +127,7 @@ classdef PUPatch<Patch
         %            leaves depth first, or an anonymous function.
         function [Max] = sample(obj,f,grid_opt)
             
-            if ~obj.is_refined
+            if isnumeric(f) | ~obj.is_refined
                 
                 if nargin==2
                     grid_opt = false;
