@@ -527,6 +527,50 @@ for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{fig:tan3D}. A
   \label{fig:tan3D}
 \end{figure}
 
+\section{Least Squares Approximations}
+
+\begin{algorithm}
+\caption{split($\Omega$,$\nu$,$j$,$t$)}
+\label{alg:LSsplit}
+\begin{algorithmic}
+\IF{$\nu$ is a leaf}
+\STATE \textsf{splitdim}($\nu$)=$j$
+\STATE Define new nodes $\nu_0$, $\nu_1$
+\STATE $[a_1,b_1],[a_2,b_2],\dots,[a_n,b_n]$ be the subintervals from \prop{zone}{$\nu$}
+\STATE Let $m:= \frac{b_j+a_j}{2}$
+\STATE Let \textsf{zone}($\nu_0$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [a_{j},m] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
+\STATE Let \textsf{zone}($\nu_1$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [m,b_{j}] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
+\FOR{$k=0,1$}
+\STATE Define \textsf{domain}($\nu_k$) from \textsf{zone}($\nu_k$) with parameter $t$ as in~(\ref{eq:zone_extend})
+\IF{$\text{\textsf{domain}($\nu_k$)} \cap \Omega = \emptyset$}
+\STATE $\nu_k$ = NULL
+\ELSIF{$\text{\textsf{domain}($\nu_k$)} \subseteq \Omega$}
+\STATE define $\nu_k$ as node on a hypercube.
+\ELSE
+\STATE For dimensions $p=1,2,\dots,j-1,j+1,\dots,d$ change subintervals $[a_p,b_p]$ of \textsf{domain}($\nu_k$) and \textsf{zone}($\nu_k$) to fit $\Omega$.
+\STATE For dimension $p=j$, change subinterval $[a_p,b_p]$ of \textsf{domain}($\nu_k$) by choosing largest $a_p$ such that $\Omega \subset \text{\textsf{domain}($\nu_k$)}$ if $k=0$, and vice versa if $k=1$. Change endpoints of \textsf{zone}($\nu_k$) to match changed endpoints of \textsf{domain}($\nu_k$).
+\ENDIF
+\STATE Define \textsf{grid}($\nu_k$) as Chebyshev tensor-product grid of size $\nmax^d$ in \textsf{domain}($\nu_k$)
+\STATE Let \textsf{isdone}($\nu_k$):= \textsf{isdone}($\nu$)
+\ENDFOR
+\ELSE
+\STATE split(\child{0}($\nu$),$k$,$t$)
+\STATE split(\child{1}($\nu$),$k$,$t$)
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{sample($\Omega$,$\nu$,$f$)}
+\label{alg:LSsample}
+\begin{algorithmic}
+\STATE define a grid $F$ of Chebyshev 2nd-kind points on \textsf{domain}($\nu$) twice as fine as \textsf{grid}($\nu$) in each dimension.
+\STATE define a collocation matrix $M$ that maps \textsf{coefficients}($\nu$) to $\text{\textsf{approximation}($\nu$)}\rvert_{F \cap \Omega}$.
+\STATE define \textsf{coefficients}($\nu$) to be a set of coefficients $C$ that minimize $\| MC - f \rvert_{F \cap \Omega} \|^2$.
+\end{algorithmic}
+\end{algorithm}
+
+
 \section{Concluding remarks}
 \label{sec:conclusion}
 
