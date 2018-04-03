@@ -29,8 +29,8 @@
 \newcommand{\plotwidth}{0.45}
 \newcommand{\WRP}{\par\qquad\(\hookrightarrow\)\enspace}
 \newcommand{\ARP}{\par\qquad\ \enspace}
-\DeclareMathOperator*{\argmax}{argmax}
-
+\DeclareMathOperator*{\argmax}{arg\,max}  % in your preamble
+\DeclareMathOperator*{\argmin}{arg\,min}  % in your preamble 
 %%%%% custom commands for this paper
 \newcommand{\nmax}{N}
 \newcommand{\bigo}{\mathcal{O}}
@@ -527,7 +527,31 @@ for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{fig:tan3D}. A
   \label{fig:tan3D}
 \end{figure}
 
-\section{Least Squares Approximations}
+\section{Discrete Chebyshev extension method}
+
+Suppose that we want to build a tensor product Chebyshev approximation of $f:\Omega \to \C$, where $\Omega \subset [-1,1]^d$ is not a hypercube. That is, we want to find coefficients $\mathbf{c} = C_{i_1,\ldots,i_d}$ for (\ref{eq:full-interp}) such that
+\begin{equation}
+\mathbf{c} = \argmin_{\mathbf{c}} = \left \| f(\vect{x}) - \tilde{p}(\vect{x}) \right \|_{X},	
+\end{equation}
+for some norm $X$. One choice of the norm is the $L_2$ norm over $\Omega$, which leads to an approximation analogous to the \textit{continuous Fourier extension} method \cite{huybrechs2010fourier}. This would be solved by creating a gram matrix of the Chebyshev basis functions using the $L_2$ norm over $\Omega$, and solving a least squares problem. Since $\Omega$ is not square, this would require a special quadrature over the domain.
+
+Here we instead build an approximation that is similar to that of the \textit{discrete Fourier extension} method, which we call the \textit{discrete Chebyshev extension} approximation \cite{adcock2014resolution}. We define a set of points $P = \{\vect{x}_i\}_{i=1}^{N_f} \subset \Omega$, and find a set of coefficients $\mathbf{c}$ that minimizes
+\begin{equation}
+\mathbf{c} = \argmin_{\mathbf{c}} \sum_{i=1}^{N_f} \lp f(\vect{x}_i) -  \tilde{p}(\vect{x}_i) \rp^2.
+\end{equation}
+The coefficients are determined by creating a collocation matrix $A$ that maps a set of coefficients $\mathbf{c}$ to $\tilde{p}(\vect{x}) \rvert_{P}$, and solving the least squares problem
+\begin{equation}
+\argmin_{\mathbf{c}}\| A \mathbf{c} - b \|^2, \quad b_k = f(\vect{x}_k). 	
+\end{equation}
+
+The condition number of $A$ in the discrete Fourier extension case has been shown to increase exponentially with the degree of the approximation \cite{adcock2014numerical}. This would make an adaptive method where the max degree is increased impractical. We instead create a tree based partition of unity approximation as in section~\ref{sec:operations}, where each approximation is found with the discrete Chebyshev extension method. The tree is created similarly to Algorithm~\ref{alg:splitleaves}, except:
+\begin{itemize}
+\item We use the Chebyshev tensor product approximation instead of the interpolant.
+\item The coefficients of the Chebyshev approximation are found with the discrete Chebyshev extension method.
+\item An approximation is determined to be split with the relative error of the approximation on a fixed set of points in the domain. If the relative error is too high, the domain is split in each dimension.
+\end{itemize}
+When sampling with the discrete Chebyshev extension method, we set $P$ to be a Chebyshev grid restricted to $\Omega$; the size of the grid is chosen so that the number of points in $P$ is four times the size of the grid of the leaf. We redefine Algorithm~\ref{alg:split} with Algorithm~\ref{alg:LSsplit} when using the new method. If a domain of a leaf lies entirely in $\Omega$, then we use methods from section~\ref{sec:operations}. Otherwise we fit the domain of the approximation to $\Omega$ while ensuring there is overlap; if a leaf has a domain outside of $\Omega$, it is marked as NULL.
+
 
 \begin{algorithm}
 \caption{split($\Omega$,$\nu$,$j$,$t$)}
@@ -557,16 +581,6 @@ for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{fig:tan3D}. A
 \STATE split(\child{0}($\nu$),$k$,$t$)
 \STATE split(\child{1}($\nu$),$k$,$t$)
 \ENDIF
-\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}
-\caption{sample($\Omega$,$\nu$,$f$)}
-\label{alg:LSsample}
-\begin{algorithmic}
-\STATE define a grid $F$ of Chebyshev 2nd-kind points on \textsf{domain}($\nu$) twice as fine as \textsf{grid}($\nu$) in each dimension.
-\STATE define a collocation matrix $M$ that maps \textsf{coefficients}($\nu$) to $\text{\textsf{approximation}($\nu$)}\rvert_{F \cap \Omega}$.
-\STATE define \textsf{coefficients}($\nu$) to be a set of coefficients $C$ that minimize $\| MC - f \rvert_{F \cap \Omega} \|^2$.
 \end{algorithmic}
 \end{algorithm}
 
