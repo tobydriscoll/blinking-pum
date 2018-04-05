@@ -29,7 +29,6 @@ classdef ChebPatch<LeafPatch
 % 33 in each direction.
     properties
         degs %array of degrees along the dimensions
-        values %grid of values to be used for interpolation
         cdegs %array of coarse degrees along the dimensions
         swap_degs %temp holder for degs
         iscoarse = false;
@@ -72,6 +71,7 @@ classdef ChebPatch<LeafPatch
             %Call superclass constructor
             obj = obj@LeafPatch(var_struct);
             
+            obj.is_interp = true;
             obj.tol = 1e-12;
             obj.deg_in = zeros(obj.dim,1);
             

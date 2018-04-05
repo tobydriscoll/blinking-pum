@@ -17,6 +17,9 @@ classdef LeafPatch<Patch
         chebweights = [];
         cheb_bump = chebfun( {0,@(x) exp(1-1./(1-x.^2)),0},[-20 -1 1 20]);
         bump
+        values
+        coeffs
+        is_interp
     end
     
     methods

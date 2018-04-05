@@ -69,7 +69,7 @@ classdef LSPatch2D < LSPatch
                 end
                 
             else
-                %Chop(obj);
+                Chop(obj);
                 Child = obj;
                 Child.is_refined = true;
             end
@@ -154,7 +154,13 @@ classdef LSPatch2D < LSPatch
                 obj.coeffs = reshape(M\F,obj.degs);
                 warning('on','all');
                 
-                F1 = f(X1,Y1);
+                
+                if~ grid_opt
+                    F1 = f(X1,Y1);
+                else
+                    F1 = f({x1,y1});
+                end
+                
                 
                 E = obj.evalfGrid({x,y});
                 E = E(ind);
@@ -318,6 +324,7 @@ classdef LSPatch2D < LSPatch
                     cutoff = length(simplify(fCol, tol))+1;
                     
                     if cutoff<obj.degs(k)
+                        obj.split_flag(k) = false;
                         j = find(cutoff<=obj.standard_degs);
                         
                         if j<obj.deg_in(k)

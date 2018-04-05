@@ -55,7 +55,6 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
         %Right now just assume the domain is just the square.
         function [sub_grid,split_ind] = InDomainGrid(obj,x,split_dim)
             sub_grid = cell(1,obj.dim);
-            split_grid = cell(1,obj.dim);
             
             for i=1:obj.dim
                 ind = x{i}>=obj.domain(i,1) & x{i}<=obj.domain(i,2);

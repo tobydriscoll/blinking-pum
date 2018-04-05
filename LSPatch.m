@@ -52,7 +52,6 @@ classdef LSPatch < LeafPatch
         degs
         domain_in
         grid_opt = false;
-        coeffs
         max_lengths
         GlobalMax
         LocalMax
@@ -77,6 +76,9 @@ classdef LSPatch < LeafPatch
             
             %Call superclass constructor
             obj = obj@LeafPatch(var_struct);
+            
+            obj.is_interp = false;
+            
             obj.is_geometric_refined = true;
             
             obj.tol = 1e-7;
