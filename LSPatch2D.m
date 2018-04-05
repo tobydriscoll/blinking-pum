@@ -277,12 +277,15 @@ classdef LSPatch2D < LSPatch
             
             if all(ind11)
                 %The domain sits entirely in the first child
-                Child = children{1};
-                
+                %Child = children{1};
+                children{2} = NullPatch(struct1);
+                Child = PUPatch(obj.domain,obj.zone,children,split_dim);
             elseif all(ind22)
                 
                 %The domain sits entirely in the second child
-                Child = children{2};
+                %Child = children{2};
+                children{1} = NullPatch(struct0);
+                Child = PUPatch(obj.domain,obj.zone,children,split_dim);
             else
                 %Return the PUPatch with the new children
                 Child = PUPatch(obj.domain,obj.zone,children,split_dim);

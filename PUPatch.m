@@ -28,6 +28,11 @@ classdef PUPatch<Patch
         %      children: (2 x 1) cell array of Patch objects;
         % splitting_dim: dimension the patch is split in.
         function obj = PUPatch(domain,zone,children,splitting_dim)
+            
+            if isempty(children{1}) && ismepty(children{2})
+                error('one child must not be empty');
+            end
+            
             obj.outerbox = children{1}.outerbox;
             obj.zone = zone;
             obj.domain = domain;
@@ -76,12 +81,13 @@ classdef PUPatch<Patch
             if nargin ==2
                 set_vals = false;
             end
-            
+                
             is_refined = true;
             is_geom_refined = true;
             
+            
             for k=1:2
-                if ~obj.children{k}.is_refined
+                if ~obj.children{k}.is_null && ~obj.children{k}.is_refined
                     if obj.children{k}.is_leaf
                         obj.children{k} = obj.children{k}.splitleaf(Max,set_vals);
                         is_refined = obj.children{k}.is_refined && is_refined;
@@ -93,6 +99,7 @@ classdef PUPatch<Patch
                     end
                 end
             end
+            
             obj.is_geometric_refined = is_geom_refined;
             obj.is_refined = is_refined;
         end
@@ -102,12 +109,11 @@ classdef PUPatch<Patch
         %     Output:
         % is_refined: returns if the patch is refined.
         function is_geometric_refined = PUsplitGeom(obj)
-            
-            
+
             is_geometric_refined = true;
             
             for k=1:2
-                if obj.children{k}.is_leaf
+                if obj.children{k}.is_leaf && ~obj.children{k}.is_null
                     obj.children{k} = obj.children{k}.splitleafGeom();
                     is_geometric_refined = obj.children{k}.is_geometric_refined && is_geometric_refined;
                 else
@@ -127,20 +133,32 @@ classdef PUPatch<Patch
         %            leaves depth first, or an anonymous function.
         function [Max] = sample(obj,f,grid_opt)
             
-            if isnumeric(f) | ~obj.is_refined
+            if isnumeric(f) || ~obj.is_refined
                 
                 if nargin==2
                     grid_opt = false;
                 end
                 
+                MaxC = [-inf -inf];
+                
                 if ~isnumeric(f)
-                    Max1 = obj.children{1}.sample(f,grid_opt);
-                    Max2 = obj.children{2}.sample(f,grid_opt);
+                    for k=1:2
+                        if ~obj.children{k}.is_null
+                            MaxC(k) = obj.children{k}.sample(f,grid_opt);
+                        end
+                    end
                 else
-                    Max1 = obj.children{1}.sample(f(1:length(obj.children{1})),grid_opt);
-                    Max2 = obj.children{2}.sample(f(length(obj.children{1})+1:end),grid_opt);
+                    
+                    if obj.children{1}.is_null
+                        MaxC(2) = obj.children{2}.sample(f,grid_opt);
+                    elseif obj.children{2}.is_null
+                        MaxC(1) = obj.children{1}.sample(f,grid_opt);
+                    else
+                    end
+                    MaxC(1) = obj.children{1}.sample(f(1:length(obj.children{1})),grid_opt);
+                    MaxC(2) = obj.children{2}.sample(f(length(obj.children{1})+1:end),grid_opt);
                 end
-                Max = max(Max1,Max2);
+                Max = max(MaxC);
                 
             else
                 
@@ -205,21 +223,25 @@ classdef PUPatch<Patch
             
             sum = zeros(num_pts,1);
             
+            
             %calculate values for the children
             for k=1:2
                 ind = obj.children{k}.InDomain(X);
                 
                 
-                if any(ind)
+                if any(ind) && ~obj.children{k}.is_null
+                    
                     if ~obj.children{k}.is_leaf
                         [sumk,dotprodk] = obj.children{k}.evalf_recurse(X(ind,:));
                     else
                         sumk = obj.children{k}.evalfBump(X(ind,:));
                         dotprodk = sumk.*obj.children{k}.evalf(X(ind,:));
                     end
+                    
                     sum(ind) = sum(ind) + sumk;
                     dotprod(ind) = dotprod(ind) + dotprodk;
                 end
+                
             end
         end
         
@@ -253,7 +275,7 @@ classdef PUPatch<Patch
             %            calculate values for the children
             
             for k=1:2
-                if all(cellfun(@any,sub_ind{k}))
+                if all(cellfun(@any,sub_ind{k})) && ~obj.children{k}.is_null
                     if ~obj.children{k}.is_leaf
                         [sumk,dotprodk] = obj.children{k}.evalfGrid_recurse(sub_grid{k});
                     else
@@ -379,7 +401,7 @@ classdef PUPatch<Patch
             
             for k=1:2
                 if not_empty_child(k)
-                    if obj.children{k}.is_leaf
+                    if obj.children{k}.is_leaf && ~obj.children{k}.is_null
                         [ii_k,jj_k,zz_k] = find(obj.children{k}.interpMatrixGrid(sub_grids{k}));
                         
                         if size(ii_k,2)~=1
@@ -470,7 +492,7 @@ classdef PUPatch<Patch
             step = 0;
             
             for k=1:2
-                if not_empty_child(k)
+                if not_empty_child(k) && ~obj.children{k}.is_null
                     if obj.children{k}.is_leaf
                         
                         sumk = obj.children{k}.evalfGridBump(sub_grids{k});
@@ -565,7 +587,7 @@ classdef PUPatch<Patch
             
             %calculate values for the children
             for k=1:2
-                if  not_empty_child(k)
+                if  not_empty_child(k) && ~obj.children{k}.is_null
                     if ~obj.children{k}.is_leaf
                         child_vals = obj.children{k}.evalfZoneGrid(sub_grids{k});
                     else
@@ -618,7 +640,7 @@ classdef PUPatch<Patch
             
             %calculate values for the children
             for k=1:2
-                if any(ind(:,k))
+                if any(ind(:,k)) && ~obj.children{k}.is_null
                     
                     in_index = (1:numpts)';
                     in_index = in_index(ind(:,k));
@@ -672,7 +694,7 @@ classdef PUPatch<Patch
             
             %calculate values for the children
             for k=1:2
-                if any(ind(:,k))
+                if any(ind(:,k)) && ~obj.children{k}.is_null
                     
                     in_index = (1:numpts)';
                     in_index = in_index(ind(:,k));
@@ -730,7 +752,7 @@ classdef PUPatch<Patch
             
             %calculate values for the children
             for k=1:2
-                if any(ind(:,k))
+                if any(ind(:,k)) && ~obj.children{k}.is_null
                     if obj.children{k}.is_leaf
                         child_vals{k} = obj.children{k}.evalf(X(ind(:,k),:));
                     else
@@ -815,7 +837,7 @@ classdef PUPatch<Patch
             end
             
             for k=1:2
-                if obj.children{k}.is_leaf
+                if obj.children{k}.is_leaf && ~obj.is_null
                     obj.children{k} = obj.children{k}.split(split_dim,set_vals);
                 else
                     obj.children{k}.split(split_dim,set_vals);
@@ -847,7 +869,7 @@ classdef PUPatch<Patch
         
         function [LEAVES]= collectLeaves_recurse(obj,leaves)
             for k=1:2
-                if obj.children{k}.is_leaf
+                if obj.children{k}.is_leaf && ~obj.children{k}.is_null
                     leaves{length(leaves)+1} = obj.children{k};
                 else
                     leaves = obj.children{k}.collectLeaves_recurse(leaves);

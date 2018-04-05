@@ -16,6 +16,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
         tol
         outerbox
         split_flag %array indicating if we will split along a dimension
+        is_null = false;
     end
     
     properties (Constant)
