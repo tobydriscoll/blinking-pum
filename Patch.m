@@ -116,17 +116,20 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
             end
         end
         
-        function fun_obj = refine(obj,f,grid_opt)
+        function fun_obj = refine(obj,f,grid_opt,fast_opt)
             
             if nargin<3
                 grid_opt = false;
+                fast_opt = false;
+            elseif nargin<4
+                fast_opt = false;
             end
             
             fun_obj = obj;
             
             while ~fun_obj.is_refined
                 
-                Max = fun_obj.sample(f,grid_opt);
+                Max = fun_obj.sample(f,grid_opt,fast_opt);
                 
                 if fun_obj.is_leaf
                     fun_obj = obj.splitleaf(Max);

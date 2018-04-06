@@ -173,7 +173,7 @@ classdef PUchebfun < PUfun
             
             sub_T = newRoot(obj);
             
-            subTreeRoot = PUfun.fast_add(obj.ChebRoot,Tree2.ChebRoot,sub_T,0);
+            subTreeRoot = PUfun.fast_subtract(obj.ChebRoot,Tree2.ChebRoot,sub_T,0);
             
             subTreeRoot.clean();
             
@@ -208,7 +208,7 @@ classdef PUchebfun < PUfun
             
             div_T = newRoot(obj);
             
-            DivTreeRoot = PUfun.fast_multiply(obj.ChebRoot,Tree2.ChebRoot,div_T,0);
+            DivTreeRoot = PUfun.fast_divide(obj.ChebRoot,Tree2.ChebRoot,div_T,0);
             
             DivTreeRoot.clean();
             

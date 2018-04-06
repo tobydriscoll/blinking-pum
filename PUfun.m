@@ -426,7 +426,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                     end
                     
                 else
-                    T_merge = T_merge.refine(@(x)T_1.evalfGrid(x)-T_2.evalfGrid(x),true);
+                    T_merge = T_merge.refine(@(x)T_1.evalfGrid(x)-T_2.evalfGrid(x),true,true);
                 end
                 
                 
@@ -446,7 +446,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                 
                 T_merge.deg_in = max(T_1.deg_in,T_2.deg_in);
                 T_merge.degs = max(T_1.degs,T_2.degs);
-                T_merge = T_merge.refine(@(x)T_1.evalfGrid(x).*T_2.evalfGrid(x),true);
+                T_merge = T_merge.refine(@(x)T_1.evalfGrid(x).*T_2.evalfGrid(x),true,true);
                 
             elseif T_1.is_leaf && ~T_2.is_leaf
                 T_merge = T_merge.split(T_2.splitting_dim);
@@ -508,7 +508,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                     end
                     
                 else
-                    T_merge = T_merge.refine(@(x)T_1.evalfGrid(x).*T_2.evalfGrid(x),true);
+                    T_merge = T_merge.refine(@(x)T_1.evalfGrid(x).*T_2.evalfGrid(x),true,true);
                 end
                 
             end
@@ -527,7 +527,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                 
                 T_merge.deg_in = max(T_1.deg_in,T_2.deg_in);
                 T_merge.degs = max(T_1.degs,T_2.degs);
-                T_merge = T_merge.refine(@(x)T_1.evalfGrid(x)./T_2.evalfGrid(x),true);
+                T_merge = T_merge.refine(@(x)T_1.evalfGrid(x)./T_2.evalfGrid(x),true,true);
                 
             elseif T_1.is_leaf && ~T_2.is_leaf
                 T_merge = T_merge.split(T_2.splitting_dim);
@@ -589,7 +589,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                     end
                     
                 else
-                    T_merge = T_merge.refine(@(x)T_1.evalfGrid(x)./T_2.evalfGrid(x),true);
+                    T_merge = T_merge.refine(@(x)T_1.evalfGrid(x)./T_2.evalfGrid(x),true,true);
                 end
                 
             end
@@ -613,7 +613,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             
             
             for i=1:length(T_Array)
-                leafArray{i} = refine(leafArray{i},@(x)T_Array{i}.evalfGrid(x).^p,true);
+                leafArray{i} = refine(leafArray{i},@(x)T_Array{i}.evalfGrid(x).^p,true,true);
             end
         end
     end

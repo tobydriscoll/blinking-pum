@@ -137,7 +137,7 @@ classdef PUFunLS < PUfun
                 %obj.Geomrefine();
                 
                 %then sample;
-                Max = obj.ChebRoot.sample(f,grid_opt);
+                Max = obj.ChebRoot.sample(f,grid_opt,false);
                 
                 
                 
@@ -259,7 +259,7 @@ classdef PUFunLS < PUfun
             
             div_T = newRoot(obj);
             
-            DivTreeRoot = PUfun.fast_multiply(obj.ChebRoot,Tree2.ChebRoot,div_T,0);
+            DivTreeRoot = PUfun.fast_divide(obj.ChebRoot,Tree2.ChebRoot,div_T,0);
             
             DivTreeRoot.clean();
             

@@ -27,7 +27,7 @@ tic,TREELS1 = PUFunLS(f1,DOMAIN,OUTERBOX,'degreeIndex',[4 4],'ChebDegreeIndex',[
 tic,TREELS2 = PUFunLS(f2,DOMAIN,OUTERBOX,'degreeIndex',[4 4],'ChebDegreeIndex',[6 6],'tol',1e-12);toc
 
 
-tic, TREE3 = TREELS1 - TREELS2; toc
+tic, TREE3 = TREELS1/TREELS2; toc
 %plot(DOMAIN);hold on; plotdomain(TREELS.ChebRoot); hold off;
 
 %x = OUTERBOX(1,1) + diff(OUTERBOX(1,:))*rand(200,1);
@@ -41,7 +41,7 @@ V = TREE3.ChebRoot.evalfGrid({x y});
 V1 = TREELS1.ChebRoot.evalfGrid({x y});
 V2 = TREELS2.ChebRoot.evalfGrid({x y});
 
-F = f1(X,Y)-f2(X,Y);
+F = f1(X,Y)./f2(X,Y);
 
 V = V - F;
 

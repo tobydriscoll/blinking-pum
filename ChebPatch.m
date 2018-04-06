@@ -319,7 +319,7 @@ classdef ChebPatch<LeafPatch
         %
         % Input:
         %     f: values sampled at obj.points.
-        function [Max] = sample(obj,f,grid_opt)
+        function [Max] = sample(obj,f,grid_opt,~)
             
             if(nargin==2)
                 grid_opt = false;

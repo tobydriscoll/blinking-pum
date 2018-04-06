@@ -131,32 +131,36 @@ classdef PUPatch<Patch
         %     Input:
         %         f: vector of values for the interpolating values on the
         %            leaves depth first, or an anonymous function.
-        function [Max] = sample(obj,f,grid_opt)
+        function [Max] = sample(obj,f,grid_opt,fast_opt)
             
             if isnumeric(f) || ~obj.is_refined
                 
                 if nargin==2
                     grid_opt = false;
+                    fast_opt = false;
+                elseif nargin==3
+                    fast_opt = false;
                 end
+                    
                 
                 MaxC = [-inf -inf];
                 
                 if ~isnumeric(f)
                     for k=1:2
                         if ~obj.children{k}.is_null
-                            MaxC(k) = obj.children{k}.sample(f,grid_opt);
+                            MaxC(k) = obj.children{k}.sample(f,grid_opt,fast_opt);
                         end
                     end
                 else
                     
                     if obj.children{1}.is_null
-                        MaxC(2) = obj.children{2}.sample(f,grid_opt);
+                        MaxC(2) = obj.children{2}.sample(f,grid_opt,fast_opt);
                     elseif obj.children{2}.is_null
-                        MaxC(1) = obj.children{1}.sample(f,grid_opt);
+                        MaxC(1) = obj.children{1}.sample(f,grid_opt,fast_opt);
                     else
                     end
-                    MaxC(1) = obj.children{1}.sample(f(1:length(obj.children{1})),grid_opt);
-                    MaxC(2) = obj.children{2}.sample(f(length(obj.children{1})+1:end),grid_opt);
+                    MaxC(1) = obj.children{1}.sample(f(1:length(obj.children{1})),grid_opt,fast_opt);
+                    MaxC(2) = obj.children{2}.sample(f(length(obj.children{1})+1:end),grid_opt,fast_opt);
                 end
                 Max = max(MaxC);
                 

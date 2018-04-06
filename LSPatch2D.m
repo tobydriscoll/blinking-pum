@@ -78,17 +78,19 @@ classdef LSPatch2D < LSPatch
         
         
         
-        function max_val = sample(obj,f,grid_opt)
+        function max_val = sample(obj,f,grid_opt,fast_opt)
             
             
             
-            if(nargin==2)
+            if nargin==2
                 grid_opt = false;
+                fast_opt = false;
+            elseif nargin==2
+                fast_opt = false;
             end
             
             max_val = 0;
             
-            if true
                 
                 for i=2:1:10
                     
@@ -120,39 +122,34 @@ classdef LSPatch2D < LSPatch
                 obj.mult = mult;
                 
                 
-                %                 D_x = ChebDiff(obj.degs(1));
-                %                 D_y = ChebDiff(obj.degs(2));
-                %                 D_xx = ChebDiff(obj.degs(1))^2;
-                %                 D_yy = ChebDiff(obj.degs(2))^2;
                 
-                % Lap = kron(D_yy,eye(obj.degs(1)))+kron(eye(obj.degs(2)),D_xx)+2*kron(D_y,D_x);
-                
-                Mx = clenshaw(chebpts(obj.degs(1)*mult),eye(obj.degs(1)));
-                My = clenshaw(chebpts(obj.degs(2)*mult),eye(obj.degs(2)));
-                
-                M = kron(My,Mx);
-                M = M(ind,:);
-                
-                if~ grid_opt
+                if ~grid_opt
                     F = f(X(ind),Y(ind));
                 else
                     F = f({x,y});
                     F = F(ind);
                 end
                 
-                max_val = max(abs(F));
-                
-                obj.LocalMax = max_val;
-                
-                %M2 = [obj.Tikhonov_param*Lap;M];
-                %F2 = [zeros(prod(obj.degs),1);F];
-                %warning('off','all');
-                %obj.coeffs = reshape(M2\F2,obj.degs);
-                %warning('on','all');
-                
-                warning('off','all');
-                obj.coeffs = reshape(M\F,obj.degs);
-                warning('on','all');
+                if ~fast_opt
+                    
+                    Mx = clenshaw(chebpts(obj.degs(1)*mult),eye(obj.degs(1)));
+                    My = clenshaw(chebpts(obj.degs(2)*mult),eye(obj.degs(2)));
+                    
+                    M = kron(My,Mx);
+                    M = M(ind,:);
+                    
+                    warning('off','all');
+                    obj.coeffs = reshape(M\F,obj.degs);
+                    warning('on','all');
+                    
+                else
+                    if ~grid_opt
+                        points = num2cell(obj.points(),1);
+                        obj.coeffs = chebfun2.vals2coeffs(reshape(f(points{:}),obj.degs));
+                    else
+                        obj.coeffs = chebfun2.vals2coeffs(f(obj.leafGrids()));
+                    end
+                end
                 
                 
                 if~ grid_opt
@@ -161,6 +158,9 @@ classdef LSPatch2D < LSPatch
                     F1 = f({x1,y1});
                 end
                 
+                max_val = max(abs(F));
+                
+                obj.LocalMax = max_val;
                 
                 E = obj.evalfGrid({x,y});
                 E = E(ind);
@@ -174,7 +174,6 @@ classdef LSPatch2D < LSPatch
                 obj.mid_values_err = max(abs(E(:)))./max(abs(F));
                 obj.mid_values_err1 = max(abs(E1(:)))./max(abs(F1(ind1)));
                 
-            end
         end
         
         % The method determines will split a child into along
