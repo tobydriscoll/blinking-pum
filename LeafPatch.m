@@ -1,17 +1,17 @@
 classdef LeafPatch<Patch
     % This is the abstract class for a leaf object. This is used with the
     % PUPatch object.
- 
-% LeafPatch(var_struct) serves as the base constructor for a leafPatch
-% object, where var_struct is a structure with fields:
-% 
-% *var_struct.domain, the domain used for the Chebyshev polynomial.
-%
-% *var_struct.zone, the zone (non overlapping part from partition). If the
-% zone is undefined, the zone is set to obj.domain.
-%
-% *var_struct.outerbox, the domain of the function. If the outerbox is
-% undefined, the outerbox is set to obj.domain.
+    
+    % LeafPatch(var_struct) serves as the base constructor for a leafPatch
+    % object, where var_struct is a structure with fields:
+    %
+    % *var_struct.domain, the domain used for the Chebyshev polynomial.
+    %
+    % *var_struct.zone, the zone (non overlapping part from partition). If the
+    % zone is undefined, the zone is set to obj.domain.
+    %
+    % *var_struct.outerbox, the domain of the function. If the outerbox is
+    % undefined, the outerbox is set to obj.domain.
     properties
         index = [];
         chebweights = [];
@@ -20,6 +20,15 @@ classdef LeafPatch<Patch
         values
         coeffs
         is_interp
+        deg_in %index for the standard degrees
+        degs %array of degrees along the dimensions
+    end
+    
+    properties (Constant)
+        standard_variables = load('cheb_points_matrices.mat');
+        standard_degs = [3 5 9 17 33 65 129];
+        invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
+        forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
     end
     
     methods
@@ -173,15 +182,45 @@ classdef LeafPatch<Patch
             end
         end
         
+        % Returns the points of the function
+        function pts = points(obj)
+            
+            C = cell(obj.dim,1);
+            
+            for i=1:obj.dim
+                C{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
+                C{i} = obj.forf(C{i},obj.domain(i,:));
+            end
+            [out{1:obj.dim}] = ndgrid(C{:});
+            
+            pts = zeros(numel(out{1}),obj.dim);
+            
+            for i=1:obj.dim
+                pts(:,i) = out{i}(:);
+            end
+            
+        end
+        
+        % Returns a cell array of the grids of the domain
+        function grid = leafGrids(obj)
+            grid = cell(1,obj.dim);
+            
+            for i=1:obj.dim
+                grid{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
+                grid{i} = obj.forf(grid{i},obj.domain(i,:));
+            end
+        end
+        
+        % TODO. Figure out what to do here!
+        function ln=length(obj)
+            ln = prod(obj.degs);
+        end
+        
     end
     methods (Abstract)
         %This method will split the child, creating a new PUPatch. If the
         %obj does not need to split, the method returns obj.
         Child = splitleaf(obj);
-        
-        ef = evalf(obj,X)
-        
-        ef = evalfGrid(obj,X)
     end
     
 end

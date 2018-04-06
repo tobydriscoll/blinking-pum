@@ -224,7 +224,7 @@ classdef PUFunLS < PUfun
             
             sub_T = newRoot(obj);
             
-            subTreeRoot = PUfun.fast_add(obj.ChebRoot,Tree2.ChebRoot,sub_T,0);
+            subTreeRoot = PUfun.fast_subtract(obj.ChebRoot,Tree2.ChebRoot,sub_T,0);
             
             subTreeRoot.clean();
             

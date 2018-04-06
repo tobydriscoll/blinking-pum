@@ -45,23 +45,14 @@ classdef LSPatch < LeafPatch
         leafArray
         Errs
         Nums
-        deg_in
         cheb_deg_in
         cdeg_in
         cdegs
-        degs
         domain_in
         grid_opt = false;
         max_lengths
         GlobalMax
         LocalMax
-    end
-    
-    properties (Constant)
-        standard_variables = load('cheb_points_matrices.mat');
-        standard_degs = [3 5 9 17 33 65 129];
-        invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
-        forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
     end
     
     methods (Abstract)
@@ -151,29 +142,7 @@ classdef LSPatch < LeafPatch
            p_struct.cdeg_in = obj.cdeg_in;
        end
         
-        % TODO. Figure out what to do here!
-        function ln=length(obj)
-            ln = prod(obj.degs);
-        end
         
-        % Returns the points of the function
-        function pts = points(obj)
-            
-            C = cell(obj.dim,1);
-            
-            for i=1:obj.dim
-                C{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
-                C{i} = obj.forf(C{i},obj.domain(i,:));
-            end
-            [out{1:obj.dim}] = ndgrid(C{:});
-            
-            pts = zeros(numel(out{1}),obj.dim);
-            
-            for i=1:obj.dim
-                pts(:,i) = out{i}(:);
-            end
-            
-        end
         
         % TODO. Figure out what to do here!
         function ef = evalf(obj,X,G)
@@ -235,6 +204,15 @@ classdef LSPatch < LeafPatch
             end
         end
         
+       %Returns a cell array of the grids of the domain
+        function grid = leafGrids(obj)
+            grid = cell(1,obj.dim);
+            
+            for i=1:obj.dim
+                grid{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
+                grid{i} = obj.forf(grid{i},obj.domain(i,:));
+            end
+        end
         
         
         

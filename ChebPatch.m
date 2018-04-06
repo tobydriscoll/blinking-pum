@@ -28,15 +28,12 @@ classdef ChebPatch<LeafPatch
 % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
 % 33 in each direction.
     properties
-        degs %array of degrees along the dimensions
         cdegs %array of coarse degrees along the dimensions
         swap_degs %temp holder for degs
         iscoarse = false;
         linOp
         ClinOp
         Binterp
-        ind_start
-        deg_in %index for the standard degrees
         orig_degs
         orig_deg_in
     end
@@ -46,12 +43,6 @@ classdef ChebPatch<LeafPatch
         swap_deg_in
     end
     
-    properties (Constant)
-        standard_variables = load('cheb_points_matrices.mat');
-        standard_degs = [3 5 9 17 33 65 129];
-        invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
-        forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
-    end
     
     
     methods
@@ -186,34 +177,6 @@ classdef ChebPatch<LeafPatch
         end
         
         
-        % Returns the points of the function
-        function pts = points(obj)
-            
-            C = cell(obj.dim,1);
-            
-            for i=1:obj.dim
-                C{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
-                C{i} = obj.forf(C{i},obj.domain(i,:));
-            end
-            [out{1:obj.dim}] = ndgrid(C{:});
-            
-            pts = zeros(numel(out{1}),obj.dim);
-            
-            for i=1:obj.dim
-                pts(:,i) = out{i}(:);
-            end
-            
-        end
-        
-        % Returns a cell array of the grids of the domain
-        function grid = leafGrids(obj)
-            grid = cell(1,obj.dim);
-            
-            for i=1:obj.dim
-                grid{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
-                grid{i} = obj.forf(grid{i},obj.domain(i,:));
-            end
-        end
         
         % Evaluates the approximant and its derivatives.
         %

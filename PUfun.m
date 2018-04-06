@@ -229,15 +229,30 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                     T_merge.values = T_1.evalfGrid(T_merge.leafGrids())+T_2.evalfGrid(T_merge.leafGrids());
                 else
                     T_merge.coeffs = zeros(T_merge.degs);
-                    if T_merge.dim==1
-                        T_merge.coeffs(1:T_1.degs) = T_1.coeffs;
-                        T_merge.coeffs(1:T_2.degs) = T_merge.coeffs(1:T_2.deg)+ T_2.coeffs;
-                    elseif T_merge.dim==2
-                        T_merge.coeffs(1:T_1.degs(1),1:T_1.degs(2)) = T_1.coeffs;
-                        T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2)) = T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2))+ T_2.coeffs;
-                    elseif T_merge.dim==3
-                        T_merge.coeffs(1:T_1.degs(1),1:T_1.degs(2),1:T_1.degs(3)) = T_1.coeffs;
-                        T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2),1:T_2.degs(3)) = T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2),1:T_2.degs(3))+ T_2.coeffs;
+                    
+                    if isequal(T_1.domain,T_2.domain)
+                        if T_merge.dim==1
+                            T_merge.coeffs(1:T_1.degs) = T_1.coeffs;
+                            T_merge.coeffs(1:T_2.degs) = T_merge.coeffs(1:T_2.deg)+ T_2.coeffs;
+                        elseif T_merge.dim==2
+                            T_merge.coeffs(1:T_1.degs(1),1:T_1.degs(2)) = T_1.coeffs;
+                            T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2)) = T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2))+ T_2.coeffs;
+                        elseif T_merge.dim==3
+                            T_merge.coeffs(1:T_1.degs(1),1:T_1.degs(2),1:T_1.degs(3)) = T_1.coeffs;
+                            T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2),1:T_2.degs(3)) = T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2),1:T_2.degs(3))+ T_2.coeffs;
+                        end
+                    else
+                        
+                        V = T_1.evalfGrid(T_merge.leafGrids())+T_2.evalfGrid(T_merge.leafGrids());
+                        
+                        if T_merge.dim==1
+                            T_merge.coeffs = tech.vals2coeffs(V);
+                        elseif T_merge.dim==2
+                            T_merge.coeffs = chebfun2.vals2coeffs(V);
+                        elseif T_mergre.dim==3
+                            T_merge.coeffs = chebfun3.vals2coeffs(V);
+                        end
+                        
                     end
                 end
                 
@@ -324,17 +339,33 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                     T_merge.values = T_1.evalfGrid(T_merge.leafGrids())-T_2.evalfGrid(T_merge.leafGrids());
                 else
                     T_merge.coeffs = zeros(T_merge.degs);
-                    if T_merge.dim==1
-                        T_merge.coeffs(1:T_1.degs) = T_1.coeffs;
-                        T_merge.coeffs(1:T_2.degs) = T_merge.coeffs(1:T_2.deg)- T_2.coeffs;
-                    elseif T_merge.dim==2
-                        T_merge.coeffs(1:T_1.degs(1),1:T_1.degs(2)) = T_1.coeffs;
-                        T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2)) = T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2)) - T_2.coeffs;
-                    elseif T_merge.dim==3
-                        T_merge.coeffs(1:T_1.degs(1),1:T_1.degs(2),1:T_1.degs(3)) = T_1.coeffs;
-                        T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2),1:T_2.degs(3)) = T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2),1:T_2.degs(3)) - T_2.coeffs;
+                    
+                    if isequal(T_1.domain,T_2.domain)
+                        if T_merge.dim==1
+                            T_merge.coeffs(1:T_1.degs) = T_1.coeffs;
+                            T_merge.coeffs(1:T_2.degs) = T_merge.coeffs(1:T_2.deg) - T_2.coeffs;
+                        elseif T_merge.dim==2
+                            T_merge.coeffs(1:T_1.degs(1),1:T_1.degs(2)) = T_1.coeffs;
+                            T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2)) = T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2)) - T_2.coeffs;
+                        elseif T_merge.dim==3
+                            T_merge.coeffs(1:T_1.degs(1),1:T_1.degs(2),1:T_1.degs(3)) = T_1.coeffs;
+                            T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2),1:T_2.degs(3)) = T_merge.coeffs(1:T_2.degs(1),1:T_2.degs(2),1:T_2.degs(3)) - T_2.coeffs;
+                        end
+                    else
+                        
+                        V = T_1.evalfGrid(T_merge.leafGrids())-T_2.evalfGrid(T_merge.leafGrids());
+                        
+                        if T_merge.dim==1
+                            T_merge.coeffs = tech.vals2coeffs(V);
+                        elseif T_merge.dim==2
+                            T_merge.coeffs = chebfun2.vals2coeffs(V);
+                        elseif T_mergre.dim==3
+                            T_merge.coeffs = chebfun3.vals2coeffs(V);
+                        end
+                        
                     end
                 end
+                
             elseif T_1.is_leaf && ~T_2.is_leaf
                 T_merge = T_merge.split(T_2.splitting_dim);
                 
