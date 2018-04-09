@@ -11,76 +11,21 @@ classdef DoubleAstroid
         
         function ind = Interior(obj,pts)
             
-            ang = pi/8;
-            ROT = [cos(ang) -sin(ang);sin(ang) cos(ang)];
+            [THo,R] = cart2pol(pts(:,1),pts(:,2));
             
-            pts = (ROT*pts.').';
+            TH = mod(THo-pi+pi/8,2*pi)-pi;
             
-            [TH,R] = cart2pol(pts(:,1),pts(:,2));
+            TH = mod(TH,pi/2);
             
-            TH1 =  TH>=-pi & TH<=-pi/2;
-            TH2 =  TH>=-pi/2 & TH<=0;
-            TH3 =  TH>=0 & TH<=pi/2;
-            TH4 =  TH>=pi/2;
-            
-            
-            R1 = (cos(TH(TH1)+pi).^(2/3)+sin(TH(TH1)+pi).^(2/3)).^(-3/2);
-            R2 = (cos(TH(TH2)+pi/2).^(2/3)+sin(TH(TH2)+pi/2).^(2/3)).^(-3/2);
-            R3 = (cos(TH(TH3)).^(2/3)+sin(TH(TH3)).^(2/3)).^(-3/2);
-            R4 = (cos(TH(TH4)-pi/2).^(2/3)+sin(TH(TH4)-pi/2).^(2/3)).^(-3/2);
-            
-                        ang = pi/8;
-            ROT = [cos(ang) -sin(ang);sin(ang) cos(ang)];
-            
-            pts = (ROT*pts.').';
-            
-            [TH,R] = cart2pol(pts(:,1),pts(:,2));
-            
-            TH1 =  TH>=-pi & TH<=-pi/2;
-            TH2 =  TH>=-pi/2 & TH<=0;
-            TH3 =  TH>=0 & TH<=pi/2;
-            TH4 =  TH>=pi/2;
-            
+            ind1 = R<=(cos(TH).^(2/3)+sin(TH).^(2/3)).^(-3/2);
            
-            R1 = (cos(TH(TH1)+pi).^(2/3)+sin(TH(TH1)+pi).^(2/3)).^(-3/2);
-            R2 = (cos(TH(TH2)+pi/2).^(2/3)+sin(TH(TH2)+pi/2).^(2/3)).^(-3/2);
-            R3 = (cos(TH(TH3)).^(2/3)+sin(TH(TH3)).^(2/3)).^(-3/2);
-            R4 = (cos(TH(TH4)-pi/2).^(2/3)+sin(TH(TH4)-pi/2).^(2/3)).^(-3/2);
+            TH = mod(THo-pi-pi/8,2*pi)-pi;
             
-            ind = true(size(pts,1),1);
+            TH = mod(TH,pi/2);
             
-            ind(TH1) = R(TH1)<=R1;
-            ind(TH2) = R(TH2)<=R2;
-            ind(TH3) = R(TH3)<=R3;
-            ind(TH4) = R(TH4)<=R4;
+            ind2 = R<=(cos(TH).^(2/3)+sin(TH).^(2/3)).^(-3/2);
             
-            ind(TH1) = R(TH1)<=R1;
-            ind(TH2) = R(TH2)<=R2;
-            ind(TH3) = R(TH3)<=R3;
-            ind(TH4) = R(TH4)<=R4;
-            
-            ang = -pi/4;
-            ROT = [cos(ang) -sin(ang);sin(ang) cos(ang)];
-            
-            pts = (ROT*pts.').';
-            
-            [TH,R] = cart2pol(pts(:,1),pts(:,2));
-            
-            TH1 =  TH>=-pi & TH<=-pi/2;
-            TH2 =  TH>=-pi/2 & TH<=0;
-            TH3 =  TH>=0 & TH<=pi/2;
-            TH4 =  TH>=pi/2;
-            
-            
-            R1 = (cos(TH(TH1)+pi).^(2/3)+sin(TH(TH1)+pi).^(2/3)).^(-3/2);
-            R2 = (cos(TH(TH2)+pi/2).^(2/3)+sin(TH(TH2)+pi/2).^(2/3)).^(-3/2);
-            R3 = (cos(TH(TH3)).^(2/3)+sin(TH(TH3)).^(2/3)).^(-3/2);
-            R4 = (cos(TH(TH4)-pi/2).^(2/3)+sin(TH(TH4)-pi/2).^(2/3)).^(-3/2);
-            
-            ind(TH1) = ind(TH1) | R(TH1)<=R1;
-            ind(TH2) = ind(TH2) | R(TH2)<=R2;
-            ind(TH3) = ind(TH3) | R(TH3)<=R3;
-            ind(TH4) = ind(TH4) | R(TH4)<=R4;
+            ind = ind1 | ind2;
             
         end
         

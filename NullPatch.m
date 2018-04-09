@@ -5,7 +5,6 @@ classdef NullPatch<Patch
     properties
         values = 0;
         coeffs = 0;
-        is_leaf = true;
         linOp
         ClinOp
     end
@@ -25,10 +24,13 @@ classdef NullPatch<Patch
         %function obj = ChebPatch(domain,zone,outerbox,deg_in,split_flag,tol,cdeg_in)
         function obj = NullPatch(var_struct)
             
+            obj.is_leaf = true;
             obj.outerbox = var_struct.outerbox;
             obj.zone = var_struct.zone;
             obj.domain = var_struct.domain;
+            dim = size(obj.domain,1);
             
+            obj.split_flag = false(dim,1);
             obj.is_refined = true;
             obj.is_geometric_refined = true;
             obj.is_null = true;
@@ -81,6 +83,8 @@ classdef NullPatch<Patch
             ef = 0;
         end
         
+        function plotdomain(obj)
+        end
         
         
         end

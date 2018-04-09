@@ -841,9 +841,9 @@ classdef PUPatch<Patch
             end
             
             for k=1:2
-                if obj.children{k}.is_leaf && ~obj.is_null
+                if obj.children{k}.is_leaf && ~obj.children{k}.is_null
                     obj.children{k} = obj.children{k}.split(split_dim,set_vals);
-                else
+                elseif ~obj.children{k}.is_null
                     obj.children{k}.split(split_dim,set_vals);
                 end
             end
@@ -875,7 +875,7 @@ classdef PUPatch<Patch
             for k=1:2
                 if obj.children{k}.is_leaf && ~obj.children{k}.is_null
                     leaves{length(leaves)+1} = obj.children{k};
-                else
+                elseif ~obj.children{k}.is_null
                     leaves = obj.children{k}.collectLeaves_recurse(leaves);
                 end
             end

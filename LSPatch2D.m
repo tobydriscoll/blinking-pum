@@ -56,7 +56,7 @@ classdef LSPatch2D < LSPatch
             
             obj.GlobalMax = Max;
             
-            if obj.mid_values_err>obj.tol
+            if obj.mid_values_err1>obj.tol
                 
                 Child = obj;
                 %Go through and split in each unresolved direction
@@ -114,7 +114,7 @@ classdef LSPatch2D < LSPatch
                     
                     ind1 = obj.domain_in.Interior(XP1);
                     
-                    if sum(ind1)/prod(obj.degs)>=4
+                    if sum(ind1)/prod(obj.degs)>=5
                         break;
                     end
                 end

@@ -163,7 +163,6 @@ classdef PUFunLS < PUfun
             
             
             if ~obj.ChebRoot.is_leaf
-                obj.ChebRoot.findIndex([]);
                 obj.leafArray = obj.ChebRoot.collectLeaves();
             else
                 obj.leafArray = {obj.ChebRoot};
