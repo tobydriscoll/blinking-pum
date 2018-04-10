@@ -29,24 +29,53 @@ classdef DoubleAstroid
             
         end
         
+        function bound = Boundary(obj,N)
+            
+            THo = linspace(-pi,pi,N)';
+            
+            TH = mod(THo-pi+pi/8,2*pi)-pi;
+            
+            TH = mod(TH,pi/2);
+            
+            bound_r_1 = (cos(TH).^(2/3)+sin(TH).^(2/3)).^(-3/2);
+            
+            TH = mod(THo-pi-pi/8,2*pi)-pi;
+            
+            TH = mod(TH,pi/2);
+            
+            bound_r_2 = [(cos(TH).^(2/3)+sin(TH).^(2/3)).^(-3/2)];
+            
+            [x,y] = pol2cart(THo,max(bound_r_1,bound_r_2));
+            
+            bound = [x(:) y(:)];
+            
+        end
+        
         function plot(obj)
             
-            Nxf = 240;
-            Nyf = 240;
+            Nxf = 200;
+            Nyf = 200;
             
             x_f = linspace(-1,1,Nxf)';
             y_f = linspace(-1,1,Nyf)';
             
             [Xf,Yf] = ndgrid(x_f,y_f);
             
-            XPf = [Xf(:) Yf(:)];
+            B = obj.Boundary(800);
             
-            grid_sq_ind = obj.Interior(XPf);
+            ind = obj.Interior([Xf(:) Yf(:)]);
             
-            %fine grid in domain
-            XPf = XPf(grid_sq_ind,:);
+            P = [Xf(ind) Yf(ind)];
             
-            scatter(XPf(:,1),XPf(:,2),'red');
+            TRI = delaunayTriangulation([B;P],[(1:length(B)-1)' (2:length(B))'; length(B) 1]);
+            
+            TF = isInterior(TRI);
+            
+            Z = zeros(length(P)+length(B),1);
+            
+            trisurf(TRI.ConnectivityList(TF,:),TRI.Points(:,1),TRI.Points(:,2),Z);
+            view(0,90);
+            shading interp;
         end
     end
 end

@@ -17,24 +17,36 @@ classdef Disk
             ind = sum((pts-obj.center).^2,2)<=obj.radius.^2;
         end
         
+        
+        function bound = Boundary(obj,N)
+            
+            THo = linspace(-pi,pi,N)';
+            
+            bound = obj.radius*[cos(THo)+obj.center(1) sin(THo)+obj.center(2)];
+            
+        end
+        
         function plot(obj)
             
-            Nxf = 66;
-            Nyf = 66;
+            Nxf = 200;
+            Nyf = 200;
             
-            x_f = chebpts(Nxf,[obj.center(1)-obj.radius obj.center(1)+obj.radius])';
-            y_f = chebpts(Nyf,[obj.center(2)-obj.radius obj.center(2)+obj.radius])';
+            x_f = linspace(obj.center(1)-obj.radius,obj.center(1)+obj.radius,Nxf)';
+            y_f = linspace(obj.center(2)-obj.radius,obj.center(2)+obj.radius,Nyf)';
             
             [Xf,Yf] = ndgrid(x_f,y_f);
             
-            XPf = [Xf(:) Yf(:)];
+            ind = obj.Interior([Xf(:) Yf(:)]);
             
-            grid_sq_ind = obj.Interior(XPf);
+            P = [Xf(ind) Yf(ind)];
             
-            %fine grid in domain
-            XPf = XPf(grid_sq_ind,:);
+            TRI = delaunay(P);
             
-            scatter(XPf(:,1),XPf(:,2),'red');
+            Z = zeros(length(P),1);
+            
+            trisurf(TRI,Xf(ind),Yf(ind),Z);
+            view(0,90);
+            shading interp;
         end
     end
 end
