@@ -586,9 +586,29 @@ When sampling with the discrete Chebyshev extension method, we set $P$ to be a C
 
 \subsection{numerical experiments}
 
-For the 2D Chebyshev extension method we test $exp(x+y), \frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}, \cos(24x-32y)\sin(21x-28y)$ and $\arctan(3(x^2+y))$. We time the evaluation on a 200x200 grid and observe the max error as in the previous section. We test the domain on the double astroid
+For the 2D Chebyshev extension method we test $exp(x+y), \frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}, \cos(24x-32y)\sin(21x-28y)$ and $\arctan(3(x^2+y))$. We time the evaluation on a 200x200 grid and observe the max error as in the previous section. We test the set of functions on the a disk, a diamond, and a double astroid as seen in Figure~\ref{domains}. In each case, we choose initial box to fit the domain as tight as possible. The results for the disk, diamond and double astroid domain can be seen in Tables~\ref{table_diamond},\ref{table_star},\ref{table_disk} respectively. For each test, we set the max degree of the polynomial to be 17, and set the target tolerance to 10^{-10}. 
+
+We see that in the case where the function is smooth or contains local features, the method is both efficient and highly accurate. In any case, we can still take advantage of grid based computations in the case of interpolations.
 
 
+\begin{figure}
+\centering
+\subfloat[Disk domain]{
+\includegraphics[scale = 0.3]{disk.eps}
+   \label{domain_a}
+ }
+\subfloat[Diamond domain]{
+\includegraphics[scale = 0.3]{diamond.eps}
+   \label{domain_b}
+ }
+ 
+ \subfloat[Double astroid domain]{
+\includegraphics[scale = 0.3]{star.eps}
+   \label{domain_c}
+ }
+ \caption{Plots of the domains we tested on 2D. The double astroid domain is the union of two rotated astroid curves.}
+\label{domains}
+\end{figure}
 
 \begin{table}[p]
 \begin{tabular}{c|c|c|c|c}
@@ -599,6 +619,7 @@ $\cos(24x-32y)\sin(21x-28y)$ & 1.79E-11 & 12.725 & 0.809 & 165310 \\ [5pt]
 $\arctan(3(x^2+y))$ & 9.65E-12 & 1.954 & 0.069 & 9826 \\ [5pt]
 \end{tabular}
 \caption{Results for the diamond domain.}
+\label{table_diamond}
 \end{table}
 
 \begin{table}[p]
@@ -610,6 +631,7 @@ $\cos(24x-32y)\sin(21x-28y)$ & 4.33E-12 & 34.136 & 0.891 & 152590 \\ [5pt]
 $\arctan(3(x^2+y))$ & 1.01E-10 & 4.758 & 0.068 & 12750 \\ [5pt]
 \end{tabular} 
 \caption{Results for the star domain.}
+\label{table_star}
 \end{table}
 
 \begin{table}[p]
@@ -621,6 +643,7 @@ $\cos(24x-32y)\sin(21x-28y)$ & 4.44E-11 & 17.426 & 1.685 & 249120 \\ [5pt]
 $\arctan(3(x^2+y))$ & 7.49E-11 & 2.207 & 0.070 & 12138 \\ [5pt]
 \end{tabular}
 \caption{Results for the disk domain.}
+\label{table_disk}
 \end{table}
 
 \section{Concluding remarks}
