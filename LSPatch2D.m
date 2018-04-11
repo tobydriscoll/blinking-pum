@@ -114,7 +114,7 @@ classdef LSPatch2D < LSPatch
                     
                     ind1 = obj.domain_in.Interior(XP1);
                     
-                    if sum(ind1)/prod(obj.degs)>=5
+                    if sum(ind1)/prod(obj.degs)>=4
                         break;
                     end
                 end
