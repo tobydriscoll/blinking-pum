@@ -586,9 +586,9 @@ When sampling with the discrete Chebyshev extension method, we set $P$ to be a C
 
 \subsection{numerical experiments}
 
-For the 2D Chebyshev extension method we test $exp(x+y), \frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}, \cos(24x-32y)\sin(21x-28y)$ and $\arctan(3(x^2+y))$. We time the evaluation on a 200x200 grid and observe the max error as in the previous section. We test the set of functions on the a disk, a diamond, and a double astroid as seen in Figure~\ref{domains}. In each case, we choose initial box to fit the domain as tight as possible. The results for the disk, diamond and double astroid domain can be seen in Tables~\ref{table_diamond},\ref{table_star},\ref{table_disk} respectively. For each test, we set the max degree of the polynomial to be 17, and set the target tolerance to $10^{-10}$. 
+For the 2D Chebyshev extension method we test $\exp(x+y), \frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}, \cos(24x-32y)\sin(21x-28y)$ and $\arctan(3(x^2+y))$. We time the evaluation on a 200x200 grid and observe the max error as in the previous section. We restrict the set of functions to a disk, a diamond, and a double astroid as seen in Figure~\ref{domains}. In each case, we choose initial box to fit the domain as tight as possible. The results for the disk, diamond and double astroid domain can be seen in Tables~\ref{table_diamond},\ref{table_star},\ref{table_disk} respectively. For each test, we set the max degree of the polynomial to be 17, and set the target tolerance to $10^{-10}$. 
 
-We see that in the case where the function is smooth or contains local features, the method is both efficient and highly accurate. In any case, we can still take advantage of grid based computations in the case of interpolations.
+We see that in the case where the function is smooth or contains local features, the method is both efficient and highly accurate. In any case, we can still take advantage of grid based computations in the case of interpolations. Our goal with adaptation is not only adapt the the features of a given function, but to the geometry; we try to cover the domains with rectangles that fit the domain as close as possible. An example of such a covering can be seen in Figure~\ref{star_plot}. Comparing our results to what's seen in \cite{matthysen2017function}, we see that adaptivity allows us to outperform in accuracy (in particular in the double astroid domain). Furthermore, we see that with smooth functions like $\exp(x+y)$ that our method can easily achieve high accuracy with a single multi-variant polynomial.
 
 
 \begin{figure}
@@ -633,19 +633,19 @@ $\frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}$ & 8.44E-11 & 0.441 & 0.014 & 2023 \\ [5pt]
 $\cos(24x-32y)\sin(21x-28y)$ & 1.79E-11 & 12.725 & 0.809 & 165310 \\ [5pt]
 $\arctan(3(x^2+y))$ & 9.65E-12 & 1.954 & 0.069 & 9826 \\ [5pt]
 \end{tabular}
-\caption{Results for the diamond domain.}
+\caption{Observed error and wall-clock time for the tree method on a diamond to construct a tree approximation with target tolerance $10^{-10}$ and $\nmax=17$, and to evaluate it on a 200$^2$ uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree.}
 \label{table_diamond}
 \end{table}
 
 \begin{table}[p]
-\begin{tabular}{ccccc}
+\begin{tabular}{c|c|c|c|c}
 & error & construct time & interp time & points \\ [5pt] \hline
 $\exp(x+y)$ & 5.18E-10 & 0.065 & 0.002 & 289 \\ [5pt]
 $\frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}$ & 6.24E-11 & 2.189 & 0.030 & 5491 \\ [5pt]
 $\cos(24x-32y)\sin(21x-28y)$ & 4.33E-12 & 34.136 & 0.891 & 152590 \\ [5pt]
 $\arctan(3(x^2+y))$ & 1.01E-10 & 4.758 & 0.068 & 12750 \\ [5pt]
 \end{tabular} 
-\caption{Results for the star domain.}
+\caption{Observed error and wall-clock time for the tree method on a double astroid to construct a tree approximation with target tolerance $10^{-10}$ and $\nmax=17$, and to evaluate it on a 200$^2$ uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree.}
 \label{table_star}
 \end{table}
 
@@ -657,7 +657,7 @@ $\frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}$ & 2.40E-10 & 1.109 & 0.070 & 3757 \\ [5pt]
 $\cos(24x-32y)\sin(21x-28y)$ & 4.44E-11 & 17.426 & 1.685 & 249120 \\ [5pt]
 $\arctan(3(x^2+y))$ & 7.49E-11 & 2.207 & 0.070 & 12138 \\ [5pt]
 \end{tabular}
-\caption{Results for the disk domain.}
+\caption{Observed error and wall-clock time for the tree method on a disk to construct a tree approximation with target tolerance $10^{-10}$ and $\nmax=17$, and to evaluate it on a 200$^2$ uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree.}
 \label{table_disk}
 \end{table}
 
