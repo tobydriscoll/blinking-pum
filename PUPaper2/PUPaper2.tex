@@ -586,7 +586,7 @@ When sampling with the discrete Chebyshev extension method, we set $P$ to be a C
 
 \subsection{numerical experiments}
 
-For the 2D Chebyshev extension method we test $exp(x+y), \frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}, \cos(24x-32y)\sin(21x-28y)$ and $\arctan(3(x^2+y))$. We time the evaluation on a 200x200 grid and observe the max error as in the previous section. We test the set of functions on the a disk, a diamond, and a double astroid as seen in Figure~\ref{domains}. In each case, we choose initial box to fit the domain as tight as possible. The results for the disk, diamond and double astroid domain can be seen in Tables~\ref{table_diamond},\ref{table_star},\ref{table_disk} respectively. For each test, we set the max degree of the polynomial to be 17, and set the target tolerance to 10^{-10}. 
+For the 2D Chebyshev extension method we test $exp(x+y), \frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}, \cos(24x-32y)\sin(21x-28y)$ and $\arctan(3(x^2+y))$. We time the evaluation on a 200x200 grid and observe the max error as in the previous section. We test the set of functions on the a disk, a diamond, and a double astroid as seen in Figure~\ref{domains}. In each case, we choose initial box to fit the domain as tight as possible. The results for the disk, diamond and double astroid domain can be seen in Tables~\ref{table_diamond},\ref{table_star},\ref{table_disk} respectively. For each test, we set the max degree of the polynomial to be 17, and set the target tolerance to $10^{-10}$. 
 
 We see that in the case where the function is smooth or contains local features, the method is both efficient and highly accurate. In any case, we can still take advantage of grid based computations in the case of interpolations.
 
@@ -614,14 +614,14 @@ We see that in the case where the function is smooth or contains local features,
 \centering
 \subfloat[Plot of $\arctan(3(y^2+x))$.]{
 \includegraphics[scale = 0.34]{starPlot.eps}
-   \label{rungefunplot}
+   \label{star_plota}
  }
 \subfloat[Plot of subdomains.]{
 \includegraphics[scale = 0.34]{starPlotDoms.eps}
-   \label{rungefundomains}
+   \label{star_plotb}
  }
 \caption{Plot of $\arctan(3(y^2+x))$ and the subdomains formed from the partition of unity method.}
-\label{rungeFUN1}
+\label{star_plot}
 \end{figure}
 
 
