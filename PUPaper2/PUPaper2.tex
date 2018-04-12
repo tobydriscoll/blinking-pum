@@ -531,17 +531,17 @@ for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{fig:tan3D}. A
 
 Suppose that we want to build a tensor product Chebyshev approximation of $f:\Omega \to \C$, where $\Omega \subset [-1,1]^d$ is not a hypercube. That is, we want to find coefficients $\mathbf{c} = C_{i_1,\ldots,i_d}$ for (\ref{eq:full-interp}) such that
 \begin{equation}
-\mathbf{c} = \argmin_{\mathbf{c}} = \left \| f(\vect{x}) - \tilde{p}(\vect{x}) \right \|_{X},	
+\mathbf{c} = \argmin_{\mathbf{c}} \left \| f(\vect{x}) - \tilde{p}(\vect{x}) \right \|_{X},	
 \end{equation}
 for some norm $X$. One choice of the norm is the $L_2$ norm over $\Omega$, which leads to an approximation analogous to the \textit{continuous Fourier extension} method \cite{huybrechs2010fourier}. This would be solved by creating a gram matrix of the Chebyshev basis functions using the $L_2$ norm over $\Omega$, and solving a least squares problem. Since $\Omega$ is not square, this would require a special quadrature over the domain.
 
-Here we instead build an approximation that is similar to that of the \textit{discrete Fourier extension} method, which we call the \textit{discrete Chebyshev extension} approximation \cite{adcock2014resolution}. We define a set of points $P = \{\vect{x}_i\}_{i=1}^{N_f} \subset \Omega$, and find a set of coefficients $\mathbf{c}$ that minimizes
+Here we instead build an approximation that is similar to that of the \textit{discrete Fourier extension} method, which we call the \textit{discrete Chebyshev extension} approximation \cite{adcock2014resolution}. We define a set of points $P = \{\vect{x}_i\}_{i=1}^{N_f} \subset \Omega$, and find a set of coefficients $\mathbf{c}$ where
 \begin{equation}
 \mathbf{c} = \argmin_{\mathbf{c}} \sum_{i=1}^{N_f} \lp f(\vect{x}_i) -  \tilde{p}(\vect{x}_i) \rp^2.
 \end{equation}
 The coefficients are determined by creating a collocation matrix $A$ that maps a set of coefficients $\mathbf{c}$ to $\tilde{p}(\vect{x}) \rvert_{P}$, and solving the least squares problem
 \begin{equation}
-\argmin_{\mathbf{c}}\| A \mathbf{c} - b \|^2, \quad b_k = f(\vect{x}_k). 	
+\argmin_{\mathbf{c}}\| A \mathbf{c} - b \|^2, \quad b = f(\vect{x})\rvert_{P}. 	
 \end{equation}
 
 The condition number of $A$ in the discrete Fourier extension case has been shown to increase exponentially with the degree of the approximation \cite{adcock2014numerical}. This would make an adaptive method where the max degree is increased impractical. We instead create a tree based partition of unity approximation as in section~\ref{sec:operations}, where each approximation is found with the discrete Chebyshev extension method. The tree is created similarly to Algorithm~\ref{alg:splitleaves}, except:
@@ -588,7 +588,7 @@ When sampling with the discrete Chebyshev extension method, we set $P$ to be a C
 
 For the 2D Chebyshev extension method we test $\exp(x+y), \frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}, \cos(24x-32y)\sin(21x-28y)$ and $\arctan(3(x^2+y))$. We time the evaluation on a 200x200 grid and observe the max error as in the previous section. We restrict the set of functions to a disk, a diamond, and a double astroid as seen in Figure~\ref{domains}. In each case, we choose initial box to fit the domain as tight as possible. The results for the disk, diamond and double astroid domain can be seen in Tables~\ref{table_diamond},\ref{table_star},\ref{table_disk} respectively. For each test, we set the max degree of the polynomial to be 17, and set the target tolerance to $10^{-10}$. 
 
-We see that in the case where the function is smooth or contains local features, the method is both efficient and highly accurate. In any case, we can still take advantage of grid based computations in the case of interpolations. Our goal with adaptation is not only adapt the the features of a given function, but to the geometry; we try to cover the domains with rectangles that fit the domain as close as possible. An example of such a covering can be seen in Figure~\ref{star_plot}. Comparing our results to what's seen in \cite{matthysen2017function}, we see that adaptivity allows us to outperform in accuracy (in particular in the double astroid domain). Furthermore, we see that with smooth functions like $\exp(x+y)$ that our method can easily achieve high accuracy with a single multi-variant polynomial.
+We see that in the case where the function is smooth or contains local features, the method is both efficient and highly accurate. In any case, we can still take advantage of grid based computations in the case of interpolations. Our goal with adaptation is not only adapt to the the features of a given function, but to the geometry; we try to cover the domains with rectangles that fit the domain as close as possible. An example of such a covering can be seen in Figure~\ref{star_plot}. Comparing our results to what's seen in \cite{matthysen2017function}, we see that adaptivity allows us to outperform in accuracy (in particular in the double astroid domain). Furthermore, we see that with smooth functions like $\exp(x+y)$ that our method can easily achieve high accuracy with a single multi-variant polynomial.
 
 
 \begin{figure}
