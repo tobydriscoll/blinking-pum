@@ -90,74 +90,9 @@ classdef LSPatch3D < LSPatch
             p_struct.max_lengths = obj.max_lengths;
             p_struct.tol = obj.tol;
             p_struct.cdeg_in = obj.cdeg_in;
-        end
+        end    
         
-        
-        
-        function Child = splitleafGeom(obj)
-            Child = obj;
-            obj.is_geometric_refined = true;
-            
-            x = chebpts(32,obj.zone(1,:))';
-            y = chebpts(32,obj.zone(2,:))';
-            z = chebpts(32,obj.zone(3,:))';
-            
-            [X,Y,Z] = ndgrid(x,y,z);
-            
-            XP = [X(:) Y(:) Z(:)];
-            
-            ind = obj.domain_in.Interior(XP);
-            
-            XP = XP(ind,:);
-            
-            new_zone = zeros(3,2);
-            
-            new_zone(:,1) = min(XP);
-            
-            new_zone(:,2) = max(XP);
-            
-            
-            %pudge out zone a bit
-            deltax = 0.1*obj.overlap*diff(obj.zone(1,:));
-            %The width of the overlap
-            deltay = 0.1*obj.overlap*diff(obj.zone(2,:));
-            
-            deltaz = 0.1*obj.overlap*diff(obj.zone(3,:));
-            
-            
-            new_zone(1,1) = max(new_zone(1,1)-deltax,obj.zone(1,1));
-            new_zone(1,2) = min(new_zone(1,2)+deltax,obj.zone(1,2));
-            
-            new_zone(2,1) = max(new_zone(2,1)-deltay,obj.zone(2,1));
-            new_zone(2,2) = min(new_zone(2,2)+deltay,obj.zone(2,2));
-            
-            new_zone(3,1) = max(new_zone(3,1)-deltaz,obj.zone(3,1));
-            new_zone(3,2) = min(new_zone(3,2)+deltaz,obj.zone(3,2));
-            
-            %The width of the overlap
-            deltax = 0.25*obj.overlap*diff(obj.zone(1,:));
-            %The width of the overlap
-            deltay = 0.25*obj.overlap*diff(obj.zone(2,:));
-            %The width of the overlap
-            deltaz = 0.25*obj.overlap*diff(obj.zone(3,:));
-            
-            obj.zone = new_zone;
-            
-            new_zone(1,1) = max(new_zone(1,1)-deltax,obj.outerbox(1,1));
-            new_zone(1,2) = min(new_zone(1,2)+deltax,obj.outerbox(1,2));
-            
-            new_zone(2,1) = max(new_zone(2,1)-deltay,obj.outerbox(2,1));
-            new_zone(2,2) = min(new_zone(2,2)+deltay,obj.outerbox(2,2));
-            
-            new_zone(3,1) = max(new_zone(3,1)-deltaz,obj.outerbox(3,1));
-            new_zone(3,2) = min(new_zone(3,2)+deltaz,obj.outerbox(3,2));
-            
-            obj.domain = new_zone;
-            
-        end
-        
-        
-        function max_val = sample(obj,f,grid_opt)
+        function max_val = sample(obj,f,grid_opt,~)
             
             if(nargin==2)
                 grid_opt = false;
@@ -165,46 +100,44 @@ classdef LSPatch3D < LSPatch
             
             max_val = 0;
             
-            if obj.is_geometric_refined
-                
-                x = chebpts(obj.degs(1)*2,obj.domain(1,:));
-                y = chebpts(obj.degs(2)*2,obj.domain(2,:));
-                z = chebpts(obj.degs(2)*2,obj.domain(3,:));
-                
-                [X,Y,Z] = ndgrid(x,y,z);
-                
-                XP = [X(:) Y(:) Z(:)];
-                
-                ind = obj.domain_in.Interior(XP);
-                
-                Mx = clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
-                My = clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
-                Mz = clenshaw(chebpts(obj.degs(3)*2),eye(obj.degs(3)));
-                
-                M = kron(Mz,kron(My,Mx));
-                M = M(ind,:);
-                
-                if~ grid_opt
-                    F = f(X(ind),Y(ind),Z(ind));
-                else
-                    F = f({x,y,z});
-                    F = F(ind);
-                end
-                
-                max_val = max(abs(F));
-                
-                warning('off','all');
-                obj.coeffs = reshape(M\F,obj.degs);
-                warning('on','all');
-                
-                E = obj.evalfGrid({x,y,z});
-                E = E(ind);
-                E = E(:) - F;
-                
-                %This is used to determin the point wise error
-                obj.mid_values_err = max(abs(E(:)));
-                
+            
+            x = chebpts(obj.degs(1)*2,obj.domain(1,:));
+            y = chebpts(obj.degs(2)*2,obj.domain(2,:));
+            z = chebpts(obj.degs(2)*2,obj.domain(3,:));
+            
+            [X,Y,Z] = ndgrid(x,y,z);
+            
+            XP = [X(:) Y(:) Z(:)];
+            
+            ind = obj.domain_in.Interior(XP);
+            
+            Mx = clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
+            My = clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
+            Mz = clenshaw(chebpts(obj.degs(3)*2),eye(obj.degs(3)));
+            
+            M = kron(Mz,kron(My,Mx));
+            M = M(ind,:);
+            
+            if~ grid_opt
+                F = f(X(ind),Y(ind),Z(ind));
+            else
+                F = f({x,y,z});
+                F = F(ind);
             end
+            
+            max_val = max(abs(F));
+            
+            warning('off','all');
+            obj.coeffs = reshape(M\F,obj.degs);
+            warning('on','all');
+            
+            E = obj.evalfGrid({x,y,z});
+            E = E(ind);
+            E = E(:) - F;
+            
+            %This is used to determin the point wise error
+            obj.mid_values_err = max(abs(E(:)));
+            
         end
         
         function Child = splitleaf(obj,Max,set_vals)
@@ -265,6 +198,21 @@ classdef LSPatch3D < LSPatch
             domain0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
             domain1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
             
+            
+            [new_zone_fit0,new_domain_fit0] = LSPatch3D.splitleafGeom(zone0,domain0,obj.outerbox,obj.domain_in);
+            [new_zone_fit1,new_domain_fit1] = LSPatch3D.splitleafGeom(zone1,domain1,obj.outerbox,obj.domain_in);
+            
+            %zone0(split_dim,:) = new_zone_fit0(split_dim,:);
+            %domain0(split_dim,:) = new_domain_fit0(split_dim,:);
+            %
+            %zone1(split_dim,:) = new_zone_fit1(split_dim,:);
+            %domain1(split_dim,:) = new_domain_fit1(split_dim,:);
+            
+            zone0 = new_zone_fit0;
+            domain0 = new_domain_fit0;
+            
+            zone1 = new_zone_fit1;
+            domain1 = new_domain_fit1;
             %We first figure out if the the subdomains sit entirely in the domain itself.
             %In this case, we would just use a standard chebyshev
             %tensor product approximation.
@@ -345,4 +293,71 @@ classdef LSPatch3D < LSPatch
             end
         end
     end
+    
+        methods (Static)
+        function [new_zone,new_domain] = splitleafGeom(zone,domain,outerbox,domain_in)
+            
+            obj.is_geometric_refined = true;
+            
+            x = linspace(domain(1,1),domain(1,2),50)';
+            y = linspace(domain(2,1),domain(2,2),50)';
+            z = linspace(domain(3,1),domain(3,2),50)';
+            
+            [X,Y,Z] = ndgrid(x,y,z);
+            
+            XP = [X(:) Y(:) Z(:)];
+            
+            ind = domain_in.Interior(XP);
+            
+            XP = XP(ind,:);
+            
+            new_domain = zeros(3,2);
+            
+            new_domain(:,1) = min(XP);
+            
+            new_domain(:,2) = max(XP);
+            
+            %pudge out zone a bit
+            deltax = 0.5*Patch.overlap*diff(zone(1,:));
+
+            deltay = 0.5*Patch.overlap*diff(zone(2,:));
+            
+            deltaz = 0.5*Patch.overlap*diff(zone(3,:));
+            
+            new_domain(1,1) = max(new_domain(1,1)-deltax,domain(1,1));
+            new_domain(1,2) = min(new_domain(1,2)+deltax,domain(1,2));
+            
+            new_domain(2,1) = max(new_domain(2,1)-deltay,domain(2,1));
+            new_domain(2,2) = min(new_domain(2,2)+deltay,domain(2,2));
+            
+            new_domain(3,1) = max(new_domain(3,1)-deltaz,domain(3,1));
+            new_domain(3,2) = min(new_domain(3,2)+deltaz,domain(3,2));
+           
+            new_zone = zone;
+            
+            if abs(new_domain(1,1)-domain(1,1))>1e-10
+                new_zone(1,1) = new_domain(1,1);
+            end
+            
+            if abs(new_domain(1,2)-domain(1,2))>1e-10
+                new_zone(1,2) = new_domain(1,2);
+            end
+            
+            if abs(new_domain(2,1)-domain(2,1))>1e-10
+                new_zone(2,1) = new_domain(2,1);
+            end
+            
+            if abs(new_domain(2,2)-domain(2,2))>1e-10
+                new_zone(2,2) = new_domain(2,2);
+            end
+            
+            if abs(new_domain(3,1)-domain(3,1))>1e-10
+                new_zone(3,1) = new_domain(3,1);
+            end
+            
+            if abs(new_domain(3,2)-domain(3,2))>1e-10
+                new_zone(3,2) = new_domain(3,2);
+            end
+        end
+        end
 end
