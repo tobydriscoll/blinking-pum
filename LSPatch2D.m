@@ -99,25 +99,33 @@ classdef LSPatch2D < LSPatch
                     x = chebpts(obj.degs(1)*mult,obj.domain(1,:));
                     y = chebpts(obj.degs(2)*mult,obj.domain(2,:));
                     
-                    x1 = chebpts(obj.degs(1)*mult,obj.domain(1,:),1);
-                    y1 = chebpts(obj.degs(2)*mult,obj.domain(2,:),1);
+
                     
                     [X,Y] = ndgrid(x,y);
                     
-                    [X1,Y1] = ndgrid(x1,y1);
+            
                     
                     XP = [X(:) Y(:)];
                     
-                    XP1 = [X1(:) Y1(:)];
+
                     
                     ind = obj.domain_in.Interior(XP);
+
                     
-                    ind1 = obj.domain_in.Interior(XP1);
-                    
-                    if sum(ind1)/prod(obj.degs)>=4
+                    if sum(ind)/prod(obj.degs)>=4
                         break;
                     end
                 end
+                
+                x1 = chebpts(2*obj.degs(1),obj.domain(1,:),1);
+                y1 = chebpts(2*obj.degs(2),obj.domain(2,:),1);
+                
+                [X1,Y1] = ndgrid(x1,y1);
+                
+                XP1 = [X1(:) Y1(:)];
+                
+                
+                ind1 = obj.domain_in.Interior(XP1);
                 
                 obj.mult = mult;
                 

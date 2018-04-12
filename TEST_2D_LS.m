@@ -5,7 +5,7 @@ DOMAIN = DoubleAstroid();
 delta = 0;
 OUTERBOX = [-0.95 0.95;-0.95 0.95];
 f = @(x,y)1./(((x-1.1).^2)+(y-1.1).^2).^2;
-%f =  @(x,y) atan(2*(x.^2+y));
+%f =  @(x,y) atan(3*(x.^2+y));
 %f2 = @(x,y)1./(((x+1.05).^2)+(y+1.05).^2).^2;
 %f = @(x,y) exp(x+y);
 %f = @(x,y) cos(24*x - 32*y).*sin(21*x - 28*y);
@@ -62,7 +62,7 @@ TRI = delaunayTriangulation([B;P],[(1:length(B)-1)' (2:length(B))'; length(B) 1]
 
 TF = isInterior(TRI);
 
-max(abs(E(ind)))
+max(abs(E(ind)))/max(abs(F(ind)))
 
 trisurf(TRI.ConnectivityList(TF,:),TRI.Points(:,1),TRI.Points(:,2),[VB;V(ind)]);
 
