@@ -623,11 +623,11 @@ We see that in the case where the function is smooth or contains local features,
 
 \begin{table}[p]
 \begin{tabular}{c|c|c|c|c}
-& error & construct time & interp time & points \\ [5pt] \hline
-$\exp(x+y)$ & 2.11E-11 & 0.033 & 0.001 & 289 \\ [5pt]
-$\frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}$ & 8.44E-11 & 0.441 & 0.014 & 2023 \\ [5pt]
-$\cos(24x-32y)\sin(21x-28y)$ & 1.79E-11 & 12.725 & 0.809 & 165310 \\ [5pt]
-$\arctan(3(x^2+y))$ & 9.65E-12 & 1.954 & 0.069 & 9826 \\ [5pt]
+& error & construct time & interp time & points \\[5pt] \hline
+$\exp(x+y)$ & 2.11E-11 & 0.029 & 0.001 & 289 \\ [5pt]
+$\frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}$ & 1.34E-09 & 0.528 & 0.016 & 2890 \\ [5pt]
+$\cos(24x-32y)\sin(21x-28y)$ & 1.79E-11 & 10.123 & 0.675 & 165310 \\ [5pt]
+$\arctan(3(x^2+y))$ & 9.65E-12 & 1.562 & 0.048 & 9826 \\
 \end{tabular}
 \caption{Observed error and wall-clock time for the tree method on a diamond to construct a tree approximation with target tolerance $10^{-10}$ and $\nmax=17$, and to evaluate it on a 200$^2$ uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree.}
 \label{table_diamond}
@@ -635,24 +635,24 @@ $\arctan(3(x^2+y))$ & 9.65E-12 & 1.954 & 0.069 & 9826 \\ [5pt]
 
 \begin{table}[p]
 \begin{tabular}{c|c|c|c|c}
-& error & construct time & interp time & points \\ [5pt] \hline
-$\exp(x+y)$ & 5.18E-10 & 0.065 & 0.002 & 289 \\ [5pt]
-$\frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}$ & 6.24E-11 & 2.189 & 0.030 & 5491 \\ [5pt]
-$\cos(24x-32y)\sin(21x-28y)$ & 4.33E-12 & 34.136 & 0.891 & 152590 \\ [5pt]
-$\arctan(3(x^2+y))$ & 1.01E-10 & 4.758 & 0.068 & 12750 \\ [5pt]
-\end{tabular} 
+& error & construct time & interp time & points \\[5pt] \hline
+$\exp(x+y)$ & 5.18E-10 & 0.045 & 0.001 & 289 \\ [5pt]
+$\frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}$ & 1.28E-09 & 1.453 & 0.022 & 4624 \\ [5pt]
+$\cos(24x-32y)\sin(21x-28y)$ & 7.90E-10 & 19.583 & 0.581 & 140450 \\ [5pt]
+$\arctan(3(x^2+y))$ & 1.01E-10 & 2.981 & 0.048 & 9826 \\
+\end{tabular}
 \caption{Observed error and wall-clock time for the tree method on a double astroid to construct a tree approximation with target tolerance $10^{-10}$ and $\nmax=17$, and to evaluate it on a 200$^2$ uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree.}
 \label{table_star}
 \end{table}
 
 \begin{table}[p]
 \begin{tabular}{c|c|c|c|c}
-& error & construct time & interp time & points \\ [5pt] \hline
-$\exp(x+y)$ & 5.44E-15 & 0.050 & 0.002 & 289 \\ [5pt]
-$\frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}$ & 2.40E-10 & 1.109 & 0.070 & 3757 \\ [5pt]
-$\cos(24x-32y)\sin(21x-28y)$ & 4.44E-11 & 17.426 & 1.685 & 249120 \\ [5pt]
-$\arctan(3(x^2+y))$ & 7.49E-11 & 2.207 & 0.070 & 12138 \\ [5pt]
-\end{tabular}
+& error & construct time & interp time & points \\[5pt] \hline
+$\exp(x+y)$ & 5.44E-15 & 0.103 & 0.002 & 289 \\ [5pt]
+$\frac{1}{((x-1.1)^2)+(y-1.1)^2)^2}$ & 2.40E-10 & 0.798 & 0.031 & 3757 \\ [5pt]
+$\cos(24x-32y)\sin(21x-28y)$ & 4.44E-11 & 10.327 & 1.075 & 245650 \\ [5pt]
+$\arctan(3(x^2+y))$ & 7.49E-11 & 1.470 & 0.077 & 12138 \\
+\end{tabular}
 \caption{Observed error and wall-clock time for the tree method on a disk to construct a tree approximation with target tolerance $10^{-10}$ and $\nmax=17$, and to evaluate it on a 200$^2$ uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree.}
 \label{table_disk}
 \end{table}
