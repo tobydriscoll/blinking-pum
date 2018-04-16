@@ -43,11 +43,11 @@ ind = in_domain.Interior(XP);
 XP_f = XP_f(ind_f,:);
 XP = XP(ind,:);
 
-Mx_f = clenshaw(chebpts(fine_degs(1)),eye(degs(1)));
-My_f = clenshaw(chebpts(fine_degs(2)),eye(degs(2)));
+Mx_f = chebtech.clenshaw(chebpts(fine_degs(1)),eye(degs(1)));
+My_f = chebtech.clenshaw(chebpts(fine_degs(2)),eye(degs(2)));
 
-Mx = clenshaw(chebpts(degs(1)),eye(degs(1)));
-My = clenshaw(chebpts(degs(2)),eye(degs(2)));
+Mx = chebtech.clenshaw(chebpts(degs(1)),eye(degs(1)));
+My = chebtech.clenshaw(chebpts(degs(2)),eye(degs(2)));
 
 M_f = kron(My_f,Mx_f);
 M_f = M_f(ind_f,:);

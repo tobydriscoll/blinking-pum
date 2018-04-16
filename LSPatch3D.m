@@ -111,9 +111,9 @@ classdef LSPatch3D < LSPatch
             
             ind = obj.domain_in.Interior(XP);
             
-            Mx = clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
-            My = clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
-            Mz = clenshaw(chebpts(obj.degs(3)*2),eye(obj.degs(3)));
+            Mx = chebtech.clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
+            My = chebtech.clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
+            Mz = chebtech.clenshaw(chebpts(obj.degs(3)*2),eye(obj.degs(3)));
             
             M = kron(Mz,kron(My,Mx));
             M = M(ind,:);

@@ -140,8 +140,8 @@ classdef LSPatch2D < LSPatch
                 
                 if ~fast_opt
                     
-                    Mx = clenshaw(chebpts(obj.degs(1)*mult),eye(obj.degs(1)));
-                    My = clenshaw(chebpts(obj.degs(2)*mult),eye(obj.degs(2)));
+                    Mx = chebtech.clenshaw(chebpts(obj.degs(1)*mult),eye(obj.degs(1)));
+                    My = chebtech.clenshaw(chebpts(obj.degs(2)*mult),eye(obj.degs(2)));
                     
                     M = kron(My,Mx);
                     M = M(ind,:);

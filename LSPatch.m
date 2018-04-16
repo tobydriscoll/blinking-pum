@@ -171,7 +171,7 @@ classdef LSPatch < LeafPatch
                 X{k} = obj.invf(X{k},obj.domain(k,:));
                 
                 %Evaluate the points at the Chebyshev polynomials
-                F = clenshaw(X{k},eye(obj.degs(k)));
+                F = chebtech.clenshaw(X{k},eye(obj.degs(k)));
                 
                 %Multiply the coefficients with F
                 G = chebfun3t.txm(G, F, k);
