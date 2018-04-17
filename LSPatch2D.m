@@ -187,8 +187,8 @@ classdef LSPatch2D < LSPatch
                 E1 = E1(ind1);
                 
                 %This is used to determin the point wise error
-                obj.mid_values_err = max(abs(E(:)))./max(abs(F));
-                obj.mid_values_err1 = max(abs(E1(:)))./max(abs(F1(ind1)));
+                obj.mid_values_err = max(abs(E(:)))./max(abs(F)*sqrt(sum(ind)));
+                obj.mid_values_err1 = max(abs(E1(:)))./max(abs(F1(ind1))*sqrt(sum(ind1)));
                 
         end
         

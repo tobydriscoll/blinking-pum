@@ -148,7 +148,7 @@ classdef LSPatch3D < LSPatch
             E = E(:) - F;
             
             %This is used to determin the point wise error
-            obj.mid_values_err = max(abs(E(:)));
+            obj.mid_values_err = max(abs(E(:)))./max(abs(F));
             
         end
         
