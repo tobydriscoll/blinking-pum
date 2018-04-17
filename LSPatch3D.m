@@ -111,12 +111,20 @@ classdef LSPatch3D < LSPatch
             
             ind = obj.domain_in.Interior(XP);
             
+            x_in = (1:obj.degs(1))';
+            y_in = (1:obj.degs(2))';
+            z_in = (1:obj.degs(3))';
+            
+            [X_in, Y_in, Z_in] = ndgrid(x_in,y_in,z_in);
+            
+            ind_c = sqrt(X_in.^2+Y_in.^2+Z_in.^2)<=max(obj.degs);
+            
             Mx = chebtech.clenshaw(chebpts(obj.degs(1)*2),eye(obj.degs(1)));
             My = chebtech.clenshaw(chebpts(obj.degs(2)*2),eye(obj.degs(2)));
             Mz = chebtech.clenshaw(chebpts(obj.degs(3)*2),eye(obj.degs(3)));
             
             M = kron(Mz,kron(My,Mx));
-            M = M(ind,:);
+            M = M(ind,ind_c);
             
             if~ grid_opt
                 F = f(X(ind),Y(ind),Z(ind));
@@ -127,9 +135,13 @@ classdef LSPatch3D < LSPatch
             
             max_val = max(abs(F));
             
+            obj.coeffs = zeros(prod(obj.degs),1);
+            
             warning('off','all');
-            obj.coeffs = reshape(M\F,obj.degs);
+            obj.coeffs(ind_c) = M\F;
             warning('on','all');
+            
+            obj.coeffs = reshape(obj.coeffs,obj.degs);
             
             E = obj.evalfGrid({x,y,z});
             E = E(ind);

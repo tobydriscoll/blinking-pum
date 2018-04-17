@@ -91,6 +91,12 @@ classdef LSPatch2D < LSPatch
             
             max_val = 0;
             
+            x_in = (1:obj.degs(1));
+            y_in = (1:obj.degs(2));
+            
+            [X_in Y_in] = ndgrid(x_in,y_in);
+            
+            ind_c = sqrt(X_in(:).^2+Y_in(:).^2)<=max(obj.degs);
                 
                 for i=2:1:10
                     
@@ -144,11 +150,13 @@ classdef LSPatch2D < LSPatch
                     My = chebtech.clenshaw(chebpts(obj.degs(2)*mult),eye(obj.degs(2)));
                     
                     M = kron(My,Mx);
-                    M = M(ind,:);
-                    
+                    M = M(ind,ind_c);
+                    obj.coeffs = zeros(prod(obj.degs),1);
                     warning('off','all');
-                    obj.coeffs = reshape(M\F,obj.degs);
+                    obj.coeffs(ind_c) = M\F;
                     warning('on','all');
+                    
+                    obj.coeffs = reshape(obj.coeffs,obj.degs);
                     
                 else
                     if ~grid_opt
