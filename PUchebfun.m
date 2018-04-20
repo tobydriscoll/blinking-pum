@@ -270,7 +270,8 @@ classdef PUchebfun < PUfun
             y = linspace(domain(2,1),domain(2,2),100)';
             ef = obj.evalfGrid({x y});
             [X,Y] = ndgrid(x,y);
-            surf(X,Y,ef);
+            defaultOpts = {'facecolor', 'flat', 'edgealpha', .5, 'edgecolor', 'none'};
+            surf(X,Y,ef,defaultOpts{:});
             xlabel('x');
             ylabel('y');
         end

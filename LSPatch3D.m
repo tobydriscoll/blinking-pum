@@ -58,6 +58,7 @@ classdef LSPatch3D < LSPatch
     
     properties
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
+        MAT
     end
     
     properties (Access = protected)
@@ -124,7 +125,10 @@ classdef LSPatch3D < LSPatch
             Mz = chebtech.clenshaw(chebpts(obj.degs(3)*2),eye(obj.degs(3)));
             
             M = kron(Mz,kron(My,Mx));
-            M = M(ind,ind_c);
+            
+            obj.MAT = M(ind,:);
+            
+            M = M(ind,:);
             
             if~ grid_opt
                 F = f(X(ind),Y(ind),Z(ind));
@@ -137,8 +141,12 @@ classdef LSPatch3D < LSPatch
             
             obj.coeffs = zeros(prod(obj.degs),1);
             
+%             warning('off','all');
+%             obj.coeffs(ind_c) = M\F;
+%             warning('on','all');
+            
             warning('off','all');
-            obj.coeffs(ind_c) = M\F;
+            obj.coeffs = M\F;
             warning('on','all');
             
             obj.coeffs = reshape(obj.coeffs,obj.degs);

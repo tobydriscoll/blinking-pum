@@ -64,7 +64,9 @@ TF = isInterior(TRI);
 
 max(abs(E(ind)))/max(abs(F(ind)))
 
-trisurf(TRI.ConnectivityList(TF,:),TRI.Points(:,1),TRI.Points(:,2),[VB;V(ind)]);
+defaultOpts = {'facecolor', 'flat', 'edgealpha', .5, 'edgecolor', 'none'};
+
+trisurf(TRI.ConnectivityList(TF,:),TRI.Points(:,1),TRI.Points(:,2),[VB;V(ind)],defaultOpts{:});
 
 % DiffTree = TREELS.diff(1,1);
 % 

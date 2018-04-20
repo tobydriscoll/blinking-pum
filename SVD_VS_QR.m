@@ -11,6 +11,7 @@ f = @(x,y) atan(x)+y;
 tau1 = 1e-7;
 %f = @(x,y) x;
 
+
 D_x = ChebDiff(degs(1));
 D_y = ChebDiff(degs(2));
 D_xx = ChebDiff(degs(1))^2;

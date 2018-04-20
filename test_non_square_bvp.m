@@ -1,14 +1,21 @@
 domain = [-1 1;-1 1];
-in_domain = Disk(2,[0 0]);
+in_domain = Disk(2,[1 1]);
 degs = [17 17];
 
-mult = 6;
+mult = 12;
 fine_degs = mult*degs;
 
 B_n = mult*17;
 
 tau1 = 1e-5;
 b_tau = 1;
+
+x_in = (1:degs(1))';
+y_in = (1:degs(2))';
+
+[X_in,Y_in] = ndgrid(x_in,y_in);
+
+ind_c = sqrt(X_in.^2+Y_in.^2)<=max(degs);
 
 Dx = ChebDiff(degs(1));
 Dy = ChebDiff(degs(2));
@@ -17,6 +24,7 @@ DX = kron(eye(degs(2)),Dx);
 DXY = kron(Dy,Dx);
 DXX = kron(eye(degs(2)),Dx^2);
 DYY = kron(Dy^2,eye(degs(1)));
+
 
 tol = 1e-14;
 
@@ -92,17 +100,17 @@ bfdx = fdx(XPf(:,1),XPf(:,2));
 
 lap = DXX+DYY+2*DXY;
 
-%tikhonov regularization
-A2 = [tau1*lap;A];
-b2 = [zeros(prod(degs),1);b];
 tic;
-V = A2\b2;
+V = A\b;
 toc
 
+V = zeros(prod(degs),1);
 %basic solution
-% tic;
-% V = A\b;
-% toc
+tic;
+V(ind_c) = A(:,ind_c)\b;
+toc
+
+
 
 norm(A*V-b,inf)
 norm(M*V-bf,inf)
@@ -113,4 +121,6 @@ V1 = chebfun2.coeffs2vals(reshape(V,degs));
 surf(X,Y,V1);
 hold on;
 scatter(XPf(:,1),XPf(:,2),'red');
+hold on;
+scatter(B(:,1),B(:,2),'blue');
 hold off;
