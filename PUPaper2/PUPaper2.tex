@@ -619,21 +619,21 @@ We see when the function is smooth or contains localized features, the method is
 
 
 \begin{table}
-  \begin{tabular}{c|c|c|c|c|c}
-    function & domain & error & construct time & interp time & points \\[5pt] \hline
-    \multirow{3}{*}{$g_1$} & disk & 5.44E-15 & 0.103 & 0.002 & 289 \\
-             & diamond &  2.11E-11 & 0.029 & 0.001 & 289 \\
-             & astroid &  5.18E-10 & 0.045 & 0.001 & 289 \\\hline
-    \multirow{3}{*}{$g_2$} & disk & 2.40E-10 & 0.798 & 0.031 & 3757 \\
-             & diamond &  1.34E-09 & 0.528 & 0.016 & 2890 \\
-             & astroid & 1.28E-09 & 1.453 & 0.022 & 4624 \\ \hline
-    \multirow{3}{*}{$g_3$} & disk & 4.44E-11 & 10.327 & 1.075 & 245650 \\
-             & diamond & 1.79E-11 & 10.123 & 0.675 & 165310 \\
-             & astroid & 7.90E-10 & 19.583 & 0.581 & 140450 \\ \hline 
-    \multirow{3}{*}{$g_4$} & disk & 7.49E-11 & 1.470 & 0.077 & 12138 \\
-             & diamond & 9.65E-12 & 1.562 & 0.048 & 9826 \\
-             & astroid & 1.01E-10 & 2.981 & 0.048 & 9826 
-  \end{tabular}
+\begin{tabular}{c|c|c|c|c|c}
+function & domain & error & construct time & interp time & points \\ [5pt] \hline
+\multirow{3}{*}{ $g_1$ } & disk & 5.44E-15 & 1.369 & 0.012 & 289 \\
+& diamond & 2.06E-11 & 0.040 & 0.002 & 289 \\
+& astroid & 2.01E-08 & 0.071 & 0.001 & 289 \\ \hline
+\multirow{3}{*}{ $g_2$ } & disk & 2.40E-10 & 2.558 & 0.117 & 3757 \\
+& diamond & 2.40E-11 & 0.406 & 0.012 & 2023 \\
+& astroid & 2.14E-10 & 1.511 & 0.023 & 4624 \\ \hline
+\multirow{3}{*}{ $g_3$ } & disk & 4.44E-11 & 11.305 & 1.500 & 245650 \\
+& diamond & 2.35E-11 & 10.894 & 0.854 & 178020 \\
+& astroid & 1.67E-10 & 28.072 & 0.836 & 153780 \\ \hline
+\multirow{3}{*}{ $g_4$ } & disk & 7.49E-11 & 1.866 & 0.059 & 12138 \\
+& diamond & 1.45E-11 & 1.536 & 0.053 & 9826 \\
+& astroid & 1.09E-11 & 3.221 & 0.049 & 9826 \\
+\end{tabular}
   \caption{Observed error and wall-clock times for the adaptive tree method to approximate the functions given in~(\ref{eq:testfun-gen}) on three different 2D domains. Also shown is the total number of sampled function values stored over all the leaves of each final tree.}
   \label{table_general}
 \end{table}
