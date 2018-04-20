@@ -159,8 +159,8 @@ Let $f$ be the scalar-valued function on $\Omega$ that we wish to approximate. A
 where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\bigo(\nmax^d \log \nmax)$ time~\cite{mason2002chebyshev}. Following the practice of Chebfun3t \cite{Hashemi2017}, for each $j=1,\ldots,d$, we define a scalar sequence $\gamma^{(j)}$ by summing $|C_{i_1,\ldots,i_d}|$ over all dimensions except the $j$th. To each of these sequences we apply Chebfun's {\tt StandardChop}  algorithm, which attempts to measure decay in the coefficients in a suitably robust sense~\cite{Aurentz:2017:CCS:3034774.2998442}. Let the output of {\tt StandardChop} for sequence $\gamma^{(j)}$ be $n_j$; this is the degree that {\tt StandardChop} deems to be sufficient for resolution at a user-set tolerance.  If $n_j<\nmax$ we say that the function is resolved in dimension $j$ on $\nu$. If $f$ is resolved in all dimensions on $\nu$, then we truncate the interpolant sums in~(\ref{eq:full-interp}) at the degrees $n_j$ and store the samples of $f$ on the corresponding smaller tensor-product grid. 
 
 \begin{algorithm}
-\caption{splitleaves($\nu$,$f$,$\nmax$,$t$)}
-\label{alg:splitleaves}
+\caption{refine($\nu$,$f$,$\nmax$,$t$)}
+\label{alg:refine}
 \begin{algorithmic}
   \IF{$\nu$ is a leaf}
     \STATE Sample $f$ on \textsf{grid}($\nu$)
@@ -175,16 +175,16 @@ where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\b
     \IF{all \textsf{isdone}($\nu$) are TRUE}
       \STATE Truncate~(\ref{eq:full-interp}) at degrees $n_1,\ldots,n_d$ to define \textsf{grid}($\nu$), \textsf{values}($\nu$), \textsf{interpolant}($\nu$)
     \ELSE
-      \STATE splitleaves($\nu$,$\nmax$,$t$)
+      \STATE refine($\nu$,$\nmax$,$t$)
     \ENDIF
   \ELSE
-    \STATE splitleaves(\child{0}($\nu$),$\nmax$,$t$)      
-    \STATE splitleaves(\child{1}($\nu$),$\nmax$,$t$)
+    \STATE refine(\child{0}($\nu$),$\nmax$,$t$)      
+    \STATE refine(\child{1}($\nu$),$\nmax$,$t$)
   \ENDIF
 \end{algorithmic}
 \end{algorithm}
 
-Algorithm~\ref{alg:splitleaves}  describes a recursive adaptation procedure for building the binary tree $\ct$, beginning with a root node whose zone and domain are both the original hyperrectangle $\Omega$. For a non-leaf input, the algorithm is simply called recursively on the children. For an input node that is currently a leaf of the tree, the function $f$ is sampled, and chopping is used in each unfinished dimension to determine whether sufficient resolution has been achieved. Each dimension that is deemed to be resolved is marked as finished. If all dimensions are found to be finished, then the interpolant is chopped to the minimum necessary length in each dimension, and the node will remain a leaf. Otherwise, the node is split in all unfinished dimensions using Algorithm~\ref{alg:split}, and Algorithm~\ref{alg:splitleaves} is applied recursively. Note that the descendants of the splitting(s) inherit the \textsf{isdone} property that marks which dimensions have been finished, so no future splits are possible in such dimensions within this branch. 
+Algorithm~\ref{alg:refine}  describes a recursive adaptation procedure for building the binary tree $\ct$, beginning with a root node whose zone and domain are both the original hyperrectangle $\Omega$. For a non-leaf input, the algorithm is simply called recursively on the children. For an input node that is currently a leaf of the tree, the function $f$ is sampled, and chopping is used in each unfinished dimension to determine whether sufficient resolution has been achieved. Each dimension that is deemed to be resolved is marked as finished. If all dimensions are found to be finished, then the interpolant is chopped to the minimum necessary length in each dimension, and the node will remain a leaf. Otherwise, the node is split in all unfinished dimensions using Algorithm~\ref{alg:split}, and Algorithm~\ref{alg:refine} is applied recursively. Note that the descendants of the splitting(s) inherit the \textsf{isdone} property that marks which dimensions have been finished, so no future splits are possible in such dimensions within this branch. 
 
 \begin{algorithm}
 \caption{split($\nu$,$j$,$t$)}
@@ -380,37 +380,29 @@ Table~\ref{putable} shows the results for the new method. For comparison, Table~
 
 \begin{table}[p]
 
-\begin{tabular}{r|c|c|c|c}
-& error & construct time & eval time & points \\[5pt] \hline
-$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$ & 1.05$\times 10^{-13}$ & 0.6403 & 0.063 & 110496 \\[5pt]
-$\arctan(\frac{x_1+x_2^2}{10^{-2}})$ & 2.15$\times 10^{-12}$ & 2.9690 & 0.3138 & 1553816 \\[5pt]
-$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$ & 1.01$\times 10^{-11}$ & 0.7298 & 0.1087 & 145280 \\[2pt]
-franke & 4.22$\times 10^{-15}$ & 0.0116 & 0.0045 & 16641 \\[2pt]
-$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 2.65$\times 10^{-14}$ & 0.0127 & 0.0025 & 1089 \\[5pt]
-$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 5.00$\times 10^{-12}$ & 0.0555 & 0.016 & 29283 \\[2pt]
-$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 2.27$\times 10^{-12}$ & 0.0119 & 8.97$\times 10^{-4}$ & 25 \\[5pt]
-$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 1.65$\times 10^{-14}$ & 0.0130 & 0.0026 & 2145 \\
+\begin{tabular}{r|c|c|c|c|c}
+Function & method & error & construct time & eval time & points \\[5pt] \hline
+  \multirow{2}{*}{$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$} &  tree-based & 1.05$\times 10^{-13}$ & 0.6403 & 0.063 & 110496 \\
+  & Chebfun2 & 1.14$\times 10^{-6}$ & 2.2997 & 0.1045 & 30 \\ \hline
+  \multirow{2}{*}{$\arctan(\frac{x_1+x_2^2}{10^{-2}})$} & tree-based & 2.15$\times 10^{-12}$ & 2.9690 & 0.3138 & 1553816 \\
+  & Chebfun2 & 7.09$\times 10^{-12}$ & 150.2228 & 4.979 & 816 \\ \hline
+  \multirow{2}{*}{$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$} & tree-based & 1.01$\times 10^{-11}$ & 0.7298 & 0.1087 & 145280 \\
+  & Chebfun2 & 5.44$\times 10^{-15}$ & 0.0493 & 0.0037 & 1 \\ \hline
+  \multirow{2}{*}{franke} & tree-based & 4.22$\times 10^{-15}$ & 0.0116 & 0.0045 & 16641 \\
+  & Chebfun2 & 1.33$\times 10^{-15}$ & 0.0198 & 0.0024 & 4 \\ \hline
+  \multirow{2}{*}{$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$} & tree-based & 2.65$\times 10^{-14}$ & 0.0127 & 0.0025 & 1089 \\
+  & Chebfun2 & 4.47$\times 10^{-14}$ & 0.0155 & 0.002 & 2 \\ \hline
+  \multirow{2}{*}{$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$} & tree-based & 5.00$\times 10^{-12}$ & 0.0555 & 0.016 & 29283 \\
+  & Chebfun2 & 1.59$\times 10^{-12}$ & 0.0203 & 0.0022 & 1 \\ \hline
+  \multirow{2}{*}{$(1+\sum_{i=1}^2 a_i x_i)^{-3}$} & tree-based & 2.27$\times 10^{-12}$ & 0.0119 & 8.97$\times 10^{-4}$ & 25 \\
+  & Chebfun2 & 2.27$\times 10^{-12}$ & 0.0117 & 0.0021 & 4 \\ \hline
+  \multirow{2}{*}{$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$} & tree-based & 1.65$\times 10^{-14}$ & 0.0130 & 0.0026 & 2145 \\
+  & Chebfun2 & 4.44$\times 10^{-16}$ & 0.0149 & 0.0022 & 1 
 \end{tabular}
-\caption{Observed error and wall-clock time for the tree method to construct a tree approximation with target tolerance $10^{-12}$ and $\nmax=129$, and to evaluate it on a 200x200 uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree. Here $u=[0.75,0.25]$, and $a=[5,10]$.}
+\caption{Observed error and wall-clock time for the tree method to construct tree-based and Chebfun2 approximations with target tolerance $10^{-12}$ and $\nmax=129$, and to evaluate it on a 200x200 uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree. Here $u=[0.75,0.25]$, and $a=[5,10]$.}
 \label{putable}
 \end{table}
 
-
-\begin{table}[p]
-\begin{tabular}{r|c|c|c|c}
-& error & time & eval time & rank \\[5pt] \hline
-$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$ & 1.14$\times 10^{-6}$ & 2.2997 & 0.1045 & 30 \\[5pt]
-$\arctan(\frac{x_1+x_2^2}{10^{-2}})$ & 7.09$\times 10^{-12}$ & 150.2228 & 4.979 & 816 \\[5pt]
-$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$ & 5.44$\times 10^{-15}$ & 0.0493 & 0.0037 & 1 \\[5pt]
-franke & 1.33$\times 10^{-15}$ & 0.0198 & 0.0024 & 4 \\[5pt]
-$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 4.47$\times 10^{-14}$ & 0.0155 & 0.002 & 2 \\[5pt]
-$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 1.59$\times 10^{-12}$ & 0.0203 & 0.0022 & 1 \\[5pt]
-$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 2.27$\times 10^{-12}$ & 0.0117 & 0.0021 & 4 \\[5pt]
-$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 4.44$\times 10^{-16}$ & 0.0149 & 0.0022 & 1 \\[5pt]
-\end{tabular}
-\caption{Observed error and wall-clock time for Chebfun2 using target tolerance $10^{-12}$ to construct an approximation and evaluate it on a 200x200 uniform grid. Also shown is the computed rank of the function, which greatly affects computation time. tested with a 200x200 grid with recorded error, construction time, time to interpolate, and numerical rank. Here $u=[0.75,0.25]$ and $a=[5,10]$.}	
-\label{chb2table}
-\end{table}
 
 \begin{figure}
   \centering
@@ -540,47 +532,45 @@ We now consider approximation over a nonrectangular domain $\Omega\subset \R^d$.
 \begin{equation}
   \argmin_{C} \sum_{i=1}^{P} \lp f(\vect{x}_i) -  \tilde{p}(\vect{x}_i) \rp^2,
 \end{equation}
-where $\Xi = \{\vect{x}_i\}_{i=1}^{P} \subset \Omega_\nu\cap \Omega$ is a point set in the ``active'' part of the leaf's domain, $\Omega_\nu\cap \Omega$. In practice we can form a matrix $A$ whose columns are evaluations of each basis function at the points in $\Xi$, leading to a standard $P\times N^d$ linear least squares problem. We choose $\Xi$ as the active part of the standard $(2N)^d$-sized Chebyshev grid. 
+where $\Xi = \{\vect{x}_i\}_{i=1}^{P} \subset \Omega_\nu\cap \Omega$ is a point set in the ``active'' part of the leaf's domain, $\Omega_\nu\cap \Omega$. In practice we can form a matrix $A$ whose columns are evaluations of each basis function at the points in $\Xi$, leading to a standard $P\times N^d$ linear least squares problem. We choose $\Xi$ as the part of the standard $(2N)^d$-sized Chebyshev grid lying inside $\Omega$. 
 
-This technique resembles Fourier extension or continuation techniques~\cite{adcock2014resolution,adcock2014numerical,huybrechs2010fourier}, so we refer to it as a \emph{Chebyshev extension approximation}. Unlike the Fourier case, however, there is no real domain extension involved; rather one contrains the usual multivariate polynomial only over part of its most natural domain. The condition number of $A$ in the discrete Fourier extension case has been shown to increase exponentially with the degree of the approximation \cite{adcock2014numerical}, but we presumably can avoid having problems with this by capping $N$ and subdividing the domain instead.
+This technique resembles Fourier extension or continuation techniques~\cite{adcock2014resolution,adcock2014numerical,huybrechs2010fourier}, so we refer to it as a \emph{Chebyshev extension approximation}. Unlike the Fourier case, however, there is no real domain extension involved; rather one constrains the usual multivariate polynomial only over part of its usual tensor-product domain. The condition number of $A$ in the discrete Fourier extension case has been shown to increase exponentially with the degree of the approximation \cite{adcock2014numerical}, but we expect to avoid having problems with this by capping $N$ and subdividing the domain instead.
 
-REWORK THESE PARAGRAPHS/ALGORITHM
+We modify Algorithm~\ref{alg:split} so that when a domain is split, the resulting zones of the children are shrunk if possible to just contact the boundary of $\Omega$. (An exception is the shared interface between the newly created children, which is fixed.) This helps to keep a substantial proportion of a leaf's domain within $\Omega$.
 
-We also make four modifications to the refinement criteria of Algorithm~\ref{alg:splitleaves}. First, we add a geometric refinement rule: if $\Omega_\nu\cap\Omega$ is nonempty but the centroid of $\Omega_\nu$ lies outside $\Omega$, the leaf is refined. Second, following a split the extents of the new domains in the split dimension are narrowed to the smallest intervals needed to contain $\Omega$. These rules help to ensure that a substantial fraction of each leaf's domain lies inside $\Omega$.
-
-The third modification has to do with determining whether the approximation on a nonrectangular leaf is of sufficient accuracy. Here we use the residual of the least-squares solution (normalized by $\sqrt{P}$) as a proxy for the true error. The final modification of Algorithm~\ref{alg:splitleaves} is that if a leaf needs to be refined, all dimensions are flagged for refinement. Our experiments indicate that even for a function on $\Omega$ (such as $xT_{60}(y)$) that has dramatically different degree requirements in its different variables, the extension of this function to the total domain of the leaf, as computed by the least squares procedure, has homogeneous dependence on the degree in all variables. 
+We also modify how refinement decisions are made and executed in Algorithm~\ref{alg:refine}, for a subtle reason. The original algorithm is able to exploit the very different resolution requirements for a function such as, say, $xT_{60}(y)$, by testing for sufficient resolution in each dimension independently and splitting accordingly. We find experimentally that if the function is like this over $\Omega$, the extension of it to the unconstrained part of the leaf node's domain has uniform resolution needs in all variables. Therefore, we use a simpler refinement process: if the norm of the least-squares residual (normalized by $\sqrt{P}$) is not acceptably small, we split in all dimensions successively. In effect, the approximation becomes a quadtree or octree within those leaves that do not lie entirely within $\Omega$. 
 
 
-\begin{algorithm}
-\caption{split($\Omega$,$\nu$,$j$,$t$)}
-\label{alg:LSsplit}
-\begin{algorithmic}
-\IF{$\nu$ is a leaf}
-\STATE \textsf{splitdim}($\nu$)=$j$
-\STATE Define new nodes $\nu_0$, $\nu_1$
-\STATE $[a_1,b_1],[a_2,b_2],\dots,[a_n,b_n]$ be the subintervals from \prop{zone}{$\nu$}
-\STATE Let $m:= \frac{b_j+a_j}{2}$
-\STATE Let \textsf{zone}($\nu_0$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [a_{j},m] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
-\STATE Let \textsf{zone}($\nu_1$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [m,b_{j}] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
-\FOR{$k=0,1$}
-\STATE Define \textsf{domain}($\nu_k$) from \textsf{zone}($\nu_k$) with parameter $t$ as in~(\ref{eq:zone_extend})
-\IF{$\text{\textsf{domain}($\nu_k$)} \cap \Omega = \emptyset$}
-\STATE $\nu_k$ = NULL
-\ELSIF{$\text{\textsf{domain}($\nu_k$)} \subseteq \Omega$}
-\STATE define $\nu_k$ as node on a hypercube.
-\ELSE
-\STATE For dimensions $p=1,2,\dots,j-1,j+1,\dots,d$ change subintervals $[a_p,b_p]$ of \textsf{domain}($\nu_k$) and \textsf{zone}($\nu_k$) to fit $\Omega$.
-\STATE For dimension $p=j$, change subinterval $[a_p,b_p]$ of \textsf{domain}($\nu_k$) by choosing largest $a_p$ such that $\Omega \subset \text{\textsf{domain}($\nu_k$)}$ if $k=0$, and vice versa if $k=1$. Change endpoints of \textsf{zone}($\nu_k$) to match changed endpoints of \textsf{domain}($\nu_k$).
-\ENDIF
-\STATE Define \textsf{grid}($\nu_k$) as Chebyshev tensor-product grid of size $\nmax^d$ in \textsf{domain}($\nu_k$)
-\STATE Let \textsf{isdone}($\nu_k$):= \textsf{isdone}($\nu$)
-\ENDFOR
-\ELSE
-\STATE split(\child{0}($\nu$),$k$,$t$)
-\STATE split(\child{1}($\nu$),$k$,$t$)
-\ENDIF
-\end{algorithmic}
-\end{algorithm}
+% \begin{algorithm}
+% \caption{split($\Omega$,$\nu$,$j$,$t$)}
+% \label{alg:LSsplit}
+% \begin{algorithmic}
+% \IF{$\nu$ is a leaf}
+% \STATE \textsf{splitdim}($\nu$)=$j$
+% \STATE Define new nodes $\nu_0$, $\nu_1$
+% \STATE $[a_1,b_1],[a_2,b_2],\dots,[a_n,b_n]$ be the subintervals from \prop{zone}{$\nu$}
+% \STATE Let $m:= \frac{b_j+a_j}{2}$
+% \STATE Let \textsf{zone}($\nu_0$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [a_{j},m] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
+% \STATE Let \textsf{zone}($\nu_1$) $:= [a_1,b_1] \times \dots \times [a_{j-1},b_{j-1}] \times [m,b_{j}] \times [a_{j+1},b_{j+1}] \times \dots \times [a_{d},b_{d}] $
+% \FOR{$k=0,1$}
+% \STATE Define \textsf{domain}($\nu_k$) from \textsf{zone}($\nu_k$) with parameter $t$ as in~(\ref{eq:zone_extend})
+% \IF{$\text{\textsf{domain}($\nu_k$)} \cap \Omega = \emptyset$}
+% \STATE $\nu_k$ = NULL
+% \ELSIF{$\text{\textsf{domain}($\nu_k$)} \subseteq \Omega$}
+% \STATE define $\nu_k$ as node on a hypercube.
+% \ELSE
+% \STATE For dimensions $p=1,2,\dots,j-1,j+1,\dots,d$ change subintervals $[a_p,b_p]$ of \textsf{domain}($\nu_k$) and \textsf{zone}($\nu_k$) to fit $\Omega$.
+% \STATE For dimension $p=j$, change subinterval $[a_p,b_p]$ of \textsf{domain}($\nu_k$) by choosing largest $a_p$ such that $\Omega \subset \text{\textsf{domain}($\nu_k$)}$ if $k=0$, and vice versa if $k=1$. Change endpoints of \textsf{zone}($\nu_k$) to match changed endpoints of \textsf{domain}($\nu_k$).
+% \ENDIF
+% \STATE Define \textsf{grid}($\nu_k$) as Chebyshev tensor-product grid of size $\nmax^d$ in \textsf{domain}($\nu_k$)
+% \STATE Let \textsf{isdone}($\nu_k$):= \textsf{isdone}($\nu$)
+% \ENDFOR
+% \ELSE
+% \STATE split(\child{0}($\nu$),$k$,$t$)
+% \STATE split(\child{1}($\nu$),$k$,$t$)
+% \ENDIF
+% \end{algorithmic}
+% \end{algorithm}
 
 \subsection{Numerical experiments}
 
@@ -680,7 +670,7 @@ For example, suppose the zones of $\nu_1$ and $\nu_2$ are $[-1,0]\times[-1,1]$ a
 
 Consider the general recursive call. If both $\nu_1$ and $\nu_2$ are leaves, then we simply evaluate the result of operating on their interpolants to get the values on \Tm. If exactly one of $\nu_1$ and $\nu_2$ is a leaf, then we split \Tm the same way as the non-leaf and recurse into the resulting children; property~(\ref{eq:merge-zones}) trivially remains true in these calls. If both  $\nu_1$ and $\nu_2$ are non-leaves, and they both split in the same dimension, then we can split $\Tm$ in that dimension and recurse, and the zones will continue to match as in~(\ref{eq:merge-zones}).
 
-The only remaining case is that $\nu_1$ and $\nu_2$ are each split, but in different dimensions. In this case we have to use information about how the splittings are constructed in Algorithm~\ref{alg:splitleaves}. Recall that each unresolved dimension is split in order, while resolved dimensions are flagged as finished in all descendants. By inductive assumption, \Tm was most recently split in dimension $r$. The algorithm determines which $\nu_k$ has splitting dimension $j$ that comes the soonest after $r$ (computed cyclically). Thus for all dimensions between $r$ and $j$, neither of the given nodes splits, so it and its descendants all must have \textsf{isdone} set to TRUE in those dimensions, and property~(\ref{eq:merge-zones}) makes no requirement. Furthermore, the dimension $r_k$ does satisfy~(\ref{eq:merge-zones}) for $\nu_k$, and the same will be true for its children and the children of $\Tm$. All other dimensions will inherit~(\ref{eq:merge-zones}) from the parents. 
+The only remaining case is that $\nu_1$ and $\nu_2$ are each split, but in different dimensions. In this case we have to use information about how the splittings are constructed in Algorithm~\ref{alg:refine}. Recall that each unresolved dimension is split in order, while resolved dimensions are flagged as finished in all descendants. By inductive assumption, \Tm was most recently split in dimension $r$. The algorithm determines which $\nu_k$ has splitting dimension $j$ that comes the soonest after $r$ (computed cyclically). Thus for all dimensions between $r$ and $j$, neither of the given nodes splits, so it and its descendants all must have \textsf{isdone} set to TRUE in those dimensions, and property~(\ref{eq:merge-zones}) makes no requirement. Furthermore, the dimension $r_k$ does satisfy~(\ref{eq:merge-zones}) for $\nu_k$, and the same will be true for its children and the children of $\Tm$. All other dimensions will inherit~(\ref{eq:merge-zones}) from the parents. 
 
 
 \newcommand{\op}{\ensuremath{\circ}}
@@ -837,7 +827,7 @@ The only remaining case is that $\nu_1$ and $\nu_2$ are each split, but in diffe
 %\STATE Construct a sparse matrix $A_c-B_c$ as seen in (\ref{2levelprec}).
 %\STATE Sample $T$ by solving (\ref{master_eq}) with GMRES with $M$ from  (\ref{2levelprec}) as a preconditioner, \ARP and the sampled values on $T$ as an initial condition.
 %\ENDIF
-%\STATE splitleaves(root($T$),$\nmax$,$t$). Here if a leaf $\nu$ is split, sample the values of the children of $\nu$ with \ARP \textsf{interpolant}($\nu$).
+%\STATE refine(root($T$),$\nmax$,$t$). Here if a leaf $\nu$ is split, sample the values of the children of $\nu$ with \ARP \textsf{interpolant}($\nu$).
 %\ENDWHILE
 %\end{algorithmic}
 %\label{BVP_solve}
