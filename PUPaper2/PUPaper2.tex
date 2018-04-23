@@ -486,28 +486,28 @@ For the two higher-rank examples, the story is very different. The tree-based me
 
 
 \begin{table}[p]
-\begin{tabular}{r|c|c|c|c}
-& error & construct time & eval time & points \\[5pt] \hline
-$\cos(u_1\pi + \sum_{i=1}^3 a_i x_i)$ & 22.71$\times 10^{-14}$ & 0.151 & 0.118 & 275000 \\ [5pt]
-$\prod_{i=1}^3 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 1.52$\times 10^{-5}$ & 7.204 & 1.312 & 10400000 \\[2pt]
-$(1+\sum_{i=1}^3 a_i x_i)^{-3}$ & 4.66$\times 10^{-10}$ & 0.16555 & 0.033 & 125 \\[5pt]
-$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 3.11$\times 10^{-15}$ & 0.0818 & 0.078 & 275000  \\[5pt]
-$1/(\cosh(5(x+y+z)))^2$ & 1.14$\times 10^{-14}$ & 0.706 & 0.545 & 2200000 \\
-$\arctan(5(x+y)+z)$ & 7.60$\times 10^{-13}$ & 0.7512 & 0.030 & 549153 \\
+\begin{tabular}{r|c|c|c|c|c}
+& error & construct time & eval time & int time & points\\[5pt] \hline
+$\cos(u_1\pi + \sum_{i=1}^3 a_i x_i)$ & 22.71$\times 10^{-14}$ & 0.151 & 0.118 & 0.044 & 275000 \\ [5pt]
+$\prod_{i=1}^3 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 1.52$\times 10^{-5}$ & 7.204 & 1.312 & 0.375 & 10400000 \\[2pt]
+$(1+\sum_{i=1}^3 a_i x_i)^{-3}$ & 4.66$\times 10^{-10}$ & 0.16555 & 0.033 & 0.001 & 125 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 3.11$\times 10^{-15}$ & 0.0818 & 0.078 & 0.007 275000  \\[5pt]
+$1/(\cosh(5(x+y+z)))^2$ & 1.14$\times 10^{-14}$ & 0.706 & 0.545 & 0.043 & 2200000 \\
+$\arctan(5(x+y)+z)$ & 7.60$\times 10^{-13}$ & 0.7512 & 0.030 & 0.047 & 549153 \\
 \end{tabular}
 \caption{Observed error and wall-clock time for the tree method to construct a tree approximation with target tolerance $10^{-12}$ and $\nmax=65$, and to evaluate it on a 200$^3$ uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree. Here $u=[0.75,0.25,-0.75]$ and $a=[25,25,25]$.}
 \label{putable3D}
 \end{table}
 
 \begin{table}[p]
-\begin{tabular}{r|c|c|c|c}
-& error & construct time & eval time & rank \\[5pt] \hline
-$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 2.16$\times 10^{-14}$ & 0.061 & 0.150 & 2  \\[5pt]
-$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 5.66$\times 10^{-7}$ & 0.057 & 0.137 & 1 \\[5pt]
-$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 4.07$\times 10^{-10}$ & 0.038 & 0.143 & 4 \\[5pt]
-$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 7.77$\times 10^{-16}$ & 0.047 & 0.144 & 1 \\[5pt]
-$1/(\cosh(5(x+y+z)))^2$ & 3.69$\times 10^{-13}$ & 80.666 & 0.398 & 93 \\
-$\arctan(5(x+y)+z)$ & 4.69$\times 10^{-13}$ & 89.957 & 0.104 & 110 \\
+\begin{tabular}{r|c|c|c|c|c}
+& error & construct time & eval time & int time & rank \\[5pt] \hline
+$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$ & 2.16$\times 10^{-14}$ & 0.061 & 0.150 & 0.006 & 2  \\[5pt]
+$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$ & 5.66$\times 10^{-7}$ & 0.057 & 0.137 & 0.002 & 1 \\[5pt]
+$(1+\sum_{i=1}^2 a_i x_i)^{-3}$ & 4.07$\times 10^{-10}$ & 0.038 & 0.143 & 0.001 & 4 \\[5pt]
+$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$ & 7.77$\times 10^{-16}$ & 0.047 & 0.144 & 0.001 & 1 \\[5pt]
+$1/(\cosh(5(x+y+z)))^2$ & 3.69$\times 10^{-13}$ & 80.666 & 0.398 & 0.002 & 93 \\
+$\arctan(5(x+y)+z)$ & 4.69$\times 10^{-13}$ & 89.957 & 0.104 & 0.001 & 110 \\
 \end{tabular}
 \caption{Observed error and wall-clock time for Chebfun3 using default settings to construct an approximation and evaluate it on a 200$^3$ uniform grid. Also shown is the computed rank of the function. Here $u=[0.75,0.25,-0.75]$ and $a=[25,25,25]$.}	
 \label{chb3table}
