@@ -181,6 +181,37 @@ classdef LSPatch < LeafPatch
             
         end
         
+        % Evaluates the derivative on a grid.
+        %
+        %  Input:
+        %      diff_dim: dimension derivative is taken in
+        %         order: order of derivative (up to 2 right now)
+        %             X: cellarray of grids to be evaluated on.
+        %
+        % Output:
+        %     ef: matrix of dim(X) containing the interpolated derivative values
+        function ef = evalfDiffGrid(obj,diff_dim,order,X)
+            if nargin<3
+                order = 1;
+            end
+            
+            unContractedModes = [1:diff_dim-1, diff_dim+1:obj.dim];  
+            
+            G = chebfun3t.unfold(obj.coeffs,diff_dim);
+            
+            for i=1:order
+            G = obj.computeDiffCoeffs(G);
+            end
+            
+            G = chebfun3t.fold(G,obj.degs,diff_dim,unContractedModes)/diff(obj.domain(diff_dim,:)/2)^order;
+
+            if nargin<4
+                ef = G;
+            else
+                ef = evalfGrid(obj,X,G);
+            end
+        end
+        
         % Evaluates the approximant and its derivatives.
         %
         %  Input:
@@ -194,8 +225,13 @@ classdef LSPatch < LeafPatch
             end
             
             unContractedModes = [1:diff_dim-1, diff_dim+1:obj.dim];  
-            G = obj.computeDiffCoeffs(chebfun3t.unfold(obj.coeffs,diff_dim))/diff(obj.domain(diff_dim,:))^order;
-            G = chebfun3t.fold(G,obj.degs,diff_dim,unContractedModes);
+            G = chebfun3t.unfold(obj.coeffs,diff_dim);
+            
+            for i=1:order
+            G = obj.computeDiffCoeffs(G);
+            end
+            
+            G = chebfun3t.fold(G,obj.degs,diff_dim,unContractedModes)/diff(obj.domain(diff_dim,:)/2)^order;
             
             if nargin<4
                 ef = G;

@@ -213,7 +213,7 @@ classdef ChebPatch<LeafPatch
                 order = 1;
             end
             
-            G = chebfun3t.txm(obj.values, obj.standard_variables.matrices{obj.deg_in(diff_dim)}, order)/diff(obj.domain(diff_dim,:))^order;
+            G = chebfun3t.txm(obj.values, obj.standard_variables.matrices{obj.deg_in(diff_dim)}, order)/(diff(obj.domain(diff_dim,:))/2)^order;
             
             if nargin<4
                 ef = G(:);
@@ -264,7 +264,7 @@ classdef ChebPatch<LeafPatch
                 order = 1;
             end
             
-            G = chebfun3t.txm(obj.values, obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),order}, diff_dim)/diff(obj.domain(diff_dim,:))^order;
+            G = chebfun3t.txm(obj.values, obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),order}, diff_dim)/(diff(obj.domain(diff_dim,:))/2)^order;
             
             if nargin<4
                 ef = G;

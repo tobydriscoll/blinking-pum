@@ -93,6 +93,15 @@ classdef LSPatch3D < LSPatch
             p_struct.cdeg_in = obj.cdeg_in;
         end    
         
+        % This method samples the polynomial with a LS square fit
+        % of the domain.
+        %
+        %     Input: f, grid_opt,fast_opt
+        %         f: objective function to be sampled
+        %  grid_opt: option if takes a grid determine from vectors x y,
+        %            i.e. [X,Y] = f({x y});
+        %  fast_opt: if the function can be sampled everywhere (an
+        %            example being a polynomial) then FFT is used.
         function max_val = sample(obj,f,grid_opt,~)
             
             if(nargin==2)
@@ -141,13 +150,10 @@ classdef LSPatch3D < LSPatch
             
             obj.coeffs = zeros(prod(obj.degs),1);
             
-%             warning('off','all');
-%             obj.coeffs(ind_c) = M\F;
-%             warning('on','all');
-            
             warning('off','all');
-            obj.coeffs = M\F;
+            obj.coeffs(ind_c) = M\F;
             warning('on','all');
+            
             
             obj.coeffs = reshape(obj.coeffs,obj.degs);
             
@@ -160,7 +166,15 @@ classdef LSPatch3D < LSPatch
             
         end
         
-        function Child = splitleaf(obj,Max,set_vals)
+        % This method determines if the leaf needs to be simplified,
+        % and splits if necessary 
+        %     Input:
+        %       Max: Global max value
+        %
+        %    Output:
+        %     Child: Returns the leaf if no splitting is needed, otherwise
+        %            returns a PUPatch with the split leaf.
+        function Child = splitleaf(obj,Max,~)
             
             obj.GlobalMax = Max;
             
@@ -219,8 +233,8 @@ classdef LSPatch3D < LSPatch
             domain1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
             
             
-            [new_zone_fit0,new_domain_fit0] = LSPatch3D.splitleafGeom(zone0,domain0,obj.outerbox,obj.domain_in);
-            [new_zone_fit1,new_domain_fit1] = LSPatch3D.splitleafGeom(zone1,domain1,obj.outerbox,obj.domain_in);
+            [new_zone_fit0,new_domain_fit0] = LSPatch3D.tightenLeaf(zone0,domain0,obj.outerbox,obj.domain_in);
+            [new_zone_fit1,new_domain_fit1] = LSPatch3D.tightenLeaf(zone1,domain1,obj.outerbox,obj.domain_in);
             
             %zone0(split_dim,:) = new_zone_fit0(split_dim,:);
             %domain0(split_dim,:) = new_domain_fit0(split_dim,:);
@@ -315,6 +329,15 @@ classdef LSPatch3D < LSPatch
     end
     
         methods (Static)
+            
+        % This method fits a given square zone and domain to the inner
+        % domain.
+        %
+        %     Input:
+        %      zone,domain,outerbox: square zone, domain, and outerbox
+        %                 domain_in: non-square inner domain to fit too.
+        %    Output:
+        %       new_zone,new_domain: fitted squared zone and domains.
         function [new_zone,new_domain] = splitleafGeom(zone,domain,outerbox,domain_in)
             
             obj.is_geometric_refined = true;

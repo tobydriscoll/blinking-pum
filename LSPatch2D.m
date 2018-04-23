@@ -47,12 +47,17 @@ classdef LSPatch2D < LSPatch
             p_struct.tol = obj.tol;
             p_struct.cdeg_in = obj.cdeg_in;
         end
+    
         
-        
-        
-        
-        
-        function Child = splitleaf(obj,Max,set_vals)
+        % This method determines if the leaf needs to be simplified,
+        % and splits if necessary 
+        %     Input:
+        %       Max: Global max value
+        %
+        %    Output:
+        %     Child: Returns the leaf if no splitting is needed, otherwise
+        %            returns a PUPatch with the split leaf.
+        function Child = splitleaf(obj,Max,~)
             
             obj.GlobalMax = Max;
             
@@ -78,6 +83,15 @@ classdef LSPatch2D < LSPatch
         
         
         
+        % This method samples the polynomial with a LS square fit
+        % of the domain.
+        %
+        %     Input: f, grid_opt,fast_opt
+        %         f: objective function to be sampled
+        %  grid_opt: option if takes a grid determine from vectors x y,
+        %            i.e. [X,Y] = f({x y});
+        %  fast_opt: if the function can be sampled everywhere (an
+        %            example being a polynomial) then FFT is used.
         function max_val = sample(obj,f,grid_opt,fast_opt)
             
             
@@ -91,12 +105,6 @@ classdef LSPatch2D < LSPatch
             
             max_val = 0;
             
-            x_in = (1:obj.degs(1));
-            y_in = (1:obj.degs(2));
-            
-            [X_in Y_in] = ndgrid(x_in,y_in);
-            
-            ind_c = sqrt(X_in(:).^2+Y_in(:).^2)<=max(obj.degs);
                 
                 for i=2:1:10
                     
@@ -150,10 +158,10 @@ classdef LSPatch2D < LSPatch
                     My = chebtech.clenshaw(chebpts(obj.degs(2)*mult),eye(obj.degs(2)));
                     
                     M = kron(My,Mx);
-                    M = M(ind,ind_c);
+                    M = M(ind,:);
                     obj.coeffs = zeros(prod(obj.degs),1);
                     warning('off','all');
-                    obj.coeffs(ind_c) = M\F;
+                    obj.coeffs = M\F;
                     warning('on','all');
                     
                     obj.coeffs = reshape(obj.coeffs,obj.degs);
@@ -225,14 +233,9 @@ classdef LSPatch2D < LSPatch
             domain0(split_dim,:) = [max(obj.outerbox(split_dim,1),obj.zone(split_dim,1)-delta) m+delta];
             domain1(split_dim,:) = [m-delta,min(obj.outerbox(split_dim,2),obj.zone(split_dim,2)+delta)];
             
-           [new_zone_fit0,new_domain_fit0] = LSPatch2D.splitleafGeom(zone0,domain0,obj.outerbox,obj.domain_in);
-           [new_zone_fit1,new_domain_fit1] = LSPatch2D.splitleafGeom(zone1,domain1,obj.outerbox,obj.domain_in);
+           [new_zone_fit0,new_domain_fit0] = LSPatch2D.tightenLeaf(zone0,domain0,obj.outerbox,obj.domain_in);
+           [new_zone_fit1,new_domain_fit1] = LSPatch2D.tightenLeaf(zone1,domain1,obj.outerbox,obj.domain_in);
             
-%             zone0(split_dim,:) = new_zone_fit0(split_dim,:);
-%             domain0(split_dim,:) = new_domain_fit0(split_dim,:);
-%             
-%             zone1(split_dim,:) = new_zone_fit1(split_dim,:);
-%             domain1(split_dim,:) = new_domain_fit1(split_dim,:);
             
             zone0 = new_zone_fit0;
             domain0 = new_domain_fit0;
@@ -322,6 +325,7 @@ classdef LSPatch2D < LSPatch
             end
         end
         
+        %This method attempts to simplify the polynomial
         function Chop(obj)
             
             loc_tol = obj.tol^(7/8);
@@ -362,7 +366,16 @@ classdef LSPatch2D < LSPatch
     end
     
     methods (Static)
-        function [new_zone,new_domain] = splitleafGeom(zone,domain,outerbox,domain_in)
+        
+        % This method fits a given square zone and domain to the inner
+        % domain.
+        %
+        %     Input:
+        %      zone,domain,outerbox: square zone, domain, and outerbox
+        %                 domain_in: non-square inner domain to fit too.
+        %    Output:
+        %       new_zone,new_domain: fitted squared zone and domains.
+        function [new_zone,new_domain] = tightenLeaf(zone,domain,outerbox,domain_in)
             
             obj.is_geometric_refined = true;
             
