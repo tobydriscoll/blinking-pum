@@ -380,24 +380,24 @@ Table~\ref{putable} shows the results for the new method. For comparison, Table~
 
 \begin{table}[p]
 
-\begin{tabular}{r|c|c|c|c|c}
-Function & method & error & construct time & eval time & points \\[5pt] \hline
-  \multirow{2}{*}{$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$} &  tree-based & 1.05$\times 10^{-13}$ & 0.6403 & 0.063 & 110496 \\
-  & Chebfun2 & 1.14$\times 10^{-6}$ & 2.2997 & 0.1045 & 30 \\ \hline
-  \multirow{2}{*}{$\arctan(\frac{x_1+x_2^2}{10^{-2}})$} & tree-based & 2.15$\times 10^{-12}$ & 2.9690 & 0.3138 & 1553816 \\
-  & Chebfun2 & 7.09$\times 10^{-12}$ & 150.2228 & 4.979 & 816 \\ \hline
-  \multirow{2}{*}{$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$} & tree-based & 1.01$\times 10^{-11}$ & 0.7298 & 0.1087 & 145280 \\
-  & Chebfun2 & 5.44$\times 10^{-15}$ & 0.0493 & 0.0037 & 1 \\ \hline
-  \multirow{2}{*}{franke} & tree-based & 4.22$\times 10^{-15}$ & 0.0116 & 0.0045 & 16641 \\
-  & Chebfun2 & 1.33$\times 10^{-15}$ & 0.0198 & 0.0024 & 4 \\ \hline
-  \multirow{2}{*}{$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$} & tree-based & 2.65$\times 10^{-14}$ & 0.0127 & 0.0025 & 1089 \\
-  & Chebfun2 & 4.47$\times 10^{-14}$ & 0.0155 & 0.002 & 2 \\ \hline
-  \multirow{2}{*}{$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$} & tree-based & 5.00$\times 10^{-12}$ & 0.0555 & 0.016 & 29283 \\
-  & Chebfun2 & 1.59$\times 10^{-12}$ & 0.0203 & 0.0022 & 1 \\ \hline
-  \multirow{2}{*}{$(1+\sum_{i=1}^2 a_i x_i)^{-3}$} & tree-based & 2.27$\times 10^{-12}$ & 0.0119 & 8.97$\times 10^{-4}$ & 25 \\
-  & Chebfun2 & 2.27$\times 10^{-12}$ & 0.0117 & 0.0021 & 4 \\ \hline
-  \multirow{2}{*}{$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$} & tree-based & 1.65$\times 10^{-14}$ & 0.0130 & 0.0026 & 2145 \\
-  & Chebfun2 & 4.44$\times 10^{-16}$ & 0.0149 & 0.0022 & 1 
+\begin{tabular}{r|c|c|c|c|c|c}
+Function & method & error & construct time & eval time & int time & points \\[5pt] \hline
+  \multirow{2}{*}{$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$} &  tree-based & 1.05$\times 10^{-13}$ & 0.6403 & 0.063 & 0.081 & 110496 \\
+  & Chebfun2 & 1.14$\times 10^{-6}$ & 2.2997 & 0.1045 & 0.004 & 30 \\ \hline
+  \multirow{2}{*}{$\arctan(\frac{x_1+x_2^2}{10^{-2}})$} & tree-based & 2.15$\times 10^{-12}$ & 2.9690 & 0.3138 & 0.528 & 1553816 \\
+  & Chebfun2 & 7.09$\times 10^{-12}$ & 150.2228 & 4.979 & 0.017 & 816 \\ \hline
+  \multirow{2}{*}{$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$} & tree-based & 1.01$\times 10^{-11}$ & 0.7298 & 0.1087 & 0.093 & 145280 \\
+  & Chebfun2 & 5.44$\times 10^{-15}$ & 0.0493 & 0.0037 & 0.001 & 1 \\ \hline
+  \multirow{2}{*}{franke} & tree-based & 4.22$\times 10^{-15}$ & 0.0116 & 0.0045 & 0.007 & 16641 \\
+  & Chebfun2 & 1.33$\times 10^{-15}$ & 0.0198 & 0.0024 & 0.001 & 4 \\ \hline
+  \multirow{2}{*}{$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$} & tree-based & 2.65$\times 10^{-14}$ & 0.0127 & 0.0025 & 0.002 & 1089 \\
+  & Chebfun2 & 4.47$\times 10^{-14}$ & 0.0155 & 0.002 & 0.001 & 2 \\ \hline
+  \multirow{2}{*}{$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$} & tree-based & 5.00$\times 10^{-12}$ & 0.0555 & 0.016 & 0.011 & 29283 \\
+  & Chebfun2 & 1.59$\times 10^{-12}$ & 0.0203 & 0.0022 & 0.001 & 1 \\ \hline
+  \multirow{2}{*}{$(1+\sum_{i=1}^2 a_i x_i)^{-3}$} & tree-based & 2.27$\times 10^{-12}$ & 0.0119 & 8.97$\times 10^{-4}$ & 0.001 & 25 \\
+  & Chebfun2 & 2.27$\times 10^{-12}$ & 0.0117 & 0.0021 & 0.001 & 4 \\ \hline
+  \multirow{2}{*}{$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$} & tree-based & 1.65$\times 10^{-14}$ & 0.0130 & 0.0026 & 0.002 & 2145 \\
+  & Chebfun2 & 4.44$\times 10^{-16}$ & 0.0149 & 0.0022 & 0.001 & 1 
 \end{tabular}
 \caption{Observed error and wall-clock time for the tree method to construct tree-based and Chebfun2 approximations with target tolerance $10^{-12}$ and $\nmax=129$, and to evaluate it on a 200x200 uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree. Here $u=[0.75,0.25]$, and $a=[5,10]$.}
 \label{putable}
