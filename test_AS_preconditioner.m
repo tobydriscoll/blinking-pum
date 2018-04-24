@@ -139,7 +139,7 @@ while ~is_refined
         
     if Tree.is_leaf
         
-        [rhs] = setLinOpsTheta(Tree,L,B,force,border,theta,dt,t);
+        [rhs] = setLinOps(Tree,L,B,force,border);
         
         sol = Tree.linOp\rhs;
         

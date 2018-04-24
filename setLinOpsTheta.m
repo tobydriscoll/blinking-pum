@@ -1,4 +1,15 @@
-%Tree has the current time step stored
+% This method sets up the linear operators to be used in the patches for
+% the theta method.
+%
+%   input:
+%    Tree: Tree that has the current time step stored
+%       L: Operator of PDE u_t = L u
+%       B: cell array of boundary condition operator in order NORTH SOUTH EAST WEST
+%  border: rhs of boundary condution
+%   theta: parameter used in theta method
+%    dt,t: time step and current time
+%  output:
+%     rhs: returns RHS for the theta method.
 function [rhs] = setLinOpsTheta(Tree,L,B,border,theta,dt,t)
 
 if Tree.is_leaf

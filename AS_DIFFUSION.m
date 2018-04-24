@@ -9,15 +9,15 @@ tol = 1e-8;
 gmres_tol = 5e-9;
 maxit = 1200;
 T = 5;
-dt = 0.1;
+dt = 0.25;
 theta = 0.5 + dt;
 
-alpha = 1;
+alpha = 0.5;
 L = @(u,x,y,dx,dy,dxx,dyy,t) alpha*(dxx+dyy);
 
 % NORTH SOUTH EAST WEST
 B = {@(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u,@(u,x,y,dx,dy,dxx,dyy) u};
-
+force = @(x,y) zeros(size(x,1),1);
 time_dependent = false;
 
 bf = @(x,y) zeros(size(x,1),1);
@@ -78,6 +78,22 @@ while CT<T
     pause(0.001);
 end
 
+
+% while CT<T
+%     
+%     setLinOps(F.ChebRoot,L,B,force,border);
+%     
+%     
+%     tic,AS_P_STEP(F.ChebRoot,dt,theta);toc
+%     
+%     plot(F);
+%     
+%     CT = CT+dt;
+%     
+%     title(CT);
+%     
+%     pause(0.001);
+% end
 
 
 

@@ -1,18 +1,27 @@
-function [out_border_c,out_border,in_border,in_border_c,in_border_g] = FindBoundaryIndex2DSides(dim,domain,out_domain)
+% This method returns the indicies of the inner boundary and outer
+% boundary. Some care is given to not double count indicies.
+% 
+%  out_border, in_border: logical array for points in the outer boundary
+%  and inner boundary.
+%
+%  out_border_s, in_border_s: cell array for the north,south,east,south (in
+%  that order) for the outer boundary and iterface.
+function [out_border_s,out_border,in_border,in_border_s] = FindBoundaryIndex2DSides(degs,domain,out_domain)
 
-out_border = false(dim);
-in_border = false(dim);
+out_border = false(degs);
+in_border = false(degs);
 
-South = false(dim); South(:,1) = true;
+South = false(degs); South(:,1) = true;
 
-North = false(dim); North(:,end) = true;
+North = false(degs); North(:,end) = true;
 
-East = false(dim); East(1,:) = true;
+East = false(degs); East(1,:) = true;
 
-West  = false(dim); West(end,:) = true;
+West  = false(degs); West(end,:) = true;
 
 border = South | North | East | West;
 
+%Might have to make this more robust!
 if domain(1,1)==out_domain(1,1)
     out_border = out_border | East;
 end
@@ -33,28 +42,18 @@ in_border(border) = ~out_border(border);
 
 out_border = out_border(:);
 in_border = in_border(:);
-out_border_c = cell(4,1);
+out_border_s = cell(4,1);
 
-out_border_c{1} = out_border & East(:);
-out_border_c{2} = out_border & West(:) & ~ out_border_c{1};
+out_border_s{1} = out_border & East(:);
+out_border_s{2} = out_border & West(:) & ~ out_border_s{1};
 
-out_border_c{3} = out_border & South(:) & ~(out_border_c{1} | out_border_c{2});
-out_border_c{4} = out_border & North(:) & ~(out_border_c{1} | out_border_c{2} | out_border_c{3});
+out_border_s{3} = out_border & South(:) & ~(out_border_s{1} | out_border_s{2});
+out_border_s{4} = out_border & North(:) & ~(out_border_s{1} | out_border_s{2} | out_border_s{3});
 
-in_border_c{1} = in_border & East(:);
-in_border_c{2} = (in_border & West(:)) & ~ in_border_c{1};
+in_border_s{1} = in_border & East(:);
+in_border_s{2} = (in_border & West(:)) & ~ in_border_s{1};
 
-in_border_c{3} = in_border & South(:) & ~(in_border_c{1} | in_border_c{2});
-in_border_c{4} = in_border & North(:) & ~(in_border_c{1} | in_border_c{2} | in_border_c{3});
-
-
-B = reshape(in_border_c{1},dim);
-in_border_g{1} = {[true;false(dim(1)-1,1)] B(1,:)};
-B = reshape(in_border_c{2},dim);
-in_border_g{2} = {[false(dim(1)-1,1);true] B(end,:)};
-B = reshape(in_border_c{3},dim);
-in_border_g{3} = {B(:,1) [true;false(dim(2)-1,1)]};
-B = reshape(in_border_c{4},dim);
-in_border_g{4} = {B(:,end) [false(dim(2)-1,1);true]};
+in_border_s{3} = in_border & South(:) & ~(in_border_s{1} | in_border_s{2});
+in_border_s{4} = in_border & North(:) & ~(in_border_s{1} | in_border_s{2} | in_border_s{3});
 
 end

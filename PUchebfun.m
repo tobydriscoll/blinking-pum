@@ -260,8 +260,15 @@ classdef PUchebfun < PUfun
         
         % disp(obj)
         % Returns color plot of patches
-        function show(obj)
-            show(obj.ChebRoot)
+        function show(obj,level,step)
+            if nargin==1  % user call
+                level = 0;
+                step = 1;
+            elseif nargin==2
+                step = 1;
+            end
+            
+            show(obj.ChebRoot,level,step)
         end
         
         % plot(obj)

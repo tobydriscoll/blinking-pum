@@ -771,17 +771,7 @@ classdef PUPatch<Patch
             vals(ind(:,2)) = child_vals{2};
         end
         
-        %  collectLeaves(obj,leaves)
-        %  Recursive function that collects leaves into cell array.
-        %
-        %     Input:
-        %    leaves: current list of leaves
-        %
-        %    Output:
-        %    LEAVES: leaves list with children of patch added.
-        function [LEAVES]= collectLeaves(obj)
-            LEAVES = collectLeaves_recurse(obj,{});
-        end
+
         
 %         function IsGeometricallyRefined = IsGeometricallyRefined(obj)
 %             G1 = obj.children{1}.IsGeometricallyRefined();
@@ -871,16 +861,7 @@ classdef PUPatch<Patch
     
     methods(Access = protected)
         
-        function [LEAVES]= collectLeaves_recurse(obj,leaves)
-            for k=1:2
-                if obj.children{k}.is_leaf && ~obj.children{k}.is_null
-                    leaves{length(leaves)+1} = obj.children{k};
-                elseif ~obj.children{k}.is_null
-                    leaves = obj.children{k}.collectLeaves_recurse(leaves);
-                end
-            end
-            LEAVES = leaves;
-        end
+
         
         % Override copyElement method:
         function cpObj = copyElement(obj)

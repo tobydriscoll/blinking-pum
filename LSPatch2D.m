@@ -11,6 +11,7 @@ classdef LSPatch2D < LSPatch
     % LSPatch2D(varargin) constructs a tensor product approximation
     % representing a function, based on the options passed into with
     % structure var_struct. The options are the same as LSPatch.m.
+    
     properties
         mid_values_err = inf %Store the evaluation at the Cheb points of the first kind
         mid_values_err1 = inf;

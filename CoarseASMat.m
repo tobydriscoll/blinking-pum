@@ -1,4 +1,15 @@
-function [ Mat ] = CoarseASMatTheta( Tree,L,B,theta,dt,t)
+% This method sets up the linear operators to be used in the patches for
+% the theta method.
+%
+%   input:
+%    Tree: Tree that has the current time step stored
+%       L: Operator of PDE u_t = L u
+%       B: cell array of boundary condition operator in order NORTH SOUTH EAST WEST
+%   theta: parameter used in theta method
+%    dt,t: time step and current time
+%  output:
+%     MAT: returns the coarse matrix for the theta method
+function [ Mat ] = CoarseASMat( Tree,L,B)
 
 if Tree.is_leaf
     LEAVES = {Tree};
@@ -17,15 +28,20 @@ zz = [];
 for k=1:length(LEAVES)
     cdim = LEAVES{k}.cdegs;
 
-    [out_border_c,~,in_border] = FindBoundaryIndex2DSides(cdim,LEAVES{k}.domain,LEAVES{k}.outerbox); 
+    %Figure out indicies of boundary and interface points
+    [out_border_s,~,in_border,~]  = FindBoundaryIndex2DSides(cdim,LEAVES{k}.domain,LEAVES{k}.outerbox); 
     
     pointsl = LEAVES{k}.points();
     
     index_n = (1:length(LEAVES{k}))';
     index_n = index_n(in_border);
     
+    %Figure out sparse indicies of interpolation matrix
     [iib,jjb,zzb] = Tree.interpMatrixZone_vecs(pointsl(in_border,:));
     
+    % add them to the matrix
+    % Note that ibb is the indicies of the interface border points.
+    % This is why we use index_n(iib) here.
     ii = [ii;index_n(iib)+step];
     jj = [jj;jjb];
     zz = [zz;-zzb];    
@@ -38,17 +54,21 @@ for k=1:length(LEAVES)
     
     E = eye(prod(cdim));
     
-    OP = E - dt*theta*L(E,pointsl(:,1),pointsl(:,2),Dx,Dy,Dxx,Dyy,t);
+    %Determine the operator
+    OP = L(E,pointsl(:,1),pointsl(:,2),Dx,Dy,Dxx,Dyy);
     
+    %Incorporate outer boundary conditions
     for i=1:4
-        if any(out_border_c{i}) && ~isempty(B{i})
-        OP(out_border_c{i},:) = ...
-            B{i}(E(out_border_c{i},:),pointsl(out_border_c{i},1),pointsl(out_border_c{i},2),Dx(out_border_c{i},:),Dy(out_border_c{i},:),Dxx(out_border_c{i},:),Dyy(out_border_c{i},:));
+        if any(out_border_s{i}) && ~isempty(B{i})
+        OP(out_border_s{i},:) = ...
+            B{i}(E(out_border_s{i},:),pointsl(out_border_s{i},1),pointsl(out_border_s{i},2),Dx(out_border_s{i},:),Dy(out_border_s{i},:),Dxx(out_border_s{i},:),Dyy(out_border_s{i},:));
         end
     end
     
+    %Incorporate interface boundary condition
     OP(in_border,:) = E(in_border,:);
     
+    %Add the operator to sparse matrix
     [iid,jjd,zzd] = find(OP);
     
     ii = [ii;iid+step];
