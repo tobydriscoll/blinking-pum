@@ -1,4 +1,5 @@
-function [rhs] = setLinOpsTheta(Tree,L,B,force,border,theta,t)
+%Tree has the current time step stored
+function [rhs] = setLinOpsTheta(Tree,L,B,border,theta,dt,t)
 
 if Tree.is_leaf
     LEAVES = {Tree};
@@ -16,11 +17,10 @@ end
 
 for k=1:length(LEAVES)
     points = LEAVES{k}.points;
-    sol = force(points(:,1),points(:,2));
+
     dim = LEAVES{k}.degs;
     
-    [out_border_c,~,in_border,in_border_c,in_border_g] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain,LEAVES{k}.outerbox);
-    
+    [out_border_c,~,in_border,~,~] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain,LEAVES{k}.outerbox);
     
     Dx = kron(eye(dim(2)),diffmat(dim(1),1,LEAVES{k}.domain(1,:)));
     Dy = kron(diffmat(dim(2),1,LEAVES{k}.domain(2,:)),eye(dim(1)));
@@ -30,7 +30,11 @@ for k=1:length(LEAVES)
     
     E = eye(prod(dim));
 
-    OP = L(E,points(:,1),points(:,2),Dx,Dy,Dxx,Dyy);
+    OP = L(E,points(:,1),points(:,2),Dx,Dy,Dxx,Dyy,t);
+    
+    sol = dt*(theta-1)*OP*LEAVES{k}.values(:);
+    
+    OP = E - dt*theta*OP;
     
     for i=1:4
         if any(out_border_c{i}) && ~isempty(B{i})
@@ -48,16 +52,6 @@ for k=1:length(LEAVES)
     OP(in_border,:) = E(in_border,:);
     
     LEAVES{k}.linOp = OP;
-    
-    grid = LEAVES{k}.leafGrids;
-    
-%         if ~Tree.is_leaf
-%             for i=1:4
-%                 if any(in_border_c{i})
-%                     LEAVES{k}.Binterp{i} = Tree.interpSparseMatrixGrid({grid{1}(in_border_g{i}{1}) grid{2}(in_border_g{i}{2})});
-%                 end
-%             end
-%         end
     
     if ~Tree.is_leaf
                 LEAVES{k}.Binterp = Tree.interpSparseMatrixZone(points(in_border,:));

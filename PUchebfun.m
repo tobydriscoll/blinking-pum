@@ -91,12 +91,14 @@ classdef PUchebfun < PUfun
                         end
                         args(1:2) = [];
                     end
+                    
+                    obj.ChebRoot = ChebPatch(cheb_struct);
+                    
                 end
                 
-                obj.deg_in = obj.ChebRoot.deg_in;
+                
                 obj.tol = obj.ChebRoot.tol;
                 
-                obj.ChebRoot = ChebPatch(cheb_struct);
                 
                 if ~is_Patch
                     refine(obj,f);

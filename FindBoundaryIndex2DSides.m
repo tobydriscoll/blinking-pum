@@ -56,4 +56,5 @@ B = reshape(in_border_c{3},dim);
 in_border_g{3} = {B(:,1) [true;false(dim(2)-1,1)]};
 B = reshape(in_border_c{4},dim);
 in_border_g{4} = {B(:,end) [false(dim(2)-1,1);true]};
+
 end

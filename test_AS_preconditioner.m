@@ -111,8 +111,8 @@ f3 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
 
 L = @(u,x,y,dx,dy,dxx,dyy) (dxx+dyy);
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u,@(u,x,y,dx,dy,dxx,dyy) u};
-force = @(x) f2(x(:,1),x(:,2));
-border = {@(x)f3(x(:,1),x(:,2)),@(x)f3(x(:,1),x(:,2)),@(x)f3(x(:,1),x(:,2)),@(x)f3(x(:,1),x(:,2))};
+force = f2;
+border = {f3,f3,f3,f3};
 
 
 cheb_struct.domain = domain;
@@ -139,7 +139,7 @@ while ~is_refined
         
     if Tree.is_leaf
         
-        [rhs] = setLinOps(Tree,L,B,force,border);
+        [rhs] = setLinOpsTheta(Tree,L,B,force,border,theta,dt,t);
         
         sol = Tree.linOp\rhs;
         
