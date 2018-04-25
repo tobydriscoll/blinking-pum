@@ -199,8 +199,13 @@ classdef PUPatch<Patch
         %Input:
         %    X: cell array of grid values.
         function vals = evalfGrid(obj,X)
-            [sum,dotprod] = obj.evalfGrid_recurse(X);
-            vals = dotprod./sum;
+            
+            if obj.dim==1
+                vals = evalf(obj,X{1});
+            else
+                [sum,dotprod] = obj.evalfGrid_recurse(X);
+                vals = dotprod./sum;
+            end
         end
         
         %  evalf(obj,X)

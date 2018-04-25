@@ -84,7 +84,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
             for i=1:length(LEAVES)
                 if obj.dim==1
                     hold on;
-                    plot(LEAVES{i}.domain,(level)*ones(1,2),'LineWidth',2,'color','blue');
+                    plot(LEAVES{i}.domain,(level)*ones(1,2),'LineWidth',2,'color','black');
                     hold off;
                 elseif obj.dim==2
                     x = LEAVES{i}.domain(1,[1 1 2 2]);

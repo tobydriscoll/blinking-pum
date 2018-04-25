@@ -274,15 +274,25 @@ classdef PUchebfun < PUfun
         % plot(obj)
         % Returns a plot of the function in 2D
         function plot(obj)
-            domain = obj.ChebRoot.domain;
-            x = linspace(domain(1,1),domain(1,2),100)';
-            y = linspace(domain(2,1),domain(2,2),100)';
-            ef = obj.evalfGrid({x y});
-            [X,Y] = ndgrid(x,y);
-            defaultOpts = {'facecolor', 'flat', 'edgealpha', .5, 'edgecolor', 'none'};
-            surf(X,Y,ef,defaultOpts{:});
-            xlabel('x');
-            ylabel('y');
+            
+            assert(obj.ChebRoot.dim ==2 || obj.ChebRoot.dim ==1,'Must be 1-D or 2-D');
+            
+            if obj.ChebRoot.dim ==1
+                domain = obj.ChebRoot.domain;
+                x = linspace(domain(1,1),domain(1,2),100)';
+                ef = obj.evalf(x);
+                plot(x,ef,'LineWidth',2,'color','blue');
+            else
+                domain = obj.ChebRoot.domain;
+                x = linspace(domain(1,1),domain(1,2),100)';
+                y = linspace(domain(2,1),domain(2,2),100)';
+                ef = obj.evalfGrid({x y});
+                [X,Y] = ndgrid(x,y);
+                defaultOpts = {'facecolor', 'flat', 'edgealpha', .5, 'edgecolor', 'none'};
+                surf(X,Y,ef,defaultOpts{:});
+                xlabel('x');
+                ylabel('y');
+            end
         end
     end
     

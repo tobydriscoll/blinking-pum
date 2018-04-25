@@ -105,7 +105,9 @@ classdef LeafPatch<Patch
                 W{i} = obj.bump{i}(X{i});
             end
             
-            if obj.dim==2
+            if obj.dim==1
+                ef = W{1};
+            elseif obj.dim==2
                 ef = W{1}*W{2}.';
             else
                 ef = reshape(W{3},1,1,length(W{3})).*(W{2}'.*W{1});

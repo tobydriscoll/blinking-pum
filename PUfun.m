@@ -89,8 +89,9 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                     
                     vals = obj.leafArray{i}.evalfGrid(X);
                     
-                    
-                    if obj.ChebRoot.dim==2
+                    if obj.ChebRoot.dim==1
+                        int = int + W{1}*vals;
+                    elseif obj.ChebRoot.dim==2
                         int = int + W{2}*(W{1}*vals).';
                     else
                         int = int + W{2}*(W{1}*chebfun3.txm(vals,W{3},3))';
@@ -106,6 +107,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
         %Output:
         %   diff_Tree  : PU approximation of derivative
         function diff_Tree = diff(obj,diff_dim,order)
+
             diff_Tree = copy(obj);
             
             for i=1:length(obj.leafArray)
