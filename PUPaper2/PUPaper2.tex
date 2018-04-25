@@ -577,13 +577,18 @@ for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{fig:tan3D}. A
 
 \section{Extension to nonrectangular domains}
 
-We now consider approximation over a nonrectangular domain $\Omega\subset \R^d$. In our construction, a leaf node $\nu$ whose domain $\Omega_\nu$ lies entirely within $\Omega$ can be treated as before. However, if $\Omega_\nu\cap \Omega \subsetneq \Omega_\nu$, we need a different approximation technique on $\nu$. We will again select a tensor-product Chebyshev polynomial as in~(\ref{eq:full-interp}), but choose its coefficient array $C$ by satisfying a discrete least squares criterion:
+We now consider approximation over a nonrectangular domain $\Omega\subset \R^d$. In our construction, a leaf node $\nu$ whose domain $\Omega_\nu$ lies entirely within $\Omega$ can be treated as before. However, if $\Omega_\nu\cap \Omega \subsetneq \Omega_\nu$, we use a different approximation technique on $\nu$. The refinement criteria of Algorithm~\ref{alg:refine} are also modified for this situation.
+
+\subsection{Algorithm modifications}
+
+
+On a leaf whose domain extends outside of $\Omega$, we again use a tensor-product Chebyshev polynomial as in~(\ref{eq:full-interp}), but choose its coefficient array $C$ by satisfying a discrete least squares criterion:
 \begin{equation}
   \argmin_{C} \sum_{i=1}^{P} \lp f(\vect{x}_i) -  \tilde{p}(\vect{x}_i) \rp^2,
 \end{equation}
 where $\Xi = \{\vect{x}_i\}_{i=1}^{P} \subset \Omega_\nu\cap \Omega$ is a point set in the ``active'' part of the leaf's domain, $\Omega_\nu\cap \Omega$. In practice we can form a matrix $A$ whose columns are evaluations of each basis function at the points in $\Xi$, leading to a standard $P\times N^d$ linear least squares problem. We choose $\Xi$ as the part of the standard $(2N)^d$-sized Chebyshev grid lying inside $\Omega$. 
 
-This technique resembles Fourier extension or continuation techniques~\cite{adcock2014resolution,adcock2014numerical,huybrechs2010fourier}, so we refer to it as a \emph{Chebyshev extension approximation}. Unlike the Fourier case, however, there is no real domain extension involved; rather one constrains the usual multivariate polynomial only over part of its usual tensor-product domain. The condition number of $A$ in the discrete Fourier extension case has been shown to increase exponentially with the degree of the approximation \cite{adcock2014numerical}, but we expect to avoid having problems with this by capping $N$ and subdividing the domain instead.
+This technique resembles Fourier extension or continuation techniques~\cite{adcock2014resolution,adcock2014numerical,huybrechs2010fourier}, so we refer to it as a \emph{Chebyshev extension approximation}. Unlike the Fourier case, however, there is no real domain extension involved; rather one constrains the usual multivariate polynomial only over part of its usual tensor-product domain. The condition number of $A$ in the Fourier extension case has been shown to increase exponentially with the degree of the approximation \cite{adcock2014numerical}, because the collection of functions spanning the approximation space is a \emph{frame} rather than a basis. We see the same phenomenon with Chebyshev extension; essentially, constraining the polynomial over only part of the hypercube leaves it underdetermined. To cope with the numerical rank deficiency of $A$, we rely on the basic least-squares solution computed by the MATLAB backslash. We found this to be as good as or better than the pseudoinverse with a truncated SVD. 
 
 We modify Algorithm~\ref{alg:split} so that when a domain is split, the resulting zones of the children are shrunk if possible to just contact the boundary of $\Omega$. (An exception is the shared interface between the newly created children, which is fixed.) This helps to keep a substantial proportion of a leaf's domain within $\Omega$.
 
@@ -632,9 +637,9 @@ For the 2D Chebyshev extension method we test
   \end{aligned}
 \end{equation}
 We approximated each function on each of three domains: the unit disk, the diamond $|x|+|y|\le 1$, and the double astroid seen in Figure~\ref{star_plot}. The initial box (root of the approximation tree) was chosen to tightly enclose the given domain. For each test we set $N=17$ and the target tolerance to $10^{-10}$
-We timed both the adaptive construction and the evaluation on a $200\times 200$ grid, and recorded the max error as in the previous section. In each case, we choose initial box to fit the domain as tightly as possible. These results can be seen in Tables~\ref{table_general}. The resulting approximation of $g_4$ on the double astroid is shown in Figure~\ref{star_plot}, along with the adaptively found subdomains. 
+We timed both the adaptive construction and the evaluation on a $200\times 200$ grid, and recorded the max error as in the previous section. In each case, we choose initial box to fit the domain as tightly as possible. These results can be seen in Table~\ref{table_general}. The resulting approximation of $g_4$ on the double astroid is shown in Figure~\ref{star_plot}, along with the adaptively found subdomains. 
 
-We see when the function is smooth or contains localized features, the method is both efficient and highly accurate; in the smoothest case of $g_1$, a global multivariate least-squares polynomial is sufficient. Only for $g_3$, which requires uniformly fine resolution throughout the domains, is there a construction time longer than a few seconds. The Fourier extension methods described in~\cite{matthysen2017function} are implemented in Julia, making a direct quantitative comparisons difficult, but based on the orders of magnitude of the results reported there, we feel confident that our results for these examples are superior. 
+When the function is smooth or contains localized features, we find that the method is both efficient and highly accurate; in the smoothest case of $g_1$, a global multivariate least-squares polynomial is sufficient. Only for $g_3$, which requires uniformly fine resolution throughout the domains, is there a construction time longer than a few seconds. The Fourier extension methods described in~\cite{matthysen2017function} are implemented in Julia, making a direct quantitative comparisons difficult, but based on the orders of magnitude of the results reported there, we feel confident that our results for these examples are superior. 
 
 
 % \begin{figure}
@@ -691,11 +696,11 @@ function & domain & error & construct time & interp time & points \\ [5pt] \hlin
 \section{Concluding remarks}
 \label{sec:conclusion}
 
-For functions over hyperrectangles of uncorrelated variables or that otherwise are well-aligned with coordinate axes, low-rank and sparse-grid approximations can be expected to be highly performant. We have demonstrated an alternative approach that, in two or three dimensions, still performs well on such functions but is far less dependent on that property. Our method sacrifices the use of a single global representation that could achieve true spectral convergence, but in practice we are able to use a partition of unity to construct a smooth, global approximation of very high accuracy in a wide range of examples. 
+For functions over hyperrectangles of uncorrelated variables or that otherwise are well-aligned with coordinate axes, low-rank and sparse-grid approximations can be expected to be highly performant. We have demonstrated an alternative adaptive approach that, in two or three dimensions, still performs well on such functions but is far less dependent on that property. Our method sacrifices the use of a single global representation that could achieve true spectral convergence, but in practice we are able to use a partition of unity to construct a smooth, global approximation of very high accuracy in a wide range of examples. 
 
-The adaptive domain decomposition offers some other potential advantages we have not yet exploited, but are studying. It offers a built-in parallelism for function construction and evaluation. It allows efficient updating of function values locally, rather than globally, over the domain. It has a built-in preconditioning strategy, based on additive Schwarz methods, for the solution of partial differential equations.
+The adaptive domain decomposition offers some other potential advantages we have not yet exploited, but are studying. It offers a built-in parallelism for function construction and evaluation. It allows efficient updating of function values locally, rather than globally, over the domain. Finally, it has a built-in preconditioning strategy, based on additive Schwarz methods, for the solution of partial differential equations.
 
-Finally, domain decomposition offers a particular strategy for functions defined over nonrectangular domains. A node in the tree can use the tensor-product polynomial approximation if its rectangular domain lies within the domain of $f$, or something else otherwise. Geometric refinement can then help to significantly mollify the approximation problem. 
+By replacing tensor-product interpolation on the leaves with a simple least-squares approximation using the same multivariate polynomials, we have been able to demonstrate at least reasonable performance in approximation over nonrectangular domains. Further investigation is required to optimize adaptive strategies and find efficient algorithms for merging trees and operations such as integration.
 
 \bibliographystyle{siamplain}
 \bibliography{PU_BIB}
