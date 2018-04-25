@@ -80,13 +80,13 @@
 
 % REQUIRED
 \begin{abstract}
-We are doing adaptive multivariate approximations, and it works pretty well. This is a working abstract.
+  Spectral polynomial approximation of smooth functions allows real-time manipulation of and computation with them, as in the Chebfun system. Extension of the technique to two-dimensional and three-dimensional functions on hyperrectangles has mainly focused on low-rank approximation. While this method is very effective for some functions, it is highly anisotropic and unacceptably slow for many functions of potential interest. A method based on automatic recursive domain splitting, with a partition of unity to define the global approximation, is easy to construct and manipulate. Experiments show it to be as fast as existing software for many low-rank functions, and much faster on other examples, even in serial computation. It is also much less sensitive to alignment with coordinate axes. Some steps are also taken toward approximation of functions on nonrectangular domains, by using least-squares polynomial approximations in a manner similar to Fourier extension methods. 
 
 \end{abstract}
 
 % REQUIRED
 \begin{keywords}
-  partition of unity, Chebyshev interpolation, Chebfun, overlapping domain decomposition
+  partition of unity, polynomial interpolation, Chebfun, overlapping domain decomposition, Fourier extension
 \end{keywords}
 
 % REQUIRED
@@ -576,6 +576,7 @@ for $p,t \in [0,\pi/4]$. Timing results can be seen in Figure~\ref{fig:tan3D}. A
 \end{figure}
 
 \section{Extension to nonrectangular domains}
+\label{sec:general-domain}
 
 We now consider approximation over a nonrectangular domain $\Omega\subset \R^d$. In our construction, a leaf node $\nu$ whose domain $\Omega_\nu$ lies entirely within $\Omega$ can be treated as before. However, if $\Omega_\nu\cap \Omega \subsetneq \Omega_\nu$, we use a different approximation technique on $\nu$. The refinement criteria of Algorithm~\ref{alg:refine} are also modified for this situation.
 
