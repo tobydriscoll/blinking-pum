@@ -67,7 +67,11 @@ classdef ChebPatch<LeafPatch
             obj.tol = 1e-12;
             obj.deg_in = zeros(obj.dim,1);
             
-            obj.deg_in(:) = 7;
+            if obj.dim<3
+                obj.deg_in(:) = 7;
+            else
+                obj.deg_in(:) = 6;
+            end
             
             obj.cdeg_in = zeros(obj.dim,1);
             obj.cdeg_in(:) = 3;
