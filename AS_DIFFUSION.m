@@ -9,20 +9,22 @@ tol = 1e-8;
 gmres_tol = 5e-9;
 maxit = 1200;
 T = 5;
-dt = 0.25;
-theta = 0.5 + dt;
+dt = 0.1;
+theta = 0.5+dt;
 
-alpha = 0.5;
+alpha = 1;
 L = @(u,x,y,dx,dy,dxx,dyy,t) alpha*(dxx+dyy);
 
-% NORTH SOUTH EAST WEST
-B = {@(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u,@(u,x,y,dx,dy,dxx,dyy) u};
+%EAST WEST SOUTH NORTH
+%B = {@(u,x,y,dx,dy,dxx,dyy,t) -dx, @(u,x,y,dx,dy,dxx,dyy,t) dx, @(u,x,y,dx,dy,dxx,dyy,t) -dy,@(u,x,y,dx,dy,dxx,dyy,t) dy};
+B = {@(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy,t) u,@(u,x,y,dx,dy,dxx,dyy,t) u};
 force = @(x,y) zeros(size(x,1),1);
 time_dependent = false;
 
 bf = @(x,y) zeros(size(x,1),1);
 border = {bf,bf,bf,bf};
 init = @(x,y) exp(-1./(1-x.^2)).*exp(-1./(1-y.^2));
+%init = @(x,y) x.*y;
 
 cheb_struct.domain = domain;
 cheb_struct.deg_in = deg_in;
@@ -54,8 +56,13 @@ CT = 0;
 Tree.sample(init);
 
 F = PUchebfun(Tree);
+
+sum(F^2)
+
 plot(F);
 pause(0.001);
+
+rhs = setLinOpsTheta(F.ChebRoot,L,B,border,theta,dt,CT);
 
 %Going to assume we have more than one patch
 while CT<T
@@ -66,8 +73,9 @@ while CT<T
     %M = @(rhs) ASPreconditioner(Tree,rhs);
     M = @(rhs) CoarseCorrection(rhs,F.ChebRoot,Mat);
     tic, [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],F.ChebRoot.Getvalues); toc;
-    
+    length(rvec)
     F.ChebRoot.sample(sol);
+    sum(F^2)
     
     plot(F);
     

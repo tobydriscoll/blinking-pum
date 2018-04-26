@@ -21,7 +21,6 @@ classdef PUchebfun < PUfun
 % PUchebfun(f,'perf1',perf1,'pref2',pref2,..) is called. This preferences that 
 % can be set are:
 % 
-% *The domain of the function: 'domain' , [a_1 b_1;a_2 b_2;...;a_d b_d]
 % 
 % *The degree indices from the standard degrees in each dimension : 
 % 'degreeIndex', [ind_1,ind_2, ... ind_d]. 

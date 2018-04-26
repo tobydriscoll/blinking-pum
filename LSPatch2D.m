@@ -8,7 +8,7 @@ classdef LSPatch2D < LSPatch
     % f and the Chebyshev polynomial for a set of points inside the domain of
     % f.
     
-    % LSPatch2D(varargin) constructs a tensor product approximation
+    % LSPatch2D(var_struct) constructs a tensor product approximation
     % representing a function, based on the options passed into with
     % structure var_struct. The options are the same as LSPatch.m.
     

@@ -4,8 +4,8 @@
 %  out_border, in_border: logical array for points in the outer boundary
 %  and inner boundary.
 %
-%  out_border_s, in_border_s: cell array for the north,south,east,south (in
-%  that order) for the outer boundary and iterface.
+%  out_border_s, in_border_s: cell array for east,west,north,west sides (in
+%  that order) for the outer boundary and interface.
 function [out_border_s,out_border,in_border,in_border_s] = FindBoundaryIndex2DSides(degs,domain,out_domain)
 
 out_border = false(degs);

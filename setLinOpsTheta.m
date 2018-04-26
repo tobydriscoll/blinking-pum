@@ -29,28 +29,31 @@ end
 for k=1:length(LEAVES)
     points = LEAVES{k}.points;
 
-    dim = LEAVES{k}.degs;
+    degs = LEAVES{k}.degs;
     
-    [out_border_c,~,in_border,~] = FindBoundaryIndex2DSides(dim,LEAVES{k}.domain,LEAVES{k}.outerbox);
+    [out_border_c,~,in_border,~] = FindBoundaryIndex2DSides(degs,LEAVES{k}.domain,LEAVES{k}.outerbox);
     
-    Dx = kron(eye(dim(2)),diffmat(dim(1),1,LEAVES{k}.domain(1,:)));
-    Dy = kron(diffmat(dim(2),1,LEAVES{k}.domain(2,:)),eye(dim(1)));
+    Dx = kron(eye(degs(2)),diffmat(degs(1),1,LEAVES{k}.domain(1,:)));
+    Dy = kron(diffmat(degs(2),1,LEAVES{k}.domain(2,:)),eye(degs(1)));
     
-    Dxx = kron(eye(dim(2)),diffmat(dim(1),2,LEAVES{k}.domain(1,:)));
-    Dyy = kron(diffmat(dim(2),2,LEAVES{k}.domain(2,:)),eye(dim(1)));
+    Dxx = kron(eye(degs(2)),diffmat(degs(1),2,LEAVES{k}.domain(1,:)));
+    Dyy = kron(diffmat(degs(2),2,LEAVES{k}.domain(2,:)),eye(degs(1)));
     
-    E = eye(prod(dim));
+    E = eye(prod(degs));
 
     OP = L(E,points(:,1),points(:,2),Dx,Dy,Dxx,Dyy,t);
     
-    sol = dt*(theta-1)*OP*LEAVES{k}.values(:);
+    LEAVES{k}.linOp_f = OP;
+    
+    sol = LEAVES{k}.values(:)+dt*(1-theta)*OP*LEAVES{k}.values(:);
     
     OP = E - dt*theta*OP;
+    
     
     for i=1:4
         if any(out_border_c{i}) && ~isempty(B{i})
             OP(out_border_c{i},:) = ...
-                B{i}(E(out_border_c{i},:),diag(points(out_border_c{i},1)),diag(points(out_border_c{i},2)),Dx(out_border_c{i},:),Dy(out_border_c{i},:),Dxx(out_border_c{i},:),Dyy(out_border_c{i},:));
+                B{i}(E(out_border_c{i},:),points(out_border_c{i},1),points(out_border_c{i},2),Dx(out_border_c{i},:),Dy(out_border_c{i},:),Dxx(out_border_c{i},:),Dyy(out_border_c{i},:),t);
             sol(out_border_c{i}) = border{i}(points(out_border_c{i},1),points(out_border_c{i},2));
         end
     end

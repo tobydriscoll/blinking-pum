@@ -32,6 +32,7 @@ classdef ChebPatch<LeafPatch
         swap_degs %temp holder for degs
         iscoarse = false;
         linOp
+        linOp_f
         ClinOp
         Binterp
         orig_degs
