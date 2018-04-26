@@ -10,42 +10,36 @@
 %    dt,t: time step and current time
 %  output:
 %     rhs: returns RHS for the theta method.
-function [rhs] = setLinOpsTheta(Tree,L,B,border,theta,dt,t)
+function [rhs] = setLinOpsTheta(PUfun,L,B,border,theta,dt,t)
 
-if Tree.is_leaf
-    LEAVES = {Tree};
-else
-    LEAVES = Tree.collectLeaves();    
+rhs = zeros(length(PUfun),1);
+
+step = zeros(length(PUfun.leafArray),1);
+
+for k=2:length(PUfun.leafArray)
+    step(k) = step(k-1) + length(PUfun.leafArray{k-1});
 end
 
-rhs = zeros(length(Tree),1);
+for k=1:length(PUfun.leafArray)
+    points = PUfun.leafArray{k}.points;
 
-step = zeros(length(LEAVES),1);
-
-for k=2:length(LEAVES)
-    step(k) = step(k-1) + length(LEAVES{k-1});
-end
-
-for k=1:length(LEAVES)
-    points = LEAVES{k}.points;
-
-    degs = LEAVES{k}.degs;
+    degs = PUfun.leafArray{k}.degs;
     
-    [out_border_c,~,in_border,~] = FindBoundaryIndex2DSides(degs,LEAVES{k}.domain,LEAVES{k}.outerbox);
+    [out_border_c,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUfun.leafArray{k}.domain,PUfun.leafArray{k}.outerbox);
     
-    Dx = kron(eye(degs(2)),diffmat(degs(1),1,LEAVES{k}.domain(1,:)));
-    Dy = kron(diffmat(degs(2),1,LEAVES{k}.domain(2,:)),eye(degs(1)));
+    Dx = kron(eye(degs(2)),diffmat(degs(1),1,PUfun.leafArray{k}.domain(1,:)));
+    Dy = kron(diffmat(degs(2),1,PUfun.leafArray{k}.domain(2,:)),eye(degs(1)));
     
-    Dxx = kron(eye(degs(2)),diffmat(degs(1),2,LEAVES{k}.domain(1,:)));
-    Dyy = kron(diffmat(degs(2),2,LEAVES{k}.domain(2,:)),eye(degs(1)));
+    Dxx = kron(eye(degs(2)),diffmat(degs(1),2,PUfun.leafArray{k}.domain(1,:)));
+    Dyy = kron(diffmat(degs(2),2,PUfun.leafArray{k}.domain(2,:)),eye(degs(1)));
     
     E = eye(prod(degs));
 
     OP = L(E,points(:,1),points(:,2),Dx,Dy,Dxx,Dyy,t);
     
-    LEAVES{k}.linOp_f = OP;
+    PUfun.leafArray{k}.linOp_f = OP;
     
-    sol = LEAVES{k}.values(:)+dt*(1-theta)*OP*LEAVES{k}.values(:);
+    sol = PUfun.leafArray{k}.values(:)+dt*(1-theta)*OP*PUfun.leafArray{k}.values(:);
     
     OP = E - dt*theta*OP;
     
@@ -61,14 +55,14 @@ for k=1:length(LEAVES)
     
     sol(in_border) = 0;
     
-    rhs(step(k)+(1:length(LEAVES{k}))) = sol;
+    rhs(step(k)+(1:length(PUfun.leafArray{k}))) = sol;
     
     OP(in_border,:) = E(in_border,:);
     
-    LEAVES{k}.linOp = OP;
+    PUfun.leafArray{k}.linOp = OP;
     
-    if ~Tree.is_leaf
-                LEAVES{k}.Binterp = Tree.interpSparseMatrixZone(points(in_border,:));
+    if ~PUfun.ChebRoot.is_leaf
+                PUfun.leafArray{k}.Binterp = PUfun.ChebRoot.interpSparseMatrixZone(points(in_border,:));
     end
 end
 

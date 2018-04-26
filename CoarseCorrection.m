@@ -1,9 +1,9 @@
-function [ output ] = CoarseCorrection(rhs,tree,Mat)
+function [ output ] = CoarseCorrection(PUApprox,rhs,Mat)
 
-cs = ASCoarsePreconditioner(tree,rhs,Mat);
+cs = ASCoarsePreconditioner(PUApprox,rhs,Mat);
 
-z = rhs - LaplacianForward(tree,cs);
+z = rhs - ParSchwarzForward(PUApprox,cs);
 
-output = cs + ASPreconditioner(tree,z);
+output = cs + ASPreconditioner(PUApprox,z);
 end
 

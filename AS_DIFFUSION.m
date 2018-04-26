@@ -62,16 +62,16 @@ sum(F^2)
 plot(F);
 pause(0.001);
 
-rhs = setLinOpsTheta(F.ChebRoot,L,B,border,theta,dt,CT);
+%rhs = setLinOpsTheta(F,L,B,border,theta,dt,CT);
 
 %Going to assume we have more than one patch
 while CT<T
-    rhs = setLinOpsTheta(F.ChebRoot,L,B,border,theta,dt,CT);
-    Mat = CoarseASMatTheta(F.ChebRoot,L,B,theta,dt,CT);
+    rhs = setLinOpsTheta(F,L,B,border,theta,dt,CT);
+    Mat = CoarseASMatTheta(F,L,B,theta,dt,CT);
     
-    A = @(sol) LaplacianForward(F.ChebRoot,sol);
-    %M = @(rhs) ASPreconditioner(Tree,rhs);
-    M = @(rhs) CoarseCorrection(rhs,F.ChebRoot,Mat);
+    A = @(sol) ParSchwarzForward(F,sol);
+    M = @(rhs) CoarseCorrection(F,rhs,Mat);
+    
     tic, [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],F.ChebRoot.Getvalues); toc;
     length(rvec)
     F.ChebRoot.sample(sol);
@@ -81,7 +81,7 @@ while CT<T
     
     CT = CT+dt;
     
-    title(CT);
+    title(sprintf('time %g',CT));
     
     pause(0.001);
 end

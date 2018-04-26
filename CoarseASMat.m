@@ -9,15 +9,9 @@
 %    dt,t: time step and current time
 %  output:
 %     MAT: returns the coarse matrix for the theta method
-function [ Mat ] = CoarseASMat( Tree,L,B)
+function [ Mat ] = CoarseASMat(PUApprox,L,B)
 
-if Tree.is_leaf
-    LEAVES = {Tree};
-else
-    LEAVES = Tree.collectLeaves();    
-end
-
-Tree.Coarsen();
+PUApprox.Coarsen();
 
 step = 0;
 
@@ -25,19 +19,19 @@ ii = [];
 jj = [];
 zz = [];
 
-for k=1:length(LEAVES)
-    cdim = LEAVES{k}.cdegs;
+for k=1:length(PUApprox.leafArray)
+    cdim = PUApprox.leafArray{k}.cdegs;
 
     %Figure out indicies of boundary and interface points
-    [out_border_s,~,in_border,~]  = FindBoundaryIndex2DSides(cdim,LEAVES{k}.domain,LEAVES{k}.outerbox); 
+    [out_border_s,~,in_border,~]  = FindBoundaryIndex2DSides(cdim,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox); 
     
-    pointsl = LEAVES{k}.points();
+    pointsl = PUApprox.leafArray{k}.points();
     
-    index_n = (1:length(LEAVES{k}))';
+    index_n = (1:length(PUApprox.leafArray{k}))';
     index_n = index_n(in_border);
     
     %Figure out sparse indicies of interpolation matrix
-    [iib,jjb,zzb] = Tree.interpMatrixZone_vecs(pointsl(in_border,:));
+    [iib,jjb,zzb] = PUApprox.ChebRoot.interpMatrixZone_vecs(pointsl(in_border,:));
     
     % add them to the matrix
     % Note that ibb is the indicies of the interface border points.
@@ -46,11 +40,11 @@ for k=1:length(LEAVES)
     jj = [jj;jjb];
     zz = [zz;-zzb];    
 
-    Dx = kron(eye(cdim(2)),diffmat(cdim(1),1,LEAVES{k}.domain(1,:)));
-    Dy = kron(diffmat(cdim(2),1,LEAVES{k}.domain(2,:)),eye(cdim(1)));
+    Dx = kron(eye(cdim(2)),diffmat(cdim(1),1,PUApprox.leafArray{k}.domain(1,:)));
+    Dy = kron(diffmat(cdim(2),1,PUApprox.leafArray{k}.domain(2,:)),eye(cdim(1)));
     
-    Dxx = kron(eye(cdim(2)),diffmat(cdim(1),2,LEAVES{k}.domain(1,:)));
-    Dyy = kron(diffmat(cdim(2),2,LEAVES{k}.domain(2,:)),eye(cdim(1)));
+    Dxx = kron(eye(cdim(2)),diffmat(cdim(1),2,PUApprox.leafArray{k}.domain(1,:)));
+    Dyy = kron(diffmat(cdim(2),2,PUApprox.leafArray{k}.domain(2,:)),eye(cdim(1)));
     
     E = eye(prod(cdim));
     
@@ -78,9 +72,9 @@ for k=1:length(LEAVES)
     step = step+prod(cdim);
 end
 
-Mat = sparse(ii,jj,zz,length(Tree),length(Tree));
+Mat = sparse(ii,jj,zz,length(PUApprox),length(PUApprox));
 
-Tree.Refine();
+PUApprox.Refine();
 
 end
 

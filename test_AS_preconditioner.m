@@ -121,7 +121,8 @@ cheb_struct.split_flag = split_flag;
 cheb_struct.cdeg_in = cdeg_in;
 cheb_struct.tol = tol;
 
-Tree = ChebPatch(cheb_struct);
+F = PUchebfun(ChebPatch(cheb_struct));
+
 
 is_refined = false;
 
@@ -135,58 +136,49 @@ NUMPTS = [];
 
 while ~is_refined
     
-    NUMPTS = [NUMPTS length(Tree)];
         
-    if Tree.is_leaf
+    if F.ChebRoot.is_leaf
         
-        [rhs] = setLinOps(Tree,L,B,force,border);
+        [rhs] = setLinOps(F,L,B,force,border);
         
-        sol = Tree.linOp\rhs;
+        sol = F.ChebRoot.linOp\rhs;
         
-        Max = Tree.sample(sol);
+        num_it = 1;
         
-        
-        Tree = Tree.splitleaf(Max,true);
     else
         
-        [rhs] = setLinOps(Tree,L,B,force,border);
-        Mat = CoarseASMat( Tree,L,B );
+        [rhs] = setLinOps(F,L,B,force,border);
+        Mat = CoarseASMat(F,L,B );
         
-        A = @(sol) LaplacianForward(Tree,sol);
-%        M = @(rhs) ASPreconditioner(Tree,rhs);
-        M = @(rhs) CoarseCorrection(rhs,Tree,Mat);
+        A = @(sol) ParSchwarzForward(F,sol);
+        M = @(rhs) CoarseCorrection(F,rhs,Mat);
         
-        [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],Tree.Getvalues);
+        [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],F.Getvalues);
         
         gmres_it = [gmres_it length(rvec)];
         
-        length(rvec)
+        num_it = length(rvec);
         
-        Max = Tree.sample(sol);
-        
-        Tree.PUsplit(Max,true);
     end
     
-    Tree.clean();
+    Max = F.sample(sol);
     
-    x = linspace(domain(1,1),domain(1,2),100)';
-    y = linspace(domain(2,1),domain(2,2),100)';
-    [X,Y] = ndgrid(x,y);
+    F.splitleaves(Max,true);
+    
+    F.clean();
+    
     clf();
     
-    G = Tree.evalfGrid({x y});
     subplot(1,2,1);
-    surf(X,Y,G);
+    plot(F);
     xlabel('x');
     ylabel('y');
     subplot(1,2,2);
-    Tree.plotdomain;
+    show(F);
+    title(sprintf('%d iterations',num_it));
     pause(0.1);
-    
-    E = f3(X,Y) - G;
-    ERRS = [ERRS norm(E(:),inf)];
 
-    is_refined = Tree.is_refined;
+    is_refined = F.ChebRoot.is_refined;
 end
 toc
 

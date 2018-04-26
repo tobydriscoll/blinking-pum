@@ -49,7 +49,15 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
     
     methods
         
-        
+        %This method will split leaves if they are determined to be
+        %unrefined.
+        function splitleaves(obj,Max,set_vals)
+            if obj.ChebRoot.is_leaf
+                obj.ChebRoot = obj.ChebRoot.splitleaf(Max,set_vals);
+            else
+                obj.ChebRoot.PUsplit(Max,set_vals);
+            end
+        end
         
         
         % ef = evalf(obj,X)
@@ -72,6 +80,14 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             ef = obj.ChebRoot.evalfGrid(X);
         end
         
+        function Max = sample(obj,f)
+            Max = obj.ChebRoot.sample(f);
+        end
+        
+        function clean(obj)
+            obj.ChebRoot.clean();
+            obj.leafArray = obj.ChebRoot.collectLeaves();
+        end
         
         % int = sum(obj)
         % This method computes the integral of obj

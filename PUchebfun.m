@@ -146,6 +146,11 @@ classdef PUchebfun < PUfun
             Patch = ChebPatch(vars);
         end
         
+        function v = Getvalues(obj)
+            v = obj.ChebRoot.Getvalues(); 
+        end
+        
+        
         % addTree = plus(obj,Tree2)
         % This method adds obj and Tree2
         %Input:
@@ -235,13 +240,13 @@ classdef PUchebfun < PUfun
         % Coarsen(obj)
         % This method Coarsens each of the patches
         function Coarsen(obj)
-            obj.ChebRoot.Coarsen
+            obj.ChebRoot.Coarsen();
         end
         
         % Refines(obj)
         % This method Refines each of the patches
         function Refine(obj)
-            obj.ChebRoot.Coarsen
+            obj.ChebRoot.Refine();
         end
         
         
