@@ -241,12 +241,14 @@ classdef PUchebfun < PUfun
         % This method Coarsens each of the patches
         function Coarsen(obj)
             obj.ChebRoot.Coarsen();
+            obj.clean();
         end
         
         % Refines(obj)
         % This method Refines each of the patches
         function Refine(obj)
             obj.ChebRoot.Refine();
+            obj.clean();
         end
         
         

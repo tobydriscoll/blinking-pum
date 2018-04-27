@@ -11,7 +11,6 @@
 %     rhs: returns RHS for the theta method.
 function [rhs] = setLinOps(PUApprox,L,B,force,border)
 
-
 rhs = zeros(length(PUApprox),1);
 
 step = zeros(length(PUApprox.leafArray),1);

@@ -58,19 +58,6 @@ msz = 8;       % MarkerSize
 %   
 % f3 = @(x,y) (1-exp((x-1)/ep)).*(1-exp((y-1)/ep)).*cos(pi*(x+y));
 
-xc = -1;
-yc = -1;
-alpha = 10;
-r0 = 1;
-% 
-f2 = @(x,y) ((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(-1/2).*(alpha+alpha.^3.*( ...
-r0.^2+(-1).*x.^2+2.*x.*xc+(-1).*xc.^2+(-1).*y.^2+2.*y.*yc+(-1).* ...
- yc.^2)).*((-1)+alpha.^2.*((-1).*r0.^2+(-1).*x.^2+2.*x.*xc+(-1).* ...
-  xc.^2+(-1).*y.^2+2.*r0.*(x.^2+(-2).*x.*xc+xc.^2+(y+(-1).*yc).^2) ...
-  .^(1/2)+2.*y.*yc+(-1).*yc.^2)).^(-2);
-
-f3 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
-
 %c = sqrt(2);
 %b = 20;
 %d = 0.8;
@@ -108,6 +95,19 @@ f3 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
 %f3 = @(x,y) (cosh(10*x)+cosh(10*y))/(2*cosh(10));
 
 %L = @(u,x,y,dx,dy,dxx,dyy) -ep*(dxx+dyy)+2*dx+dy;
+
+xc = -1;
+yc = -1;
+alpha = 10;
+r0 = 1;
+ 
+f2 = @(x,y) ((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(-1/2).*(alpha+alpha.^3.*( ...
+r0.^2+(-1).*x.^2+2.*x.*xc+(-1).*xc.^2+(-1).*y.^2+2.*y.*yc+(-1).* ...
+ yc.^2)).*((-1)+alpha.^2.*((-1).*r0.^2+(-1).*x.^2+2.*x.*xc+(-1).* ...
+  xc.^2+(-1).*y.^2+2.*r0.*(x.^2+(-2).*x.*xc+xc.^2+(y+(-1).*yc).^2) ...
+  .^(1/2)+2.*y.*yc+(-1).*yc.^2)).^(-2);
+
+f3 = @(x,y) atan(alpha.*((-1).*r0+((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(1/2)));
 
 L = @(u,x,y,dx,dy,dxx,dyy) (dxx+dyy);
 B = {@(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u, @(u,x,y,dx,dy,dxx,dyy) u,@(u,x,y,dx,dy,dxx,dyy) u};
@@ -164,8 +164,6 @@ while ~is_refined
     Max = F.sample(sol);
     
     F.splitleaves(Max,true);
-    
-    F.clean();
     
     clf();
     

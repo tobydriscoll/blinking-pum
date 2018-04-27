@@ -57,6 +57,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             else
                 obj.ChebRoot.PUsplit(Max,set_vals);
             end
+            obj.clean();
         end
         
         
