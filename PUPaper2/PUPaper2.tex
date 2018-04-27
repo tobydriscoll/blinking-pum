@@ -80,7 +80,7 @@
 
 % REQUIRED
 \begin{abstract}
-  Spectral polynomial approximation of smooth functions allows real-time manipulation of and computation with them, as in the Chebfun system. Extension of the technique to two-dimensional and three-dimensional functions on hyperrectangles has mainly focused on low-rank approximation. While this method is very effective for some functions, it is highly anisotropic and unacceptably slow for many functions of potential interest. A method based on automatic recursive domain splitting, with a partition of unity to define the global approximation, is easy to construct and manipulate. Experiments show it to be as fast as existing software for many low-rank functions, and much faster on other examples, even in serial computation. It is also much less sensitive to alignment with coordinate axes. Some steps are also taken toward approximation of functions on nonrectangular domains, by using least-squares polynomial approximations in a manner similar to Fourier extension methods. 
+  Spectral polynomial approximation of smooth functions allows real-time manipulation of and computation with them, as in the Chebfun system. Extension of the technique to two-dimensional and three-dimensional functions on hyperrectangles has mainly focused on low-rank approximation. While this method is very effective for some functions, it is highly anisotropic and unacceptably slow for many functions of potential interest. A method based on automatic recursive domain splitting, with a partition of unity to define the global approximation, is easy to construct and manipulate. Experiments show it to be as fast as existing software for many low-rank functions, and much faster on other examples, even in serial computation. It is also much less sensitive to alignment with coordinate axes. Some steps are also taken toward approximation of functions on nonrectangular domains, by using least-squares polynomial approximations in a manner similar to Fourier extension methods, with promising results. 
 
 \end{abstract}
 
@@ -101,25 +101,25 @@ A distinctive and powerful mode of scientific computation has emerged recently i
 
 Townsend and Trefethen extended the 1D Chebfun algorithms to 2D functions over rectangles in Chebfun2~\cite{townsend2013extension,Townsend2014}, which uses low-rank approximations in an adaptive cross approximation. The construction and manipulation of 2D approximations is suitably fast for a wide range of smooth examples. Most recently, Hashemi and Trefethen created an extension of Chebfun called Chebfun3 for 3D approximations on hyperrectangles using low-rank ``slice--Tucker'' decompositions~\cite{Hashemi2017}. The range of functions that Chebfun3 can cope with in a reasonable interactive computing time is somewhat narrower than for Chebfun2, as one would expect.
 
-A distinctive aspect of the low-rank approximations used by Chebfun2 and Chebfun3 is that they are highly nonisotropic. That is, rotation of the coordinate axes can transform a rank-one or low-rank function to one with a much higher rank, greatly increasing the time required for function construction and manipulations. 
+A distinctive aspect of the low-rank approximations used by Chebfun2 and Chebfun3 is that they are highly nonisotropic. That is, rotation of the coordinate axes can transform a rank-one or low-rank function into one with a much higher rank, greatly increasing the time required for function construction and manipulations. 
 
-An alternative to Chebfun and related projects ported to other languages is sparse grid interpolation. Here one uses linear or polynomial interpolants on hierarchical Smolyak grids. Notable examples of software based on this technique are the Sparse Grid Interpolation Toolbox~\cite{Klimke2005} and the Sparse Grids Matlab Kit~\cite{Back2011}. An advantage of these packages is that they are capable of at least medium-dimensional representations on hyperrectangles. However, they are less fully featured than the Chebfun family. These methods are also highly nonisotropic.
+An alternative to Chebfun and related projects ported to other languages is sparse grid interpolation. Here one uses linear or polynomial interpolants on hierarchical Smolyak grids. Notable examples of software based on this technique are the Sparse Grid Interpolation Toolbox~\cite{Klimke2005} and the Sparse Grids Matlab Kit~\cite{Back2011}. An advantage of these packages is that they are capable of at least medium-dimensional representations on hyperrectangles. However, they seem to be less focused on high-accuracy approximation for a wide range of functions, and they are less fully featured than the Chebfun family. These methods are also highly nonisotropic.
 
 In this work we propose decomposing a hyperrectangular domain by adaptive, recursive bisections in one dimension at a time, generalizing earlier work in one dimension \cite{Aiton2018}. The resulting subdomains are defined to be overlapping, and on each we employ simple tensor-product Chebyshev polynomial interpolants. In order to define a global smooth approximation, we use a partition of unity to blend together the subdomains. This allows the approximation to capture highly localized function features while remaining computationally tractable.
 
-The more general problem of approximation of a function with high pointwise accuracy over a nonrectangular domain $\Omega \subset \R^d$ allows more limited global options than in the hyperrectangular case. Neither low-rank nor sparse grid approximations have any clear global generalizations to this case. Two techniques that can achieve spectral convergence for at least some such domains are radial basis functions~\cite{} and Fourier extension or continuation~\cite{adcock2014resolution}, but neither has been conclusively demonstrated to operate with high speed and reliability over a large collection of domains and functions.
+The more general problem of approximation of a function with high pointwise accuracy over a nonrectangular domain $\Omega \subset \R^d$ allows more limited global options than in the hyperrectangular case. Neither low-rank nor sparse grid approximations have any clear global generalizations to this case. Two techniques that can achieve spectral convergence for at least some such domains are radial basis functions~\cite{Fornberg2015} and Fourier extension or continuation~\cite{adcock2014resolution}, but neither has been conclusively demonstrated to operate with high speed and reliability over a large collection of domains and functions.
 
 Our use of an adaptive decomposition allows us to approximate on such domains with great flexibility. If a base subdomain is hyperrectangular, we proceed with a tensor-product interpolation for speed, but if its intersection with the global domain is nonrectangular, we can opt for a different representation. We need not be concerned with having a very large number of degrees of freedom in any local subproblem, since further subdivision is available, so the local algorithm need not be overly sophisticated. 
 
 
-The adaptive construction of function approximations is based on binary trees, as explained in section~\ref{sec:construction}. In section~\ref{sec:operations} we describe fast algorithms for evaluation, arithmetic combination, differentiation, and integration of the resulting tree-based approximations. Numerical experiments in section~\ref{sec:numerical_experiments} demonstrate that the tree-based approximations exhibit far less anisotropy than do Chebfun2 and Chebfun3. Our implementation is faster than Chebfun2 and Chebfun3 on all tested examples---sometimes by orders of magnitude---except for examples of very low rank, for which all the methods are acceptably fast. In section~\ref{sec:general-domain} we describe and demonstrate approximation on nonrectangular domains using a simple linear least-squares approximation by the tensor-product Chebyshev basis. While these results are preliminary, we think they show enough promise to merit further investigation. 
+The adaptive construction of function approximations is based on binary trees, as explained in section~\ref{sec:construction}. In section~\ref{sec:operations} we describe fast algorithms for evaluation, arithmetic combination, differentiation, and integration of the resulting tree-based approximations. Numerical experiments over hyperrectangles in section~\ref{sec:numerical_experiments} demonstrate that the tree-based approximations exhibit far less anisotropy than do Chebfun2 and Chebfun3. Our implementation is faster than Chebfun2 and Chebfun3 on all tested examples---sometimes by orders of magnitude---except for examples of very low rank, for which all the methods are acceptably fast. In section~\ref{sec:general-domain} we describe and demonstrate approximation on nonrectangular domains using a simple linear least-squares approximation by the tensor-product Chebyshev basis. While these results are preliminary, we think they show enough promise to merit further investigation. 
 
 
 
 \section{Adaptive construction}
 \label{sec:construction}
 
-Let $\Omega = \{ \vect{x} \in \R^d: x_i \in [a_i,b_i], i=1,\ldots,d\}$ be a hyperrectangle, and suppose we wish to approximate $f:\Omega \to \R$. Our strategy is to cover $\Omega$ with overlapping subdomains, on each of which $f$ is well-approximated by a multivariate polynomial, and use a partition of unity to construct a global approximation. We defer a description of the partition of unity scheme to section~\ref{sec:operations}. In this section we describe an adaptive procedure for obtaining the overlapping domains. 
+Let $\Omega = \{ \vect{x} \in \R^d: x_i \in [a_i,b_i], i=1,\ldots,d\}$ be a hyperrectangle, and suppose we wish to approximate $f:\Omega \to \R$. Our strategy is to cover $\Omega$ with overlapping subdomains, on each of which $f$ is well-approximated by a multivariate polynomial, and use a partition of unity to construct a global approximation. We defer a description of the partition of unity scheme to section~\ref{sec:operations}. In this section we describe an adaptive procedure for obtaining the overlapping domains and individual approximations over them. 
 
 The domains are constructed from recursive bisections of $\Omega$ into nonoverlapping hyperrectangular \emph{zones}. Let $t>0$ be a parameter. Given a zone $\prod_{j=1}^d [\alpha_{j},\beta_{j}]$, we extend it to a larger domain $\prod_{j=1}^d [\bar{\alpha}_{j},\bar{\beta}_{j}]$ by fixing a parameter $t>0$, defining
 \begin{equation}
@@ -157,7 +157,7 @@ Let $f$ be the scalar-valued function on $\Omega$ that we wish to approximate. A
   \label{eq:full-interp}
   \tilde{p}(\vect{x}) = \sum_{i_1=0}^{\nmax-1} \cdots \sum_{i_d=0}^{\nmax-1}  C_{i_1,\ldots,i_d} T_{i_1}(x_1)\cdots T_{i_d}(x_d),
 \end{equation}
-where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\bigo(\nmax^d \log \nmax)$ time~\cite{mason2002chebyshev}. Following the practice of Chebfun3t \cite{Hashemi2017}, for each $j=1,\ldots,d$, we define a scalar sequence $\gamma^{(j)}$ by summing $|C_{i_1,\ldots,i_d}|$ over all dimensions except the $j$th. To each of these sequences we apply Chebfun's {\tt StandardChop}  algorithm, which attempts to measure decay in the coefficients in a suitably robust sense~\cite{Aurentz:2017:CCS:3034774.2998442}. Let the output of {\tt StandardChop} for sequence $\gamma^{(j)}$ be $n_j$; this is the degree that {\tt StandardChop} deems to be sufficient for resolution at a user-set tolerance.  If $n_j<\nmax$ we say that the function is resolved in dimension $j$ on $\nu$. If $f$ is resolved in all dimensions on $\nu$, then we truncate the interpolant sums in~(\ref{eq:full-interp}) at the degrees $n_j$ and store the samples of $f$ on the corresponding smaller tensor-product grid. 
+where the coefficient array $C$ can be computed by FFT in $\bigo(\nmax^d \log \nmax)$ time~\cite{mason2002chebyshev}. Following the practice of Chebfun3t \cite{Hashemi2017}, for each $j=1,\ldots,d$, we define a scalar sequence $\gamma^{(j)}$ by summing $|C_{i_1,\ldots,i_d}|$ over all dimensions except the $j$th. To each of these sequences we apply Chebfun's {\tt StandardChop}  algorithm, which attempts to measure decay in the coefficients in a suitably robust sense~\cite{Aurentz:2017:CCS:3034774.2998442}. Let the output of {\tt StandardChop} for sequence $\gamma^{(j)}$ be $n_j$; this is the degree that {\tt StandardChop} deems to be sufficient for resolution at a user-set tolerance.  If $n_j<\nmax$ we say that the function is resolved in dimension $j$ on $\nu$. If $f$ is resolved in all dimensions on $\nu$, then we truncate the interpolant sums in~(\ref{eq:full-interp}) at the degrees $n_j$ and store the samples of $f$ on the corresponding smaller tensor-product grid. 
 
 \begin{algorithm}
 \caption{refine($\nu$,$f$,$\nmax$,$t$)}
@@ -176,16 +176,16 @@ where the coefficient array $C$ can be computed by an $n$-dimensional FFT in $\b
     \IF{all \textsf{isdone}($\nu$) are TRUE}
       \STATE Truncate~(\ref{eq:full-interp}) at degrees $n_1,\ldots,n_d$ to define \textsf{grid}($\nu$), \textsf{values}($\nu$), \textsf{interpolant}($\nu$)
     \ELSE
-      \STATE refine($\nu$,$\nmax$,$t$)
+      \STATE refine($\nu$,$f$,$\nmax$,$t$)
     \ENDIF
   \ELSE
-    \STATE refine(\child{0}($\nu$),$\nmax$,$t$)      
-    \STATE refine(\child{1}($\nu$),$\nmax$,$t$)
+    \STATE refine(\child{0}($\nu$),$f$,$\nmax$,$t$)      
+    \STATE refine(\child{1}($\nu$),$f$,$\nmax$,$t$)
   \ENDIF
 \end{algorithmic}
 \end{algorithm}
 
-Algorithm~\ref{alg:refine}  describes a recursive adaptation procedure for building the binary tree $\ct$, beginning with a root node whose zone and domain are both the original hyperrectangle $\Omega$. For a non-leaf input, the algorithm is simply called recursively on the children. For an input node that is currently a leaf of the tree, the function $f$ is sampled, and chopping is used in each unfinished dimension to determine whether sufficient resolution has been achieved. Each dimension that is deemed to be resolved is marked as finished. If all dimensions are found to be finished, then the interpolant is chopped to the minimum necessary length in each dimension, and the node will remain a leaf. Otherwise, the node is split in all unfinished dimensions using Algorithm~\ref{alg:split}, and Algorithm~\ref{alg:refine} is applied recursively. Note that the descendants of the splitting(s) inherit the \textsf{isdone} property that marks which dimensions have been finished, so no future splits are possible in such dimensions within this branch. 
+Algorithm~\ref{alg:refine}  describes a recursive adaptation procedure for building the binary tree $\ct$, beginning with a root node whose zone and domain are both the original hyperrectangle $\Omega$. For a non-leaf input, the algorithm is simply called recursively on the children. For an input node that is currently a leaf of the tree, the function $f$ is sampled, and chopping is used in each unfinished dimension to determine whether sufficient resolution has been achieved. Each dimension that is deemed to be resolved is marked as finished. If all dimensions are found to be finished, then the interpolant is chopped to the minimum necessary length in each dimension, and the node will remain a leaf. Otherwise, the node is split in all unfinished dimensions using Algorithm~\ref{alg:split}, and Algorithm~\ref{alg:refine} is applied recursively. Note that the descendants of a splitting inherit the \textsf{isdone} property that marks which dimensions have been finished, so no future splits are possible in such dimensions within this branch. 
 
 \begin{algorithm}
 \caption{split($\nu$,$j$,$t$)}
@@ -252,12 +252,12 @@ and let
   \label{eq:affine}
   \ell(x;a,b) = 2\frac{x-a}{b-a} - 1
 \end{equation}
-be the affine map from $[a,b]$ to $[-1,1]$. Suppose $\nu$ is a leaf of $T$ with domain $\Omega_\nu = \prod [\bar{\alpha}_j,\bar{\beta}_j]$. Then we can define the smoothed-indicator or bump function
+be the affine map from $[a,b]$ to $[-1,1]$. Suppose $\nu$ is a leaf of $\ct$ with domain $\Omega_\nu = \prod [\bar{\alpha}_j,\bar{\beta}_j]$. Then we can define the smoothed-indicator or bump function
 \begin{equation}
   \label{eq:bump-functions}
   \psi_\nu(\vect{x}) = \prod_{j=1}^d \psi_0\bigl( \ell(x_j;\bar{\alpha}_{j},\bar{\beta}_{j}) \bigr).
 \end{equation}
-Next we use Shepard's method~\cite{wendland2004scattered} to define a partition of unity $\{w_\nu (\vect{x})\}$, indexed by the leaves of $T$:
+Next we use Shepard's method~\cite{wendland2004scattered} to define a partition of unity $\{w_\nu (\vect{x})\}$, indexed by the leaves of $\ct$:
 \begin{equation}
   \label{eq:pu-weight}
   w_\nu(\vect{x}) = \frac{\psi_\nu(\vect{x})}{\displaystyle \sum_{\mu\in \text{leaves}(\ct)} \psi_\mu(\vect{x})}.
@@ -287,7 +287,7 @@ This formula suggests a recursive approach to evaluating the numerator and denom
 \STATE $S=0$, $P=0$
 \IF{$\nu$ is a leaf}
 \STATE $S=\psi_\nu(\vect{x})$
-\STATE $P = S \cdot \text{interpolant}(\nu)(\vect{x})$
+\STATE $P = S \cdot \textsf{interpolant}(\nu)(\vect{x})$
 \ELSE
 \FOR{$k=0,1$}
 \IF{$\vect{x} \in \text{\textsf{domain}(\child{k}}(\nu))$}
@@ -312,9 +312,9 @@ The innermost sum yields $N^{d-1}M$ unique values, each taking $\bigo(N)$ time t
 
 \subsection{Binary arithmetic operations}
 
-Suppose we have two approximations $\hat{s}_1(\vect{x})$, $\hat{s}_2(\vect{x})$, represented by trees $\ct_1$ and $\ct_2$ respectively, and we want to construct a tree approximation for $\hat{s}_1 \circ \hat{s}_2$, where $\circ$ is one of the operators $+$, $-$, $\times$, or $\div$. If $\ct_1$ and $\ct_2$ have identical tree structures, then it is straightforward to operate leafwise on the polynomial approximations. In the cases of multiplication and division, the resulting tree may have to be refined further using Algorithm~\ref{alg:split}, since these operations typically result in polynomials of degree greater than the operands. 
+Suppose we have two approximations ${s}_1(\vect{x})$, ${s}_2(\vect{x})$, represented by trees $\ct_1$ and $\ct_2$ respectively, and we want to construct a tree approximation for ${s}_1 \circ {s}_2$, where $\circ$ is one of the operators $+$, $-$, $\times$, or $\div$. If $\ct_1$ and $\ct_2$ have identical tree structures, then it is straightforward to operate leafwise on the polynomial approximations. In the cases of multiplication and division, the resulting tree may have to be refined further using Algorithm~\ref{alg:split}, since these operations typically result in polynomials of degree greater than the operands. 
 
-If the trees $\ct_1$ and $\ct_2$ are not structurally identical, we are free to use Algorithm~\ref{alg:split} to construct an approximation by sampling values of $\hat{s}_1 \circ \hat{s}_2$. However, the tree of $\hat{s}_1 \circ \hat{s}_2$ likely shares refinement structure with both $\ct_1$ and $\ct_2$. For example, Figure~\ref{zone_tan} shows the refined zones of the trees for $\arctan(100(x^2+y))$, $\arctan(100(x+y^2))$, and their sum. Thus in practice we merge the trees $\ct_1$ and $\ct_2$ using Algorithm~\ref{alg:merge}, presented in Appendix~\ref{sec:merge}. The merged tree, whose leaves contain sampled values of the result, may then be refined further if chopping tests then reveal that the result is not fully resolved. 
+If the trees $\ct_1$ and $\ct_2$ are not structurally identical, we are free to use Algorithm~\ref{alg:split} to construct an approximation by sampling values of ${s}_1 \circ {s}_2$. However, the tree of ${s}_1 \circ {s}_2$ likely shares refinement structure with both $\ct_1$ and $\ct_2$. For example, Figure~\ref{zone_tan} shows the refined zones of the trees for $\arctan(100(x^2+y))$, $\arctan(100(x+y^2))$, and their sum. Thus in practice we merge the trees $\ct_1$ and $\ct_2$ using Algorithm~\ref{alg:merge}, presented in Appendix~\ref{sec:merge}. The merged tree, whose leaves contain sampled values of the result, may then be refined further if chopping tests then reveal that the result is not fully resolved. 
 
 \begin{figure}
 \centering
@@ -354,7 +354,7 @@ For the second sum, note that the weight function derivatives are nonzero only a
   \sum_{\nu\in \text{leaves}(\ct)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x})
   = s_\nu(\vect{x}) \pp{}{x_j}  \sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) = 0,
 \end{equation}
-since the weights are a partition of unity. Thus this term essentially contributes an amount on the order of the local interpolation accuracy times the gradients of the weights. These are inversely proportional to the overlap widths, which are themselves proportional to the zone widths (see~(\ref{eq:overlap})). At most, then, they contribute an amount that is $\bigo(2^m)$ larger than the original local error on a leaf that is at depth $m$ in the tree. As a practical issue, we are unlikely to be able to cope anyway with a tree of depth great enough to incur a factor as large as two full orders of magnitude---which we would need only to resolve features at a scale much less than 1\% of the original domain width. Hence we feel justified ignoring this contribution. 
+since the weights are a partition of unity. Thus this term essentially contributes an amount on the order of the local interpolation accuracy times the gradients of the weights. These gradients are inversely proportional to the overlap widths, which are themselves proportional to the zone widths (see~(\ref{eq:overlap})). At most, then, they contribute an amount that is $\bigo(2^m)$ larger than the original local error on a leaf that is at depth $m$ in the tree. As a practical issue, we are unlikely to be able to cope anyway with a tree of depth great enough to incur a factor as large as two full orders of magnitude---which we would need only to resolve features at a scale much less than 1\% of the original domain width. Hence we feel justified ignoring this contribution. 
 
 
 \subsection{Integration}
@@ -369,11 +369,11 @@ Since the leaf interpolants are defined natively over the overlapping domains, t
 \section{Numerical experiments}
 \label{sec:numerical_experiments}
 
-All the following experiments were performed on a computer with a 2.6 GHz Intel Core i5 processor in version 2017a of MATLAB. Our code, which uses a serial object-oriented recursive implementation of the algorithms, is available for download at ??. Comparisons to Chebfun2 and Chebfun3 were done using Chebfun version 5.5.0. We also tried to use the Sparse Grid Interpolation Toolbox~\cite{Klimke2005}, but on all the examples we were unable to get it close to our desired error tolerances within its hard-coded limits on sparse grid depth. 
+All the following experiments were performed on a computer with a 2.6 GHz Intel Core i5 processor in version 2017a of MATLAB. Our code, which uses a serial object-oriented recursive implementation of the algorithms, is available for download.\footnote{\url{https://bitbucket.org/kevinaiton/partition-of-unity-chebyshev-grid-interpolation}} Comparisons to Chebfun2 and Chebfun3 were done using Chebfun version 5.5.0. We also tried to use the Sparse Grid Interpolation Toolbox~\cite{Klimke2005}, but on all the examples we were unable to get it close to our desired error tolerances within its hard-coded limits on sparse grid depth. 
 
 \subsection{2D experiments}
 
-We first test the 2D functions $\log(1+(x^2+y^4)/10^{-5})$, $\arctan((x+y^2)/10^{-2})$, $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$, Franke's function \cite{franke1979critical}, and the smooth functions from the Genz family test package \cite{genz1987package}. For each function we record the time of construction, the time to evaluate on a 200x200 grid, and the max observed error on this grid. Table~\ref{tab:timing2D} shows the results for the new method. For the low-rank test cases, the methods are comparable, with neither showing a consistent advantage; most importantly, both methods are fast. In the tests of high-rank functions, the tree-based method enjoys a clear advantage in both construction and evaluation times. Moreover, the method remains fast enough for interactive computing even as the total number of nodes exceeds 1.6 million.  We present plots of the functions and adaptively generated subdomains for the first three test functions in Figures~\ref{TANFUN1}-\ref{rungeFUN1}.
+We first test the 2D functions $\log(1+(x^2+y^4)/10^{-5})$, $\arctan((x+y^2)/10^{-2})$, $\frac{10^{-4}}{(10^{-4}+x^2)(10^{-4}+y^2)}$, Franke's function \cite{franke1979critical}, and the smooth functions from the Genz family test package \cite{genz1987package}. For each function we record the time of construction, the time to evaluate on a $200\times 200$ grid, and the max observed error on this grid. Table~\ref{tab:timing2D} shows the results for the new method. For the low-rank test cases, the methods are comparable, with neither showing a consistent advantage; most importantly, both methods are fast. In the tests of high-rank functions, the tree-based method enjoys a clear advantage in both construction and evaluation times. Moreover, the method remains fast enough for interactive computing even as the total number of nodes exceeds 1.6 million.  We present plots of the functions and adaptively generated subdomains for the first three test functions in Figures~\ref{TANFUN1}-\ref{rungeFUN1}.
 
 \begin{table}[p]
 
@@ -496,7 +496,7 @@ Our next experiment is to add and multiply the rank-one function $\arctan(250x)$
 
 \subsection{3D experiments}
 
-We next test the 3D functions $1/(\cosh(5(x+y+z)))^2$, $\arctan(5(x+y)+z)$, and 3D versions of the smooth functions from the Genz family test package. Table~\ref{tab:timing3D} shows the construction time, the time taken to evaluate on a $200\times 200 \times 200$ grid, and the max error on this grid. We see that Chebfun3 mostly outperforms the tree-based method for low-Tucker-rank functions, though the results are mixed for the grid evaluations. In these cases, however, the tree-based method is still operating within acceptable interactive speed. (We also note that for the generalized Runge function, both methods failed to get close to the targeted accuracy.) For the two higher-rank examples, the story is very different. The tree-based method is able to perform all the tests in under a second, while Chebfun3 requires over 80 seconds to construct these cases. Once Chebfun3 finds the approximation, its evaluation time is also under a second.  
+We next test the 3D functions $1/(\cosh(5(x+y+z)))^2$, $\arctan(5(x+y)+z)$, and 3D versions of the smooth functions from the Genz family test package. Table~\ref{tab:timing3D} shows the construction time, the time taken to evaluate on a $200\times 200 \times 200$ grid, and the max error on this grid. We see that Chebfun3 mostly outperforms the tree-based method for low-Tucker-rank functions, though the results are mixed for the grid evaluations. In these cases, however, the tree-based method is still operating with acceptable interactive speed. (We also note that for the generalized Runge function, both methods failed to get close to the targeted accuracy.) For the two higher-rank examples, the story is very different. The tree-based method is able to perform all the tests in under a second, while Chebfun3 requires over 80 seconds to construct these cases. Once Chebfun3 finds the approximation, its evaluation time is also under a second.  
 
 
 \begin{table}[p]
@@ -588,11 +588,11 @@ On a leaf whose domain extends outside of $\Omega$, we again use a tensor-produc
 \end{equation}
 where $\Xi = \{\vect{x}_i\}_{i=1}^{P} \subset \Omega_\nu\cap \Omega$ is a point set in the ``active'' part of the leaf's domain, $\Omega_\nu\cap \Omega$. In practice we can form a matrix $A$ whose columns are evaluations of each basis function at the points in $\Xi$, leading to a standard $P\times N^d$ linear least squares problem. We choose $\Xi$ as the part of the standard $(2N)^d$-sized Chebyshev grid lying inside $\Omega$. 
 
-This technique resembles Fourier extension or continuation techniques~\cite{adcock2014resolution,adcock2014numerical,huybrechs2010fourier}, so we refer to it as a \emph{Chebyshev extension approximation}. Unlike the Fourier case, however, there is no real domain extension involved; rather one constrains the usual multivariate polynomial only over part of its usual tensor-product domain. The condition number of $A$ in the Fourier extension case has been shown to increase exponentially with the degree of the approximation \cite{adcock2014numerical}, because the collection of functions spanning the approximation space is a \emph{frame} rather than a basis. We see the same phenomenon with Chebyshev extension; essentially, constraining the polynomial over only part of the hypercube leaves it underdetermined. To cope with the numerical rank deficiency of $A$, we rely on the basic least-squares solution computed by the MATLAB backslash. We found this to be as good as or better than the pseudoinverse with a truncated SVD. 
+This technique resembles Fourier extension or continuation techniques~\cite{adcock2014resolution,huybrechs2010fourier}, so we refer to it as a \emph{Chebyshev extension approximation}. Unlike the Fourier case, however, there is no real domain extension involved; rather one constrains the usual multivariate polynomial only over part of its usual tensor-product domain. The condition number of $A$ in the Fourier extension case has been shown to increase exponentially with the degree of the approximation \cite{adcock2014numerical}, because the collection of functions spanning the approximation space is a \emph{frame} rather than a basis. We see the same phenomenon with Chebyshev extension; essentially, constraining the polynomial over only part of the hypercube leaves it underdetermined. To cope with the numerical rank deficiency of $A$, we rely on the basic least-squares solution computed by the MATLAB backslash. We found this to be as good as or better than the pseudoinverse with a truncated SVD. 
 
 We modify Algorithm~\ref{alg:split} so that when a domain is split, the resulting zones of the children are shrunk if possible to just contact the boundary of $\Omega$. (An exception is the shared interface between the newly created children, which is fixed.) This helps to keep a substantial proportion of a leaf's domain within $\Omega$.
 
-We also modify how refinement decisions are made and executed in Algorithm~\ref{alg:refine}, for a subtle reason. The original algorithm is able to exploit the very different resolution requirements for a function such as, say, $xT_{60}(y)$, by testing for sufficient resolution in each dimension independently and splitting accordingly. We find experimentally that if the function is like this over $\Omega$, the extension of it to the unconstrained part of the leaf node's domain has uniform resolution needs in all variables. Therefore, we use a simpler refinement process: if the norm of the least-squares residual (normalized by $\sqrt{P}$) is not acceptably small, we split in all dimensions successively. In effect, the approximation becomes a quadtree or octree within those leaves that do not lie entirely within $\Omega$. 
+We also modify how refinement decisions are made and executed in Algorithm~\ref{alg:refine}, for a subtle reason. The original algorithm is able to exploit the very different resolution requirements for a function such as, say, $xT_{60}(y)$, by testing for sufficient resolution in each dimension independently and splitting accordingly. We find experimentally that if the function is like this over $\Omega$, the extension of it to the unconstrained part of the leaf node's domain has uniform resolution requirements in all variables. Therefore, we use a simpler refinement process: if the norm of the least-squares residual (normalized by $\sqrt{P}$) is not acceptably small, we split in all dimensions successively. In effect, the approximation becomes a quadtree or octree within those nodes that do not lie entirely within $\Omega$. 
 
 
 % \begin{algorithm}
@@ -628,7 +628,7 @@ We also modify how refinement decisions are made and executed in Algorithm~\ref{
 
 \subsection{Numerical experiments}
 
-For the 2D Chebyshev extension method we test
+We chose the test functions 
 \begin{equation}
   \label{eq:testfun-gen}
   \begin{aligned}
@@ -666,7 +666,7 @@ When the function is smooth or contains localized features, we find that the met
 \includegraphics[scale = 0.34]{starPlotDoms.eps}
    \label{star_plotb}
  }
-\caption{Plot of $\arctan(3(y^2+x))$ and the subdomains formed from the partition of unity method.}
+\caption{Plot of $\arctan(3(y^2+x))$ and the subdomains formed from the partition of unity method. The error in this approximation was found to be about $10^{-11}$.}
 \label{star_plot}
 \end{figure}
 
@@ -695,11 +695,11 @@ function & domain & error & construct time & interp time & points \\ [5pt] \hlin
 \section{Concluding remarks}
 \label{sec:conclusion}
 
-For functions over hyperrectangles of uncorrelated variables or that otherwise are well-aligned with coordinate axes, low-rank and sparse-grid approximations can be expected to be highly performant. We have demonstrated an alternative adaptive approach that, in two or three dimensions, still performs well on such functions but is far less dependent on that property. Our method sacrifices the use of a single global representation that could achieve true spectral convergence, but in practice we are able to use a partition of unity to construct a smooth, global approximation of very high accuracy in a wide range of examples. 
+For functions over hyperrectangles of uncorrelated variables or that otherwise are well-aligned with coordinate axes, low-rank and sparse-grid approximations can be expected to be highly performant. We have demonstrated an alternative adaptive approach that, in two or three dimensions, still performs very well on such functions but is far less dependent on that property. Our method sacrifices the use of a single global representation that could achieve true spectral convergence, but in practice we are able to use a partition of unity to construct a smooth, global approximation of very high accuracy in a wide range of examples. 
 
 The adaptive domain decomposition offers some other potential advantages we have not yet exploited, but are studying. It offers a built-in parallelism for function construction and evaluation. It allows efficient updating of function values locally, rather than globally, over the domain. Finally, it has a built-in preconditioning strategy, based on additive Schwarz methods, for the solution of partial differential equations.
 
-By replacing tensor-product interpolation on the leaves with a simple least-squares approximation using the same multivariate polynomials, we have been able to demonstrate at least reasonable performance in approximation over nonrectangular domains. Further investigation is required to optimize adaptive strategies and find efficient algorithms for merging trees and operations such as integration.
+By replacing tensor-product interpolation on the leaves with a simple least-squares approximation using the same multivariate polynomials, we have been able to demonstrate at least reasonable performance in approximation over nonrectangular domains. Further investigation is required to better understand the least-squares approximation process, optimize adaptive strategies, and find efficient algorithms for merging trees and operations such as integration.
 
 \bibliographystyle{siamplain}
 \bibliography{PU_BIB}
@@ -719,7 +719,7 @@ We assume an important relationship among the input nodes. Suppose that \prop{zo
 \end{equation}
 This is trivially true at the root level. The significance of this requirement is that it allows us to avoid ambiguity about what the zone of $\Tm$ should be after a new split in, say, dimension $j$. Since only an uncompleted dimension can be split, the zone of the children of $\Tm$ after splitting will be identical to that of whichever (or both) of the $\nu_k$ requires refinement in dimension $j$.
 
-For example, suppose the zones of $\nu_1$ and $\nu_2$ are $[-1,0]\times[-1,1]$ and $[-1,1]\times[0,1]$, respectively, and \prop{zone}{$\Tm$}=$[-1,0]\times[0,1]$. It's clear that we can interpolate from $\nu_1$ and $\nu_2$ onto $\Tm$. It's also clear that we can further split in $x$ in $\nu_1$, and in $y$ in $\nu_2$. But if we were to split $\nu_2$ in $x$, one of the children would have zone $[0,1]\times[0,1]$, which is inaccessible to $\nu_1$. 
+For example, suppose the zones of $\nu_1$ and $\nu_2$ are $[-1,0]\times[-1,1]$ and $[-1,1]\times[0,1]$, respectively, and \prop{zone}{$\Tm$}=$[-1,0]\times[0,1]$. It is clear that we can interpolate from $\nu_1$ and $\nu_2$ onto $\Tm$. It is also clear that we can further split in $x$ in $\nu_1$, and in $y$ in $\nu_2$. But if we were to split $\nu_2$ in $x$, one of the children would have zone $[0,1]\times[0,1]$, which is inaccessible to $\nu_1$. 
 
 Consider the general recursive call. If both $\nu_1$ and $\nu_2$ are leaves, then we simply evaluate the result of operating on their interpolants to get the values on $\Tm$. If exactly one of $\nu_1$ and $\nu_2$ is a leaf, then we split $\Tm$ the same way as the non-leaf and recurse into the resulting children; property~(\ref{eq:merge-zones}) trivially remains true in these calls. If both  $\nu_1$ and $\nu_2$ are non-leaves, and they both split in the same dimension, then we can split $\Tm$ in that dimension and recurse, and the zones will continue to match as in~(\ref{eq:merge-zones}).
 
