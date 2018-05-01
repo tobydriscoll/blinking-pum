@@ -16,22 +16,30 @@
   \DeclareGraphicsExtensions{.eps}
 \fi
 
-% Declare title and authors, without \thanks
-\newcommand{\TheTitle}{An adaptive partition of unity method for Chebyshev polynomial interpolation on Hypercubes} 
-\newcommand{\TheAuthors}{Kevin W. Aiton, Tobin A. Driscoll}
+% Add a serial/Oxford comma by default.
+\newcommand{\creflastconjunction}{, and~}
+
+% Used for creating new theorem and remark environments
+\newsiamremark{remark}{Remark}
+\newsiamremark{hypothesis}{Hypothesis}
+\crefname{hypothesis}{Hypothesis}{Hypotheses}
+\newsiamthm{claim}{Claim}
+
+
+%\newcommand{\TheTitle}{An adaptive partition of unity method for Chebyshev polynomial interpolation on Hypercubes} 
+%\newcommand{\TheAuthors}{Kevin W. Aiton, Tobin A. Driscoll}
+
 
 % Sets running headers as well as PDF title and authors
-\headers{Adaptive partition of unity}{\TheAuthors}
+\headers{Adaptive partition of unity}{Kevin W. Aiton, Tobin A. Driscoll}
 
 % Title. If the supplement option is on, then "Supplementary Material"
 % is automatically inserted before the title.
-\title{{\TheTitle}\thanks{Submitted to the editors \today.
+\title{An adaptive partition of unity method for Chebyshev polynomial interpolation on Hypercubes \thanks{Submitted to the editors May 1, 2018.
 \funding{This research was supported by National Science Foundation grant DMS-1412085.}}}
 
 % Authors: full names plus addresses.
-\author{
-  Kevin W. Aiton, Tobin A. Driscoll
-}
+\author{Kevin W. Aiton, Tobin A. Driscoll}
 
 \usepackage{amsopn}
 \DeclareMathOperator{\diag}{diag}

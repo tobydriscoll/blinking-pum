@@ -1,5 +1,5 @@
 % SIAM Article Template
-\documentclass{siamart0516}
+\documentclass[review]{siamart171218}
 \usepackage{subfig}
 \usepackage{forest}
 \usepackage[section]{placeins}
@@ -49,12 +49,12 @@
 \input{ex_shared}
 
 % Optional PDF information
-\ifpdf
-\hypersetup{
-  pdftitle={\TheTitle},
-  pdfauthor={\TheAuthors}
-}
-\fi
+%\ifpdf
+%\hypersetup{
+%  pdftitle={\TheTitle},
+%  pdfauthor={\TheAuthors}
+%}
+%\fi
 
 % The next statement enables references to information in the
 % supplement. See the xr-hyperref package for details.
@@ -121,7 +121,7 @@ The adaptive construction of function approximations is based on binary trees, a
 
 Let $\Omega = \{ \vect{x} \in \R^d: x_i \in [a_i,b_i], i=1,\ldots,d\}$ be a hyperrectangle, and suppose we wish to approximate $f:\Omega \to \R$. Our strategy is to cover $\Omega$ with overlapping subdomains, on each of which $f$ is well-approximated by a multivariate polynomial, and use a partition of unity to construct a global approximation. We defer a description of the partition of unity scheme to section~\ref{sec:operations}. In this section we describe an adaptive procedure for obtaining the overlapping domains and individual approximations over them. 
 
-The domains are constructed from recursive bisections of $\Omega$ into nonoverlapping hyperrectangular \emph{zones}. Let $t>0$ be a parameter. Given a zone $\prod_{j=1}^d [\alpha_{j},\beta_{j}]$, we extend it to a larger domain $\prod_{j=1}^d [\bar{\alpha}_{j},\bar{\beta}_{j}]$ by fixing a parameter $t>0$, defining
+The domains are constructed from recursive bisections of $\Omega$ into nonoverlapping hyperrectangular \emph{zones}. Given a zone $\prod_{j=1}^d [\alpha_{j},\beta_{j}]$, we extend it to a larger domain $\prod_{j=1}^d [\bar{\alpha}_{j},\bar{\beta}_{j}]$ by fixing a parameter $t>0$, defining
 \begin{equation}
   \label{eq:overlap}
   \delta_{j} =  \frac{\beta_{j}-\alpha_{j}}{2}(1+t),\quad j=1,\ldots,d,
@@ -343,7 +343,7 @@ If the trees $\ct_1$ and $\ct_2$ are not structurally identical, we are free to 
 
 Differentiation of the global approximant~(\ref{eq:pu-approx}) results in two groups of terms:
 \begin{equation}
-  \pp{}{x_j} s(\vect{x}) = \sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) \pp{}{x_j} s_\nu(\vect{x}) + \sum_{\nu\in \text{leaves}(\ct)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x}).
+  \pp{}{x_j} s(\vect{x})=\sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) \pp{}{x_j} s_\nu(\vect{x})+\sum_{\nu\in \text{leaves}(\ct)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x}).
   \label{eq:pu-deriv}	
 \end{equation}
 The first sum is a partition of unity approximation of leafwise differentiated interpolants. That is, we simply apply standard spectral differentiation to the data stored in the leaves of $\ct$.
@@ -369,7 +369,7 @@ Since the leaf interpolants are defined natively over the overlapping domains, t
 \section{Numerical experiments}
 \label{sec:numerical_experiments}
 
-All the following experiments were performed on a computer with a 2.6 GHz Intel Core i5 processor in version 2017a of MATLAB. Our code, which uses a serial object-oriented recursive implementation of the algorithms, is available for download.\footnote{\url{https://bitbucket.org/kevinaiton/partition-of-unity-chebyshev-grid-interpolation}} Comparisons to Chebfun2 and Chebfun3 were done using Chebfun version 5.5.0. We also tried to use the Sparse Grid Interpolation Toolbox~\cite{Klimke2005}, but on all the examples we were unable to get it close to our desired error tolerances within its hard-coded limits on sparse grid depth. 
+All the following experiments were performed on a computer with a 2.6 GHz Intel Core i5 processor in version 2017a of MATLAB. Our code, which uses a serial object-oriented recursive implementation of the algorithms, is available for download.\footnote{\url{https://github.com/kevinwaiton/PUchebfun}} Comparisons to Chebfun2 and Chebfun3 were done using Chebfun version 5.5.0. We also tried to use the Sparse Grid Interpolation Toolbox~\cite{Klimke2005}, but on all the examples we were unable to get it close to our desired error tolerances within its hard-coded limits on sparse grid depth. 
 
 \subsection{2D experiments}
 
@@ -760,203 +760,8 @@ The only remaining case is that $\nu_1$ and $\nu_2$ are each split, but in diffe
 
 
 
-
-%\begin{theorem}
-%Algorithm~\ref{addition3} produces a tree $T_{\text{add}}$ with a merged splitting of $\nu_1$ and $\nu_2$.
-%\label{split_theorem_2}
-%\end{theorem}
-%
-%\begin{proof}
-%Suppose we have that \textsf{zone}($T_{\text{add}}$) and \textsf{zone}($\nu_1$) are the same along the first dimension i.e. if \textsf{zone}($T_{\text{add}}$)=$[a,b]\times[c,d]$ and \textsf{zone}($\nu_1$)=$[e,f]\times[g,h]$ then $[a,b]=[e,f]$. Then it is clear that if $\nu_1$ and $T_{\text{add}}$ split first in $x$ that \textsf{zone}(\child{k}($T_{\text{add}}$)) and \textsf{zone}(\child{k}($\nu_1$)) will match along the first dimension as well. Suppose for induction that for $k=0,1$ \textsf{zone}($T_{\text{add}}$) and \textsf{zone}($T_k$) are the same along dimensions that $T_k$ still splits in. This is trivially true at the first call since at the root \textsf{zone}($T_{\text{add}}$)=\textsf{zone}($\nu_1$)=\textsf{zone}($\nu_2$).
-%
-%Suppose we are at a case where $\nu_1$ is not a leaf and we split \textsf{zone}($T_{\text{add}}$) along \textsf{splitdim}($\nu_1$). By the induction hypothesis we have that \textsf{zone}($T_{\text{add}}$) matches \textsf{zone}($\nu_1$) along dimension \textsf{splitdim}($\nu_1$); this gives us that \textsf{zone}(\child{k}($T_{\text{add}}$)) and \textsf{zone}(\child{k}($\nu_1$)) match along \textsf{splitdim}($\nu_1$) as well. Since nothing has changed for the other dimensions, the induction hypothesis holds for \child{k}($\nu_1$) and \child{k}($T_{\text{add}}$).
-%
-%The only case left is where $\nu_1$ and $\nu_2$ are not leaves, but \textsf{splitdim}($\nu_1$) and \textsf{splitdim}($\nu_2$) differ. Suppose that in this case $nextsplit$=\textsf{splitdim}($\nu_1$) in Algorithm~\ref{addition3}. We then call add(\child{k}($\nu_1$),$\nu_2$,\child{k}($T_{\mbox{add}}$),$nextsplit$). The induction hypothesis holds for \child{k}($\nu_1$) and \child{k}($T_{\mbox{add}}$) for similar reasons as before. Given that \child{k}($T_{\mbox{add}}$) is changed only in \textsf{splitdim}($\nu_1$), the induction hypothesis holds for $\nu_2$ and \child{k}($T_{\mbox{add}}$) for all dimensions except possibly \textsf{splitdim}($\nu_1$). But by Lemma~\ref{split_theorem}, we have $\nu_2$ does not split in \textsf{splitdim}($\nu_1$) so the induction hypothesis holds for $\nu_2$ and \child{k}($T_{\mbox{add}}$).
-%\end{proof}
-
-
 \end{appendices}
 
-
-%\section{Adaptive alternating Schwarz}
-%The \textit{alternating Schwarz method} is an iterative method used to solve boundary value problems. Suppose we wish to solve
-%\begin{equation}
-%\label{pde_2_solve}
-%\Delta u = 0 \text{ in } \Omega, \quad u=g \text{ on } \partial\Omega,
-%\end{equation}
-%with overlapping subdomains $\Omega_1,\Omega_2$ such that $\Omega = \Omega_1 \cup \Omega_2$. Let $\Gamma_k = \partial \Omega_k \setminus \partial \Omega$ for $k=1,2$. Starting with $u_1^0=u_2^0=0$ the alternating Schwarz method iteratively solves for $u_1^n,u_2^n$ by solving
-%\begin{equation}
-%\begin{aligned}
-%	\Delta u_1^{n+1}&=0 \text{ in } \Omega_1 ,\\
-%	u_1^{n+1}&=g \text{ on } \partial\Omega_1 \setminus \Gamma_1 \\
-%	u_1^{n+1}&=u_{2}^{n} \text{ on } \Gamma_1,
-%\end{aligned},\quad
-%\begin{aligned}
-%	\Delta u_2^{n+1}&=0 \text{ in } \Omega_2, \\
-%	u_2^{n+1}&=g \text{ on } \partial\Omega_2 \setminus \Gamma_2, \\
-%	u_2^{n+1}&=u_{1}^{n+1} \text{ on } \Gamma_2,
-%\end{aligned}
-%\label{ASSchwarz}
-%\end{equation}
-%for $n=1,2,\dots$. This was first proven to converge to the solution of (\ref{pde_2_solve}) by H. Schwarz in order to prove existence of solutions on arbitrary domains (in his case, the union of a square and circle) \cite{OriginalSchwarz}. Slightly altering (\ref{ASSchwarz}) we have the {\it parallel Schwarz method} where we iteratively solve
-%\begin{equation}
-%\begin{aligned}
-%	\Delta u_1^{n+1}&=0 \text{ in } \Omega_1, \\
-%	u_1^{n+1}&=g \text{ on } \partial\Omega_1 \setminus \Gamma_1, \\
-%	u_1^{n+1}&=u_{2}^{n} \text{ on } \Gamma_1,
-%\end{aligned}\quad
-%\begin{aligned}
-%	\Delta u_2^{n+1}&=0 \text{ in } \Omega_2, \\
-%	u_2^{n+1}&=g \text{ on } \partial\Omega_2 \setminus \Gamma_2, \\
-%	u_2^{n+1}&=u_{1}^{n} \text{ on } \Gamma_2,
-%\end{aligned}
-%\end{equation}
-%which was examined by Lions \cite{lions1988schwarz}. This method is parallel in the sense that for each iteration, the two systems can be solved simultaneously. We use the parallel Schwarz approach with our method to construct an adaptive BVP solver.
-%
-%Suppose we are solving
-%\begin{equation}
-%\label{bvp_to_solve}
-%\mathcal{L}(u)=f \text{ in } \Omega, \\ \quad u=g \text{ on } \partial\Omega
-%\end{equation}
-%using a tree $T$ from our method. For each leaf $\nu_k$ of $T$ we assign a discrete operator $A_k$ of (\ref{bvp_to_solve}). Let $\Omega_k:=$\textsf{domain}($\nu_k$). Since we can have multiply overlapping domains, we must decide which neighboring leaves to interpolate from on the interface $\Gamma_k = \partial \Omega_k \setminus \Omega$ \footnote{In fact, we could use the partition of unity interpolant to resolve multiple overlaps without ambiguity. However, the approach we take here is faster in practice and does not seem to affect the convergence we observe.}. For our scheme, we interpolate along the zones of $T$ as seen in Algorithm~\ref{alg6}.
-%
-%
-%
-%\begin{algorithm}[t]
-%\caption{$F$=zoneEvaluate($\nu$,$\vect{x}$)}
-%\label{alg6}
-%\begin{algorithmic}
-%\IF{$\nu$ is a leaf}
-%\STATE $F = \text{interpolant}(\nu)(\vect{x})$
-%\ELSE
-%\IF{$\vect{x} \in \text{\textsf{zone}(\child{0}}(\nu))$}
-%\STATE $F$ = zoneEvaluate(\child{0}($\nu$),$\vect{x}$) 
-%\ELSE
-%\STATE $F$ = zoneEvaluate(\child{1}($\nu$),$\vect{x}$) 
-%\ENDIF
-%\ENDIF
-%\end{algorithmic}
-%\end{algorithm}
-%Let the interpolating points of $T$ be ordered depth first. For each leaf $\nu_k$, we define an interpolation matrix $B_k$ that uses Algorithm~\ref{alg6} on $\Gamma_k$, and returns zero for points outside $\Gamma_k$. Let $A = \diag(A_1,A_2,\dots,A_m)$ and $B = [B_1^T B_2^T \dots B_m^T]^T$. For each leaf $\nu_k$, define the vector $f_k = [(f \vert_{\Omega_k})^T (g \vert_{\partial \Omega \setminus \Gamma_k})^T 0]^T$, and define $b = [f_1^T f_2^T \dots f_m^T]^T$. We can then define the parallel Schwarz method iteratively:
-%\begin{equation}
-%\label{iterative_Schwarz}
-%A u^{n+1} =	B u^{n}+b.
-%\end{equation}
-%By adding and subtracting $u^{n}$, we can rewrite (\ref{iterative_Schwarz}) as
-%\begin{equation}
-%\label{gmres_as}
-%u^{n+1} = u^{n} - A^{-1}((A-B)u^{n}-b).	
-%\end{equation}
-%This formulation allows us to use GMRES to solve for the fixed point of the iterative process, where we solve
-%\begin{equation}
-%	(A-B)u = b
-%\label{master_eq}
-%\end{equation}
-%with $A^{-1}$ as the preconditioner, as seen in \cite{smith2004domain}.
-%
-% In order to keep the number of preconditioned GMRES iterations from growing with the number of subdomains, we use a two-level iteration that allows rapid communication between distant domains. Let $A_c$, $B_c$ be matrices formed similarly to $A$ and $B$, but with coarse grids over the leaves. Define block diagonal matrices $P$ and $C$ that interpolate from the fine grid and coarse grid  for each leaf and vice versa, respectively. We define a two level multiplicative preconditioner $M$, where $v=M r$ is given by
-%\begin{equation}
-%\label{2levelprec}
-%\begin{aligned}
-%	v &\leftarrow P (A_c-B_c)^{-1} C r \\
-%	v &\leftarrow v + A^{-1}(r-Av).
-%\end{aligned}
-%\end{equation}
-%To invert $(A_c-B_c)$, we use direct linear algebra with a sparse matrix since the size of the system is relatively small. We compute $P$, $C$, and $A^{-1}$ iteratively over the leaves.
-%
-%In Algorithm~\ref{alg8} we combine the two-level parallel AS for BVPs with the adaptive PU refinement method of section 2. The process starts with a global, tensor-product solution. Decisions about adaptation refinement are made based on the resolvedness of the proposed solution, which is interpolated onto any new subdomains. Then preconditioned GMRES is used to improve the solution, leading to new adaptation decisions. 
-%
-%
-%\begin{algorithm}[!t]
-%\caption{$T$=refineBVP($\nmax$,$t$,BVP)}
-%\label{alg8}
-%\begin{algorithmic}
-%\STATE Define $T$ as a tree with a single node with the domain of the BVP.
-%\WHILE{$T$ has unrefined leaves}
-%\IF{$T$ is a single leaf}
-%\STATE sample $T$ by solving with a single tensor product approximation.
-%\ELSE
-%\STATE For each leaf $\nu_k$, construct local discretization of the BVP $A_k$.
-%\STATE Construct a sparse matrix $A_c-B_c$ as seen in (\ref{2levelprec}).
-%\STATE Sample $T$ by solving (\ref{master_eq}) with GMRES with $M$ from  (\ref{2levelprec}) as a preconditioner, \ARP and the sampled values on $T$ as an initial condition.
-%\ENDIF
-%\STATE refine(root($T$),$\nmax$,$t$). Here if a leaf $\nu$ is split, sample the values of the children of $\nu$ with \ARP \textsf{interpolant}($\nu$).
-%\ENDWHILE
-%\end{algorithmic}
-%\label{BVP_solve}
-%\end{algorithm}
-%
-%\section{BVP examples}
-%As in section~\ref{numerical_experiments}, these experiments were computed on a computer with a 2.6 GHz Intel core i5 processor in version 2017a of Matlab.
-%Our first example is Poisson's equation
-%\begin{equation}
-% \Delta u = f(x,y) \text{ in } \Omega, \quad u=b(x,y) \text{ on } \partial\Omega
-%\label{peterbed_bvp_2}
-%\end{equation}
-%where $f(x,y),b(x,y)$ are chosen so that 
-%\begin{equation}
-%u(x,y) = \arctan \\prop{child$_0$}(100 \lp \sqrt{(x+1)^2+(y+1)^2}-1 \rp \right)
-%\label{boundary_layer_sol_2}
-%\end{equation}
-%and the solution has a wave front \cite{mitchell2013collection}. The PDE was solved using Algorithm~\ref{alg8} with parameters $t=0.1$, $tol=10^{-8}$ and $\nmax=33$. Our method took 205 second to adapt, and had a max absolute error of $1.6 \times 10^{-8}$. The number of GMRES iterations needed during the domain adaptation is shown in Figure 7.
-%
-%\begin{figure}[!htb]
-%\centering
-%\subfloat[Plot of (\ref{boundary_layer_sol_2}).]{
-%\includegraphics[scale = 0.34]{cool_pde_2.eps}
-%   \label{fun_bound_plot_2}
-% }
-%\subfloat[Plot of subdomains.]{
-%\includegraphics[scale = 0.34]{cool_pde_domain_2.eps}
-%   \label{bound_plot_2_domains}
-% }
-%\caption{Plot of $\log(1+(x^2+y^4)/10^{-5})$ and the subdomains formed from the partition of unity method.}
-%\label{bound_plot_2}
-%\end{figure}
-%
-%\begin{figure}[!htb]
-%\centering
-%
-%\includegraphics[scale = 0.5]{GMRES_ITERATION_2.eps}
-%
-%\caption{Plot of GMRES iterations for each adaptive step need to solve (\ref{peterbed_bvp}).}
-%\label{bound_gmres_it_2}
-%\end{figure}
-%
-%For our next example, we look at an advection diffusion PDE from \cite{aiffa5computational}:
-%\begin{equation}
-%\varepsilon \Delta u + 2 u_x+u_y = f(x,y) \text{ in } \Omega, \quad u=b(x,y) \text{ on } \partial\Omega
-%\label{peterbed_bvp}
-%\end{equation}
-%where $f(x,y),b(x,y)$ are chosen so that 
-%\begin{equation}
-%u(x,y) = \\prop{child$_0$}(1-e^{\frac{x-1}{\epsilon }}\right) \\prop{child$_0$}(1-e^{\frac{y-1}{\epsilon }}\right) \cos (\pi  (x+y)).
-%\label{boundary_layer_sol}
-%\end{equation}
-%This solution has boundary layers at $x=1,y=1$ when $\varepsilon \ll 1$. We use Algorithm~\ref{alg8} to solve (\ref{peterbed_bvp}) with $\varepsilon=5\times10^{-3}$, $t=0.1$, $tol=10^{-8}$ and $\nmax=33$. The solution and subsequent domains are plotted in Figure~\ref{bound_plot_1}. Our method took 74 seconds to solve the BVP, with a max error of $3.12\times 10^{-8}$ as sampled on a $100 \times 100$ grid. As this problem is convection-dominated, the preconditioner is only moderately effective, but the number of GMRES iterations levels off as the number of subdomains increases, as seen in Figure 5. The number of GMRES iterations per adaptive step can be seen in Figure~\ref{bound_gmres_it}.
-%
-%\begin{figure}[!htb]
-%\centering
-%\subfloat[Plot of (\ref{boundary_layer_sol}).]{
-%\includegraphics[scale = 0.34]{coolPDE.eps}
-%   \label{fun_bound_plot_1}
-% }
-%\subfloat[Plot of subdomains.]{
-%\includegraphics[scale = 0.34]{coolPDEdomain.eps}
-%   \label{bound_plot_1_domains}
-% }
-%\caption{Plot of $\log(1+(x^2+y^4)/10^{-5})$ and the subdomains formed from the partition of unity method.}
-%\label{bound_plot_1}
-%\end{figure}
-%
-%\begin{figure}[!htb]
-%\centering
-%
-%\includegraphics[scale = 0.5]{gmres_it_bound.eps}
-%
-%\caption{Plot of GMRES iterations for each adaptive step need to solve (\ref{peterbed_bvp}).}
-%\label{bound_gmres_it}
-%\end{figure}
 
 
 \end{document}

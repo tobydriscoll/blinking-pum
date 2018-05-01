@@ -14,6 +14,8 @@
 %    4/3/15     (TGK)    Added support for electronic crossreferences and article IDs.
 %    6/9/16     (JEH)    Fixed DOI, arXiv, and PubMed entries.
 %    6/14/16    (JEH)    Fixed format.editors function.
+%    11/4/16    (JEH)    Changes to DOI, arXiv, and PubMed entries.
+%    12/14/17   (JEH)    Fixed another issue with the format.editors function.
 
 ENTRY
   { address
@@ -215,11 +217,15 @@ FUNCTION {format.organization}
 FUNCTION {format.editors}
 { editor empty$
     { "" }
-    { editor format.names scapify }
-      if$
-      editor num.names$ #1 >
+    { author empty$ %in this case, see format.authors
+        { "" }
+        { editor num.names$ #1 >
         { ", eds." * }
-	{ ", ed." * }
+      	{ ", ed." * }
+           if$
+           editor format.names scapify}
+      if$
+    }
   if$
 }
 
@@ -255,10 +261,8 @@ FUNCTION {format.eprint}
 { eprint empty$
      { "" }
      { archive empty$
-         {"\href{http://arxiv.org/abs/" eprint * "} " * 
-          "{arXiv:" * eprint * format.eprintclass * "}" *}
-         {"\href{" archive *  "/" * eprint * "} " * 
-          "{" * format.archive * eprint * format.eprintclass * "}" *}
+      	{"\url{https://arxiv.org/abs/" eprint * "}" * }
+         {"\url{" archive *  "/" * eprint * "} " * }
        if$ 
      }
      if$
@@ -287,10 +291,8 @@ FUNCTION {format.doi}
 { doi empty$
      { "" }
      { archive empty$
-         {"\href{http://dx.doi.org/" doi * "} " * 
-          "{doi:" * doi * format.doiclass * "}" *}
-         {"\href{http://dx.doi.org/" doi * "} " * 
-          "{doi:" * doi * format.doiclass * "}" *}
+	{ "\url{https://doi.org/" doi * "}" * }
+	{ "\url{https://doi.org/" doi * "}" * }
        if$ 
      }
      if$
