@@ -8,23 +8,24 @@ split_flag = [1 1];
 tol = 1e-8;
 gmres_tol = 5e-9;
 maxit = 1200;
-T = 5;
-dt = 0.1;
+T = 1;
+dt = 0.0001;
 theta = 0.5+dt;
 
-alpha = 1;
+alpha = 0.1;
 L = @(u,x,y,dx,dy,dxx,dyy,t) alpha*(dxx+dyy);
 
 %EAST WEST SOUTH NORTH
-%B = {@(u,x,y,dx,dy,dxx,dyy,t) -dx, @(u,x,y,dx,dy,dxx,dyy,t) dx, @(u,x,y,dx,dy,dxx,dyy,t) -dy,@(u,x,y,dx,dy,dxx,dyy,t) dy};
-B = {@(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy,t) u,@(u,x,y,dx,dy,dxx,dyy,t) u};
+B = {@(u,x,y,dx,dy,dxx,dyy,t) dx, @(u,x,y,dx,dy,dxx,dyy,t) dx, @(u,x,y,dx,dy,dxx,dyy,t) dy,@(u,x,y,dx,dy,dxx,dyy,t) dy};
+%B = {@(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy,t) u,@(u,x,y,dx,dy,dxx,dyy,t) u};
 force = @(x,y) zeros(size(x,1),1);
 time_dependent = false;
 
 bf = @(x,y) zeros(size(x,1),1);
 border = {bf,bf,bf,bf};
-init = @(x,y) exp(-1./(1-x.^2)).*exp(-1./(1-y.^2));
-%init = @(x,y) x.*y;
+init = @(x,y) cos(pi*x).*cos(pi*y)+cos(4*pi*x).*cos(4*pi*y);
+exact = @(x,y,t) exp(-alpha*2*pi^2*t).*cos(pi*x).*cos(pi*y)+exp(-alpha*32*pi^2*t).*cos(4*pi*x).*cos(4*pi*y);
+
 
 cheb_struct.domain = domain;
 cheb_struct.deg_in = deg_in;
@@ -36,10 +37,10 @@ Tree = ChebPatch(cheb_struct);
 Tree = Tree.split(1);
 Tree.split(2);
 
-for k=1:1
-    Tree.split(1);
-    Tree.split(2);
-end
+% for k=1:1
+%     Tree.split(1);
+%     Tree.split(2);
+% end
 
 is_refined = false;
 
@@ -62,9 +63,9 @@ sum(F^2)
 plot(F);
 pause(0.001);
 
-%rhs = setLinOpsTheta(F,L,B,border,theta,dt,CT);
+x = linspace(-1,1,100)';
+[X,Y] = ndgrid(linspace(-1,1,100));
 
-%Going to assume we have more than one patch
 while CT<T
     rhs = setLinOpsTheta(F,L,B,border,theta,dt,CT);
     Mat = CoarseASMatTheta(F,L,B,theta,dt,CT);
@@ -73,35 +74,23 @@ while CT<T
     M = @(rhs) CoarseCorrection(F,rhs,Mat);
     
     tic, [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],F.ChebRoot.Getvalues); toc;
-    length(rvec)
+    num_it = length(rvec);
     F.ChebRoot.sample(sol);
-    sum(F^2)
     
     plot(F);
     
     CT = CT+dt;
     
-    title(sprintf('time %g',CT));
+    F_exact = exact(X,Y,CT);
+    Error = F_exact - F.evalfGrid({x x});
+    
+    Error = norm(Error(:),inf);
+    
+    title(sprintf('time %g iterations %d relative error %2.2e',CT,num_it,Error));
     
     pause(0.001);
 end
 
-
-% while CT<T
-%     
-%     setLinOps(F.ChebRoot,L,B,force,border);
-%     
-%     
-%     tic,AS_P_STEP(F.ChebRoot,dt,theta);toc
-%     
-%     plot(F);
-%     
-%     CT = CT+dt;
-%     
-%     title(CT);
-%     
-%     pause(0.001);
-% end
 
 
 
