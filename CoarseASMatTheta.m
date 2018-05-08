@@ -49,7 +49,7 @@ for k=1:length(PUApprox.leafArray)
     E = eye(prod(cdegs));
     
     %Determine Operator used for the theta method
-    OP = E - dt*theta*L(E,pointsl(:,1),pointsl(:,2),Dx,Dy,Dxx,Dyy,t);
+    OP = E - dt*theta*L(E,diag(pointsl(:,1)),diag(pointsl(:,2)),Dx,Dy,Dxx,Dyy,t+dt);
     
     %Incorporate boundary conditions
     for i=1:4

@@ -35,11 +35,13 @@ for k=1:length(PUfun.leafArray)
     
     E = eye(prod(degs));
 
-    OP = L(E,points(:,1),points(:,2),Dx,Dy,Dxx,Dyy,t);
+    OP = L(E,diag(points(:,1)),diag(points(:,2)),Dx,Dy,Dxx,Dyy,t);
     
     PUfun.leafArray{k}.linOp_f = OP;
     
     sol = PUfun.leafArray{k}.values(:)+dt*(1-theta)*OP*PUfun.leafArray{k}.values(:);
+    
+    OP = L(E,diag(points(:,1)),diag(points(:,2)),Dx,Dy,Dxx,Dyy,t+dt);
     
     OP = E - dt*theta*OP;
     
@@ -48,7 +50,7 @@ for k=1:length(PUfun.leafArray)
         if any(out_border_c{i}) && ~isempty(B{i})
             OP(out_border_c{i},:) = ...
                 B{i}(E(out_border_c{i},:),points(out_border_c{i},1),points(out_border_c{i},2),Dx(out_border_c{i},:),Dy(out_border_c{i},:),Dxx(out_border_c{i},:),Dyy(out_border_c{i},:),t);
-            sol(out_border_c{i}) = border{i}(points(out_border_c{i},1),points(out_border_c{i},2));
+            sol(out_border_c{i}) = border{i}(points(out_border_c{i},1),points(out_border_c{i}),t+dt);
         end
     end
     
