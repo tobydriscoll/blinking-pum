@@ -9,17 +9,18 @@ tol = 1e-4;
 gmres_tol = 5e-5;
 maxit = 1200;
 T = 10;
-dt = 0.25;
+dt = 0.1;
 theta = 0.5;
 v = 1;
 c = 0.8;
 kappa = 1;
 t0 = 1;
+lapfactor = @(x,y) 1./(cos(y) + cosh(x)).^2;
 
 alpha = 1.6;  gamma = 7;
 
 lambda = @(t) 1-c+c*tanh(4*cos(2*pi*v*t));
-lambdadt = @(t) -8*c*pi*v*sech(4*cos(2*pi*v*t)).^2.*sin(2*pi*v*t);
+lambdadt = @(t) -8*c*pi*v*sech(4*cos(2*pi*t*v)).^2.*sin(2*pi*t*v);
 dhx = @(dx,x) ((x.^2-alpha^2).^2)./((x.^2+alpha^2)*gamma)*dx;
 dhy = @(dy,t) 2./(lambda(t)+1)*dy;
 
@@ -29,9 +30,6 @@ x_s = @(x) gamma*x./(alpha^2-x.^2);
 y_e = @(x,y) sin(y)./(cos(y)+cosh(x));
 x_e = @(x,y) sinh(x)./(cos(y)+cosh(x));
 
-L = @(h,x,y,dx,dy,dxx,dyy,t) alpha*(dxx+dyy);
-
-L_blink = @(h,x,y,dx,dy,dxx,dyy,t) L(h,x_s(x),y_s(y,t),dhx(dx,x),dhy(dy,t),dhx(dx,x)^2,dhy(dy,t),t)-lambdadt(t)/(lambda(t)+1)*(1+y)*dy;
 
 %EAST WEST SOUTH NORTH
 %B = {@(h,x,y,dx,dy,dxx,dyy,t) dx, @(h,x,y,dx,dy,dxx,dyy,t) dx, @(h,x,y,dx,dy,dxx,dyy,t) dy,@(h,x,y,dx,dy,dxx,dyy,t) dy};
@@ -41,8 +39,9 @@ time_dependent = false;
 
 %bf = @(x,y,t) zeros(size(x,1),1);
 
-bf = @(x,y,t) 1/(4*pi*(t+t0))*exp(-(x_e(x_s(x),y_s(y,t)).^2+y_e(x_s(x),y_s(y,t)).^2)./(4*kappa*(t+t0)));
-%bf = @(x,y,t) 1/(4*pi*(t+t0))*exp(-(x.^2+y.^2)./(4*kappa*(t+t0)));
+
+kernal = @(x,y,t) 1/(4*pi*(t+t0))*exp(-(x.^2+y.^2)./(4*1*(t+t0)));
+bf = @(x,y,t) kernal(x_e(x_s(x),y_s(y,t)),y_e(x_s(x),y_s(y,t)),t);
 border = {bf,bf,bf,bf};
 init = @(x,y) bf(x,y,0);
 exact = @(x,y,t) bf(x,y,t);
@@ -102,12 +101,12 @@ ylim([-1 1]);
 view([360 90]);
 shading flat;
 
-pause(0.001);
+pause(0.1);
     
 while CT<T
     if length(F.leafArray)>1
-        rhs = setLinOpsTheta(F,L_blink,B,border,theta,dt,CT);
-        Mat = CoarseASMatTheta(F,L_blink,B,theta,dt,CT);
+        rhs = setLinOpsThetaBlink(F,B,border,theta,dt,CT);
+        Mat = CoarseASMatThetaBlink(F,B,theta,dt,CT);
         
         A = @(sol) ParSchwarzForward(F,sol);
         M = @(rhs) CoarseCorrection(F,rhs,Mat);
@@ -116,7 +115,7 @@ while CT<T
         num_it = length(rvec);
         
     else
-        rhs = setLinOpsTheta(F,L_blink,B,border,theta,dt,CT);
+        rhs = setLinOpsThetaBlink(F,B,border,theta,dt,CT);
         
         sol = F.ChebRoot.linOp\rhs;
         
@@ -144,14 +143,14 @@ while CT<T
     Error = norm(Error(:),inf);
     DT = delaunay(X_e(:),Y_e(:));
     
-    pcolor(X_e,Y_e,F_eval);
+    pcolor(X_e,Y_e,F_exact);
     xlim([-1 1]);
     ylim([-1 1]);
     view([360 90]);
     shading flat;
     title(sprintf('time %g iterations %d relative error %2.2e',CT,num_it,Error));
     
-    pause(0.001);
+    pause(0.1);
 end
 
 
