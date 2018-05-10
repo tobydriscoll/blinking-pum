@@ -78,7 +78,7 @@ for k=1:length(PUApprox.leafArray)
     Dxxe = kron(eye(cdegs(2)),S2E.*Dxs^2);
     Dyye = kron(S2E.*Dys(t+dt)^2,eye(cdegs(1)));
 
-    OP = Dxxe+Dyye-kron(diag(dyc_dt(t+dt)),eye(cdegs(1)));
+    OP = Dxxe+Dyye-kron(ddiag(dyc_dt(t+dt)/dyc_dys(t+dt)),eye(cdegs(1)));
     
     OP = eye(prod(cdegs)) - dt*theta*OP;
     

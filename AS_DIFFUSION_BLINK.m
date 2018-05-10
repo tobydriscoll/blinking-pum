@@ -8,19 +8,23 @@ split_flag = [1 1];
 tol = 1e-4;
 gmres_tol = 5e-5;
 maxit = 1200;
-T = 10;
-dt = 0.1;
-theta = 0.5;
-v = 1;
-c = 0.8;
-kappa = 1;
-t0 = 1;
-lapfactor = @(x,y) 1./(cos(y) + cosh(x)).^2;
+T = 5;
+dt = 0.001;
+theta = 0.5+dt;
+t0 = 0.01;
+x0 = 0.1;
+y0 = 0.2;
+pc = 0.8;
+
 
 alpha = 1.6;  gamma = 7;
 
-lambda = @(t) 1-c+c*tanh(4*cos(2*pi*v*t));
-lambdadt = @(t) -8*c*pi*v*sech(4*cos(2*pi*t*v)).^2.*sin(2*pi*t*v);
+freq = 2*16*pi;
+
+lambda = @(t) 1 + pc*(-1+tanh(4*cos(freq*t)));  % upper eyelid position, in (-1,1]
+dlambda_dt = @(t) freq*4*pc*sin(freq*t).*sech(4*cos(freq*t)).^2;
+
+
 dhx = @(dx,x) ((x.^2-alpha^2).^2)./((x.^2+alpha^2)*gamma)*dx;
 dhy = @(dy,t) 2./(lambda(t)+1)*dy;
 
@@ -34,13 +38,11 @@ x_e = @(x,y) sinh(x)./(cos(y)+cosh(x));
 %EAST WEST SOUTH NORTH
 %B = {@(h,x,y,dx,dy,dxx,dyy,t) dx, @(h,x,y,dx,dy,dxx,dyy,t) dx, @(h,x,y,dx,dy,dxx,dyy,t) dy,@(h,x,y,dx,dy,dxx,dyy,t) dy};
 B = {@(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy,t) u, @(u,x,y,dx,dy,dxx,dyy,t) u,@(u,x,y,dx,dy,dxx,dyy,t) u};
-force = @(x,y) zeros(size(x,1),1);
-time_dependent = false;
 
 %bf = @(x,y,t) zeros(size(x,1),1);
 
 
-kernal = @(x,y,t) 1/(4*pi*(t+t0))*exp(-(x.^2+y.^2)./(4*1*(t+t0)));
+kernal = @(x,y,t) exp( -(((x-x0).^2+(y-y0).^2)/(4*(t+t0)))) / (4*pi*(t+t0));
 bf = @(x,y,t) kernal(x_e(x_s(x),y_s(y,t)),y_e(x_s(x),y_s(y,t)),t);
 border = {bf,bf,bf,bf};
 init = @(x,y) bf(x,y,0);
@@ -53,8 +55,8 @@ cheb_struct.cdeg_in = cdeg_in;
 cheb_struct.tol = tol;
 
 Tree = ChebPatch(cheb_struct);
-Tree = Tree.split(1);
-Tree.split(2);
+%Tree = Tree.split(1);
+%Tree.split(2);
 
 % for k=1:1
 %     Tree.split(1);
@@ -88,24 +90,12 @@ Z = tanh((X_s+1i*Y_s)/2);
 
 X_e = sinh(X_s)./(cos(Y_s)+cosh(X_s));  Y_e = sin(Y_s)./(cos(Y_s)+cosh(X_s));
 
-F_exact = exact(X_e,Y_e,CT);
-F_eval = F.evalfGrid({x x});
-Error = F_exact-F_eval;
 
-Error = norm(Error(:),inf);
-DT = delaunay(X_e(:),Y_e(:));
 
-pcolor(X_e,Y_e,F_eval);
-xlim([-1 1]);
-ylim([-1 1]);
-view([360 90]);
-shading flat;
 
-pause(0.1);
-    
 while CT<T
     if length(F.leafArray)>1
-        rhs = setLinOpsThetaBlink(F,B,border,theta,dt,CT);
+        rhs = setLinOpsThetaBlink(F,B,border,theta,dt,CT,lambda,dlambda_dt,alpha,gamma);
         Mat = CoarseASMatThetaBlink(F,B,theta,dt,CT);
         
         A = @(sol) ParSchwarzForward(F,sol);
@@ -115,7 +105,7 @@ while CT<T
         num_it = length(rvec);
         
     else
-        rhs = setLinOpsThetaBlink(F,B,border,theta,dt,CT);
+        rhs = setLinOpsThetaBlink(F,B,border,theta,dt,CT,lambda,dlambda_dt,alpha,gamma);
         
         sol = F.ChebRoot.linOp\rhs;
         
@@ -123,7 +113,7 @@ while CT<T
     end
     F.ChebRoot.sample(sol);
     
-    %plot(F);
+    plot(F);
     
     CT = CT+dt;
     
@@ -136,21 +126,34 @@ while CT<T
     
     X_e = sinh(X_s)./(cos(Y_s)+cosh(X_s));  Y_e = sin(Y_s)./(cos(Y_s)+cosh(X_s));
     
-    F_exact = exact(X_e,Y_e,CT);
+    F_exact = exact(X,Y,CT);
+    
     F_eval = F.evalfGrid({x x});
     Error = F_exact-F_eval;
     
     Error = norm(Error(:),inf);
     DT = delaunay(X_e(:),Y_e(:));
     
-    pcolor(X_e,Y_e,F_exact);
-    xlim([-1 1]);
-    ylim([-1 1]);
-    view([360 90]);
-    shading flat;
-    title(sprintf('time %g iterations %d relative error %2.2e',CT,num_it,Error));
     
-    pause(0.1);
+    
+    subplot(1,2,1);
+pcolor(X_e,Y_e,F_eval);
+    title(sprintf('time %g iterations %d relative error %2.2e',CT,num_it,Error));
+xlim([-1 1]);
+ylim([-1 1]);
+view([360 90]);
+    caxis([0 8])
+shading flat;
+subplot(1,2,2);
+pcolor(X_e,Y_e,F_exact);
+title('exact');
+xlim([-1 1]);
+ylim([-1 1]);
+view([360 90]);
+    caxis([0 8])
+shading flat;
+
+pause();
 end
 
 

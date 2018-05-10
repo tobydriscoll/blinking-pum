@@ -10,14 +10,8 @@
 %    dt,t: time step and current time
 %  output:
 %     rhs: returns RHS for the theta method.
-function [rhs] = setLinOpsThetaBlink(PUfun,B,border,theta,dt,t)
+function [rhs] = setLinOpsThetaBlink(PUfun,B,border,theta,dt,t,lambda,dlambda_dt,alpha,gamma)
 
-alpha = 1.6;  gamma = 7;
-pc = 0.8;
-freq = 2*pi;
-
-lambda = @(t) 1 + pc*(-1+tanh(4*cos(freq*t)));  % upper eyelid position, in (-1,1]
-dlambda_dt = @(t) -freq*4*pc*sin(freq*t).*sech(4*cos(freq*t)).^2;
 
 xc2xs = @(xc) gamma*xc./(alpha^2-xc.^2);
 yc2ys = @(t,yc) (yc+1).*(1+lambda(t))/2-1;  % map from [-1,1] to [-1,rho]
@@ -26,6 +20,7 @@ yc2ys = @(t,yc) (yc+1).*(1+lambda(t))/2-1;  % map from [-1,1] to [-1,rho]
 s2e = @(xs,ys) deal(real(tanh((xs+1i*ys)/2)),imag(tanh((xs+1i*ys)/2)));
 dze_dzs = @(xs,ys) sech((xs+1i*ys)/2).^2 / 2;
 abs_dze_dzs = @(xs,ys) (cosh(xs)+cos(ys)).^(-1);
+lapfactor = @(x,y) 1./(cos(y) + cosh(x)).^2; 
 
 c2e = @(t,xc,yc) s2e( xc2xs(xc), yc2ys(t,yc) );  % composite c->e
 
@@ -58,26 +53,31 @@ for k=1:length(PUfun.leafArray)
     dxs_dxc = gamma*(alpha^2+xc.^2)./(alpha.^2-xc.^2).^2;
     Dxs = diag(1./dxs_dxc)*Dxc;
     
-    [XS,YS] = ndgrid(xc2xs(xc),yc2ys(t,yc));
+    [xe,ye] = c2e(xc,yc,t);
     
-    S2E = abs_dze_dzs(XS,YS);
+    [Xe,Ye] = ndgrid(xe,ye);
+    
+    S2E = lapfactor(Xe,Ye).^(-1);
+    
     
     Dxxe = kron(eye(degs(2)),S2E.*Dxs^2);
     Dyye = kron(S2E.*Dys(t)^2,eye(degs(1)));
     
-    OP = Dxxe+Dyye-kron(diag(dyc_dt(t)),eye(degs(1)));
+    OP = Dxxe+Dyye+kron(diag(dyc_dt(t))*Dyc,eye(degs(1)));
     
     PUfun.leafArray{k}.linOp_f = OP;
     
     sol = PUfun.leafArray{k}.values(:)+dt*(1-theta)*OP*PUfun.leafArray{k}.values(:);
     
-    [XS,YS] = ndgrid(xc2xs(xc),yc2ys(t+dt,yc));
+    [xe,ye] = c2e(xc,yc,t+dt);
     
-    S2E = abs_dze_dzs(XS,YS);
+    [Xe,Ye] = ndgrid(xe,ye);
+    
+    S2E = lapfactor(Xe,Ye).^(-1);
     
     Dyye = kron(S2E.*Dys(t+dt)^2,eye(degs(1)));
     
-    OP = Dxxe+Dyye-kron(diag(dyc_dt(t+dt)),eye(degs(1)));
+    OP = Dxxe+Dyye+kron(diag(dyc_dt(t+dt))*Dyc,eye(degs(1)));
     
     OP = eye(prod(degs)) - dt*theta*OP;
     
@@ -87,7 +87,7 @@ for k=1:length(PUfun.leafArray)
         if any(out_border_c{i}) && ~isempty(B{i})
             OP(out_border_c{i},:) = ...
                 B{i}(E(out_border_c{i},:),points(out_border_c{i},1),points(out_border_c{i},2),0,0,0,0,t+dt);
-            sol(out_border_c{i}) = border{i}(points(out_border_c{i},1),points(out_border_c{i}),t+dt);
+            sol(out_border_c{i}) = border{i}(points(out_border_c{i},1),points(out_border_c{i},2),t+dt);
         end
     end
     

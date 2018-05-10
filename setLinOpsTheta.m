@@ -50,7 +50,7 @@ for k=1:length(PUfun.leafArray)
         if any(out_border_c{i}) && ~isempty(B{i})
             OP(out_border_c{i},:) = ...
                 B{i}(E(out_border_c{i},:),points(out_border_c{i},1),points(out_border_c{i},2),Dx(out_border_c{i},:),Dy(out_border_c{i},:),Dxx(out_border_c{i},:),Dyy(out_border_c{i},:),t);
-            sol(out_border_c{i}) = border{i}(points(out_border_c{i},1),points(out_border_c{i}),t+dt);
+            sol(out_border_c{i}) = border{i}(points(out_border_c{i},1),points(out_border_c{i},2),t+dt);
         end
     end
     
