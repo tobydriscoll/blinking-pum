@@ -12,6 +12,7 @@ end
 
 for k=1:length(PUApprox.leafArray)
     
+    
     degs = PUApprox.leafArray{k}.degs;
     
     sol_k = sol(step(k)+(1:prod(degs)));
@@ -23,6 +24,7 @@ for k=1:length(PUApprox.leafArray)
     lap(in_border) = lap(in_border)-PUApprox.leafArray{k}.Binterp*sol;
     
     output(step(k)+(1:length(PUApprox.leafArray{k}))) = lap;
+    
 end
 
 end

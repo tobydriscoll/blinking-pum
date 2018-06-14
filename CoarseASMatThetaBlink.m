@@ -9,20 +9,18 @@
 %    dt,t: time step and current time
 %  output:
 %     MAT: returns the coarse matrix for the theta method
-function [ Mat ] = CoarseASMatThetaBlink(PUApprox,B,theta,dt,t)
+function [ Mat ] = CoarseASMatThetaBlink(PUApprox,B,theta,dt,t,lambda,dlambda_dt,alpha,gamma)
 
-
-alpha = 1.6;  gamma = 7;
-pc = 0.8;
-freq = 2*pi;
-
-lambda = @(t) 1 + pc*(-1+tanh(4*cos(freq*t)));  % upper eyelid position, in (-1,1]
-dlambda_dt = @(t) -freq*4*pc*sin(freq*t).*sech(4*cos(freq*t)).^2;
+PUApprox.Coarsen();
 
 xc2xs = @(xc) gamma*xc./(alpha^2-xc.^2);
 yc2ys = @(t,yc) (yc+1).*(1+lambda(t))/2-1;  % map from [-1,1] to [-1,rho]
-abs_dze_dzs = @(xs,ys) (cosh(xs)+cos(ys)).^(-1);
-PUApprox.Coarsen();
+
+% Transformation from strip (xs,ys) to eye (xe,ye)
+s2e = @(xs,ys) deal(real(tanh((xs+1i*ys)/2)),imag(tanh((xs+1i*ys)/2)));
+lapfactor = @(x,y) 1./(cos(y) + cosh(x)).^2; 
+
+c2e = @(t,xc,yc) s2e( xc2xs(xc), yc2ys(t,yc) );  % composite c->e
 
 step = 0;
 
@@ -71,14 +69,16 @@ for k=1:length(PUApprox.leafArray)
     dxs_dxc = gamma*(alpha^2+xc.^2)./(alpha.^2-xc.^2).^2;
     Dxs = diag(1./dxs_dxc)*Dxc;
     
-    [XS,YS] = ndgrid(xc2xs(xc),yc2ys(t+dt,yc));
+    [xe,ye] = c2e(xc,yc,t);
     
-    S2E = abs_dze_dzs(XS,YS);
+    [Xe,Ye] = ndgrid(xe,ye);
+    
+        S2E = lapfactor(Xe,Ye).^(-1);
     
     Dxxe = kron(eye(cdegs(2)),S2E.*Dxs^2);
     Dyye = kron(S2E.*Dys(t+dt)^2,eye(cdegs(1)));
 
-    OP = Dxxe+Dyye-kron(ddiag(dyc_dt(t+dt)/dyc_dys(t+dt)),eye(cdegs(1)));
+    OP = Dxxe+Dyye-kron(diag(dyc_dt(t+dt))*Dyc,eye(cdegs(1)));
     
     OP = eye(prod(cdegs)) - dt*theta*OP;
     

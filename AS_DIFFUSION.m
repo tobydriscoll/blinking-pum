@@ -9,7 +9,7 @@ tol = 1e-8;
 gmres_tol = 5e-9;
 maxit = 1200;
 T = 1;
-dt = 0.0001;
+dt = 0.01;
 theta = 0.5+dt;
 
 alpha = 0.1;
@@ -21,7 +21,7 @@ B = {@(u,x,y,dx,dy,dxx,dyy,t) dx, @(u,x,y,dx,dy,dxx,dyy,t) dx, @(u,x,y,dx,dy,dxx
 force = @(x,y) zeros(size(x,1),1);
 time_dependent = false;
 
-bf = @(x,y) zeros(size(x,1),1);
+bf = @(x,y,t) zeros(size(x,1),1);
 border = {bf,bf,bf,bf};
 init = @(x,y) cos(pi*x).*cos(pi*y)+cos(4*pi*x).*cos(4*pi*y);
 exact = @(x,y,t) exp(-alpha*2*pi^2*t).*cos(pi*x).*cos(pi*y)+exp(-alpha*32*pi^2*t).*cos(4*pi*x).*cos(4*pi*y);
