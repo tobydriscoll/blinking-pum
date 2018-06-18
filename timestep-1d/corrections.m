@@ -23,14 +23,25 @@ jacfun = @jacapply;
 
     function Jv = jacapply(v)
         Jv = cell(Nd,1);
+        persistent L U
+        
+        % Explicit reset proved not to be necessary. Each time this function
+        % is redefined for new data, the L and U vars are reset.
+        %%if ischar(v), L = []; return, end
+        
+        if isempty(L)
+            L = cell(Nd,1);  U = cell(Nd,1);
+            for d = 1:Nd
+                [L{d},U{d}] = lu(corjac{d}(z(data(d).idx)));
+            end
+        end
+        
         for d = 1:Nd
             idx = data(d).idx;
-            J = corjac{d}(z(idx));
-            %J = fdjac(corres{d},z(idx),corres{d}(z(idx)));
             r = zeros(n(d),1);
             r(1) = data(d).Bl*v;
             r(end) = data(d).Br*v;
-            Jv{d} = (J\r) - v(idx);
+            Jv{d} = (U{d}\(L{d}\r)) - v(idx);
         end
         Jv = cell2mat(Jv);
     end
