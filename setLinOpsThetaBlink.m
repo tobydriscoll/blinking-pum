@@ -18,8 +18,6 @@ yc2ys = @(t,yc) (yc+1).*(1+lambda(t))/2-1;  % map from [-1,1] to [-1,rho]
 
 % Transformation from strip (xs,ys) to eye (xe,ye)
 s2e = @(xs,ys) deal(real(tanh((xs+1i*ys)/2)),imag(tanh((xs+1i*ys)/2)));
-dze_dzs = @(xs,ys) sech((xs+1i*ys)/2).^2 / 2;
-abs_dze_dzs = @(xs,ys) (cosh(xs)+cos(ys)).^(-1);
 lapfactor = @(x,y) 1./(cos(y) + cosh(x)).^2; 
 
 c2e = @(t,xc,yc) s2e( xc2xs(xc), yc2ys(t,yc) );  % composite c->e

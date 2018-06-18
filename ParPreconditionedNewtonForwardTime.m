@@ -7,7 +7,7 @@
 % OUTPUT:
 %          z: correction of solution
 %          J: cell array of local Jacobians
-function [z,J] = ParPreconditionedNewtonForward(PUApprox,sol,evalF,num_sols)
+function [z] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,num_sols)
 
 %PUApprox.sample(sol);
 
@@ -23,6 +23,7 @@ for k=1:length(PUApprox.leafArray)
     degs = PUApprox.leafArray{k}.degs;
     
     sol_loc{k} = [];
+    rhs_loc{k} = [];
     diff{k} = [];
     
     %This function returns the logical indicies of the gamma and outer
@@ -39,7 +40,10 @@ for k=1:length(PUApprox.leafArray)
     % NOTE: I assume each solution has the same length for simplicity
     for j=1:num_sols
         tmp = sol(loc_sol_step+step(k)+(1:prod(degs)));
+        rhs_tmp = rhs(loc_sol_step+step(k)+(1:prod(degs)));
+        
         sol_loc{k} = [sol_loc{k};tmp];
+        rhs_loc{k} = [rhs_loc{k};rhs_tmp];
         
         %This computes solution interpolated on the zone interface of the
         %patch.
@@ -53,7 +57,7 @@ end
 %parallel step
 for k=1:length(PUApprox.leafArray)
     
-    [z{k},J{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,length(PUApprox.leafArray{k}));
+    [z{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},rhs_loc{k},t,in_border{k},diff{k},evalF,num_sols,length(PUApprox.leafArray{k}));
     
 end
 
@@ -73,7 +77,7 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c,Jk] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,sol_length)
+function [c] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,num_sols,sol_length)
 
     %The residul is F(sol_k+z_k) 
     %            sol_k(border_k)+z_k(border_k)-B_k*u 
@@ -82,7 +86,7 @@ function [c,Jk] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,sol_
         
         z = z+sol_k;
         
-        [F,J] = evalF(approx,z);
+        [F] = evalF(approx,t,z)-rhs_k;
         
         sol_step = 0;
         
@@ -105,7 +109,7 @@ function [c,Jk] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,sol_
 
     options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',10000,'FunctionTolerance',1e-4);
 
-    [s,~,~,~,Jk] = fsolve(@residual,zeros(size(sol_k)),options);
+    s = fsolve(@residual,zeros(size(sol_k)),options);
     
     c = s(:,end);
 end

@@ -10,7 +10,7 @@ gmres_tol = 5e-5;
 maxit = 1200;
 T = 5;
 dt = 0.001;
-theta = 0.5+dt;
+theta = 0.5;
 t0 = 0.01;
 x0 = 0.1;
 y0 = 0.2;
@@ -55,8 +55,8 @@ cheb_struct.cdeg_in = cdeg_in;
 cheb_struct.tol = tol;
 
 Tree = ChebPatch(cheb_struct);
-%Tree = Tree.split(1);
-%Tree.split(2);
+% Tree = Tree.split(1);
+% Tree.split(2);
 
 % for k=1:1
 %     Tree.split(1);
@@ -96,7 +96,7 @@ X_e = sinh(X_s)./(cos(Y_s)+cosh(X_s));  Y_e = sin(Y_s)./(cos(Y_s)+cosh(X_s));
 while CT<T
     if length(F.leafArray)>1
         rhs = setLinOpsThetaBlink(F,B,border,theta,dt,CT,lambda,dlambda_dt,alpha,gamma);
-        Mat = CoarseASMatThetaBlink(F,B,theta,dt,CT);
+        Mat = CoarseASMatThetaBlink(F,B,theta,dt,CT,lambda,dlambda_dt,alpha,gamma);
         
         A = @(sol) ParSchwarzForward(F,sol);
         M = @(rhs) CoarseCorrection(F,rhs,Mat);
@@ -113,7 +113,6 @@ while CT<T
     end
     F.ChebRoot.sample(sol);
     
-    plot(F);
     
     CT = CT+dt;
     
@@ -153,7 +152,7 @@ view([360 90]);
     caxis([0 8])
 shading flat;
 
-pause();
+pause(0.001);
 end
 
 
