@@ -4,19 +4,19 @@
 BC = [1 -1.4];
 ODE = struct;
 ODE.fun = @(u,D1,D2) 0.04*(D2*u) - u.*(D1*u);
-ODE.jac = @(u,D1,D2) 0.04*D2 - diag(u)*D1 + diag(D1*u);
+ODE.jac = @(u,D1,D2) 0.04*D2 - u.*D1 + diag(D1*u);
 
 % define the subdomains
 dom = struct;
 %dom(1).xlim = [-1 0.06];  dom(1).n = 50;
 %dom(2).xlim = [-0.05 1];  dom(2).n = 47;
-dom(1).xlim = [-1 -0.48];  dom(1).n = 32;
-dom(2).xlim = [-0.52 0.6];  dom(2).n = 44;
-dom(3).xlim = [0.54 1];  dom(3).n = 25;
+dom(1).xlim = [-1 -0.48];  dom(1).n = 500;
+dom(2).xlim = [-0.52 0.6];  dom(2).n = 500;
+dom(3).xlim = [0.54 1];  dom(3).n = 500;
 n = cat(1,dom.n);
 
 % time stepping parameters
-T = 3;  dt = .01;
+T = 1;  dt = .01;
 
 [data,DAEfun,jacfun] = setup_BE(ODE,BC,dt,dom);
 
@@ -47,7 +47,7 @@ for ts = 1:ceil(T/dt)
         u = u+s;
     end
     un = u;
-    plot(x,un,'o'), ylim(sort(BC)), shg, drawnow
+    plot(x,un,'o'), ylim(sort(BC)),  drawnow
 end
 
 %%
