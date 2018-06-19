@@ -149,6 +149,8 @@ end
  options, threshold, rtol, normcontrol, normy, hmax, htry, htspan] = ...
     odearguments(FcnHandlesUsed, solver_name, ode, tspan, y0, options, varargin);
 nfevals = nfevals + 1;
+
+%This won't work with row scale! needs to be local to each patch
 one2neq = (1:neq);
 
 % Handle the output
@@ -546,7 +548,7 @@ while ~done
 %     end
 
     if DAE
-      [RowScale,Miter] = RowScales(PUApprox,Miter,one2neq);
+      [RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);
     end
     if issparse(Miter)
       [L,U,P,Q,R] = lu(Miter);
@@ -610,8 +612,8 @@ while ~done
 
 
         %make sure signes match. 
-        R = -Masstimes(PUApprox,Mtnew,psi+difkp1);
-        rhs = hinvGak*ParPreconditionedNewtonForwardTime(tnew,ynew,R,PUApprox,evalF,num_sols);
+        R = Masstimes(PUApprox,Mtnew,psi+difkp1);
+        rhs = ParPreconditionedNewtonForwardTime(tnew,ynew,R,PUApprox,evalF,num_sols,hinvGak);
         
         %rhs = hinvGak*feval(odeFcn,tnew,ynew,odeArgs{:}) -  Mtnew*(psi+difkp1);
         
@@ -626,11 +628,14 @@ while ~done
         
         %HEY! replace with gmres jacobian function. use LU decomp of each
         %local operator.
-        if issparse(Miter)
-          del = Q * (U \ (L \ (P * (R \ rhs))));
-        else  
-          del = U \ (L \ rhs(p));
-        end  
+        
+        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x,num_sols),rhs,[],[]);  
+%         if issparse(Miter)
+%           del = Q * (U \ (L \ (P * (R \ rhs))));
+%         else  
+%           del = U \ (L \ rhs(p));
+%         end  
+
         warning(warnstat);
         
         % If no new warnings or a muted warning, restore previous lastwarn.
@@ -739,7 +744,7 @@ while ~done
         end
         if DAE
             
-          [RowScale,Miter] = RowScales(PUApprox,Miter,one2neq);  
+          [RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);  
 %           RowScale = 1 ./ max(abs(Miter),[],2);
 %           Miter = sparse(one2neq,one2neq,RowScale) * Miter;
         end
@@ -1073,9 +1078,10 @@ for i=1:length(PUApprox.leafArray)
 end    
 end
 
-function [RowScale,Miter] = RowScales(PUApprox,Miter,one2neq)
+function [RowScale,Miter] = RowScales(PUApprox,Miter,num_sols)
 for i=1:length(PUApprox.leafArray)
       RowScale{i} = 1 ./ max(abs(Miter),[],2);
+      one2neq = 1:PUApprox{i}.length*num_sols;
       Miter{i} = sparse(one2neq,one2neq,RowScale) * Miter{i};
 end
 end

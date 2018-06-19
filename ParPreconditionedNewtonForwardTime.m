@@ -7,7 +7,7 @@
 % OUTPUT:
 %          z: correction of solution
 %          J: cell array of local Jacobians
-function [z] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,num_sols)
+function [z] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,num_sols,hinvGak)
 
 %PUApprox.sample(sol);
 
@@ -57,7 +57,7 @@ end
 %parallel step
 for k=1:length(PUApprox.leafArray)
     
-    [z{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},rhs_loc{k},t,in_border{k},diff{k},evalF,num_sols,length(PUApprox.leafArray{k}));
+    [z{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},rhs_loc{k},t,in_border{k},diff{k},evalF,hinvGak,num_sols,length(PUApprox.leafArray{k}));
     
 end
 
@@ -77,7 +77,7 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,num_sols,sol_length)
+function [c] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGak,num_sols,sol_length)
 
     %The residul is F(sol_k+z_k) 
     %            sol_k(border_k)+z_k(border_k)-B_k*u 
@@ -86,7 +86,7 @@ function [c] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,num_sols
         
         z = z+sol_k;
         
-        [F] = evalF(approx,t,z)-rhs_k;
+        [F] = hinvGak*evalF(approx,t,z)-rhs_k;
         
         sol_step = 0;
         
