@@ -6,6 +6,7 @@
 \usepackage[export]{adjustbox}
 \usepackage[title]{appendix}
 \usepackage{amssymb}
+
 \usepackage{multirow}
 
 \newcommand{\lp}{\left(}
@@ -41,7 +42,7 @@
 \newcommand{\weight}[1]{w\textsubscript{#1}}
 %%%%%
 
-
+\newtheorem{thm}{Theorem}[section]
 % Information that is shared between the article and the supplement
 % (title and author information, macros, packages, etc.) goes into
 % ex_shared.tex. If there is no supplement, this file can be included
@@ -342,19 +343,41 @@ If the trees $\ct_1$ and $\ct_2$ are not structurally identical, we are free to 
 \subsection{Differentiation}
 
 Differentiation of the global approximant~(\ref{eq:pu-approx}) results in two groups of terms:
-\begin{equation}
+\begin{equation*}
   \pp{}{x_j} s(\vect{x})=\sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) \pp{}{x_j} s_\nu(\vect{x})+\sum_{\nu\in \text{leaves}(\ct)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x}).
-  \label{eq:pu-deriv}	
-\end{equation}
-The first sum is a partition of unity approximation of leafwise differentiated interpolants. That is, we simply apply standard spectral differentiation to the data stored in the leaves of $\ct$.
+%  \label{eq:pu-deriv}	
+\end{equation*}
+The first sum is a partition of unity approximation of leafwise differentiated interpolants. That is, we simply apply standard spectral differentiation to the data stored in the leaves of $\ct$. Although it may seem surprising at first, we can define the desired derivative approximation solely in terms of this first sum, and neglect the second with little penalty.
 
-For the second sum, note that the weight function derivatives are nonzero only at values of $\vect{x}$ that lie in the domains of more than one leaf; elsewhere the weight functions are identically one or zero. If the values of all the leafwise interpolants agree perfectly at such $\vect{x}$, then
-\begin{equation}
-  \label{eq:pu-weight-deriv}
-  \sum_{\nu\in \text{leaves}(\ct)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x})
-  = s_\nu(\vect{x}) \pp{}{x_j}  \sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) = 0,
-\end{equation}
-since the weights are a partition of unity. Thus this term essentially contributes an amount on the order of the local interpolation accuracy times the gradients of the weights. These gradients are inversely proportional to the overlap widths, which are themselves proportional to the zone widths (see~(\ref{eq:overlap})). At most, then, they contribute an amount that is $\bigo(2^m)$ larger than the original local error on a leaf that is at depth $m$ in the tree. As a practical issue, we are unlikely to be able to cope anyway with a tree of depth great enough to incur a factor as large as two full orders of magnitude---which we would need only to resolve features at a scale much less than 1\% of the original domain width. Hence we feel justified ignoring this contribution. 
+\begin{thm}
+  Define
+  \begin{equation}
+    \label{eq:pu-deriv}
+    s^{(j)}(\vect{x})=\sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) \pp{}{x_j} s_\nu(\vect{x}).
+  \end{equation}
+  Then for all $\vect{x}\in\Omega$,
+  \begin{equation}
+    \label{eq:pu-deriv-error}
+    \left|s^{(j)}(\vect{x})-\pp{f}{x_j}(\vect{x})\right| \le \sum_{\vect{x} \in \prop{domain}{\nu}} w_\nu(\vect{x}) \left| \pp{s_\nu}{x_j}(\vect{x}) - \pp{f}{x_j} (\vect{x})\right|. %\le \sum_{\vect{x} \in \prop{domain}{\nu}} \left| \pp{s_\nu}{x_j}(\vect{x}) - \pp{f}{x_j} (\vect{x})\right|.
+  \end{equation}
+\end{thm}
+\begin{proof}
+  By the partition of unity property,
+  \[
+    s^{(j)}(\vect{x})-\pp{f}{x_j}(\vect{x}) = \sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) \left[\pp{}{x_j} s_\nu(\vect{x}) - \pp{f}{x_j}(\vect{x})\right].
+  \]
+  The result follows because $w_\nu(\vect{x})=0$ if $\vect{x}\notin \prop{domain}{\nu}$.%, and $|w_\nu(\vect{x})|\le 1$ for all $\vect(x)$. 
+\end{proof}
+
+Hence if $\vect{x}$ is not in an overlap region, the error in the global derivative approximation $s^{(j)}$ is the same as for the local approximant. Otherwise, it is bounded---pessimistically, since the weights are positive and sum to unity pointwise---by the sum of errors in all the contributing approximants. Since no point can be in more than $2^d$ subdomains (and then only near a meeting of hyperrectangle corners), we feel this error is acceptable in two and three dimensions.  
+
+% For the second sum, note that the weight function derivatives are nonzero only at values of $\vect{x}$ that lie in the domains of more than one leaf; elsewhere the weight functions are identically one or zero. If the values of all the leafwise interpolants agree perfectly at such $\vect{x}$, then
+% \begin{equation}
+%   \label{eq:pu-weight-deriv}
+%   \sum_{\nu\in \text{leaves}(\ct)} s_\nu(\vect{x}) \pp{}{x_j} w_\nu(\vect{x})
+%   = s_\nu(\vect{x}) \pp{}{x_j}  \sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) = 0,
+% \end{equation}
+% since the weights are a partition of unity. Thus this term essentially contributes an amount on the order of the local interpolation accuracy times the gradients of the weights. These gradients are inversely proportional to the overlap widths, which are themselves proportional to the zone widths (see~(\ref{eq:overlap})). At most, then, they contribute an amount that is $\bigo(2^m)$ larger than the original local error on a leaf that is at depth $m$ in the tree. As a practical issue, we are unlikely to be able to cope anyway with a tree of depth great enough to incur a factor as large as two full orders of magnitude---which we would need only to resolve features at a scale much less than 1\% of the original domain width. Hence we feel justified ignoring this contribution. 
 
 
 \subsection{Integration}
