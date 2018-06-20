@@ -3,20 +3,20 @@
 % define the problem
 BC = [1 -1.4];
 ODE = struct;
-ODE.fun = @(u,D1,D2) 0.04*(D2*u) - u.*(D1*u);
-ODE.jac = @(u,D1,D2) 0.04*D2 - u.*D1 + diag(D1*u);
+ODE.fun = @(u,D1,D2) 0.02*(D2*u) - u.*(D1*u);
+ODE.jac = @(u,D1,D2) 0.02*D2 - u.*D1 - diag(D1*u);
 
 % define the subdomains
 dom = struct;
 %dom(1).xlim = [-1 0.06];  dom(1).n = 50;
 %dom(2).xlim = [-0.05 1];  dom(2).n = 47;
-dom(1).xlim = [-1 -0.48];  dom(1).n = 500;
-dom(2).xlim = [-0.52 0.6];  dom(2).n = 500;
-dom(3).xlim = [0.54 1];  dom(3).n = 500;
+dom(1).xlim = [-1 -0.48];  dom(1).n = 60;
+dom(2).xlim = [-0.52 0.6];  dom(2).n = 100;
+dom(3).xlim = [0.54 1];  dom(3).n = 50;
 n = cat(1,dom.n);
 
 % time stepping parameters
-T = 1;  dt = .01;
+T = 1;  dt = .02;
 
 [data,DAEfun,jacfun] = setup_BE(ODE,BC,dt,dom);
 
@@ -39,10 +39,14 @@ for ts = 1:ceil(T/dt)
         [z,jacfun] = corrections(u,un,dt,BC,dom,data);
         normres(k,ts) = norm(z);
         
-        % find overall Newton step by GMRES
-        [s,~,~,~,gmhist] = gmres(jacfun,-z,[],1e-10*norm(u)/normres(k));
-        normstep(k,ts) = norm(s);  numgm(k,ts) = length(gmhist) - 1;
+        if normres(k) < 1e-15, break, end
         
+        % find overall Newton step by GMRES
+        jacfun('clear')
+        tol = min(0.1,1e-10*norm(u)/normres(k));
+        [s,~,~,~,gmhist] = gmres(jacfun,-z,[],tol);
+        normstep(k,ts) = norm(s);  numgm(k,ts) = length(gmhist) - 1;
+
         % update
         u = u+s;
     end

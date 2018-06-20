@@ -22,12 +22,10 @@ z = cell2mat(z);
 jacfun = @jacapply;
 
     function Jv = jacapply(v)
-        Jv = cell(Nd,1);
         persistent L U
         
-        % Explicit reset proved not to be necessary. Each time this function
-        % is redefined for new data, the L and U vars are reset.
-        %%if ischar(v), L = []; return, end
+        % Not clear whether explicit reset is necessary. 
+        if ischar(v), L = []; return, end
         
         if isempty(L)
             L = cell(Nd,1);  U = cell(Nd,1);
@@ -36,6 +34,7 @@ jacfun = @jacapply;
             end
         end
         
+        Jv = cell(Nd,1);
         for d = 1:Nd
             idx = data(d).idx;
             r = zeros(n(d),1);
@@ -69,11 +68,11 @@ jacfun = @jac;
         if ~isempty(rbc)
             r(end) = z(end) + uloc(end) - rbc;
         end
-        
+ 
         % without interface interactions:
         r = M*(z+uloc-un(idx)) - dt*r;
-        
-        % interface conditions        
+               
+        % interface conditions
         if isempty(lbc)
             r(1) = z(1) + uloc(1) - Bl*u;
         end
@@ -86,13 +85,17 @@ jacfun = @jac;
 
     function J = jac(z)
         J = ODEjac(z+uloc);
+        
         if ~isempty(lbc)
             J(1,:) = 0;  J(1,1) = 1;
         end
+        
         if ~isempty(rbc)
             J(end,:) = 0;  J(end,end) = 1;
         end
+
         J = M - dt*J;
+        
         if isempty(lbc)
             J(1,:) = 0;  J(1,1) = 1;
         end
