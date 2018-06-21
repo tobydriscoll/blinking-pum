@@ -2,6 +2,12 @@ u = [0.75 0.25];
 
 a = [5 10];
 
+[~,F1] = cheb.gallery2('squarepeg');
+[~,F2] = cheb.gallery2('tiltedpeg');
+
+p = chebfunpref;
+tol = p.cheb2Prefs.chebfun2eps;
+
 test_funs = {@(x,y) log(1+10^5*(x.^2+y.^2));
             @(x,y) atan(10^2*(x+y.^2));
             @(x,y) 10^(-4)./((10^(-4)+x.^2).*(10^(-4)+y.^2));
@@ -9,7 +15,9 @@ test_funs = {@(x,y) log(1+10^5*(x.^2+y.^2));
             @(x,y) cos(2*pi*u(1)+a(1)*x+a(2)*y);
             @(x,y)  1./(a(1)^-2+(x-u(1)).^2).*1./(a(2)^-2+(y-u(2)).^2);
             @(x,y) 1./(1+a(1)*x+a(2)*y).^(-3);
-            @(x,y) exp(-a(1)*(x-u(1)).^2-a(2)*(y-u(2)).^2)};
+            @(x,y) exp(-a(1)*(x-u(1)).^2-a(2)*(y-u(2)).^2);
+            F1;
+            F2};
         
         
 CON_TIME_PU = zeros(length(test_funs),1);
@@ -27,7 +35,7 @@ G = {x x};
 [X,Y] = ndgrid(x,x);
 
 for i=1:length(test_funs)
-    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1],'degreeIndex',[7 7],'tol',1e-12); CON_TIME_PU(i) = toc;    
+    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1],'Degree',[129 129],'tol',tol); CON_TIME_PU(i) = toc;    
     tic,ef = TREE.evalfGrid(G);INTERP_TIME_PU(i) = toc;
     E = abs(ef-test_funs{i}(X,Y)); INTERP_ERROR_PU(i) = max(E(:));
     NUM_PTS_PU(i) = length(TREE);

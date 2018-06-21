@@ -17,16 +17,17 @@ classdef LeafPatch<Patch
         chebweights = [];
         cheb_bump = chebfun( {0,@(x) exp(1-1./(1-x.^2)),0},[-20 -1 1 20]);
         bump
-        values
+        %values
         coeffs
         is_interp
-        deg_in %index for the standard degrees
+        % deg_in %index for the standard degrees
         degs %array of degrees along the dimensions
+        cdegs
     end
     
     properties (Constant)
-        standard_variables = load('cheb_points_matrices.mat');
-        standard_degs = [3 5 9 17 33 65 129];
+        %standard_variables = load('cheb_points_matrices.mat');
+        %standard_degs = [3 5 9 17 33 65 129];
         invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
         forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
     end
@@ -36,9 +37,15 @@ classdef LeafPatch<Patch
             
             if isfield(var_struct, 'domain')
                 obj.domain = var_struct.domain;
+                [obj.dim,~] = size(obj.domain);
             else
                 error('A domain needs to be specified.');
             end
+            
+            obj.split_flag = true(obj.dim,1);
+            obj.degs  = zeros(1,obj.dim);
+            obj.tol = 1e-12;
+            obj.degs(:) = 128;
             
             if isfield(var_struct, 'outerbox')
                 obj.outerbox = var_struct.outerbox;
@@ -50,6 +57,22 @@ classdef LeafPatch<Patch
                 obj.zone = var_struct.zone;
             else
                 obj.zone = obj.domain;
+            end
+            
+            if isfield(var_struct, 'degs')
+                obj.degs = var_struct.degs;
+            end
+            
+            if isfield(var_struct, 'split_flag')
+                obj.split_flag = var_struct.split_flag;
+            end
+            
+            if isfield(var_struct, 'tol')
+                obj.tol = var_struct.tol;
+            end
+            
+            if isfield(var_struct, 'cdegs')
+                obj.cdegs = var_struct.cdegs;
             end
             
             
@@ -187,8 +210,7 @@ classdef LeafPatch<Patch
             C = cell(obj.dim,1);
             
             for i=1:obj.dim
-                C{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
-                C{i} = obj.forf(C{i},obj.domain(i,:));
+               C{i} = chebpts(obj.degs(i),obj.domain(i,:));
             end
             [out{1:obj.dim}] = ndgrid(C{:});
             
@@ -205,21 +227,233 @@ classdef LeafPatch<Patch
             grid = cell(1,obj.dim);
             
             for i=1:obj.dim
-                grid{i} = obj.standard_variables.chebpoints{obj.deg_in(i)};
-                grid{i} = obj.forf(grid{i},obj.domain(i,:));
+                grid{i} = chebpts(obj.deg(i),obj.domain(i,:));
             end
         end
         
-        % TODO. Figure out what to do here!
         function ln=length(obj)
             ln = prod(obj.degs);
         end
         
+                % TODO. Figure out what to do here!
+        function ef = evalf(obj,X,G)
+            if nargin<3
+                G = obj.coeffs;
+            end
+            
+            [num_pts,~] = size(X);
+            
+            ef = zeros(num_pts,1);
+            
+            for i=1:num_pts
+                ef(i) = evalfGrid(obj,num2cell(X(i,:)),G);
+            end
+            
+        end
+        
+        function ef = evalfGrid(obj,X,G)
+            
+            if nargin<3
+                G = obj.coeffs;
+            end
+            
+            [~,d_ind] = sort(obj.degs,'descend');
+            
+            for k=1:obj.dim
+                %Shift the points to the domain [-1 1]x[-1 1]
+                X{d_ind(k)} = obj.invf(X{d_ind(k)},obj.domain(d_ind(k),:));
+                
+                %Evaluate the points at the Chebyshev polynomials
+                F = chebtech.clenshaw(X{d_ind(k)},eye(obj.degs(d_ind(k))));
+                
+                %Multiply the coefficients with F
+                G = chebfun3t.txm(G, F, d_ind(k));
+            end
+            
+            ef  = G;
+            
+        end
+        
+        % Evaluates the derivative on a grid.
+        %
+        %  Input:
+        %      diff_dim: dimension derivative is taken in
+        %         order: order of derivative (up to 2 right now)
+        %             X: cellarray of grids to be evaluated on.
+        %
+        % Output:
+        %     ef: matrix of dim(X) containing the interpolated derivative values
+        function ef = evalfDiffGrid(obj,diff_dim,order,X)
+            if nargin<3
+                order = 1;
+            end
+            
+            unContractedModes = [1:diff_dim-1, diff_dim+1:obj.dim];  
+            
+            G = chebfun3t.unfold(obj.coeffs,diff_dim);
+            
+            for i=1:order
+            G = obj.computeDiffCoeffs(G);
+            end
+            
+            G = chebfun3t.fold(G,obj.degs,diff_dim,unContractedModes)/diff(obj.domain(diff_dim,:)/2)^order;
+
+            if nargin<4
+                ef = G;
+            else
+                ef = evalfGrid(obj,X,G);
+            end
+        end
+        
+        % Evaluates the approximant and its derivatives.
+        %
+        %  Input:
+        %      X: set of points to evaluate at
+        %
+        % Output:
+        %     ef: length(X) array containing the interpolated
+        function ef = Diff(obj,diff_dim,order,X)
+            if nargin<3
+                order = 1;
+            end
+            
+            unContractedModes = [1:diff_dim-1, diff_dim+1:obj.dim];  
+            G = chebfun3t.unfold(obj.coeffs,diff_dim);
+            
+            for i=1:order
+            G = obj.computeDiffCoeffs(G);
+            end
+            
+            G = chebfun3t.fold(G,obj.degs,diff_dim,unContractedModes)/diff(obj.domain(diff_dim,:)/2)^order;
+            
+            if nargin<4
+                ef = G;
+            else
+                ef = evalfDiffGrid(obj,diff_dim,order,X,G);
+            end
+        end
+        
+                %  interpMatrixPoints(obj,X)
+        %  This method creates a interpolating matrix given a list of
+        %  points.
+        %
+        %  Input:
+        %      X: list of points.
+        %
+        % Output:
+        %      M: interpolating matrix.
+        function M = interpMatrixPoints(obj,X)
+            
+            M = zeros(size(X,1),length(obj));
+            
+            for i=1:size(X,1)
+                M(i,:) = obj.interpMatrixGrid(num2cell(X(i,:)));
+            end
+            
+        end
+        
+        %  interpMatrixGrid(obj,grid)
+        %  This method creates a interpolating matrix given a grid.
+        %
+        %  Input:
+        %      X: cell array of grid values.
+        %
+        % Output:
+        %      M: interpolating matrix.
+        function M = interpMatrixGrid(obj,grid)
+            G = obj.leafGrids();
+            if obj.dim==1
+                if iscell(grid)
+                    M = barymat(grid{1},G{1});
+                else
+                    M = barymat(grid,G{1});
+                end
+            elseif obj.dim==2
+                M = kron(barymat(grid{2},G{2}),barymat(grid{1},G{1}));
+            elseif obj.dim==3
+                M = kron(barymat(grid{3},G{3}),kron(barymat(grid{2},G{2}),barymat(grid{1},G{1})));
+            end
+        end
+       
+        % TODO! fix this for coeffs    
+        % Construct for the ChebPatch
+        %
+        % This method coarsens the patch, resampling the patches values
+        % on a coarse grid.
+        function Coarsen(obj)
+            if ~obj.iscoarse
+                
+                obj.iscoarse = true;
+                
+                obj.swap_degs = obj.degs;
+                obj.swap_deg_in = obj.deg_in;
+                
+                obj.degs = obj.cdegs;
+                obj.deg_in = obj.cdeg_in;
+                
+                grid = obj.leafGrids();
+                
+                obj.degs = obj.swap_degs;
+                obj.deg_in = obj.swap_deg_in;
+                
+                obj.values = obj.evalfGrid(grid);
+                
+                obj.degs = obj.cdegs;
+                obj.deg_in = obj.cdeg_in;
+                
+                obj.cheb_length = prod(obj.cdegs);
+            end
+        end
+        
+        % TODO! fix this for coeffs
+        % Construct for the ChebPatch
+        %
+        % This method refines the patch, resampling the patches values
+        % on a fine grid.
+        function Refine(obj)
+            if obj.iscoarse
+                
+                obj.iscoarse = false;
+                
+                obj.degs = obj.swap_degs;
+                obj.deg_in = obj.swap_deg_in;
+                
+                grid = obj.leafGrids();
+                
+                obj.degs = obj.cdegs;
+                obj.deg_in = obj.cdeg_in;
+                
+                obj.values = obj.evalfGrid(grid);
+                
+                obj.degs = obj.swap_degs;
+                obj.deg_in = obj.swap_deg_in;
+                
+                obj.cheb_length = prod(obj.degs);
+            end
+        end
     end
+    
+    
     methods (Abstract)
         %This method will split the child, creating a new PUPatch. If the
         %obj does not need to split, the method returns obj.
         Child = splitleaf(obj);
     end
     
+    methods (Static)
+        function cout = computeDiffCoeffs(c)
+            %COMPUTEDERCOEFFS   Recurrence relation for coefficients of derivative.
+            %   C is the matrix of Chebyshev coefficients of a (possibly array-valued)
+            %   CHEBTECH object.  COUT is the matrix of coefficients for a CHEBTECH object
+            %   whose columns are the derivatives of those of the original.
+            
+            [n, m] = size(c);
+            cout = zeros(n, m);                        % Initialize vector {c_r}
+            w = repmat(2*(1:n-1)', 1, m);
+            v = w.*c(2:end,:);                           % Temporal vector
+            cout(n-1:-2:1,:) = cumsum(v(n-1:-2:1,:), 1); % Compute c_{n-2}, c_{n-4}, ...
+            cout(n-2:-2:1,:) = cumsum(v(n-2:-2:1,:), 1); % Compute c_{n-3}, c_{n-5}, ...
+            cout(1,:) = .5*cout(1,:);                    % Adjust the value for c_0
+        end
+    end
 end
