@@ -70,10 +70,10 @@ classdef PUFunLS < PUfun
                 args = varargin;
                 
                 while ( ~isempty(args) )
-                    if strcmpi(args{1}, 'degreeIndex')
-                        cheb_struct.deg_in = args{2};
-                    elseif strcmpi(args{1}, 'ChebDegreeIndex')
-                        cheb_struct.cheb_deg_in = args{2};
+                    if strcmpi(args{1}, 'Degree')
+                        cheb_struct.degs = args{2};
+                    elseif strcmpi(args{1}, 'ChebDegree')
+                        cheb_struct.cheb_degs = args{2};
                     elseif strcmpi(args{1}, 'MaxLengths')
                         cheb_struct.max_lengths = args{2};
                     elseif strcmpi(args{1}, 'tol')

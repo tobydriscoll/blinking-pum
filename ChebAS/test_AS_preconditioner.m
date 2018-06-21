@@ -2,8 +2,8 @@ overlap = 0.1;
 
 domain = [-1 1;-1 1];
 
-deg_in = [5 5];
-cdeg_in = [3 3];
+degs = [32 32];
+cdegs = [10 10];
 split_flag = [1 1];
 tol = 1e-8;
 gmres_tol = 5e-9;
@@ -116,9 +116,9 @@ border = {f3,f3,f3,f3};
 
 
 cheb_struct.domain = domain;
-cheb_struct.deg_in = deg_in;
+cheb_struct.degs = degs;
 cheb_struct.split_flag = split_flag;
-cheb_struct.cdeg_in = cdeg_in;
+cheb_struct.cdegs = cdegs;
 cheb_struct.tol = tol;
 
 F = PUchebfun(ChebPatch(cheb_struct));

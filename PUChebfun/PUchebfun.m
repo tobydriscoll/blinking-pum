@@ -142,7 +142,7 @@ classdef PUchebfun < PUfun
         
         function Patch = newRoot(obj)
             vars.domain = obj.domain;
-            vars.deg_in = obj.deg_in;
+            vars.degs = obj.degs;
             Patch = ChebPatch(vars);
         end
         
@@ -262,6 +262,10 @@ classdef PUchebfun < PUfun
         % Returns string of object
         function disp(obj)
             disp(obj.ChebRoot.toString());
+        end
+        
+        function Setvalues(obj,f)
+            obj.ChebRoot.Setvalues(f);
         end
         
         % disp(obj)

@@ -861,9 +861,12 @@ classdef PUPatch<Patch
             end
         end
         
+        function Setvalues(obj,f)
+            obj.children{1}.Setvalues(f(1:length(obj.children{1})));
+            obj.children{2}.Setvalues(f(length(obj.children{1})+1:end));
+        end
         
     end
-    
     methods(Access = protected)
         
 

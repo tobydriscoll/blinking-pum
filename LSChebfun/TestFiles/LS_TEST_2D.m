@@ -7,14 +7,14 @@ INTERP_TIMES = zeros(length(DOMAIN), length(funs));
 INTERP_ERR = zeros(length(DOMAIN),length(funs));
 NUMPTS = zeros(length(DOMAIN),length(funs));
 
-DegreeIND = [4 4];
-ChebIND = [6 6];
+DegreeIND = [33 33];
+
 tol = 1e-10;
 
 for D_i=1:length(DOMAIN)
         for f_i=1:length(funs)
             
-             tic,F = PUFunLS(funs{f_i},DOMAIN{D_i},OUTERBOX{D_i},'degreeIndex',DegreeIND,'ChebDegreeIndex',ChebIND,'tol',tol);CONS_TIMES(D_i,f_i) = toc;
+             tic,F = PUFunLS(funs{f_i},DOMAIN{D_i},OUTERBOX{D_i},'Degree',DegreeIND,'tol',tol);CONS_TIMES(D_i,f_i) = toc;
              
              x = linspace(OUTERBOX{D_i}(1,1),OUTERBOX{D_i}(1,2),200)';
              y = linspace(OUTERBOX{D_i}(2,1),OUTERBOX{D_i}(2,2),200)';

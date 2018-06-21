@@ -28,8 +28,11 @@ G = {x x x};
 [X,Y,Z] = ndgrid(x,x,x);
 
 for i=1:length(test_funs)
-    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1;-1 1],'Degree',[129 129 129],'tol',tol); CON_TIME_PU(i) = toc;  
+    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1;-1 1],'Degree',[65 65 65],'tol',tol); CON_TIME_PU(i) = toc;  
     tic,ef = TREE.evalfGrid(G);INTERP_TIME_PU(i) = toc;
+    if any(isnan(ef(:)))
+        error('found a nan');
+    end
     E = abs(ef-test_funs{i}(X,Y,Z)); INTERP_ERROR_PU(i) = max(E(:));
     NUM_PTS_PU(i) = length(TREE);
     

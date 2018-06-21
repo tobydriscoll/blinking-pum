@@ -15,9 +15,9 @@ classdef LeafPatch<Patch
     properties
         index = [];
         chebweights = [];
-        cheb_bump = chebfun( {0,@(x) exp(1-1./(1-x.^2)),0},[-20 -1 1 20]);
+        %cheb_bump = chebfun( {0,@(x) exp(1-1./(1-x.^2)),0},[-20 -1 1 20]);
         bump
-        %values
+        values = [];
         coeffs
         is_interp
         % deg_in %index for the standard degrees
@@ -28,6 +28,7 @@ classdef LeafPatch<Patch
     properties (Constant)
         %standard_variables = load('cheb_points_matrices.mat');
         %standard_degs = [3 5 9 17 33 65 129];
+        cheb_bump = @(x) exp(1-1./(1-x.^2));
         invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
         forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
     end
@@ -85,14 +86,19 @@ classdef LeafPatch<Patch
             for k=1:obj.dim
                 % if isequal(obj.domain(k,:),obj.outerbox(k,:))
                 %     w = @(x) ones(size(x));
-                if obj.domain(k,1) == obj.outerbox(k,1)
-                    w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
+                if isequal(obj.domain(k,:),obj.outerbox(k,:))
+                    w = @(x)obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
+                    obj.bump{k} = @(x) (x<=obj.domain(k,1)) + (x>=obj.domain(k,2)) + (x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
+                elseif obj.domain(k,1) == obj.outerbox(k,1)
+                    w = @(x)obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
+                    obj.bump{k} = @(x) (x<=obj.domain(k,1)) + (x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
                 elseif obj.domain(k,2) == obj.outerbox(k,2)
                     w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))-1)/2);
+                    obj.bump{k} = @(x)(x>=obj.domain(k,2))+(x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
                 else
                     w = @(x) obj.cheb_bump(obj.invf(x,obj.domain(k,:)));
+                    obj.bump{k} = @(x)(x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
                 end
-                obj.bump{k} = w;
             end
         end
         
@@ -227,7 +233,7 @@ classdef LeafPatch<Patch
             grid = cell(1,obj.dim);
             
             for i=1:obj.dim
-                grid{i} = chebpts(obj.deg(i),obj.domain(i,:));
+                grid{i} = chebpts(obj.degs(i),obj.domain(i,:));
             end
         end
         
@@ -271,6 +277,24 @@ classdef LeafPatch<Patch
             end
             
             ef  = G;
+            
+        end
+        
+        function C = DiffCoeffs(obj,diff_dim,order)
+            
+            if nargin<3
+                order = 1;
+            end
+            
+            unContractedModes = [1:diff_dim-1, diff_dim+1:obj.dim];
+            
+            C = chebfun3t.unfold(obj.coeffs,diff_dim);
+            
+            for i=1:order
+                C = obj.computeDiffCoeffs(C);
+            end
+            
+            C = chebfun3t.fold(C,obj.degs,diff_dim,unContractedModes);
             
         end
         
@@ -375,37 +399,70 @@ classdef LeafPatch<Patch
             end
         end
        
-        % TODO! fix this for coeffs    
-        % Construct for the ChebPatch
+        % Evaluates the approximant on a grid.
         %
-        % This method coarsens the patch, resampling the patches values
-        % on a coarse grid.
+        %  Input:
+        %      X: cellarray of grids to be evaluated on.
+        %
+        % Output:
+        %     ef: matrix of dim(X) containing the interpolated values
+        function ef = evalfBaryGrid(obj,X,G)
+            
+            for k=1:obj.dim
+                %Shift the points to the right domain
+                points = obj.invf(X{k},obj.domain(k,:));
+                [x,w] = chebpts(obj.degs(k));
+                f = bary(points,eye(obj.degs(k)),x,w);
+                
+                if length(X{k})==1
+                    f = f.';
+                end
+                
+                G = chebfun3t.txm(G, f, k);
+            end
+            ef = G;
+        end
+        
+        % Evaluates the approximant and its derivatives.
+        %
+        %  Input:
+        %      X: set of points to evaluate at
+        %
+        % Output:
+        %     ef: length(X) array containing the interpolated
+        function ef = evalfBarry(obj,X,G)
+            
+            [num_pts,~] = size(X);
+            
+            ef = zeros(num_pts,1);
+            
+            for i=1:num_pts
+                ef(i) = evalfGrid(obj,num2cell(X(i,:)),G);
+            end
+            
+        end
+        
         function Coarsen(obj)
             if ~obj.iscoarse
                 
                 obj.iscoarse = true;
                 
                 obj.swap_degs = obj.degs;
-                obj.swap_deg_in = obj.deg_in;
                 
                 obj.degs = obj.cdegs;
-                obj.deg_in = obj.cdeg_in;
                 
                 grid = obj.leafGrids();
                 
                 obj.degs = obj.swap_degs;
-                obj.deg_in = obj.swap_deg_in;
                 
-                obj.values = obj.evalfGrid(grid);
+                obj.values = obj.evalfBaryGrid(grid,obj.values);
                 
                 obj.degs = obj.cdegs;
-                obj.deg_in = obj.cdeg_in;
                 
                 obj.cheb_length = prod(obj.cdegs);
             end
         end
         
-        % TODO! fix this for coeffs
         % Construct for the ChebPatch
         %
         % This method refines the patch, resampling the patches values
@@ -416,23 +473,25 @@ classdef LeafPatch<Patch
                 obj.iscoarse = false;
                 
                 obj.degs = obj.swap_degs;
-                obj.deg_in = obj.swap_deg_in;
                 
                 grid = obj.leafGrids();
                 
                 obj.degs = obj.cdegs;
-                obj.deg_in = obj.cdeg_in;
                 
-                obj.values = obj.evalfGrid(grid);
+                obj.values = obj.evalfBaryGrid(grid,obj.values);
                 
                 obj.degs = obj.swap_degs;
-                obj.deg_in = obj.swap_deg_in;
                 
                 obj.cheb_length = prod(obj.degs);
             end
         end
+        
+        
+        function Setvalues(obj,f)
+            obj.values = reshape(f,obj.degs);
+        end
+        
     end
-    
     
     methods (Abstract)
         %This method will split the child, creating a new PUPatch. If the

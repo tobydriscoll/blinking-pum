@@ -94,14 +94,14 @@ classdef ChebPatch<LeafPatch
                 if ~grid_opt
                     if obj.dim==1
                         obj.coeffs = chebtech2.vals2coeffs(f(obj.points()));
+                    elseif obj.dim==2
+                        points = obj.points();
+                        V = reshape(f(points(:,1),points(:,2)),obj.degs);
+                        obj.coeffs = chebfun2.vals2coeffs(V);
                     else
-                        points = num2cell(obj.points(),1);
-                        V = reshape(f(points{:}),obj.degs);
-                        if obj.dim==2
-                            obj.coeffs = chebfun2.vals2coeffs(V);
-                        else
-                            obj.coeffs = chebfun3.vals2coeffs(V);
-                        end
+                        points = obj.points();
+                        V = reshape(f(points(:,1),points(:,2),points(:,3)),obj.degs);
+                        obj.coeffs = chebfun3.vals2coeffs(V); 
                     end
                 else
                     %If a function is more efficient on a grid, evaluate it
@@ -201,6 +201,9 @@ classdef ChebPatch<LeafPatch
             for k=1:obj.dim
                 if isHappy(k)
                     obj.degs(k) = cutoff(k);
+                    if obj.degs(k)<obj.cdegs(k)
+                        obj.cdegs(k) = obj.degs(k);
+                    end
                     obj.split_flag(k) = false;
                 end
             end
@@ -218,6 +221,15 @@ classdef ChebPatch<LeafPatch
                 obj.is_refined = true;
                 obj.cheb_length = prod(obj.degs);
                 Child = obj;
+                if set_vals
+                    if obj.dim==1
+                        obj.values = chebtech2.coeffs2vals(obj.coeffs);
+                    elseif obj.dim==2
+                        obj.values = chebfun2.coeffs2vals(obj.coeffs);
+                    else
+                        obj.values = chebfun3.coeffs2vals(obj.coeffs);
+                    end
+                end
             else
                 
                 
@@ -298,7 +310,9 @@ classdef ChebPatch<LeafPatch
             
             if set_vals
                 for k=1:2
-                    Child.children{k}.sample(obj.evalfGrid(Child.children{k}.leafGrids()));
+                    V = obj.evalfGrid(Child.children{k}.leafGrids());
+                    Child.children{k}.sample(V);
+                    Child.children{k}.values = V;
                 end
             end
         end
@@ -328,6 +342,9 @@ classdef ChebPatch<LeafPatch
             IsGeometricallyRefined = true;
         end
         
+        function V = Getvalues(obj)
+            V = obj.values(:);
+        end
         
         
         function reset(obj)
