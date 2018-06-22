@@ -411,7 +411,8 @@ classdef LeafPatch<Patch
             for k=1:obj.dim
                 %Shift the points to the right domain
                 points = obj.invf(X{k},obj.domain(k,:));
-                [x,w] = chebpts(obj.degs(k));
+                x = chebpts(obj.degs(k));
+                w = chebtech2.barywts(obj.degs(k));
                 f = bary(points,eye(obj.degs(k)),x,w);
                 
                 if length(X{k})==1
@@ -443,6 +444,7 @@ classdef LeafPatch<Patch
         end
         
         function Coarsen(obj)
+            
             if ~obj.iscoarse
                 
                 obj.iscoarse = true;
@@ -461,6 +463,7 @@ classdef LeafPatch<Patch
                 
                 obj.cheb_length = prod(obj.cdegs);
             end
+
         end
         
         % Construct for the ChebPatch
@@ -484,6 +487,8 @@ classdef LeafPatch<Patch
                 
                 obj.cheb_length = prod(obj.degs);
             end
+
+            
         end
         
         

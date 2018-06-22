@@ -132,6 +132,8 @@ classdef ChebPatch<LeafPatch
                 end
             end
             
+            obj.values = V;
+            
             Max = max(abs(V(:)));
             obj.local_max = Max;
             
@@ -203,6 +205,7 @@ classdef ChebPatch<LeafPatch
                     obj.degs(k) = cutoff(k);
                     if obj.degs(k)<obj.cdegs(k)
                         obj.cdegs(k) = obj.degs(k);
+                        obj.values = [];
                     end
                     obj.split_flag(k) = false;
                 end

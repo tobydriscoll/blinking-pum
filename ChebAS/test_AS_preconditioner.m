@@ -147,13 +147,14 @@ while ~is_refined
         
     else
         
+        init = F.Getvalues;
         [rhs] = setLinOps(F,L,B,force,border);
         Mat = CoarseASMat(F,L,B );
         
         A = @(sol) ParSchwarzForward(F,sol);
         M = @(rhs) CoarseCorrection(F,rhs,Mat);
         
-        [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],F.Getvalues);
+        [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],init);
         
         gmres_it = [gmres_it length(rvec)];
         
