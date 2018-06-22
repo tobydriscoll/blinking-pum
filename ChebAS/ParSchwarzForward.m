@@ -1,6 +1,6 @@
 function [ output ] = ParSchwarzForward(PUApprox,sol)
 
-PUApprox.sample(sol);
+%PUApprox.sample(sol);
 
 output = zeros(size(sol));
 

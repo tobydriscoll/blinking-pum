@@ -84,13 +84,11 @@ classdef LSPatch3D < LSPatch
             p_struct.outerbox = obj.outerbox;
             p_struct.zone = obj.zone;
             p_struct.domain = obj.domain;
-            p_struct.deg_in = obj.deg_in;
-            p_struct.cheb_deg_in = obj.cheb_deg_in;
             p_struct.domain_in = obj.domain_in;
             p_struct.split_flag = obj.split_flag;
             p_struct.max_lengths = obj.max_lengths;
             p_struct.tol = obj.tol;
-            p_struct.cdeg_in = obj.cdeg_in;
+            p_struct.degs = obj.degs;
         end    
         
         % This method samples the polynomial with a LS square fit

@@ -20,7 +20,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
     end
     
     properties (Constant)
-        overlap = 0.1;
+        overlap = 0.08;
     end
     
     methods (Abstract)
@@ -102,6 +102,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
         function clean(obj)
             if obj.is_leaf
                 %obj.split_flag = false(size(obj.split_flag));
+                obj.cheb_length = prod(obj.degs);
             else
                 
                 clean(obj.children{1});

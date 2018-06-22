@@ -33,7 +33,7 @@ classdef PUchebfun < PUfun
 % 33 in each direction. 
 
     properties
-        deg_in
+        degs
         tol
         domain = [];
         grid_opt = false;
@@ -77,14 +77,14 @@ classdef PUchebfun < PUfun
                     while ( ~isempty(args) )
                         if strcmpi(args{1}, 'gridOption')
                             obj.grid_opt = args{2};
-                        elseif strcmpi(args{1}, 'degreeIndex')
-                            obj.deg_in = args{2};
-                            cheb_struct.deg_in = args{2};
+                        elseif strcmpi(args{1}, 'Degree')
+                            obj.degs = args{2};
+                            cheb_struct.degs = args{2};
                         elseif strcmpi(args{1}, 'tol')
                             obj.tol = args{2};
                             cheb_struct.tol = args{2};
-                        elseif strcmpi(args{1}, 'CourseDegreeIndex')
-                            cheb_struct.cdeg_in = args{2};
+                        elseif strcmpi(args{1}, 'CourseDegree')
+                            cheb_struct.cdegs = args{2};
                         else
                             error(strcat(args{1},' is not a valid parameter.'));
                         end
@@ -142,7 +142,7 @@ classdef PUchebfun < PUfun
         
         function Patch = newRoot(obj)
             vars.domain = obj.domain;
-            vars.deg_in = obj.deg_in;
+            vars.degs = obj.degs;
             Patch = ChebPatch(vars);
         end
         
@@ -262,6 +262,10 @@ classdef PUchebfun < PUfun
         % Returns string of object
         function disp(obj)
             disp(obj.ChebRoot.toString());
+        end
+        
+        function Setvalues(obj,f)
+            obj.ChebRoot.Setvalues(f);
         end
         
         % disp(obj)

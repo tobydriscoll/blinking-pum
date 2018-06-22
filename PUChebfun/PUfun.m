@@ -121,6 +121,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
         function N = norm(obj)
             N = sum(obj^2);
         end
+        
         % diff_Tree = diff(obj,diff_dim,order)
         % This method computes thd approximation of the derivative
         %Input:
@@ -131,11 +132,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             diff_Tree = copy(obj);
             
             for i=1:length(obj.leafArray)
-                if obj.leafArray{i}.is_interp
-                    diff_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},diff_dim,order);
-                else
-                    diff_Tree.leafArray{i}.coeffs = evalfDiffGrid(obj.leafArray{i},diff_dim,order);
-                end
+                diff_Tree.leafArray{i}.coeffs = DiffCoeffs(obj.leafArray{i},diff_dim,order);
             end
             
         end
@@ -150,23 +147,11 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             
             for i=1:length(obj.leafArray)
                 if obj.ChebRoot.dim==1
-                    if obj.leafArray{i}.is_interp
-                        div_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,1);
-                    else
-                        div_Tree.leafArray{i}.coeffs = evalfDiffGrid(obj.leafArray{i},1,1);
-                    end
+                        div_Tree.leafArray{i}.coeffs = DiffCoeffs(obj.leafArray{i},1,1);
                 elseif obj.ChebRoot.dim==2
-                    if obj.leafArray{i}.is_interp
-                        div_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,1)+evalfDiffGrid(obj.leafArray{i},2,1);
-                    else
-                        div_Tree.leafArray{i}.coeffs = evalfDiffGrid(obj.leafArray{i},1,1)+evalfDiffGrid(obj.leafArray{i},2,1);
-                    end
+                        div_Tree.leafArray{i}.coeffs = DiffCoeffs(obj.leafArray{i},1,1)+DiffCoeffs(obj.leafArray{i},2,1);
                 else
-                    if obj.leafArray{i}.is_interp
-                        div_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,1)+evalfDiffGrid(obj.leafArray{i},2,1)+evalfDiffGrid(obj.leafArray{i},3,1);
-                    else
-                        div_Tree.leafArray{i}.coeffs = evalfDiffGrid(obj.leafArray{i},1,1)+evalfDiffGrid(obj.leafArray{i},2,1);
-                    end
+                        div_Tree.leafArray{i}.coeffs = DiffCoeffs(obj.leafArray{i},1,1)+DiffCoeffs(obj.leafArray{i},2,1)+DiffCoeffs(obj.leafArray{i},3,1);
                 end
             end
             
@@ -182,26 +167,13 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             
             for i=1:length(obj.leafArray)
                 if obj.ChebRoot.dim==1
-                    if obj.leafArray{i}.is_interp
-                        lap_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,2);
-                    else
-                        lap_Tree.leafArray{i}.coeffs = evalfDiffGrid(obj.leafArray{i},1,2);
-                    end
+                        lap_Tree.leafArray{i}.coeffs = DiffCoeffs(obj.leafArray{i},1,2);
                 elseif obj.ChebRoot.dim==2
-                    if obj.leafArray{i}.is_interp
-                        lap_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,2)+evalfDiffGrid(obj.leafArray{i},2,2);
-                    else
-                        lap_Tree.leafArray{i}.coeffs = evalfDiffGrid(obj.leafArray{i},1,2);
-                    end
+                        lap_Tree.leafArray{i}.coeffs = DiffCoeffs(obj.leafArray{i},1,2)+DiffCoeffs(obj.leafArray{i},2,2);
                 else
-                    if obj.leafArray{i}.is_interp
-                        lap_Tree.leafArray{i}.values = evalfDiffGrid(obj.leafArray{i},1,2)+evalfDiffGrid(obj.leafArray{i},2,2)+evalfDiffGrid(obj.leafArray{i},3,2);
-                    else
-                        lap_Tree.leafArray{i}.coeffs = evalfDiffGrid(obj.leafArray{i},1,2);
-                    end
+                        lap_Tree.leafArray{i}.coeffs = DiffCoeffs(obj.leafArray{i},1,2)+DiffCoeffs(obj.leafArray{i},2,2)+DiffCoeffs(obj.leafArray{i},3,2);
                 end
             end
-            
         end
         
         % ln = length(obj)
@@ -245,11 +217,8 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
         function T_merge = fast_add(T_1,T_2,T_merge,split_dim)
             
             if T_1.is_leaf && T_2.is_leaf
-                T_merge.deg_in = max(T_1.deg_in,T_2.deg_in);
                 T_merge.degs = max(T_1.degs,T_2.degs);
-                if T_merge.is_interp
-                    T_merge.values = T_1.evalfGrid(T_merge.leafGrids())+T_2.evalfGrid(T_merge.leafGrids());
-                else
+                
                     T_merge.coeffs = zeros(T_merge.degs);
                     
                     if isequal(T_1.domain,T_2.domain)
@@ -268,7 +237,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                         V = T_1.evalfGrid(T_merge.leafGrids())+T_2.evalfGrid(T_merge.leafGrids());
                         
                         if T_merge.dim==1
-                            T_merge.coeffs = tech.vals2coeffs(V);
+                            T_merge.coeffs = chebtech2.vals2coeffs(V);
                         elseif T_merge.dim==2
                             T_merge.coeffs = chebfun2.vals2coeffs(V);
                         elseif T_mergre.dim==3
@@ -276,7 +245,6 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                         end
                         
                     end
-                end
                 
             elseif T_1.is_leaf && ~T_2.is_leaf
                 T_merge = T_merge.split(T_2.splitting_dim);
@@ -355,12 +323,9 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
         function T_merge = fast_subtract(T_1,T_2,T_merge,split_dim)
             
             if T_1.is_leaf && T_2.is_leaf
-                T_merge.deg_in = max(T_1.deg_in,T_2.deg_in);
                 T_merge.degs = max(T_1.degs,T_2.degs);
-                if T_merge.is_interp
-                    T_merge.values = T_1.evalfGrid(T_merge.leafGrids())-T_2.evalfGrid(T_merge.leafGrids());
-                else
-                    T_merge.coeffs = zeros(T_merge.degs);
+                
+                T_merge.coeffs = zeros(T_merge.degs);
                     
                     if isequal(T_1.domain,T_2.domain)
                         if T_merge.dim==1
@@ -386,7 +351,6 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                         end
                         
                     end
-                end
                 
             elseif T_1.is_leaf && ~T_2.is_leaf
                 T_merge = T_merge.split(T_2.splitting_dim);
@@ -466,7 +430,6 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             
             if T_1.is_leaf && T_2.is_leaf
                 
-                T_merge.deg_in = max(T_1.deg_in,T_2.deg_in);
                 T_merge.degs = max(T_1.degs,T_2.degs);
                 T_merge = T_merge.refine(@(x)T_1.evalfGrid(x).*T_2.evalfGrid(x),true,true);
                 
@@ -547,7 +510,6 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             
             if T_1.is_leaf && T_2.is_leaf
                 
-                T_merge.deg_in = max(T_1.deg_in,T_2.deg_in);
                 T_merge.degs = max(T_1.degs,T_2.degs);
                 T_merge = T_merge.refine(@(x)T_1.evalfGrid(x)./T_2.evalfGrid(x),true,true);
                 

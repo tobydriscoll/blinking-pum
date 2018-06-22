@@ -28,7 +28,6 @@ classdef ChebPatch<LeafPatch
 % So if 'degreeIndex', [5 5 5], the max degree of any approximate will be 
 % 33 in each direction.
     properties
-        cdegs %array of coarse degrees along the dimensions
         swap_degs %temp holder for degs
         iscoarse = false;
         linOp
@@ -37,6 +36,10 @@ classdef ChebPatch<LeafPatch
         Binterp
         orig_degs
         orig_deg_in
+        local_max
+        L
+        U
+        p
     end
     
     properties (Access = protected)
@@ -63,43 +66,6 @@ classdef ChebPatch<LeafPatch
             %Call superclass constructor
             obj = obj@LeafPatch(var_struct);
             
-            obj.is_interp = true;
-            obj.tol = 1e-12;
-            obj.deg_in = zeros(obj.dim,1);
-            
-            if obj.dim<3
-                obj.deg_in(:) = 7;
-            else
-                obj.deg_in(:) = 6;
-            end
-            
-            obj.cdeg_in = zeros(obj.dim,1);
-            obj.cdeg_in(:) = 3;
-            obj.split_flag = true(obj.dim,1);
-            
-            if isfield(var_struct, 'deg_in')
-                obj.deg_in = var_struct.deg_in;
-            end
-            
-            if isfield(var_struct, 'split_flag')
-                obj.split_flag = var_struct.split_flag;
-            end
-            
-            if isfield(var_struct, 'tol')
-                obj.tol = var_struct.tol;
-            end
-            
-            if isfield(var_struct, 'cdeg_in')
-                obj.cdeg_in = var_struct.cdeg_in;
-            end
-            
-            obj.degs = obj.standard_degs(obj.deg_in);
-            obj.cdegs = obj.standard_degs(obj.cdeg_in);
-            
-            obj.orig_degs = obj.degs;
-            obj.orig_deg_in = obj.deg_in;
-            
-            obj.cheb_length = prod(obj.degs);
             obj.is_refined = false;
             obj.is_geometric_refined = true;
         end
@@ -109,215 +75,10 @@ classdef ChebPatch<LeafPatch
             p_struct.outerbox = obj.outerbox;
             p_struct.zone = obj.zone;
             p_struct.domain = obj.domain;
-            p_struct.deg_in = obj.deg_in;
             p_struct.split_flag = obj.split_flag;
             p_struct.tol = obj.tol;
-            p_struct.cdeg_in = obj.cdeg_in;
-        end
-        
-        % Construct for the ChebPatch
-        %
-        % This method coarsens the patch, resampling the patches values
-        % on a coarse grid.
-        function Coarsen(obj)
-            if ~obj.iscoarse
-                
-                obj.iscoarse = true;
-                
-                obj.swap_degs = obj.degs;
-                obj.swap_deg_in = obj.deg_in;
-                
-                obj.degs = obj.cdegs;
-                obj.deg_in = obj.cdeg_in;
-                
-                grid = obj.leafGrids();
-                
-                obj.degs = obj.swap_degs;
-                obj.deg_in = obj.swap_deg_in;
-                
-                obj.values = obj.evalfGrid(grid);
-                
-                obj.degs = obj.cdegs;
-                obj.deg_in = obj.cdeg_in;
-                
-                obj.cheb_length = prod(obj.cdegs);
-            end
-        end
-        
-        
-        % Construct for the ChebPatch
-        %
-        % This method refines the patch, resampling the patches values
-        % on a fine grid.
-        function Refine(obj)
-            if obj.iscoarse
-                
-                obj.iscoarse = false;
-                
-                obj.degs = obj.swap_degs;
-                obj.deg_in = obj.swap_deg_in;
-                
-                grid = obj.leafGrids();
-                
-                obj.degs = obj.cdegs;
-                obj.deg_in = obj.cdeg_in;
-                
-                obj.values = obj.evalfGrid(grid);
-                
-                obj.degs = obj.swap_degs;
-                obj.deg_in = obj.swap_deg_in;
-                
-                obj.cheb_length = prod(obj.degs);
-            end
-        end
-        
-        % Returns the length of the object
-        function ln=length(obj)
-            ln = obj.cheb_length;
-        end
-        
-        % Returns the values of the object
-        function vals = Getvalues(obj)
-            vals = obj.values(:);
-        end
-        
-        
-        
-        % Evaluates the approximant and its derivatives.
-        %
-        %  Input:
-        %      X: set of points to evaluate at
-        %
-        % Output:
-        %     ef: length(X) array containing the interpolated
-        function ef = evalf(obj,X,G)
-            
-            if nargin<3
-                G = obj.values;
-            end
-            
-            [num_pts,~] = size(X);
-            
-            ef = zeros(num_pts,1);
-            
-            for i=1:num_pts
-                ef(i) = evalfGrid(obj,num2cell(X(i,:)),G);
-            end
-            
-        end
-        
-        % Evaluates the approximant and its derivatives.
-        %
-        %  Input:
-        %      X: set of points to evaluate at
-        %
-        % Output:
-        %     ef: length(X) array containing the interpolated
-        function ef = Diff(obj,diff_dim,order,X)
-            if nargin<3
-                order = 1;
-            end
-            
-            G = chebfun3t.txm(obj.values, obj.standard_variables.matrices{obj.deg_in(diff_dim)}, order)/(diff(obj.domain(diff_dim,:))/2)^order;
-            
-            if nargin<4
-                ef = G(:);
-            else
-                ef = evalfDiffGrid(obj,diff_dim,order,X,G);
-            end
-        end
-        
-        % Evaluates the approximant on a grid.
-        %
-        %  Input:
-        %      X: cellarray of grids to be evaluated on.
-        %
-        % Output:
-        %     ef: matrix of dim(X) containing the interpolated values
-        function ef = evalfGrid(obj,X,G)
-            
-            if nargin<3
-                G = obj.values;
-            end
-            
-            for k=1:obj.dim
-                %Shift the points to the right domain
-                points = obj.invf(X{k},obj.domain(k,:));
-                
-                f = bary(points,eye(obj.degs(k)),obj.standard_variables.chebpoints{obj.deg_in(k)},obj.standard_variables.chebweights{obj.deg_in(k)});
-                
-                if length(X{k})==1
-                    f = f.';
-                end
-                
-                G = chebfun3t.txm(G, f, k);
-            end
-            ef = G;
-        end
-        
-        % Evaluates the derivative on a grid.
-        %
-        %  Input:
-        %      diff_dim: dimension derivative is taken in
-        %         order: order of derivative (up to 2 right now)
-        %             X: cellarray of grids to be evaluated on.
-        %
-        % Output:
-        %     ef: matrix of dim(X) containing the interpolated derivative values
-        function ef = evalfDiffGrid(obj,diff_dim,order,X)
-            if nargin<3
-                order = 1;
-            end
-            
-            G = chebfun3t.txm(obj.values, obj.standard_variables.chebmatrices{obj.deg_in(diff_dim),order}, diff_dim)/(diff(obj.domain(diff_dim,:))/2)^order;
-            
-            if nargin<4
-                ef = G;
-            else
-                ef = evalfGrid(obj,X,G);
-            end
-        end
-        
-        %  interpMatrixPoints(obj,X)
-        %  This method creates a interpolating matrix given a list of
-        %  points.
-        %
-        %  Input:
-        %      X: list of points.
-        %
-        % Output:
-        %      M: interpolating matrix.
-        function M = interpMatrixPoints(obj,X)
-            
-            M = zeros(size(X,1),length(obj));
-            
-            for i=1:size(X,1)
-                M(i,:) = obj.interpMatrixGrid(num2cell(X(i,:)));
-            end
-            
-        end
-        
-        %  interpMatrixGrid(obj,grid)
-        %  This method creates a interpolating matrix given a grid.
-        %
-        %  Input:
-        %      X: cell array of grid values.
-        %
-        % Output:
-        %      M: interpolating matrix.
-        function M = interpMatrixGrid(obj,grid)
-            G = obj.leafGrids();
-            if obj.dim==1
-                if iscell(grid)
-                    M = barymat(grid{1},G{1});
-                else
-                    M = barymat(grid,G{1});
-                end
-            elseif obj.dim==2
-                M = kron(barymat(grid{2},G{2}),barymat(grid{1},G{1}));
-            elseif obj.dim==3
-                M = kron(barymat(grid{3},G{3}),kron(barymat(grid{2},G{2}),barymat(grid{1},G{1})));
-            end
+            p_struct.cdegs = obj.cdegs;
+            p_struct.degs = obj.degs;
         end
         
         % Sets the values to be used for interpolation
@@ -330,42 +91,54 @@ classdef ChebPatch<LeafPatch
                 grid_opt = false;
             end
             
-%             f_dim = nargin(f);
-%             
-%             if f_dim~=obj.dim
-%                 error('Function does not have correct number of inputs');
-%             end
-            
             %Just assume we sample f for right now.
             if ~isnumeric(f)
                 
                 if ~grid_opt
                     if obj.dim==1
-                        obj.values = f(obj.points());
+                        obj.coeffs = chebtech2.vals2coeffs(f(obj.points()));
+                    elseif obj.dim==2
+                        points = obj.points();
+                        V = reshape(f(points(:,1),points(:,2)),obj.degs);
+                        obj.coeffs = chebfun2.vals2coeffs(V);
                     else
-                        points = num2cell(obj.points(),1);
-                        obj.values = reshape(f(points{:}),obj.degs);
+                        points = obj.points();
+                        V = reshape(f(points(:,1),points(:,2),points(:,3)),obj.degs);
+                        obj.coeffs = chebfun3.vals2coeffs(V); 
                     end
                 else
                     %If a function is more efficient on a grid, evaluate it
                     %as so.
-                    obj.values = f(obj.leafGrids());
+                    V = f(obj.leafGrids());
+                    if obj.dim==2
+                        obj.coeffs = chebfun2.vals2coeffs(V);
+                    else
+                        obj.coeffs = chebfun3.vals2coeffs(V);
+                    end
                 end
             else
                 switch obj.dim
                     case 1
                         [~,n2] = size(f);
                         if n2 == 1
-                            obj.values = f';
+                            V = f';
                         else
-                            obj.values = f;
+                            V = f;
                         end
-                        
+                        obj.coeffs = chebtech2.vals2coeffs(V);
+                    case 2
+                        V = reshape(f,obj.degs);
+                        obj.coeffs = chebfun2.vals2coeffs(V);
                     otherwise
-                        obj.values = reshape(f,obj.degs);
+                        V = reshape(f,obj.degs);
+                        obj.coeffs = chebfun3.vals2coeffs(V);
                 end
             end
-            Max = max(abs(obj.values(:)));
+            
+            obj.values = V;
+            
+            Max = max(abs(V(:)));
+            obj.local_max = Max;
             
         end
         
@@ -390,33 +163,40 @@ classdef ChebPatch<LeafPatch
             loc_tol = obj.tol^(7/8);
             
             cutoff = zeros(obj.dim,1);
+            isHappy = zeros(obj.dim,1);
             
-            local_max = max(abs(obj.values(:)));
             
             if obj.dim==1
-                fCol = chebtech2(obj.values);
+                fCol = chebtech2({[],obj.coeffs});
                 hscale = diff(obj.domain);
-                tol = loc_tol*max(vscale./local_max,hscale);
+                tol = loc_tol*max(vscale./obj.local_max,hscale);
                 cutoff(1) = length(simplify(fCol, tol))+1;
-            else
                 
-                if obj.dim==2
-                    coeffs = chebfun2.vals2coeffs(obj.values);
-                else
-                    coeffs = chebfun3.vals2coeffs(obj.values);
-                end
+                p = chebfunpref;
+                p.chebfuneps = obj.tol*vscale;
+                
+                [isHappy(1), cutoff(1)] = happinessCheck(fCol, [], [], [], p);
+            else
                 
                 for k=1:obj.dim
                     
                     if obj.split_flag(k)
-                        
-                        colChebtech = chebfun3t.unfold(coeffs, k);
+
+                        colChebtech = chebfun3t.unfold(obj.coeffs, k);
                         colChebtech = sum(abs(colChebtech),2);
                         fCol = chebtech2({[],colChebtech});
                         hscale = diff(obj.domain(k,:));
                         
-                        tol = loc_tol*max(vscale./local_max,hscale);
+                        p = chebfunpref;
+                        p.chebfuneps = loc_tol;
+                        
+                        tol = loc_tol*max(vscale./obj.local_max,hscale);
+                        
+                        %[isHappy(k), cutoff(k)] = happinessCheck(fCol, [], [], [], p);
+                        
                         cutoff(k) = length(simplify(fCol, tol))+1;
+                        
+                        isHappy(k) = cutoff(k)<obj.degs(k);
                         
                     end
                     
@@ -424,26 +204,39 @@ classdef ChebPatch<LeafPatch
             end
             
             for k=1:obj.dim
-                sliceSample(obj,k,cutoff(k));
+                if isHappy(k)
+                    obj.degs(k) = cutoff(k);
+                    if obj.degs(k)<obj.cdegs(k)
+                        obj.cdegs(k) = obj.degs(k);
+                        obj.values = [];
+                    end
+                    obj.split_flag(k) = false;
+                end
             end
             
-            
-            
+            if obj.dim==1
+                obj.coeffs = obj.coeffs(1:obj.degs);
+            elseif obj.dim==2
+                obj.coeffs = obj.coeffs(1:obj.degs(1),1:obj.degs(2));
+            else
+                obj.coeffs = obj.coeffs(1:obj.degs(1),1:obj.degs(2),1:obj.degs(3));
+            end
             
             if ~any(obj.split_flag)
                 %The leaf is refined, so return it.
                 obj.is_refined = true;
                 obj.cheb_length = prod(obj.degs);
                 Child = obj;
+                if set_vals
+                    if obj.dim==1
+                        obj.values = chebtech2.coeffs2vals(obj.coeffs);
+                    elseif obj.dim==2
+                        obj.values = chebfun2.coeffs2vals(obj.coeffs);
+                    else
+                        obj.values = chebfun3.coeffs2vals(obj.coeffs);
+                    end
+                end
             else
-                
-%                 ind = 1:obj.dim;
-%                 ind = ind(obj.split_flag);
-%                 
-%                 [~,split_dim] = max(diff(obj.domain(obj.split_flag,:).',1));
-%                 split_dim = ind(split_dim);
-%                 
-%                 Child = split(obj,split_dim,set_vals);
                 
                 
                 Child = obj;
@@ -463,35 +256,6 @@ classdef ChebPatch<LeafPatch
             end
         end
         
-        % The method will slice a sample in a given dimension.
-        %
-        %     Input:
-        %      d_in: splitting dimension
-        %       len: length to be sliced too
-        function [] = sliceSample(obj,d_in,len)
-            if obj.split_flag(d_in) && len<obj.degs(d_in)
-                obj.split_flag(d_in) = false;
-                
-                %If it is, find the smallest degree we can use.
-                k = find(len<=obj.standard_degs,1);
-                
-                if obj.dim==1
-                    if k<obj.deg_in(d_in)
-                        obj.values = obj.values(1:2^(obj.deg_in(d_in)-k):obj.standard_degs(obj.deg_in(d_in)));
-                    end
-                else
-                    
-                    %Slice the values for the new dimension k along i
-                    if k<obj.deg_in(d_in)
-                        obj.values = obj.slice(obj.values,1:2^(obj.deg_in(d_in)-k):obj.standard_degs(obj.deg_in(d_in)),d_in);
-                    end
-                end
-                obj.deg_in(d_in) = k;
-                obj.degs(d_in) = obj.standard_degs(k);
-                
-                obj.cheb_length = prod(obj.degs);
-            end
-        end
         
         % The method determines will split a child into along
         % a dimension.
@@ -552,7 +316,9 @@ classdef ChebPatch<LeafPatch
             
             if set_vals
                 for k=1:2
-                    Child.children{k}.sample(obj.evalfGrid(Child.children{k}.leafGrids()));
+                    V = obj.evalfGrid(Child.children{k}.leafGrids());
+                    Child.children{k}.sample(V);
+                    Child.children{k}.values = V;
                 end
             end
         end
@@ -582,6 +348,9 @@ classdef ChebPatch<LeafPatch
             IsGeometricallyRefined = true;
         end
         
+        function V = Getvalues(obj)
+            V = obj.values(:);
+        end
         
         
         function reset(obj)
@@ -596,15 +365,4 @@ classdef ChebPatch<LeafPatch
             Child = obj;
         end
     end
-    
-
-    methods (Static)
-        %This method slices an array along a certain dimension
-        function out = slice(A, ix, dim)
-            subses = repmat({':'}, [1 ndims(A)]);
-            subses{dim} = ix;
-            out = A(subses{:});
-        end
-    end
-    
 end

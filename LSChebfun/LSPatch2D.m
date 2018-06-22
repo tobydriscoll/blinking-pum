@@ -40,13 +40,11 @@ classdef LSPatch2D < LSPatch
             p_struct.outerbox = obj.outerbox;
             p_struct.zone = obj.zone;
             p_struct.domain = obj.domain;
-            p_struct.deg_in = obj.deg_in;
-            p_struct.cheb_deg_in = obj.cheb_deg_in;
             p_struct.domain_in = obj.domain_in;
             p_struct.split_flag = obj.split_flag;
             p_struct.max_lengths = obj.max_lengths;
             p_struct.tol = obj.tol;
-            p_struct.cdeg_in = obj.cdeg_in;
+            p_struct.degs = obj.degs;
         end
     
         
@@ -114,18 +112,11 @@ classdef LSPatch2D < LSPatch
                     x = chebpts(obj.degs(1)*mult,obj.domain(1,:));
                     y = chebpts(obj.degs(2)*mult,obj.domain(2,:));
                     
-
-                    
                     [X,Y] = ndgrid(x,y);
                     
-            
-                    
                     XP = [X(:) Y(:)];
-                    
 
-                    
                     ind = obj.domain_in.Interior(XP);
-
                     
                     if sum(ind)/prod(obj.degs)>=4
                         break;
@@ -266,6 +257,7 @@ classdef LSPatch2D < LSPatch
             if all(obj.domain_in.Interior(XP1))
                 %The square is in the domain. Set the child to a
                 %standard Chebpatch
+                struct0.degs = obj.cheb_degs;
                 children{1} = ChebPatch(struct0);
             else
                 %The square is not in the domain. Set the child to a
@@ -277,6 +269,7 @@ classdef LSPatch2D < LSPatch
             if all(obj.domain_in.Interior(XP2))
                 %The square is in the domain. Set the child to a
                 %standard Chebpatch
+                struct1.degs = obj.cheb_degs;
                 children{2} = ChebPatch(struct1);
             else
                 %The square is not in the domain. Set the child to a
@@ -345,17 +338,13 @@ classdef LSPatch2D < LSPatch
                     
                     if cutoff<obj.degs(k)
                         obj.split_flag(k) = false;
-                        j = find(cutoff<=obj.standard_degs);
                         
-                        if j<obj.deg_in(k)
-                            obj.deg_in(k) = j;
-                            obj.deg(k) = obj.standard_degs(j);
-                            
-                            if k==1
-                                obj.coeffs = obj.coeffs(1:obj.deg(k),:);
-                            else
-                                obj.coeffs = obj.coeffs(:,1:obj.deg(k));
-                            end
+                        obj.degs(k) = cutoff;
+                        
+                        if k==1
+                            obj.coeffs = obj.coeffs(1:obj.degs(k),:);
+                        else
+                            obj.coeffs = obj.coeffs(:,1:obj.degs(k));
                         end
                     end
                 end

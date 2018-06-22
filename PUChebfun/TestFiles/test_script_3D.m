@@ -2,6 +2,9 @@ u = [0.75 0.25 -0.75];
 
 a = [25 25 25];
 
+p = chebfunpref;
+tol = p.cheb3Prefs.chebfun3eps;
+
  test_funs = {
              @(x,y,z) cos(2*pi*u(1)+a(1)*x+a(2)*y+a(3)*z);
              @(x,y,z)  1./(a(1)^-2+(x-u(1)).^2).*1./(a(2)^-2+(y-u(2)).^2).*1./(a(3)^-2+(z-u(3)).^2);
@@ -25,8 +28,11 @@ G = {x x x};
 [X,Y,Z] = ndgrid(x,x,x);
 
 for i=1:length(test_funs)
-    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1;-1 1],'degreeIndex',[7 7 7],'tol',1e-12); CON_TIME_PU(i) = toc;  
+    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1;-1 1],'Degree',[65 65 65],'tol',tol); CON_TIME_PU(i) = toc;  
     tic,ef = TREE.evalfGrid(G);INTERP_TIME_PU(i) = toc;
+    if any(isnan(ef(:)))
+        error('found a nan');
+    end
     E = abs(ef-test_funs{i}(X,Y,Z)); INTERP_ERROR_PU(i) = max(E(:));
     NUM_PTS_PU(i) = length(TREE);
     
