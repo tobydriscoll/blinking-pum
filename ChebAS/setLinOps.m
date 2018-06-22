@@ -9,7 +9,7 @@
 %  border: rhs of boundary condution
 %  output:
 %     rhs: returns RHS for the theta method.
-function [rhs] = setLinOps(PUApprox,L,B,force,border)
+function [rhs] = setLinOps(PUApprox,OPER,B,force,border)
 
 rhs = zeros(length(PUApprox),1);
 
@@ -38,7 +38,7 @@ for k=1:length(PUApprox.leafArray)
     E = eye(prod(dim));
 
     %Determine operator
-    OP = L(E,points(:,1),points(:,2),Dx,Dy,Dxx,Dyy);
+    OP = OPER(E,points(:,1),points(:,2),Dx,Dy,Dxx,Dyy);
     
     %Determine outer boundary operators and rhs for each of the sides.
     for i=1:4
@@ -58,6 +58,15 @@ for k=1:length(PUApprox.leafArray)
 
     
     PUApprox.leafArray{k}.linOp = OP;
+    
+    if length(PUApprox.leafArray)>1
+        
+        [L,U,p] = lu(OP,'vector');
+        PUApprox.leafArray{k}.L = L;
+        PUApprox.leafArray{k}.U = U;
+        PUApprox.leafArray{k}.p = p;
+        
+    end
     
     if ~PUApprox.ChebRoot.is_leaf
                 PUApprox.leafArray{k}.Binterp = PUApprox.ChebRoot.interpSparseMatrixZone(points(in_border,:));

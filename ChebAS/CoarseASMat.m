@@ -9,7 +9,7 @@
 %    dt,t: time step and current time
 %  output:
 %     MAT: returns the coarse matrix for the theta method
-function [ Mat ] = CoarseASMat(PUApprox,L,B)
+function [ Mat_struct ] = CoarseASMat(PUApprox,Linop,B)
 
 PUApprox.Coarsen();
 
@@ -49,7 +49,7 @@ for k=1:length(PUApprox.leafArray)
     E = eye(prod(cdim));
     
     %Determine the operator
-    OP = L(E,pointsl(:,1),pointsl(:,2),Dx,Dy,Dxx,Dyy);
+    OP = Linop(E,pointsl(:,1),pointsl(:,2),Dx,Dy,Dxx,Dyy);
     
     %Incorporate outer boundary conditions
     for i=1:4
@@ -73,6 +73,14 @@ for k=1:length(PUApprox.leafArray)
 end
 
 Mat = sparse(ii,jj,zz,length(PUApprox),length(PUApprox));
+
+[L,U,P,Q,R] = lu(Mat);
+
+Mat_struct.L = L;
+Mat_struct.U = U;
+Mat_struct.P = P;
+Mat_struct.Q = Q;
+Mat_struct.R = R;
 
 PUApprox.Refine();
 

@@ -8,7 +8,8 @@ PUApprox.Coarsen();
 
 rhsc = PUApprox.Getvalues();
 
-solc = Mat\rhsc;
+%solc = Mat\rhsc;
+solc = Mat.Q * (Mat.U \ (Mat.L \ (Mat.P * (Mat.R \ rhsc))));
 
 %PUApprox.Setvalues(solc);
 PUApprox.sample(solc);

@@ -37,6 +37,9 @@ classdef ChebPatch<LeafPatch
         orig_degs
         orig_deg_in
         local_max
+        L
+        U
+        p
     end
     
     properties (Access = protected)

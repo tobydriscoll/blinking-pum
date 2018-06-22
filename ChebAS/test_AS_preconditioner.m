@@ -5,8 +5,8 @@ domain = [-1 1;-1 1];
 degs = [32 32];
 cdegs = [10 10];
 split_flag = [1 1];
-tol = 1e-8;
-gmres_tol = 5e-9;
+tol = 1e-10;
+gmres_tol = 5e-11;
 maxit = 1200;
 
 ep = 5e-3;

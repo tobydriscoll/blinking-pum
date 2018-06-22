@@ -15,5 +15,6 @@ for k=1:length(PUApprox.leafArray)
     
     rhs_k = rhs(ind_k);
     
-    output(ind_k) = PUApprox.leafArray{k}.linOp\rhs_k;
+    %output(ind_k) = PUApprox.leafArray{k}.linOp\rhs_k;
+    output(ind_k) = PUApprox.leafArray{k}.U\(PUApprox.leafArray{k}.L\rhs_k(PUApprox.leafArray{k}.p));
 end
