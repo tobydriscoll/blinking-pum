@@ -1,4 +1,4 @@
-overlap = 0.1;
+doverlap = 0.1;
 
 domain = [-1 1;-1 1];
 

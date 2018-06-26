@@ -268,6 +268,7 @@ classdef PUchebfun < PUfun
             obj.ChebRoot.Setvalues(f);
         end
         
+            
         % disp(obj)
         % Returns color plot of patches
         function show(obj,level,step)

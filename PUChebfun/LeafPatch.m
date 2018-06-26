@@ -493,7 +493,19 @@ classdef LeafPatch<Patch
         
         
         function Setvalues(obj,f)
-            obj.values = reshape(f,obj.degs);
+            if isnumeric(f)
+                obj.values = reshape(f,obj.degs);
+            else
+                if obj.dim==1
+                    obj.values = f(obj.points());
+                elseif obj.dim==2
+                    points = obj.points();
+                    obj.values = reshape(f(points(:,1),points(:,2)),obj.degs);
+                else
+                    points = obj.points();
+                    obj.values = reshape(f(points(:,1),points(:,2),points(:,3)),obj.degs);
+                end
+            end
         end
         
     end

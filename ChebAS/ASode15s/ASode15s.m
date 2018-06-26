@@ -1,4 +1,4 @@
-function varargout = ode15s(ode,tspan,y0,PUApprox,options,varargin)
+function varargout = ASode15s(ode,tspan,y0,PUApprox,num_sols,options,varargin)
 %ODE15S Solve stiff differential equations and DAEs, variable order method.
 %   [TOUT,YOUT] = ODE15S(ODEFUN,TSPAN,Y0) with TSPAN = [T0 TFINAL] integrates 
 %   the system of differential equations y' = f(t,y) from time T0 to TFINAL 
@@ -109,7 +109,7 @@ function varargout = ode15s(ode,tspan,y0,PUApprox,options,varargin)
 
 solver_name = 'ode15s';
 
-if nargin < 4
+if nargin < 6
   options = [];
   if nargin < 3
     y0 = [];
@@ -147,7 +147,7 @@ end
 % Handle solver arguments
 [neq, tspan, ntspan, next, t0, tfinal, tdir, y0, f0, odeArgs, odeFcn, ...
  options, threshold, rtol, normcontrol, normy, hmax, htry, htspan] = ...
-    odearguments(FcnHandlesUsed, solver_name, ode, tspan, y0, options, varargin);
+    ASodearguments(FcnHandlesUsed, solver_name, ode, tspan, y0, options, varargin);
 nfevals = nfevals + 1;
 
 %This won't work with row scale! needs to be local to each patch
@@ -188,7 +188,10 @@ printstats = strcmp(odeget(options,'Stats','off','fast'),'on');
 % Handle the mass matrix NO! Mtype = 1 (constant). Assume cell array of mass matrices
 % is passed through (one for each patch).
 %[Mtype, Mt, Mfun, Margs, dMoptions] = odemass(FcnHandlesUsed,odeFcn,t0,y0,...
-%                                              options,varargin);
+%                                             options,varargin);
+
+Mt = odeget(options,'Mass',[],'fast');
+Mtype = 1;
 
 % Non-negative solution components NO! We don't worry about this
 %
@@ -211,20 +214,20 @@ printstats = strcmp(odeget(options,'Stats','off','fast'),'on');
 % HEY! I dont think this is needed
 % Handle the Jacobian
 [Jconstant,Jac,Jargs,Joptions] = ...
-    odejacobian(FcnHandlesUsed,odeFcn,t0,y0,options,varargin);
+    ASodejacobian(FcnHandlesUsed,odeFcn,t0,y0,options,varargin);
 Janalytic = isempty(Joptions);
     
 t = t0;
 y = y0;
 
-yp0_OK = false;
-DAE = false;
+yp0_OK = true;
+DAE = true;
 RowScale = [];
 if Mtype > 0
-  nz = nnz(Mt);
-  if nz == 0
-    error(message('MATLAB:ode15s:MassMatrixAllZero'))
-  end
+%   nz = nnz(Mt);
+%   if nz == 0
+%     error(message('MATLAB:ode15s:MassMatrixAllZero'))
+%   end
    
 Msingular = 'yes'; DAE = true; 
 %   Msingular = odeget(options,'MassSingular','maybe','fast');
@@ -236,18 +239,18 @@ Msingular = 'yes'; DAE = true;
    
   if DAE
     yp0 = odeget(options,'InitialSlope',[],'fast');
-    if isempty(yp0)
-      yp0_OK = false;
-      yp0 = zeros(neq,1);  
-    else
+    %if isempty(yp0)
+     % yp0_OK = false;
+     % yp0 = zeros(neq,1);  
+    %else
       yp0 = yp0(:);
-      if length(yp0) ~= neq
-        error(message('MATLAB:ode15s:YoYPoLengthMismatch'));
-      end
+     % if length(yp0) ~= neq
+     %   error(message('MATLAB:ode15s:YoYPoLengthMismatch'));
+     % end
       % NO! we assume things are fine
       % Test if (y0,yp0) are consistent enough to accept.
       %yp0_OK = (norm(Mt*yp0 - f0) <= 1e-3*rtol*max(norm(Mt*yp0),norm(f0)));
-    end
+    %end
 % NO! assume everything is fine    
 %     if ~yp0_OK           % Must compute ICs, so classify them.
 %       if Mtype >= 3  % state dependent
@@ -340,25 +343,25 @@ end
 %   end
 %else
 
-  if Mtype == 0 
-    yp = f0;
-  elseif DAE && yp0_OK
-    yp = yp0;
-
-% NO! DAE is true
-%
-%   else
-%     if issparse(Mt)
-%       [L,U,P,Q,R] = lu(Mt);            
-%       yp = Q * (U \ (L \ (P * (R \ f0))));      
-%     else
-%       [L,U,p] = lu(Mt,'vector');      
-%       yp = U \ (L \ f0(p));
-%     end  
-%     ndecomps = ndecomps + 1;              
-%     nsolves = nsolves + 1;  
-    
-  end
+%   if Mtype == 0 
+%     yp = f0;
+%   elseif DAE && yp0_OK
+%     yp = yp0;
+% 
+% % NO! DAE is true
+% %
+% %   else
+% %     if issparse(Mt)
+% %       [L,U,P,Q,R] = lu(Mt);            
+% %       yp = Q * (U \ (L \ (P * (R \ f0))));      
+% %     else
+% %       [L,U,p] = lu(Mt,'vector');      
+% %       yp = U \ (L \ f0(p));
+% %     end  
+% %     ndecomps = ndecomps + 1;              
+% %     nsolves = nsolves + 1;  
+%     
+%   end
 
 % NO! change to match cell array of jacs.
 %
@@ -374,8 +377,10 @@ end
 %   end     
 %end
 
+yp = y0;
+
 %cell array of Jacobians
-dfdy = ComputeJac(PUApprox,t,y);
+dfdy = ComputeJac(Jac,num_sols,PUApprox,t,y);
 
 Jcurrent = true;
 
@@ -451,7 +456,9 @@ dif(:,1) = h * yp;
 hinvGak = h * invGa(k);
 nconhk = 0;                             % steps taken with current h and k
 
-Miter = Mt - hinvGak * dfdy;
+
+Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
+%Miter = Mt - hinvGak * dfdy;
 
 % NO! we assume mass matrix is constant
 %
@@ -465,15 +472,21 @@ Miter = Mt - hinvGak * dfdy;
 
 % HEY! this needs to change.
 % Use explicit scaling of the equations when solving DAEs.
-if DAE
-  RowScale = 1 ./ max(abs(Miter),[],2);
-  Miter = sparse(one2neq,one2neq,RowScale) * Miter;
-end
-if issparse(Miter)
-  [L,U,P,Q,R] = lu(Miter);
-else
-  [L,U,p] = lu(Miter,'vector');  
-end  
+
+[RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);
+[L,U,p] = LUarray(PUApprox,Miter);
+
+% if DAE
+%   RowScale = 1 ./ max(abs(Miter),[],2);
+%   Miter = sparse(one2neq,one2neq,RowScale) * Miter;
+% end
+% if issparse(Miter)
+%   [L,U,P,Q,R] = lu(Miter);
+% else
+%   [L,U,p] = lu(Miter,'vector');  
+% end  
+
+
 ndecomps = ndecomps + 1;                
 havrate = false;
 
@@ -612,14 +625,14 @@ while ~done
 
 
         %make sure signes match. 
-        R = Masstimes(PUApprox,Mtnew,psi+difkp1);
-        rhs = ParPreconditionedNewtonForwardTime(tnew,ynew,R,PUApprox,evalF,num_sols,hinvGak);
+        R = Masstimes(PUApprox,num_sols,Mtnew,psi-pred);
+        rhs = ParPreconditionedNewtonForwardTime(tnew,ynew,R,PUApprox,ode,num_sols,hinvGak,Jac,Mtnew);
         
         %rhs = hinvGak*feval(odeFcn,tnew,ynew,odeArgs{:}) -  Mtnew*(psi+difkp1);
         
         if DAE                          % Account for row scaling.
             
-          rhs = scaleRHS(PUApprox,RowScale,rhs);  
+          rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);  
           %rhs = RowScale .* rhs;
         end
                 
@@ -696,7 +709,7 @@ while ~done
           if ~Jcurrent  
             if Janalytic
               %dfdy = feval(Jac,t,y,Jargs{:});
-              dfdy = ComputeJac(PUApprox,t,y);
+              dfdy = ComputeJac(PUApprox,num_sols,t,y);
             else
               f0 = feval(odeFcn,t,y,odeArgs{:});
               [dfdy,Joptions.fac,nF] = odenumjac(odeFcn, {t,y,odeArgs{:}}, f0, Joptions);     
@@ -1062,11 +1075,21 @@ function [R,J] = ODEandJac(approx,ODEfun,JACfun,t,u)
     J = JACfun(approx,t,u);
 end
 
-function dfdy = ComputeJac(PUApprox,t,y)
+function dfdy = ComputeJac(Jac,num_sols,PUApprox,t,y)
+
+
+step = zeros(length(PUApprox.leafArray),1);
+
+%Figure out starting index for each patch
+for k=2:length(PUApprox.leafArray)
+    step(k) = step(k-1) + num_sols*length(PUApprox.leafArray{k-1});
+end
+
 
 for i=1:length(PUApprox.leafArray)
     %Figure out how to make this; force it if need be.
-    dfdy{i} = Jac(t,y,PUApprox.leafArray{i});
+    ind = step(k)+(1:(num_sols*length(PUApprox.leafArray{i})));
+    dfdy{i} = Jac(t,y(ind),PUApprox.leafArray{i});
 end
 
 end
@@ -1074,25 +1097,25 @@ end
 function D = timeDiff(PUApprox,Mt,dfdy,hinvGak)
 for i=1:length(PUApprox.leafArray)
     %Figure out how to make this; force it if need be.
-    D{i} = Mt{i} - hinvGak * dfdy;
+    D{i} = Mt{i} - hinvGak * dfdy{i};
 end    
 end
 
 function [RowScale,Miter] = RowScales(PUApprox,Miter,num_sols)
 for i=1:length(PUApprox.leafArray)
-      RowScale{i} = 1 ./ max(abs(Miter),[],2);
-      one2neq = 1:PUApprox{i}.length*num_sols;
-      Miter{i} = sparse(one2neq,one2neq,RowScale) * Miter{i};
+      RowScale{i} = 1 ./ max(abs(Miter{i}),[],2);
+      one2neq = 1:PUApprox.leafArray{i}.length*num_sols;
+      Miter{i} = sparse(one2neq,one2neq,RowScale{i}) * Miter{i};
 end
 end
 
 function [L,U,p] = LUarray(PUApprox,Miter)
-for i=1:length(PUApprox)
+for i=1:length(PUApprox.leafArray)
     [L{i},U{i},p{i}] = lu(Miter{i},'vector');
 end
 end
 
-function R = Masstimes(PUApprox,Miter,y)
+function R = Masstimes(PUApprox,num_sols,Miter,y)
 
 step = zeros(length(PUApprox.leafArray),1);
 
@@ -1105,13 +1128,13 @@ R = [];
 
 for k=1:length(PUApprox.leafArray)
     degs = PUApprox.leafArray{k}.degs;
-    ind = step(k)+(1:prod(degs));
+    ind = step(k)+(1:(num_sols*prod(degs)));
     R = [R;Miter{k}*(y(ind))];
 end
 
 end
 
-function Y = scaleRHS(PUApprox,Rowscale,y)
+function Y = scaleRHS(PUApprox,Rowscale,y,num_sols)
 
 
 step = zeros(length(PUApprox.leafArray),1);

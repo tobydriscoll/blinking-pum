@@ -1,4 +1,4 @@
-function [ Dcx ] = ChebDiff(n)
+function [ Dcx ] = ChebDiff(N,p,dom)
 % This function computes a differentiation matrices for a n-1 degree
 % Chebyshev polynomial.
 

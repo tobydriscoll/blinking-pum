@@ -862,8 +862,13 @@ classdef PUPatch<Patch
         end
         
         function Setvalues(obj,f)
-            obj.children{1}.Setvalues(f(1:length(obj.children{1})));
-            obj.children{2}.Setvalues(f(length(obj.children{1})+1:end));
+            if isnumeric(f)
+                obj.children{1}.Setvalues(f(1:length(obj.children{1})));
+                obj.children{2}.Setvalues(f(length(obj.children{1})+1:end));
+            else
+                obj.children{1}.Setvalues(f);
+                obj.children{2}.Setvalues(f);
+            end
         end
         
     end
