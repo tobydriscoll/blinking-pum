@@ -45,8 +45,10 @@ classdef LeafPatch<Patch
             
             obj.split_flag = true(obj.dim,1);
             obj.degs  = zeros(1,obj.dim);
+            obj.cdegs  = zeros(1,obj.dim);
             obj.tol = 1e-12;
             obj.degs(:) = 128;
+            obj.cdegs(:) = 9;
             
             if isfield(var_struct, 'outerbox')
                 obj.outerbox = var_struct.outerbox;

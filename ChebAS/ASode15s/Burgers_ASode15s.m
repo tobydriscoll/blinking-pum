@@ -16,7 +16,7 @@ cheb_struct.tol = tol;
 
 Tree = ChebPatch(cheb_struct);
 Tree = Tree.split(1);
-Tree.split(2);
+%Tree.split(2);
 
 F = PUchebfun(Tree);
 %set mass matricies
@@ -45,7 +45,15 @@ opt = odeset('mass',M,'reltol',odetol,'abstol',odetol,'jacobian',@(t,y,approx)Bu
 %opt = odeset('mass',M{i},'reltol',odetol,'abstol',odetol);
 %[t,U] = ode15s(@(t,y) BurgersEvaluation(Tree,t,y,R),tspan,y0,opt);
 
-%tspan = [0 0.5];
+tspan = [0 0.5];
 
-[t,U] = ASode15s(@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),tspan,y0,F,2,opt);
+%[t,U] = ASode15s(@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),tspan,y0,F,2,opt);
 
+RHS = [];
+for i=1:length(F.leafArray)
+   ind = (i-1)*2*length(F.leafArray{i})+(1:(2*length(F.leafArray{i})));
+   RHS = [RHS;M{i}*y0(ind)];
+end
+
+dh = 0.007;
+z = ParPreconditionedNewtonForwardTime(0+dh,y0,RHS,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2,dh,@(t,y,approx)BurgersJacobian(t,y,approx,R),M);

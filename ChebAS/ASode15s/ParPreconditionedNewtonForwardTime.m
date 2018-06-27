@@ -7,7 +7,7 @@
 % OUTPUT:
 %          z: correction of solution
 %          J: cell array of local Jacobians
-function [z] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,num_sols,hinvGak,Jac,M)
+function [z,J] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,num_sols,hinvGak,Jac,M)
 
 %PUApprox.sample(sol);
 
@@ -47,9 +47,12 @@ for k=1:length(PUApprox.leafArray)
         
         %This computes solution interpolated on the zone interface of the
         %patch.
-        diff{k} = [diff{k};PUApprox.leafArray{k}.Binterp*sol(sol_step+(1:length(PUApprox)))];
-        loc_sol_step = loc_sol_step + prod(degs);
-        sol_step = sol_step + length(PUApprox);
+        
+        if length(PUApprox.leafArray)>1
+            diff{k} = [diff{k};PUApprox.leafArray{k}.Binterp*sol(sol_step+(1:length(PUApprox)))];
+            loc_sol_step = loc_sol_step + prod(degs);
+            sol_step = sol_step + length(PUApprox);
+        end
     end
     
 end
@@ -57,7 +60,7 @@ end
 %parallel step
 for k=1:length(PUApprox.leafArray)
     
-    [z{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,length(PUApprox.leafArray{k}),Jac,M{k});
+    [z{k},J{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,length(PUApprox.leafArray{k}),Jac,M{k});
     
 end
 
@@ -77,16 +80,17 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGak,num_sols,sol_length,Jac,M)
+function [c,J] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGak,num_sols,sol_length,Jac,M)
 
     %The residul is F(sol_k+z_k) 
     %            sol_k(border_k)+z_k(border_k)-B_k*u 
     %            (iterfacing at the zone interface)
     function [F,J] = residual(z)
         
-        z = z+sol_k;
+              
+        [F] = hinvGak*evalF(approx,t,z+sol_k)-rhs_k-M*z;
         
-        [F] = hinvGak*evalF(approx,t,z)-rhs_k-M*z;
+        z = z+sol_k;  
         
         sol_step = 0;
         
@@ -98,21 +102,42 @@ function [c] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGak,
         % NOTE: I assume each solution has the same length for simplicity
         for i=1:num_sols
             F_s{i} = F(sol_step+(1:sol_length));
-            F_s{i}(border_k) = z(border_k) - diff_k(diff_step+(1:diff_len));
+            z_loc = z(sol_step+(1:sol_length));
+            
+            if any(border_k)
+                F_s{i}(border_k) = z_loc(border_k) - diff_k(diff_step+(1:diff_len));
+            end
             sol_step = sol_step+sol_length;
             diff_step = diff_step + diff_len;
         end
         
         F = cell2mat(F_s');
         
-        J = Jac(t,z,approx);
+        J = hinvGak*Jac(t,z,approx)-M;
+        
+        E = eye(sol_length);
+        
+        for i=1:num_sols
+            ind = false(sol_length*num_sols,1);
+            ind((i-1)*sol_length+(1:sol_length)) = border_k;
+            
+            J(ind,:) = zeros(sum(ind),num_sols*sol_length);
+            J(ind,(i-1)*sol_length+(1:sol_length)) = E(border_k,:);
+        end
         
     end
 
-    options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',100,'FunctionTolerance',1e-2);
+    options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-6);
 
-    s = fsolve(@residual,zeros(size(sol_k)),options);
+    [s,~,~,~,J] = fsolve(@residual,zeros(size(sol_k)),options);
     
+    %opt = [20,-1,.5,0];
+    %tol = [1e-2 1e-2];
+    %[s, ~, ~, ~,mat_struct] = nsold(zeros(size(sol_k)),@residual,tol,opt);
+    
+    %L = mat_struct.L;
+    %U = mat_struct.U;
+   % p = mat_struct.p;
     c = s(:,end);
 end
 

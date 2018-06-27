@@ -18,8 +18,19 @@ end
 for k=1:length(PUApprox.leafArray) 
     degs = PUApprox.leafArray{k}.degs;
     [~,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
-    z{k} = zeros(length(PUApprox.leafArray{k}),1);
-    z{k}(in_border) = PUApprox.leafArray{k}.Binterp*x;
+    
+    b = [];
+    
+    sol_len = length(PUApprox);
+    
+    for i=1:num_sols
+        b_loc = zeros(length(PUApprox.leafArray{k}),1);
+        
+        b_loc(in_border) = PUApprox.leafArray{k}.Binterp*x((i-1)*sol_len+(1:sol_len));
+        b = [b;b_loc];
+    end
+    
+    z{k} = b;
 end
 
 %Parallel part
@@ -29,7 +40,7 @@ for k=1:length(PUApprox.leafArray)
     
     x_k = x(ind_k);
     
-    output(ind_k) = U{k}\(L{k}\x_k(p{k}))-x_k;
+    output(ind_k) = U{k}\(L{k}\z{k}(p{k}))-x_k;
     
 end
 

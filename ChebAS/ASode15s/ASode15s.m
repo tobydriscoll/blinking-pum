@@ -473,8 +473,8 @@ Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
 % HEY! this needs to change.
 % Use explicit scaling of the equations when solving DAEs.
 
-[RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);
-[L,U,p] = LUarray(PUApprox,Miter);
+%[RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);
+%[L,U,p] = LUarray(PUApprox,Miter);
 
 % if DAE
 %   RowScale = 1 ./ max(abs(Miter),[],2);
@@ -561,13 +561,13 @@ while ~done
 %     end
 
     if DAE
-      [RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);
+      %[RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);
     end
-    if issparse(Miter)
-      [L,U,P,Q,R] = lu(Miter);
-    else  
-      [L,U,p] = LUarray(PUApprox,Miter);
-    end  
+%     if issparse(Miter)
+%       [L,U,P,Q,R] = lu(Miter);
+%     else  
+%       %[L,U,p] = LUarray(PUApprox,Miter);
+%     end  
     ndecomps = ndecomps + 1;            
     havrate = false;
   end
@@ -625,14 +625,15 @@ while ~done
 
 
         %make sure signes match. 
-        R = Masstimes(PUApprox,num_sols,Mtnew,psi-pred);
-        rhs = ParPreconditionedNewtonForwardTime(tnew,ynew,R,PUApprox,ode,num_sols,hinvGak,Jac,Mtnew);
+        R = Masstimes(PUApprox,num_sols,Mtnew,psi+difkp1);
+        [rhs,J] = ParPreconditionedNewtonForwardTime(tnew,ynew,R,PUApprox,ode,num_sols,hinvGak,Jac,Mtnew);
         
+        [L,U,p] = LUarray(PUApprox,J);
         %rhs = hinvGak*feval(odeFcn,tnew,ynew,odeArgs{:}) -  Mtnew*(psi+difkp1);
         
         if DAE                          % Account for row scaling.
             
-          rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);  
+          %rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);  
           %rhs = RowScale .* rhs;
         end
                 
@@ -642,7 +643,7 @@ while ~done
         %HEY! replace with gmres jacobian function. use LU decomp of each
         %local operator.
         
-        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x,num_sols),rhs,[],[]);  
+        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,rhs,num_sols),rhs,[],[]);  
 %         if issparse(Miter)
 %           del = Q * (U \ (L \ (P * (R \ rhs))));
 %         else  
@@ -757,15 +758,15 @@ while ~done
         end
         if DAE
             
-          [RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);  
+%          [RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);  
 %           RowScale = 1 ./ max(abs(Miter),[],2);
 %           Miter = sparse(one2neq,one2neq,RowScale) * Miter;
         end
-        if issparse(Miter)
-          [L,U,P,Q,R] = lu(Miter);
-        else  
-          [L,U,p] = lu(Miter,'vector');
-        end  
+%         if issparse(Miter)
+%           [L,U,P,Q,R] = lu(Miter);
+%         else  
+%           [L,U,p] = lu(Miter,'vector');
+%         end  
         ndecomps = ndecomps + 1;        
         havrate = false;
       end   
@@ -777,16 +778,16 @@ while ~done
     else
       err = norm(difkp1 .* invwt,inf) * erconst(k);
     end
-    if nonNegative && (err <= rtol) && any(ynew(idxNonNegative)<0)
-      if normcontrol
-        errNN = norm( max(0,-ynew(idxNonNegative)) ) * invwt;
-      else
-        errNN = norm( max(0,-ynew(idxNonNegative)) ./ thresholdNonNegative, inf);
-      end
-      if errNN > rtol
-        err = errNN;
-      end
-    end
+%     if nonNegative && (err <= rtol) && any(ynew(idxNonNegative)<0)
+%       if normcontrol
+%         errNN = norm( max(0,-ynew(idxNonNegative)) ) * invwt;
+%       else
+%         errNN = norm( max(0,-ynew(idxNonNegative)) ./ thresholdNonNegative, inf);
+%       end
+%       if errNN > rtol
+%         err = errNN;
+%       end
+%     end
     
     if err > rtol                       % Failed step
       nfailed = nfailed + 1;            
@@ -847,7 +848,7 @@ while ~done
       if issparse(Miter)
         [L,U,P,Q,R] = lu(Miter);
       else   
-        [L,U,p] = LUarray(PUApprox,Miter);
+        %[L,U,p] = LUarray(PUApprox,Miter);
         %[L,U,p] = lu(Miter,'vector');
       end
       ndecomps = ndecomps + 1;          

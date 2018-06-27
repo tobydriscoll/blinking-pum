@@ -28,17 +28,22 @@ G = {x x x};
 [X,Y,Z] = ndgrid(x,x,x);
 
 for i=1:length(test_funs)
-    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1;-1 1],'Degree',[65 65 65],'tol',tol); CON_TIME_PU(i) = toc;  
+    
+    FV = test_funs{i}(X,Y,Z);
+    
+    M = max(abs(FV(:)));
+    
+    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1;-1 1],'Degree',[129 129 129],'tol',tol); CON_TIME_PU(i) = toc;  
     tic,ef = TREE.evalfGrid(G);INTERP_TIME_PU(i) = toc;
     if any(isnan(ef(:)))
         error('found a nan');
     end
-    E = abs(ef-test_funs{i}(X,Y,Z)); INTERP_ERROR_PU(i) = max(E(:));
+    E = abs(ef-FV); INTERP_ERROR_PU(i) = max(E(:))/M;
     NUM_PTS_PU(i) = length(TREE);
     
     tic, F = chebfun3(test_funs{i}); CON_TIME_CHEB(i) = toc;
     tic; ef = F(X,Y,Z); INTERP_TIME_CHEB(i) = toc;
-    E = abs(ef-test_funs{i}(X,Y,Z)); INTERP_ERROR_CHEB(i) = max(E(:));
+    E = abs(ef-FV); INTERP_ERROR_CHEB(i) = max(E(:))/M;
     RANK_CHEB(i) = rank(F);
 end
 

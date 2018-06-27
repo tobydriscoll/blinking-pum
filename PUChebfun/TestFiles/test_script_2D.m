@@ -43,12 +43,15 @@ for i=1:length(test_funs)
     end
     
     
-    E = abs(ef-test_funs{i}(X,Y)); INTERP_ERROR_PU(i) = max(E(:));
+    FV = test_funs{i}(X,Y);
+    M = max(abs(FV(:)));
+    
+    E = abs(ef-FV); INTERP_ERROR_PU(i) = max(E(:))/M;
     NUM_PTS_PU(i) = length(TREE);
     
     tic, F = chebfun2(test_funs{i}); CON_TIME_CHEB(i) = toc;
     tic; ef = F(X,Y); INTERP_TIME_CHEB(i) = toc;
-    E = abs(ef-test_funs{i}(X,Y)); INTERP_ERROR_CHEB(i) = max(E(:));
+    E = abs(ef-FV); INTERP_ERROR_CHEB(i) = max(E(:))/M;
     RANK_CHEB(i) = rank(F);
 end
 
