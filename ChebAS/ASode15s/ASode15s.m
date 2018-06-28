@@ -315,6 +315,8 @@ for i = 1:length(warnoffId)
   warnoff(i).state = 'off';
 end
 
+
+yp0 = ParLocalResidual(t0,y0,PUApprox,ode,num_sols);
 % NO! we assum yp0_ok = true
 %
 % Get the initial slope yp. For DAEs the default is to compute
@@ -377,10 +379,10 @@ end
 %   end     
 %end
 
-yp = y0;
+yp = yp0;
 
 %cell array of Jacobians
-dfdy = ComputeJac(Jac,num_sols,PUApprox,t,y);
+%dfdy = ComputeJac(Jac,num_sols,PUApprox,t,y);
 
 Jcurrent = true;
 
@@ -457,7 +459,7 @@ hinvGak = h * invGa(k);
 nconhk = 0;                             % steps taken with current h and k
 
 
-Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
+%Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
 %Miter = Mt - hinvGak * dfdy;
 
 % NO! we assume mass matrix is constant
@@ -615,6 +617,9 @@ while ~done
 %       end
       
       % Iterate with simplified Newton method.
+      
+      maxit = 5;
+      
       tooslow = false;
       for iter = 1:maxit
           
@@ -626,7 +631,7 @@ while ~done
 
         %make sure signes match. 
         R = Masstimes(PUApprox,num_sols,Mtnew,psi+difkp1);
-        [rhs,J] = ParPreconditionedNewtonForwardTime(tnew,ynew,R,PUApprox,ode,num_sols,hinvGak,Jac,Mtnew);
+        [rhs,J] = ParPreconditionedNewtonForwardTime(tnew,ynew,-R,PUApprox,ode,num_sols,hinvGak,Jac,Mtnew);
         
         [L,U,p] = LUarray(PUApprox,J);
         %rhs = hinvGak*feval(odeFcn,tnew,ynew,odeArgs{:}) -  Mtnew*(psi+difkp1);
@@ -643,7 +648,8 @@ while ~done
         %HEY! replace with gmres jacobian function. use LU decomp of each
         %local operator.
         
-        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,rhs,num_sols),rhs,[],[]);  
+        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x,num_sols),-rhs,[],[]);
+%        del = -del;
 %         if issparse(Miter)
 %           del = Q * (U \ (L \ (P * (R \ rhs))));
 %         else  
@@ -664,7 +670,7 @@ while ~done
           newnrm = norm(del .* invwt,inf);
         end
         difkp1 = difkp1 + del;
-        ynew = pred + difkp1;
+        ynew = pred + del;
         
         if newnrm <= minnrm
           gotynew = true;
@@ -687,8 +693,8 @@ while ~done
           havrate = true;                 
           errit = newnrm * rate / (1 - rate);
           if errit <= 0.5*rtol             
-            gotynew = true;
-            break;
+           % gotynew = true;
+           % break;
           elseif iter == maxit            
             tooslow = true;
             break;
@@ -752,7 +758,7 @@ while ~done
           hinvGak = h * invGa(k);
           nconhk = 0;
         end
-        Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
+%        Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
         if Mtype == 4
           Miter = Miter + dMpsidy;
         end
@@ -776,7 +782,7 @@ while ~done
     if normcontrol
       err = (norm(difkp1) * invwt) * erconst(k);
     else
-      err = norm(difkp1 .* invwt,inf) * erconst(k);
+      err = norm((ynew-pred) .* invwt,inf) * erconst(k);
     end
 %     if nonNegative && (err <= rtol) && any(ynew(idxNonNegative)<0)
 %       if normcontrol
@@ -837,20 +843,20 @@ while ~done
       
       hinvGak = h * invGa(k);
       nconhk = 0;
-      Miter = Mt - hinvGak * dfdy;
+%      Miter = Mt - hinvGak * dfdy;
       if Mtype == 4
         Miter = Miter + dMpsidy;
       end      
       if DAE
-        RowScale = 1 ./ max(abs(Miter),[],2);
-        Miter = sparse(one2neq,one2neq,RowScale) * Miter;
+       % RowScale = 1 ./ max(abs(Miter),[],2);
+       % Miter = sparse(one2neq,one2neq,RowScale) * Miter;
       end
-      if issparse(Miter)
-        [L,U,P,Q,R] = lu(Miter);
-      else   
+%      if issparse(Miter)
+%        [L,U,P,Q,R] = lu(Miter);
+%      else   
         %[L,U,p] = LUarray(PUApprox,Miter);
         %[L,U,p] = lu(Miter,'vector');
-      end
+%      end
       ndecomps = ndecomps + 1;          
       havrate = false;
       
@@ -868,39 +874,39 @@ while ~done
   end
   
   NNreset_dif = false;
-  if nonNegative && any(ynew(idxNonNegative) < 0)
-    NNidx = idxNonNegative(ynew(idxNonNegative) < 0); % logical indexing
-    ynew(NNidx) = 0;
-    if normcontrol
-      normynew = norm(ynew);
-    end
-    NNreset_dif = true;
-  end   
+%   if nonNegative && any(ynew(idxNonNegative) < 0)
+%     NNidx = idxNonNegative(ynew(idxNonNegative) < 0); % logical indexing
+%     ynew(NNidx) = 0;
+%     if normcontrol
+%       normynew = norm(ynew);
+%     end
+%     NNreset_dif = true;
+%   end   
   
-  if haveEventFcn
-    [te,ye,ie,valt,stop] = odezero(@ntrp15s,eventFcn,eventArgs,valt,...
-                                   t,y,tnew,ynew,t0,h,dif,k,idxNonNegative);
-    if ~isempty(te)
-      if output_sol || (nargout > 2)
-        teout = [teout, te];
-        yeout = [yeout, ye];
-        ieout = [ieout, ie];
-      end
-      if stop               % Stop on a terminal event. 
-        % Adjust the interpolation data to [t te(end)].                 
-        taux = te(end) - (0:k)*(te(end) - t);
-        yaux = ntrp15s(taux,t,y,tnew,ynew,h,dif,k,idxNonNegative);
-        for j=2:k+1
-          yaux(:,j:k+1) = yaux(:,j-1:k) - yaux(:,j:k+1);
-        end
-        dif(:,1:k) = yaux(:,2:k+1);        
-        tnew = te(end);
-        ynew = ye(:,end);
-        h = tnew - t;
-        done = true;
-      end
-    end
-  end
+%   if haveEventFcn
+%     [te,ye,ie,valt,stop] = odezero(@ntrp15s,eventFcn,eventArgs,valt,...
+%                                    t,y,tnew,ynew,t0,h,dif,k,idxNonNegative);
+%     if ~isempty(te)
+%       if output_sol || (nargout > 2)
+%         teout = [teout, te];
+%         yeout = [yeout, ye];
+%         ieout = [ieout, ie];
+%       end
+%       if stop               % Stop on a terminal event. 
+%         % Adjust the interpolation data to [t te(end)].                 
+%         taux = te(end) - (0:k)*(te(end) - t);
+%         yaux = ntrp15s(taux,t,y,tnew,ynew,h,dif,k,idxNonNegative);
+%         for j=2:k+1
+%           yaux(:,j:k+1) = yaux(:,j-1:k) - yaux(:,j:k+1);
+%         end
+%         dif(:,1:k) = yaux(:,2:k+1);        
+%         tnew = te(end);
+%         ynew = ye(:,end);
+%         h = tnew - t;
+%         done = true;
+%       end
+%     end
+%   end
 
   if output_sol
     nout = nout + 1;
@@ -1150,7 +1156,7 @@ Y = [];
 for k=1:length(PUApprox.leafArray)
     degs = PUApprox.leafArray{k}.degs;
     ind = step(k)+(1:prod(degs));
-    Y = [Y;Rowscale.*y(ind)]
+    Y = [Y;Rowscale.*y(ind)];
 end
 
 end

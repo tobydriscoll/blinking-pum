@@ -1,6 +1,6 @@
 domain = [0 1;0 1];
 split_flag = [false false];
-degs = [32 32];
+degs = [16 16];
 cdegs = [9 9];
 tol = 1e-8;
 R = 80;
@@ -25,12 +25,16 @@ for i=1:length(F.leafArray)
 end
 
 %get intial condition
-F.Setvalues(@(x,y)f(x,y,0));
-u0 = Tree.Getvalues();
-F.Setvalues(@(x,y)g(x,y,0));
-v0 = Tree.Getvalues();
 
-y0 = [u0;v0];
+y0 = [];
+
+for i=1:length(F.leafArray)
+    F.leafArray{i}.Setvalues(@(x,y)f(x,y,0));
+    u0 = F.leafArray{i}.Getvalues();
+    F.leafArray{i}.Setvalues(@(x,y)g(x,y,0));
+    v0 = F.leafArray{i}.Getvalues();
+    y0 = [y0;u0;v0];
+end
 
 %set interpolation matrices
 setInterpMatrices(F);
@@ -41,19 +45,8 @@ odetol = 1e-3;
 
 tspan = [0 0.5];
 
-opt = odeset('mass',M,'reltol',odetol,'abstol',odetol,'jacobian',@(t,y,approx)BurgersJacobian(t,y,approx,R));
-%opt = odeset('mass',M{i},'reltol',odetol,'abstol',odetol);
+opt = odeset('mass',M,'reltol',odetol,'abstol',odetol,'jacobian',@(t,y,approx)BurgersJacobian(t,y,approx,R),'BDF','on');
+[t,U] = ASode15s(@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),tspan,y0,F,2,opt);
+
+%opt = odeset('mass',M{1},'reltol',odetol,'abstol',odetol,'jacobian',@(t,y)BurgersJacobian(t,y,Tree,R),'BDF','on');
 %[t,U] = ode15s(@(t,y) BurgersEvaluation(Tree,t,y,R),tspan,y0,opt);
-
-tspan = [0 0.5];
-
-%[t,U] = ASode15s(@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),tspan,y0,F,2,opt);
-
-RHS = [];
-for i=1:length(F.leafArray)
-   ind = (i-1)*2*length(F.leafArray{i})+(1:(2*length(F.leafArray{i})));
-   RHS = [RHS;M{i}*y0(ind)];
-end
-
-dh = 0.007;
-z = ParPreconditionedNewtonForwardTime(0+dh,y0,RHS,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2,dh,@(t,y,approx)BurgersJacobian(t,y,approx,R),M);
