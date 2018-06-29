@@ -1130,41 +1130,43 @@ for i=1:length(PUApprox.leafArray)
 end
 end
 
-function R = Masstimes(PUApprox,num_sols,Miter,y)
+function R = Masstimes(PUApprox,num_sols,M,y)
 
 step = zeros(length(PUApprox.leafArray),1);
 
 %Figure out starting index for each patch
 for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + num_sols*length(PUApprox.leafArray{k-1});
+    step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
 end
 
 R = [];
 
-for k=1:length(PUApprox.leafArray)
-    degs = PUApprox.leafArray{k}.degs;
-    ind = step(k)+(1:(num_sols*prod(degs)));
-    R = [R;Miter{k}*(y(ind))];
+y = reshape(y,length(PUApprox),num_sols);
+
+for i=1:length(PUApprox.leafArray)
+    sol_len = length(PUApprox.leafArray{i});
+    tmp = y(step(i)+(1:sol_len),:);
+    R = [R;reshape(M{i}*tmp(:),sol_len,2)];
 end
 
 end
 
-function Y = scaleRHS(PUApprox,Rowscale,y,num_sols)
-
-
-step = zeros(length(PUApprox.leafArray),1);
-
-%Figure out starting index for each patch
-for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + num_sols*length(PUApprox.leafArray{k-1});
-end
-
-Y = [];
-
-for k=1:length(PUApprox.leafArray)
-    degs = PUApprox.leafArray{k}.degs;
-    ind = step(k)+(1:(num_sols*prod(degs)));
-    Y = [Y;2.*y(ind)];
-end
-
-end
+% function Y = scaleRHS(PUApprox,Rowscale,y,num_sols)
+% 
+% 
+% step = zeros(length(PUApprox.leafArray),1);
+% 
+% %Figure out starting index for each patch
+% for k=2:length(PUApprox.leafArray)
+%     step(k) = step(k-1) + num_sols*length(PUApprox.leafArray{k-1});
+% end
+% 
+% Y = [];
+% 
+% for k=1:length(PUApprox.leafArray)
+%     degs = PUApprox.leafArray{k}.degs;
+%     ind = step(k)+(1:(num_sols*prod(degs)));
+%     Y = [Y;2.*y(ind)];
+% end
+% 
+% end

@@ -24,24 +24,18 @@ for i=1:length(F.leafArray)
    M{i} = BurgersMassMatrix(F.leafArray{i});
 end
 
-%get intial condition
+F.Setvalues(@(x,y)f(x,y,0));
+u0 = F.Getvalues();
+F.Setvalues(@(x,y)g(x,y,0));
+v0 = F.Getvalues();
 
-y0 = [];
+y0 = [u0;v0];
 
-for i=1:length(F.leafArray)
-    F.leafArray{i}.Setvalues(@(x,y)f(x,y,0));
-    u0 = F.leafArray{i}.Getvalues();
-    F.leafArray{i}.Setvalues(@(x,y)g(x,y,0));
-    v0 = F.leafArray{i}.Getvalues();
-    y0 = [y0;u0;v0];
-end
 
 %set interpolation matrices
 setInterpMatrices(F);
 
 odetol = 1e-3;
-
-
 
 tspan = [0 0.5];
 

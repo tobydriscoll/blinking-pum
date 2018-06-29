@@ -4,6 +4,7 @@ degs = [10 10];
 cdegs = [9 9];
 tol = 1e-8;
 R = 10;
+num_sols = 2;
 
 f = @(x,y,t) 3/4 - 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
 g = @(x,y,t) 3/4 + 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
@@ -47,12 +48,15 @@ ynew = pred;
 
 for j=1:7
     
+    dif1 = reshape(pred-ynew,length(F),num_sols);
+    
     RHS = [];
     for i=1:length(F.leafArray)
-        ind = (i-1)*2*length(F.leafArray{i})+(1:(2*length(F.leafArray{i})));
-        RHS = [RHS;M{i}*(y0(ind)-ynew(ind))];
+        tmp = dif1((i-1)*prod(degs)+(1:prod(degs)),:);
+        RHS = [RHS;reshape(M{i}*tmp(:),prod(degs),2)];
     end
     
+    RHS = RHS(:);
     
     [z,J] = ParPreconditionedNewtonForwardTime(0+dh,ynew,RHS,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2,dh,@(t,y,approx)BurgersJacobian(t,y,approx,R),M);
     
@@ -60,9 +64,9 @@ for j=1:7
         [L{i},U{i},p{i}] = lu(J{i},'vector');
     end
 
-    [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(F,L,U,p,x,2),z,[],[]);
+    [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(F,L,U,p,x,2),-z,[],[]);
     
-    ynew = ynew-del;
+    ynew = ynew+del;
 end
 
 
