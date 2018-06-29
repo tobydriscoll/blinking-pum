@@ -555,7 +555,7 @@ while ~done
     nconhk = 0;
     
     %cell array with local linear operators for time step integration
-    Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
+ %   Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
     
 % NO! we assume Mtype==1    
 %     if Mtype == 4
@@ -618,7 +618,7 @@ while ~done
       
       % Iterate with simplified Newton method.
       
-      maxit = 5;
+
       
       tooslow = false;
       for iter = 1:maxit
@@ -633,9 +633,17 @@ while ~done
         R = Masstimes(PUApprox,num_sols,Mtnew,psi+difkp1);
         [rhs,J] = ParPreconditionedNewtonForwardTime(tnew,ynew,-R,PUApprox,ode,num_sols,hinvGak,Jac,Mtnew);
         
-        [L,U,p] = LUarray(PUApprox,J);
+        
         %rhs = hinvGak*feval(odeFcn,tnew,ynew,odeArgs{:}) -  Mtnew*(psi+difkp1);
         
+       %[RowScale,J] = RowScales(PUApprox,J,num_sols);
+       
+       [L,U,p] = LUarray(PUApprox,J);
+       
+       %rhs = 2*rhs;
+       
+       %rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);
+       
         if DAE                          % Account for row scaling.
             
           %rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);  
@@ -670,7 +678,7 @@ while ~done
           newnrm = norm(del .* invwt,inf);
         end
         difkp1 = difkp1 + del;
-        ynew = pred + del;
+        ynew = pred + difkp1;
         
         if newnrm <= minnrm
           gotynew = true;
@@ -693,8 +701,8 @@ while ~done
           havrate = true;                 
           errit = newnrm * rate / (1 - rate);
           if errit <= 0.5*rtol             
-           % gotynew = true;
-           % break;
+             gotynew = true;
+             break;
           elseif iter == maxit            
             tooslow = true;
             break;
@@ -782,7 +790,7 @@ while ~done
     if normcontrol
       err = (norm(difkp1) * invwt) * erconst(k);
     else
-      err = norm((ynew-pred) .* invwt,inf) * erconst(k);
+      err = norm((difkp1) .* invwt,inf) * erconst(k);
     end
 %     if nonNegative && (err <= rtol) && any(ynew(idxNonNegative)<0)
 %       if normcontrol
@@ -1108,11 +1116,11 @@ for i=1:length(PUApprox.leafArray)
 end    
 end
 
-function [RowScale,Miter] = RowScales(PUApprox,Miter,num_sols)
+function [RowScale,J] = RowScales(PUApprox,Miter,num_sols)
 for i=1:length(PUApprox.leafArray)
-      RowScale{i} = 1 ./ max(abs(Miter{i}),[],2);
-      one2neq = 1:PUApprox.leafArray{i}.length*num_sols;
-      Miter{i} = sparse(one2neq,one2neq,RowScale{i}) * Miter{i};
+    RowScale{i} = 1 ./ max(abs(Miter{i}),[],2);
+    one2neq = 1:PUApprox.leafArray{i}.length*num_sols;
+    J{i} = 2.* Miter{i};
 end
 end
 
@@ -1155,8 +1163,8 @@ Y = [];
 
 for k=1:length(PUApprox.leafArray)
     degs = PUApprox.leafArray{k}.degs;
-    ind = step(k)+(1:prod(degs));
-    Y = [Y;Rowscale.*y(ind)];
+    ind = step(k)+(1:(num_sols*prod(degs)));
+    Y = [Y;2.*y(ind)];
 end
 
 end

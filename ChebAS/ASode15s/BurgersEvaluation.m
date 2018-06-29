@@ -30,12 +30,10 @@ g = @(x,y,t) 3/4 + 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
     [X,Y] = ndgrid(Approx.leafGrids{:});
     
     F1 = -(u.*ux+v.*uy) + 1/R*(uxx+uyy);
-    F1(in_border) = u(in_border);
     F1(out_border) = u(out_border) - f(X(out_border),Y(out_border),t);
     
     
     F2 = -(u.*vx+v.*vy) + 1/R*(vxx+vyy);
-    F2(in_border) = v(in_border);
     F2(out_border) = v(out_border) - g(X(out_border),Y(out_border),t);
     
     output = [F1(:);F2(:)];

@@ -3,7 +3,7 @@ function [ M ] = BurgersMassMatrix(Approx)
     %Determine outer border
     [~,out_border,in_border,~] = FindBoundaryIndex2DSides(degs,Approx.domain,Approx.outerbox);
     
-    border = in_border | out_border;
+    border = out_border;
     M1 = eye(prod(degs));
     M2 = M1;
     M1(border,:) = zeros(sum(border),prod(degs));
