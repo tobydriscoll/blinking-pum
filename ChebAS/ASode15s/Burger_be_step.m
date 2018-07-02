@@ -79,7 +79,9 @@ toc
 
 % domain = [0 1;0 1];
 % split_flag = [false false];
-% degs = [64 64];
+
+% degs = [40 40];
+
 % cdegs = [9 9];
 % tol = 1e-8;
 % R = 80;
@@ -131,28 +133,29 @@ toc
 % yp0  = BurgersEvaluation(Tree,0,y0,R);
 % pred = y0+dh*yp0;
 % ynew = pred;
-%  
-% tic; 
+
 % 
-% 
-% 
+%  J = M{1} - dh * BurgersJacobian(dh,pred,Tree,R);
+
 % for j=1:5
 %     
 %     dif1 = pred-ynew;
 %     
-%     rhs = dh*BurgersEvaluation(Tree,dh,ynew,R) + M{1}*dif1;             
-% 
-%     J = dh * BurgersJacobian(dh,ynew,Tree,R)-M{1};
+%     rhs = dh*BurgersEvaluation(Tree,dh,ynew,R) + M{1}*dif1;
 %     
-%     del = J\rhs;
+%     J = dh * BurgersJacobian(dh,ynew,Tree,R)-M{1};
+% 
+%              
+%     
+%     del = J\(rhs);
 %     
 %     ynew = ynew-del;
 %     
-%     d2(j) = norm(del,inf);
+%     d2(j) = norm(del);
 %     
-%     norm(del,inf)
+%     norm(del)
 %    
 % end
-% toc
+>>>>>>> 73a000f
 
 
