@@ -3,7 +3,7 @@ split_flag = [false false];
 degs = [10 10];
 cdegs = [9 9];
 tol = 1e-8;
-R = 10;
+R = 80;
 num_sols = 2;
 
 f = @(x,y,t) 3/4 - 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
@@ -40,7 +40,7 @@ odetol = 1e-3;
 
 tspan = [0 0.5];
 
-dh = 0.001;
+dh = 0.01;
 
 yp0 = ParLocalResidual(0,y0,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2);
 pred = y0+dh*yp0;
