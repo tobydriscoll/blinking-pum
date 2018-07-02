@@ -25,7 +25,7 @@ for k=1:length(PUApprox.leafArray)
     degs = PUApprox.leafArray{k}.degs;
     [~,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
     
-    z{k} = zeros(length(PUApprox),num_sols);
+    z{k} = zeros(prod(degs),num_sols);
     
     z{k}(in_border,:) = PUApprox.leafArray{k}.Binterp*x;
     

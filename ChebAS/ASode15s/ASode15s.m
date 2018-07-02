@@ -639,7 +639,7 @@ while ~done
        
       % [L,U,p] = LUarray(PUApprox,J);
        
-       if isempty(L{1})
+       if isempty(L)
            L = L_old;
            U = U_old;
            p = p_old;

@@ -1,4 +1,4 @@
-function [sol, it_hist, ierr, x_hist,mat_struct] = ASnsold(x,f,tol,parms)
+function [sol, it_hist, ierr, x_hist,mat_struct] = ASnsold(x,f,jac_f,tol,parms)
 % NSOLD  Newton-Armijo nonlinear solver
 %
 % Factor Jacobians with Gaussian Elimination
@@ -156,8 +156,8 @@ while(fnrm > stop_tol & itc < maxit)
             [l,u,p] = lu(jacb,'vector');
             end
         else
-            [fv,jac] = feval(f,x);
-        [l,u,p] = lu(jac,'vector');
+            jac = jac_f(x);
+            [l,u,p] = lu(jac,'vector');
         end
     end
     itsham = itsham-1;

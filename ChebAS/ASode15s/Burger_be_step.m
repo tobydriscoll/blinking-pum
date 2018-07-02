@@ -61,16 +61,10 @@ for j=1:5
     
     RHS = RHS(:);
     
-    [z,L,U,p] = ParPreconditionedNewtonForwardTime(0+dh,ynew,RHS,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2,dh,@(t,y,approx)BurgersJacobian(t,y,approx,R),M);
-    
-    if isempty(L{1})
-        L = L_old;
-        U = U_old;
-        p = p_old;
-    end
+    [z,J] = ParPreconditionedNewtonForwardTime(0+dh,ynew,RHS,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2,dh,@(t,y,approx)BurgersJacobian(t,y,approx,R),M);
     
     
-    [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(F,L,U,p,x,2),-z,[],[]);
+    [del,~,~,~,~] = gmres(@(x)JacobianFoward(F,J,x,2),-z,[],[]);
     
     ynew = ynew+del;
     
@@ -78,90 +72,87 @@ for j=1:5
     
     norm(del,inf)
    
-    L_old = L;
-    U_old = U;
-    p_old = p;
 end
 toc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-domain = [0 1;0 1];
-split_flag = [false false];
-degs = [64 64];
-cdegs = [9 9];
-tol = 1e-8;
-R = 80;
-num_sols = 2;
-
-f = @(x,y,t) 3/4 - 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
-g = @(x,y,t) 3/4 + 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
-
-cheb_struct.domain = domain;
-cheb_struct.degs = degs;
-cheb_struct.split_flag = split_flag;
-cheb_struct.cdegs = cdegs;
-cheb_struct.tol = tol;
-
-Tree = ChebPatch(cheb_struct);
-
-F = PUchebfun(Tree);
-%set mass matricies
-for i=1:length(F.leafArray)
-   M{i} = BurgersMassMatrix(F.leafArray{i});
-end
-
-
-F.Setvalues(@(x,y)f(x,y,0));
-u0 = F.Getvalues();
-F.Setvalues(@(x,y)g(x,y,0));
-v0 = F.Getvalues();
-
-y0 = [u0;v0];
-
-%set interpolation matrices
-setInterpMatrices(F);
-
-
-F = PUchebfun(Tree);
-
-%set mass matricies
-for i=1:length(F.leafArray)
-   M{i} = BurgersMassMatrix(F.leafArray{i});
-end
-
-
-odetol = 1e-3;
-
-tspan = [0 0.5];
-
-dh = 0.05;
-
-yp0  = BurgersEvaluation(Tree,0,y0,R);
-pred = y0+dh*yp0;
-ynew = pred;
- 
-tic; 
-
-
-
-for j=1:5
-    
-    dif1 = pred-ynew;
-    
-    rhs = dh*BurgersEvaluation(Tree,dh,ynew,R) + M{1}*dif1;             
-
-    J = dh * BurgersJacobian(dh,ynew,Tree,R)-M{1};
-    
-    del = J\rhs;
-    
-    ynew = ynew-del;
-    
-    d2(j) = norm(del,inf);
-    
-    norm(del,inf)
-   
-end
-toc
+% domain = [0 1;0 1];
+% split_flag = [false false];
+% degs = [64 64];
+% cdegs = [9 9];
+% tol = 1e-8;
+% R = 80;
+% num_sols = 2;
+% 
+% f = @(x,y,t) 3/4 - 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
+% g = @(x,y,t) 3/4 + 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
+% 
+% cheb_struct.domain = domain;
+% cheb_struct.degs = degs;
+% cheb_struct.split_flag = split_flag;
+% cheb_struct.cdegs = cdegs;
+% cheb_struct.tol = tol;
+% 
+% Tree = ChebPatch(cheb_struct);
+% 
+% F = PUchebfun(Tree);
+% %set mass matricies
+% for i=1:length(F.leafArray)
+%    M{i} = BurgersMassMatrix(F.leafArray{i});
+% end
+% 
+% 
+% F.Setvalues(@(x,y)f(x,y,0));
+% u0 = F.Getvalues();
+% F.Setvalues(@(x,y)g(x,y,0));
+% v0 = F.Getvalues();
+% 
+% y0 = [u0;v0];
+% 
+% %set interpolation matrices
+% setInterpMatrices(F);
+% 
+% 
+% F = PUchebfun(Tree);
+% 
+% %set mass matricies
+% for i=1:length(F.leafArray)
+%    M{i} = BurgersMassMatrix(F.leafArray{i});
+% end
+% 
+% 
+% odetol = 1e-3;
+% 
+% tspan = [0 0.5];
+% 
+% dh = 0.05;
+% 
+% yp0  = BurgersEvaluation(Tree,0,y0,R);
+% pred = y0+dh*yp0;
+% ynew = pred;
+%  
+% tic; 
+% 
+% 
+% 
+% for j=1:5
+%     
+%     dif1 = pred-ynew;
+%     
+%     rhs = dh*BurgersEvaluation(Tree,dh,ynew,R) + M{1}*dif1;             
+% 
+%     J = dh * BurgersJacobian(dh,ynew,Tree,R)-M{1};
+%     
+%     del = J\rhs;
+%     
+%     ynew = ynew-del;
+%     
+%     d2(j) = norm(del,inf);
+%     
+%     norm(del,inf)
+%    
+% end
+% toc
 
 
