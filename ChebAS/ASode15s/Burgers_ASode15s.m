@@ -1,6 +1,6 @@
 domain = [0 1;0 1];
 split_flag = [false false];
-degs = [40 40];
+degs = [32 32];
 cdegs = [9 9];
 tol = 1e-8;
 R = 80;

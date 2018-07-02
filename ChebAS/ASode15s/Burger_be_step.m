@@ -40,16 +40,20 @@ odetol = 1e-3;
 
 tspan = [0 0.5];
 
-dh = 0.01;
+dh = 0.05;
 
 yp0 = ParLocalResidual(0,y0,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2);
-
 pred = y0+dh*yp0;
-
 ynew = pred;
 
+<<<<<<< HEAD
 tic;
 for j=1:5
+=======
+del_old = zeros(size(yp0));
+
+for j=1:4
+>>>>>>> parent of 46f15b1... updated burger_be_step with single approximation comparison
     
     dif1 = reshape(pred-ynew,length(F),num_sols);
     
@@ -71,6 +75,7 @@ for j=1:5
     
     ynew = ynew+del;
     
+<<<<<<< HEAD
     d1(j) = norm(del);
     
     norm(del)
@@ -155,6 +160,9 @@ for j=1:5
     d2(j) = norm(del);
     
     norm(del)
+=======
+    d(j) = norm(del);
+>>>>>>> parent of 46f15b1... updated burger_be_step with single approximation comparison
    
 end
 toc

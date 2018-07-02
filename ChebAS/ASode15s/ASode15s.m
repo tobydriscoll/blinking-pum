@@ -688,31 +688,32 @@ while ~done
             errit = newnrm * rate / (1 - rate);
             if errit <= 0.05*rtol       % More stringent when using old rate.
               gotynew = true;
-              break;
+            %  break;
             end
           else
             rate = 0;
           end
-        elseif newnrm > 0.9*oldnrm
+        elseif iter>3 && newnrm > 0.9*oldnrm
           tooslow = true;
-            break;
+        %  break;
         else
           rate = max(0.9*rate, newnrm / oldnrm);
           havrate = true;                 
           errit = newnrm * rate / (1 - rate);
           if errit <= 0.5*rtol             
              gotynew = true;
-             break;
+            % break;
           elseif iter == maxit            
             tooslow = true;
-            break;
+          %  break;
           elseif 0.5*rtol < errit*rate^(maxit-iter)
             tooslow = true;
-            break;
+            % break;
           end
         end
-        
-         oldnrm = newnrm;
+        norm(del)
+        rate
+        oldnrm = newnrm;
       end                               % end of Newton loop
       nfevals = nfevals + iter;         
       nsolves = nsolves + iter;         
@@ -1148,8 +1149,6 @@ for i=1:length(PUApprox.leafArray)
     tmp = y(step(i)+(1:sol_len),:);
     R = [R;reshape(M{i}*tmp(:),sol_len,2)];
 end
-
-R = R(:);
 
 end
 
