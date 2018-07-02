@@ -75,13 +75,13 @@
 \DeclareMathOperator*{\osc}{osc}
 
 % items enclosed in square brackets are optional; explanation below
-\title[Optimal Domain Splitting]{A 2D partition of unity adaptive refinement Chebyshev polynomial method}
+\title[What I've done]{What I am doing}
 \author[K. Aiton]{Kevin Aiton}
 \institute[UD]{
   Department of Mathematics\\
 University of Delaware\\
 }
-\date[November 2017]{November 14, 2017}
+\date[November 2017]{May 10, 2018}
 
 
 \begin{document}
@@ -94,401 +94,116 @@ University of Delaware\\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}[plain]
   \titlepage
-  \begin{center}
-  This research was supported by National Science Foundation grant DMS-1412085
-  \end{center}
 \end{frame}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% OUTLINE OF PRESENTATION
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Additive Schwarz}
 
-\begin{frame}[plain]{Outline of Presentation}
-
-\begin{itemize}
-	\item Overview of Chebyshev interpolant convergence theory
-	\item Overview of Chebfun and Chebfun2
-	\item The partition of unity method
-	\item Alternating Schwarz method
-\end{itemize}
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Overview of Chebyshev polynomial convergence %theory
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{frame}{Overview of Chebyshev polynomial convergence theory}
-We can use Chebyshev polynomials to construct approximating functions.
-\begin{itemize}
-\item \text{\bf Chebfun} uses polynomial interpolants based on the Chebyshev points $$x_j = \cos(j\pi/n)$$	
-\item Chebyshev interpolants allow for fast and accurate algorithms forinterpolation, differentiation, root finding, etc.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Overview of Chebyshev polynomial convergence theory}
-Using Chebfun:	
+		We are currently working on an adaptive \textbf{additive Schwarz} method for solving boundary value problems. To solve $\mathcal{L}(u)=f$ in $\Omega$, $u=g$ on $\partial \Omega$:
 \bigskip
 
-\begin{center}
-\includegraphics[scale = 0.4]{FishPlot.eps}
-\end{center}
-\begin{center}
-it only took 0.03 seconds to find all these roots!	
-\end{center}
 
-\end{frame}
-
-\begin{frame}{Overview of Chebyshev polynomial convergence theory}
-
-Using Chebfun:	
-\bigskip
-
-\begin{center}
-\includegraphics[scale = 0.4]{AiryExample.eps}
-\end{center}
-\begin{center}
-it only took 0.02 seconds to find all these extrema points for the Airy function!	
-\end{center}
-
-\end{frame}
-
-
-
-\begin{frame}{Overview of Chebyshev polynomial convergence theory}
-
-The Chebyshev points allow for \textbf{spectral} convergence.
-
-\begin{itemize}
-\item If $f(x) = \sum_{i=0}^{\infty} a_i T_i(x)$, then for the interpolant $p_n(x)$ $$ \|f(x) - p_n \|_{\infty} \leq 2 \sum_{i=n+1}^{\infty} |a_i|.$$
-\item For analytic functions, $|a_k|<O(\rho^{-k})$
-\item Chebfun's {\tt standardChop} method uses the coefficients to determine the degree of $p_n(x)$ for a given tolerance.
-\end{itemize}
-
-\end{frame}
-
-\begin{frame}{Chopping a Chebfun polynomial}
-\begin{center}
-\includegraphics[scale = 0.4]{Cheb15.eps}
-\end{center}
-
-\begin{center}
-\begin{itemize}
-\item \begin{center} Coefficients for $f(x)=\exp(x)/(1+10 x^2)$. \end{center}
-\item \begin{center} with tol=$10^{-15}$, $n=119$ \end{center}
-\item \begin{center} $\| f(x)-p_n(x) \|_{\infty}$ = 1.0e-14 \end{center}
-\end{itemize} 
-\end{center}
-\end{frame}
-
-\begin{frame}{Chopping a Chebfun polynomial}
-\begin{center}
-\includegraphics[scale = 0.4]{Cheb8.eps}
-\end{center}
-
-\begin{center}
-\begin{itemize}
-\item \begin{center} Coefficients for $f(x)=\exp(x)/(1+10 x^2)$. \end{center}
-\item \begin{center} with tol=$10^{-8}$, $n=71$ \end{center}
-\item \begin{center} $\| f(x)-p_n(x) \|_{\infty}$ = 1.1e-8 \end{center}
-\end{itemize}
-\end{center}
-\end{frame}
-
-\begin{frame}{2D approximation with Chebfun2}
-	\textbf{Chebfun2} can approximate $f(x,y)$ with a using a low-rank approximation:
-	$$
-	f(x,y) \approx \sum_{j=1}^{k} \sigma_j \phi_j(y) \psi_j(x),
-	$$	
-
-	With low rank functions, we can quickly find roots, solve for extrema, integrate, differentiate , and more.
-
-\end{frame}
-
-\begin{frame}{2D approximation with Chebfun2}
-	\begin{center}
-	For example, Chebfun2 can:
-	\end{center}
-
-\begin{center}
-\includegraphics[scale = 0.4]{contours.eps}
-\end{center}
-
-\begin{center}
-find where $\cos(2 \pi x y) = 0.95$ in 0.14 seconds!
-\end{center}
-
-\end{frame}
-
-\begin{frame}{2D approximation with Chebfun}
-
-\begin{center}
-It is different for high rank functions. For $f(x,y) = \arctan \lp \lp x^2+y \rp/0.01 \rp$, the rank is 815.
-\end{center}
-\begin{columns}
-
-\begin{column}{0.5\textwidth}	
-\begin{center}
-\includegraphics[scale = 0.3]{tan2Dplot.eps}	
-\end{center}
-\end{column}
-
-\begin{column}{0.5\textwidth}
-Chebfun2 took approximately took 3 minutes to adaptively construct an approximation.
-\end{column}
-
-\end{columns}
-
-\end{frame}
-
-\begin{frame}{Refinement for 2D tensor product polynomials}
-\begin{itemize}
-\item We seek to do build an approximation of $f(x,y)$ with the use of tensor product approximations of the form $$ p(x,y) = \sum_{i=0}^{N_x} \sum_{j=0}^{N_y} T_i(x)T_j(y) a_{ij}$$
-\end{itemize}
-
-\begin{theorem} 
-Let $f:[-1,1]^2 \to \R$ be Lipschitz continuous. Then for $\varepsilon>0$ there exists $N_x,N_y$ such that
-$$
-\|f(x,y)-p(x,y)\|_{\infty} \leq \varepsilon.
-$$
- \end{theorem}
-
-\end{frame}
-
-%\begin{frame}{Refinement for 2D tensor product polynomials}
-%\begin{itemize}
-%\item With $$
-% 	c_j(x) = \frac{2 \hat{\delta_j}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-y^2}}T_j(y)f(x,y)dy.
-%$$ we have for fixed $\hat{x}$
-%$$
-%f(\hat{x},y) \approx \sum_{j=0}^{N_y}T_j(y)c_j(\hat{x})
-%$$
-%and for fixed $\hat{y}$
-%$$
-%p(x,\hat{y}) = \sum_{i=0}^{N_x} T_i(x) \frac{2 \hat{\delta_i}}{\pi} \int_{-1}^{1} \frac{1}{\sqrt{1-x^2}} \sum_{j=0}^{N_y}T_j(\hat{y})c_j(x) dx.
-%$$
-%
-%\end{itemize}
-%\end{frame}
-
-
-%\begin{frame}[t]{Refinement for 2D tensor product polynomials}
-%
-%\begin{center}
-%Key idea of proof: with $$p(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$$
-%\end{center}
-%
-%\begin{columns}[t]
-%\begin{column}[t]{0.5\textwidth}
-%We can find $N_y$ such that
-%$$\|f(\cdot,y) -\sum_{i=0}^{N_y} c_j(\cdot)T_j(y) \| \leq \varepsilon/2$$
-%\end{column}
-%\begin{column}[t]{0.5\textwidth}
-%\begin{center}
-%We can then find $N_x$ such that
-%$$\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\|<\varepsilon/2,$$
-%\end{center}	
-%\end{column}
-%
-%\end{columns}
-%
-%\end{frame}
-
-
-%\begin{frame}{Refinement for 2D tensor product polynomials}
-%\begin{center}
-%We can test $\|f(\cdot,y) -\sum_{i=0}^{N_y} c_j(\cdot)T_j(y) \| \leq \varepsilon/2$ discretely by testing the series  $\{f(x_k,y)\}$ for the Chebyshev points $\{x_k\}$.
-%\end{center}
-%
-%\begin{center}
-%For coefficients computed with FFT, we have,
-%$$ c_j(x_k) = \sum_{i=0}^{N_x}T_j(x_k)a_{ij}. $$
-%\end{center}
-%
-%\begin{center}
-%We thus have
-%$$ |c_j(x_k)| < \sum_{i=0}^{N_x} |a_{ij}|. $$ We use {\tt StandardChop} on $\{ \sum_{i=0}^{N_x} |a_{ij}|  \}_{j=0}^{N_y}$ to test for the condition.
-%\end{center}
-%
-%\end{frame}
-%
-%\begin{frame}{Refinement for 2D tensor product polynomials}
-%
-%\begin{center}
-%\includegraphics[scale = 0.5]{absCoeffs.eps}
-%\end{center}
-%
-%\end{frame}
-%
-%\begin{frame}{Refinement for 2D tensor product polynomials}
-%\begin{center}
-%To test for $\|p(x,\cdot) - \sum_{i=0}^{N_y} c_j(x)T_j(\cdot)\|<\varepsilon/2$, we note: $$p(x,\cdot)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(\cdot)a_{ij}$$
-%and
-%$$ \left | \sum_{j=0}^{N_y} T_j(\cdot)a_{ij} \right | < \sum_{j=0}^{N_y} |a_{ij}|. $$
-%\end{center}
-%
-%\begin{center}
-%We use {\tt StandardChop} on $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$ to test for the condition.
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}{Refinement for 2D tensor product polynomials}
-%\begin{center}
-%This gives us a discrete test for convergence:
-%\end{center}
-%
-%\begin{center}
-%Run	{\tt standardChop} on $\{ \sum_{i=0}^{N_x} |a_{ij}|  \}_{j=0}^{N_y}$ and $\{ \sum_{j=0}^{N_y} |a_{ij}|  \}_{i=0}^{N_x}$.
-%\end{center}
-%
-%\end{frame}
-
-\begin{frame}{Partition of unity method}
-
-To refine, we cannot just increase $N_x$ and $N_y$. $N_x N_y$ gets big!
-
-\bigskip
-
-\begin{itemize}
-\item We instead split $[-1,1] \times [-1,1]$ into overlapping rectangles $\{ \Omega_k \}$.
-\item With approximations $s_k:\Omega_k \to \R$, we define a partition of unity $w_k:\Omega \to \R$ with $\sum_k w_k=1$ so we get an approximation $$s(\vect{x}) = \sum_k w_k(\vect{x})s_k(\vect{x}).$$
-\end{itemize}
-
-\end{frame}
-
-\begin{frame}{Partition of unity method}
-\begin{center}
-Some key facts:
-\end{center}
-
-\begin{itemize}
-\item If each $w_k$ is smooth, and $w_k$ has support on $\Omega_k$ then $\sum_k w_k(\vect{x})s_k(\vect{x})$ is smooth.
-\item Thus with overlapping subdomains, we can avoid matching!
-\item With splitting, we can keep the total resolution low while still having an accurate approximation.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Partition of unity method}
-
-The domains are defined by the leaves of a kd-tree, where each split is defined by splitting the rectangle in half with a line.
-\bigskip
-
-\begin{center}
-\includegraphics[scale = 0.4]{zonePlot.eps}
-\end{center}
-\end{frame}
-
-\begin{frame}{Partition of unity method}
-
-For each leaf of the tree, we form the domain by 'pudging out' the rectangle.
-\bigskip
-
-\begin{center}
-\includegraphics[scale = 0.4]{domainPlot.eps}
-\end{center}
-\end{frame}
-
-\begin{frame}{Partition of unity method}
-
-We build an approximation of $f(x,y)$ on $[-1,1] \times [-1,1]$ by:
-\bigskip
-\begin{itemize}
-\item For the polynomial approximation $s_k(x,y)=\sum_{i=0}^{N_x} T_i(x) \sum_{j=0}^{N_y} T_j(y)a_{ij}$ on $\Omega_k$, test if 
-$$\|s_k(x,y) - f(x,y) \| < \varepsilon $$
-via the coefficients.
-\item If the do not, split $\Omega_k$ in half. Recursively repeat this on the children.
-\end{itemize}
-
-\end{frame}
-
-\begin{frame}{Partition of unity method}
-
-Here we adaptively build an approximation $s(x,y)$ for $f(x,y) = \arctan \lp \lp x^2+y \rp/0.01 \rp$ with tol=$10^{-12}$.
-\bigskip
-
-\begin{columns}[t]
-
-\begin{column}{0.5\textwidth}	
-\begin{center}
-\includegraphics[scale = 0.3]{tan2Dplot.eps}	
-\end{center}
-\end{column}
-
-\begin{column}{0.5\textwidth}
-\begin{center}
-\includegraphics[scale = 0.3]{tan2Dsubdomains.eps}	
-\end{center}
-\end{column}
-
-\end{columns}
-
-\begin{center}
-took 2 seconds to build, $\| s(x,y)-f(x,y)\|_{\infty} = 5\times10^{-13}$.	
-\end{center}
-
-\end{frame}
-
-\begin{frame}{BVP's}
-
-		We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. To solve $\mathcal{L}(u)=f$ in $\Omega$, $u=g$ on $\partial \Omega$ we:
-\bigskip
-	
 	\begin{center}
 	for $n=1,2,\dots$ solve
 	\begin{equation*}
 	\begin{aligned}
 	&\mathcal{L}(u_1^{n+1})=f \text{ in } \Omega_1\\
-	&u_1^{n+1} = g \text{ at } \partial\Omega_1 \cap \partial\Omega \\
-	&u_1^{n+1} = u_2^{n} \text{ at } \partial\Omega_1 \setminus \partial\Omega 
-	\end{aligned} \quad 	\begin{aligned}
+	&u_1^{n+1} = g \text{ at } \partial\Omega_1 \setminus \Gamma_1 \\
+	&u_1^{n+1} = u_2^{n} \text{ at } \Gamma_1	\end{aligned} \quad 	\begin{aligned}
 	&\mathcal{L}(u_2^{n+1})=f \text{ in } \Omega_2 \\
-	&u_2^{n+1} = g \text{ at } \partial\Omega_2 \cap \partial\Omega \\
-	&u_2^{n+1} = u_1^{n} \text{ at } \partial\Omega_2 \setminus \partial\Omega 
-	\end{aligned}
+	&u_2^{n+1} = g \text{ at } \partial\Omega_2 \setminus \Gamma_2  \\
+	&u_2^{n+1} = u_1^{n} \text{ at } \Gamma_2 \end{aligned}
 	\end{equation*}	
 	\end{center}
 
+\begin{center}
+		\includegraphics[scale  = 0.4]{AS.eps}
+\end{center}
+
+
 \end{frame}
 
-\begin{frame}{BVP's}
-We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. We develop a scheme where:
+\begin{frame}{Additive Schwarz}
+		To discretely solve $\mathcal{L}(u)=f$ in $\Omega$, $u=g$ on $\partial \Omega$ with Chebyshev polynomials we create discrete operators $A_1$,$A_2$ and then for $n=1,2,\dots$ solve
+		\begin{center}
+	\begin{equation*}
+A_1 u_1^{n+1} =  \begin{bmatrix} 
+  f\rvert_{\Omega_1} \\ g\rvert_{\Omega_1 \setminus \Gamma_1} \\ u_2^{n} \rvert_{\Gamma_1}
+  \end{bmatrix}, \quad A_2 u_2^{n+1} =  \begin{bmatrix} 
+  f\rvert_{\Omega_2} \\ g\rvert_{\Omega_2 \setminus \Gamma_2} \\ u_1^{n} \rvert_{\Gamma_2}
+  \end{bmatrix}
+	\end{equation*}
+	\end{center}
 
-\bigskip
+\begin{center}
+		\includegraphics[scale  = 0.4]{AS.eps}
+\end{center}
 
-We use the overlapping subdomains from a kd-tree.
 
-	\begin{center}
-		\includegraphics[scale = 0.3]{ASdomain1.eps}
+\end{frame}
+
+
+\begin{frame}{Additive Schwarz}
+		Define matrix $B_{12}$ to map the polynomial $u_2$ to $u_2 \rvert_{\Gamma_1}$, and define $B_{21}$ similarly. Let $u^n = \begin{bmatrix}
+			u_1^n \\ u_2^n
+		\end{bmatrix}$. Additive Schwarz can be solved in block form like so:
+		\begin{center}
+		for $n=1,2,\cdots$ solve
+	\begin{equation*}
+\underbrace{\begin{bmatrix}
+A_1 & 0 \\
+0 & A_2	
+\end{bmatrix}}_{A} u^{n+1} = \underbrace{\begin{bmatrix}
+0 & B_{12} \\
+B_{21} & 0	
+\end{bmatrix}}_{B} u^n + \underbrace{\begin{bmatrix}
+	f\rvert_{\Omega_1} \\ g\rvert_{\Omega_1 \setminus \Gamma_1} \\ 0 \\ f\rvert_{\Omega_2} \\ g\rvert_{\Omega_2 \setminus \Gamma_2} \\ 0
+\end{bmatrix}}_{b}
+	\end{equation*}
+	\end{center}
+
+\end{frame}
+
+\begin{frame}{Additive Schwarz}
+		Adding and subtracting $u^n$	, we see that	
+		\begin{center}
+	\begin{equation*}
+	u^{n+1} = u^n + A^{-1}((B-A)u^n+b)	
+	\end{equation*}
+	We then recognize:
+	\begin{itemize}
+		\item if $u^0=0$, then
+\begin{equation*}
+\begin{aligned} 
+	& u^1 = A^{-1} b \\
+	& u^2 = 2 A^{-1}b +A^{-1}(B-A)A^{-1}b \\
+	& \vdots
+\end{aligned}
+\end{equation*}
+That is, $u^n$ is in the Krylov subspace of $\mathcal{K}_n(A^{-1}(A-B), A^{-1}b)$.
+		\item If $\| A^{-1}(B-A)u^n+b \|$ is small then $\| u^{n+1} - u^{n} \|$ is small as well.
+	\end{itemize}
 	\end{center}
 \end{frame}
 
-\begin{frame}{BVP's}
-		We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. We develop a scheme where:
-\bigskip
-
-		For border interpolation of $\partial \Omega_k$, we evaluate the interpolant $s_j(x,y)$ if $(x,y)$ is in the non overlapping rectangle of leaf $j$.
-\bigskip
-
-	\begin{center}
-		\includegraphics[scale = 0.3]{ASdomain2.eps}
-	\end{center}
+\begin{frame}{Additive Schwarz}
+\begin{itemize}
+		\item \textbf{GMRES} approximates $A^{-1}(B-A)x = A^{-1} b$ with $x_n \in \mathcal{K}_n(A^{-1}(A-B), A^{-1}b)$ such that $x_n$ minimizes $\| A^{-1}(B-A)x_n - A^{-1} b \|$.
+		\item We can thus accelerate Additive Schwarz by using GMRES to minimize $\|(B-A)u-b\|$ with $A^{-1}$ as a preconditioner.
+\end{itemize}
 \end{frame}
 
-\begin{frame}{BVP's}
-		We are currently working on an adaptive \textbf{alternating Schwarz} method for solving boundary value problems. We develop a scheme where:
-\bigskip
+\begin{frame}{Additive Schwarz}
+We use a two-level iteration that allows rapid communication between distant domains. Defining block course matrices $A_c$, $B_c$, coarsening operator $C$, and refinement operator $P$ we define a preconditioner $M:b\rightarrow v $ such that
 
-		After obtaining a solution, split the leaves if necessary using the scheme we defined before.
-\bigskip
-
-	\begin{center}
-		\includegraphics[scale = 0.3]{zonePlot2.eps}
-	\end{center}
+\begin{equation*}
+\begin{aligned}
+	v &\leftarrow P (A_c-B_c)^{-1} C b \\
+	v &\leftarrow v + A^{-1}(b-Av).
+\end{aligned}
+\end{equation*}
 \end{frame}
 
-\begin{frame}{BVPs}
+\begin{frame}{Example}
 
 Here we adaptively solve
 $$
@@ -518,39 +233,28 @@ For this solution we adapted to tol=$10^{-8}$, and got error $5 \times 10^{-8}$.
 
 \end{frame}
 
-
-\begin{frame}{BVP's}
+\begin{frame}{Current work}
 \begin{itemize}
-\item We apply GMRES with alternating Schwarz as a preconditioner.
-\item We currently use a two level preconditioner, where we observe the number of GMRES iterations stays constant with increasing subdomains.
-\item We will take advantage of the tree to develop a multi-level preconditioner.
+\item We can apply the current to the blinking eye model using the conformal map.
+\item We can solve the blinking eye problem by using Additive Schwarz with least square approximations of the eye.
 \end{itemize}
 
+\begin{columns}[c]
+
+\begin{column}{0.5\textwidth}	
+\begin{center}
+\includegraphics[scale = 0.3]{LS_3D.eps}	
+
+$\Omega$
+
+\end{center}
+\end{column}
+
+\begin{column}{0.5\textwidth}
+For a function $f:\Omega \to \R$ and a set of points $\Xi \in \Omega$, we find a polynomial $p$ in the span of a Chebyshev polynomial basis that minimizes the least square problem $$ \sum_{x_i \in \Xi} (f(\vect{x_i})-p(\vect{x_i}))^2. $$
+\end{column}
+\end{columns}
 \end{frame}
 
-\begin{frame}{Future Work}
-\begin{itemize}
-\item Adaptive solvers for nonlinear BVPs
-\item Extending work into 3D and non rectangular domains
-\item Apply method to tear film models with moving boundary
-\end{itemize}
-
-\end{frame}
-
-\begin{frame}{Resources}
-\begin{thebibliography}{9}
-\bibitem{DriscollWeideman2014} 
-Tobin A. Driscoll, and J.A.C. Weideman
-\textit{Optimal Domain Splitting for Interpolation by Chebyshev Polynomials}. 
-Siam Journal of Numerical Analysis, 2014
-\bibitem{ApproxTref} 
-Lloyd N. Trefethen,
-\textit{Approximation Theory and Approximation Practice}. 
-SIAM
-\bibitem{cheb} 
-\textit{Chebfun}. 
-http://www.chebfun.org
-\end{thebibliography}
-\end{frame}
 
 \end{document}
