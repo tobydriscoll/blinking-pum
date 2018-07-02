@@ -40,13 +40,15 @@ odetol = 1e-3;
 
 tspan = [0 0.5];
 
-dh = 0.01;
+dh = 0.05;
 
 yp0 = ParLocalResidual(0,y0,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2);
 pred = y0+dh*yp0;
 ynew = pred;
 
-for j=1:7
+del_old = zeros(size(yp0));
+
+for j=1:4
     
     dif1 = reshape(pred-ynew,length(F),num_sols);
     
@@ -67,6 +69,9 @@ for j=1:7
     [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(F,L,U,p,x,2),-z,[],[]);
     
     ynew = ynew+del;
+    
+    d(j) = norm(del);
+   
 end
 
 

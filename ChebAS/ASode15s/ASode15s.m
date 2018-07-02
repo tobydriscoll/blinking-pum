@@ -619,7 +619,7 @@ while ~done
       % Iterate with simplified Newton method.
       
 
-      
+      maxit = 5;
       tooslow = false;
       for iter = 1:maxit
           
@@ -656,7 +656,7 @@ while ~done
         %HEY! replace with gmres jacobian function. use LU decomp of each
         %local operator.
         
-        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x,num_sols),-rhs,[],[]);
+        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x,num_sols),-rhs,[],1e-14);
 %        del = -del;
 %         if issparse(Miter)
 %           del = Q * (U \ (L \ (P * (R \ rhs))));
@@ -688,30 +688,31 @@ while ~done
             errit = newnrm * rate / (1 - rate);
             if errit <= 0.05*rtol       % More stringent when using old rate.
               gotynew = true;
-              break;
+            %  break;
             end
           else
             rate = 0;
           end
-        elseif newnrm > 0.9*oldnrm
+        elseif iter>3 && newnrm > 0.9*oldnrm
           tooslow = true;
-          break;
+        %  break;
         else
           rate = max(0.9*rate, newnrm / oldnrm);
           havrate = true;                 
           errit = newnrm * rate / (1 - rate);
           if errit <= 0.5*rtol             
              gotynew = true;
-             break;
+            % break;
           elseif iter == maxit            
             tooslow = true;
-            break;
+          %  break;
           elseif 0.5*rtol < errit*rate^(maxit-iter)
             tooslow = true;
-            break;
+            % break;
           end
         end
-        
+        norm(del)
+        rate
         oldnrm = newnrm;
       end                               % end of Newton loop
       nfevals = nfevals + iter;         
@@ -724,7 +725,7 @@ while ~done
           if ~Jcurrent  
             if Janalytic
               %dfdy = feval(Jac,t,y,Jargs{:});
-              dfdy = ComputeJac(PUApprox,num_sols,t,y);
+%              dfdy = ComputeJac(PUApprox,num_sols,t,y);
             else
               f0 = feval(odeFcn,t,y,odeArgs{:});
               [dfdy,Joptions.fac,nF] = odenumjac(odeFcn, {t,y,odeArgs{:}}, f0, Joptions);     
@@ -802,7 +803,7 @@ while ~done
 %         err = errNN;
 %       end
 %     end
-    
+   % rtol = 5e-2;
     if err > rtol                       % Failed step
       nfailed = nfailed + 1;            
       if absh <= hmin
