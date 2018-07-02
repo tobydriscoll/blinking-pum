@@ -1,6 +1,10 @@
 domain = [0 1;0 1];
 split_flag = [false false];
+<<<<<<< HEAD
 degs = [32 32];
+=======
+degs = [16 16];
+>>>>>>> e25f1768842eb92dcb2072b3176545ae3a612657
 cdegs = [9 9];
 tol = 1e-8;
 R = 80;
@@ -15,8 +19,8 @@ cheb_struct.cdegs = cdegs;
 cheb_struct.tol = tol;
 
 Tree = ChebPatch(cheb_struct);
-%Tree = Tree.split(1);
-%Tree.split(2);
+Tree = Tree.split(1);
+Tree.split(2);
 
 F = PUchebfun(Tree);
 %set mass matricies
@@ -39,8 +43,8 @@ odetol = 1e-3;
 
 tspan = [0 0.5];
 
-%opt = odeset('mass',M,'reltol',odetol,'abstol',odetol,'jacobian',@(t,y,approx)BurgersJacobian(t,y,approx,R),'BDF','on');
-%[t,U] = ASode15s(@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),tspan,y0,F,2,opt);
+opt = odeset('mass',M,'reltol',odetol,'abstol',odetol,'jacobian',@(t,y,approx)BurgersJacobian(t,y,approx,R),'BDF','on');
+[t,U] = ASode15s(@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),tspan,y0,F,2,opt);
 
-opt = odeset('mass',M{1},'reltol',odetol,'abstol',odetol,'jacobian',@(t,y)BurgersJacobian(t,y,Tree,R),'BDF','on');
-[t,U] = ode15s(@(t,y) BurgersEvaluation(Tree,t,y,R),tspan,y0,opt);
+%opt = odeset('mass',M{1},'reltol',odetol,'abstol',odetol,'jacobian',@(t,y)BurgersJacobian(t,y,Tree,R),'BDF','on');
+%[t,U] = ode15s(@(t,y) BurgersEvaluation(Tree,t,y,R),tspan,y0,opt);

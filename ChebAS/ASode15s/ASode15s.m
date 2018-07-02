@@ -619,7 +619,6 @@ while ~done
       % Iterate with simplified Newton method.
       
 
-      maxit = 5;
       tooslow = false;
       for iter = 1:maxit
           
@@ -631,15 +630,27 @@ while ~done
 
         %make sure signes match. 
         R = Masstimes(PUApprox,num_sols,Mtnew,psi+difkp1);
-        [rhs,J] = ParPreconditionedNewtonForwardTime(tnew,ynew,-R,PUApprox,ode,num_sols,hinvGak,Jac,Mtnew);
+        [rhs,L,U,p] = ParPreconditionedNewtonForwardTime(tnew,ynew,-R,PUApprox,ode,num_sols,hinvGak,Jac,Mtnew);
         
         
         %rhs = hinvGak*feval(odeFcn,tnew,ynew,odeArgs{:}) -  Mtnew*(psi+difkp1);
         
        %[RowScale,J] = RowScales(PUApprox,J,num_sols);
        
-       [L,U,p] = LUarray(PUApprox,J);
+      % [L,U,p] = LUarray(PUApprox,J);
        
+       if isempty(L)
+           L = L_old;
+           U = U_old;
+           p = p_old;
+       else
+           L_old = L;
+           U_old = U;
+           p_old = p;
+       end
+       
+
+    
        %rhs = 2*rhs;
        
        %rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);

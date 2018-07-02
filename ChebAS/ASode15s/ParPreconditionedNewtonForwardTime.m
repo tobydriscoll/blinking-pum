@@ -47,7 +47,6 @@ for k=1:length(PUApprox.leafArray)
     
     [z{k},J{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,Jac,M{k});
     
-    z{k} = reshape(z{k},length(PUApprox.leafArray{k}),num_sols);
 end
 
 z = cell2mat(z');
@@ -100,9 +99,11 @@ function [c,J] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGa
         
     end
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-14,'Display','off');
-
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-9,'Display','off');
 [s,~,~,~,J] = fsolve(@residual,zeros(numel(sol_k),1),options);
+
+%opt = [20,-1,.5,0];
+%[s, ~, ~, ~,J] = ASnsold(zeros(numel(sol_k),1),@residual,[1e-8 1e-8],opt);
 
 c = s(:,end);
 end
