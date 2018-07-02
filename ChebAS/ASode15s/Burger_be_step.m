@@ -1,6 +1,6 @@
 domain = [0 1;0 1];
 split_flag = [false false];
-degs = [10 10];
+degs = [32 32];
 cdegs = [9 9];
 tol = 1e-8;
 R = 80;
@@ -48,6 +48,7 @@ pred = y0+dh*yp0;
 
 ynew = pred;
 
+tic;
 for j=1:5
     
     dif1 = reshape(pred-ynew,length(F),num_sols);
@@ -75,13 +76,13 @@ for j=1:5
     norm(del)
    
 end
-
+toc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 domain = [0 1;0 1];
 split_flag = [false false];
-degs = [40 40];
+degs = [64 64];
 cdegs = [9 9];
 tol = 1e-8;
 R = 80;
@@ -135,6 +136,8 @@ pred = y0+dh*yp0;
 ynew = pred;
 
  J = M{1} - dh * BurgersJacobian(dh,pred,Tree,R);
+ 
+tic; 
 for j=1:5
     
     dif1 = pred-ynew;
@@ -154,5 +157,6 @@ for j=1:5
     norm(del)
    
 end
+toc
 
 
