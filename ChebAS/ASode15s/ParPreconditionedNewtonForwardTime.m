@@ -11,7 +11,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,J] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,num_sols,hinvGak,Jac,M)
+function [z,L,U,p] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,num_sols,hinvGak,Jac,M)
 
 step = zeros(length(PUApprox.leafArray),1);
 
@@ -45,7 +45,11 @@ end
 %parallel step
 for k=1:length(PUApprox.leafArray)
     
-    [z{k},J{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,Jac,M{k});
+    [z{k},mat_struct] = local_inverse(PUApprox.leafArray{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,Jac,M{k});
+    
+    L{k} = mat_struct.L;
+    U{k} = mat_struct.U;
+    p{k} = mat_struct.p;
     
     z{k} = reshape(z{k},length(PUApprox.leafArray{k}),num_sols);
 end
@@ -100,9 +104,11 @@ function [c,J] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGa
         
     end
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-14,'Display','off');
+%options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-9,'Display','off');
+%[s,~,~,~,J] = fsolve(@residual,zeros(numel(sol_k),1),options);
 
-[s,~,~,~,J] = fsolve(@residual,zeros(numel(sol_k),1),options);
+opt = [20,-1,.5,0];
+[s, ~, ~, ~,J] = ASnsold(zeros(numel(sol_k),1),@residual,[1e-8 1e-8],opt);
 
 c = s(:,end);
 end

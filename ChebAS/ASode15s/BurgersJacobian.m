@@ -26,7 +26,7 @@ function [ J ] = BurgersJacobian(t,y,Approx,R)
     Dy = kron(dy,Ix);
     Dyy = kron(dy^2,Ix);
     
-    J1du = -(diag(u)*Dx+diag(Dx*u)+diag(v)*Dy)+1/R*(Dxx+Dyy);
+    J1du = -(u.*Dx+diag(Dx*u)+v.*Dy)+1/R*(Dxx+Dyy);
     J1du(border,:) = I(border,:);
     
     J1dv = -diag(Dy*u);
@@ -35,7 +35,7 @@ function [ J ] = BurgersJacobian(t,y,Approx,R)
     J2du = -diag(Dx*v);
     J2du(border,:) = Z(border,:);
     
-    J2dv = -(diag(u)*Dx+diag(v)*Dy+diag(Dy*v))+1/R*(Dxx+Dyy);
+    J2dv = -(u.*Dx+v.*Dy+diag(Dy*v))+1/R*(Dxx+Dyy);
     J2dv(border,:) = I(border,:);
     
     J = [J1du J1dv;J2du J2dv];

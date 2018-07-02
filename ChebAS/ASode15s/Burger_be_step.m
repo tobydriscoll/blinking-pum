@@ -61,20 +61,26 @@ for j=1:5
     
     RHS = RHS(:);
     
-    [z,J] = ParPreconditionedNewtonForwardTime(0+dh,ynew,RHS,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2,dh,@(t,y,approx)BurgersJacobian(t,y,approx,R),M);
+    [z,L,U,p] = ParPreconditionedNewtonForwardTime(0+dh,ynew,RHS,F,@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),2,dh,@(t,y,approx)BurgersJacobian(t,y,approx,R),M);
     
-    for i=1:length(F.leafArray)
-        [L{i},U{i},p{i}] = lu(J{i},'vector');
+    if isempty(L{1})
+        L = L_old;
+        U = U_old;
+        p = p_old;
     end
-
+    
+    
     [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(F,L,U,p,x,2),-z,[],[]);
     
     ynew = ynew+del;
     
-    d1(j) = norm(del);
+    d1(j) = norm(del,inf);
     
-    norm(del)
+    norm(del,inf)
    
+    L_old = L;
+    U_old = U;
+    p_old = p;
 end
 toc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -134,27 +140,26 @@ dh = 0.05;
 yp0  = BurgersEvaluation(Tree,0,y0,R);
 pred = y0+dh*yp0;
 ynew = pred;
-
- J = M{1} - dh * BurgersJacobian(dh,pred,Tree,R);
  
 tic; 
+
+
+
 for j=1:5
     
     dif1 = pred-ynew;
     
-    rhs = dh*BurgersEvaluation(Tree,dh,ynew,R) + M{1}*dif1;
-    
-    J = dh * BurgersJacobian(dh,ynew,Tree,R)-M{1};
+    rhs = dh*BurgersEvaluation(Tree,dh,ynew,R) + M{1}*dif1;             
 
-             
+    J = dh * BurgersJacobian(dh,ynew,Tree,R)-M{1};
     
-    del = J\(rhs);
+    del = J\rhs;
     
     ynew = ynew-del;
     
-    d2(j) = norm(del);
+    d2(j) = norm(del,inf);
     
-    norm(del)
+    norm(del,inf)
    
 end
 toc
