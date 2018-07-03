@@ -43,11 +43,14 @@ for k=1:length(PUApprox.leafArray)
 end
 
 %parallel step
-for k=1:length(PUApprox.leafArray)
+
+leafs = PUApprox.leafArray;
+
+for k=1:length(leafs)
     
-    [z{k},J{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,Jac,M{k});
+    [z{k},J{k}] = local_inverse(leafs{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,Jac,M{k});
     
-    z{k} = reshape(z{k},length(PUApprox.leafArray{k}),num_sols);
+    z{k} = reshape(z{k},length(leafs{k}),num_sols);
 end
 
 z = cell2mat(z');

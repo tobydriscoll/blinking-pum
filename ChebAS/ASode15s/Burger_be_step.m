@@ -1,7 +1,7 @@
 domain = [0 1;0 1];
 split_flag = [false false];
-degs = [10 10];
-cdegs = [9 9];
+degs = [32 32];
+cdegs = [10 10];
 tol = 1e-8;
 R = 80;
 num_sols = 2;
@@ -48,7 +48,8 @@ pred = y0+dh*yp0;
 
 ynew = pred;
 
-for j=1:5
+tic
+for j=1:3
     
     dif1 = reshape(pred-ynew,length(F),num_sols);
     
@@ -66,7 +67,9 @@ for j=1:5
         [L{i},U{i},p{i}] = lu(J{i},'vector');
     end
 
-    [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(F,L,U,p,x,2),-z,[],[]);
+    [del,flag,relres,iter] = gmres(@(x)JacobianFowardLU(F,L,U,p,x,2),-z,[],[]);
+    
+    iter
     
     ynew = ynew+del;
     
@@ -75,13 +78,14 @@ for j=1:5
     norm(del)
    
 end
+toc
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 domain = [0 1;0 1];
 split_flag = [false false];
-degs = [40 40];
+degs = [64 64];
 cdegs = [9 9];
 tol = 1e-8;
 R = 80;
@@ -135,7 +139,9 @@ pred = y0+dh*yp0;
 ynew = pred;
 
  J = M{1} - dh * BurgersJacobian(dh,pred,Tree,R);
-for j=1:5
+ 
+tic;
+for j=1:3
     
     dif1 = pred-ynew;
     
@@ -154,5 +160,6 @@ for j=1:5
     norm(del)
    
 end
+toc
 
 

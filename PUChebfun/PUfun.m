@@ -240,7 +240,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
                             T_merge.coeffs = chebtech2.vals2coeffs(V);
                         elseif T_merge.dim==2
                             T_merge.coeffs = chebfun2.vals2coeffs(V);
-                        elseif T_mergre.dim==3
+                        elseif T_merge.dim==3
                             T_merge.coeffs = chebfun3.vals2coeffs(V);
                         end
                         

@@ -619,7 +619,7 @@ while ~done
       % Iterate with simplified Newton method.
       
 
-      maxit = 5;
+
       tooslow = false;
       for iter = 1:maxit
           
