@@ -65,7 +65,7 @@ end
 %          Jk: local Jocabian
 function F = local_residual(approx,sol_k,t,border_k,diff_k,evalF,num_sols)
      
-        F = evalF(approx,t,sol_k(:));  
+        F = evalF(t,sol_k(:),approx);  
         
         sol_length = length(approx);
 

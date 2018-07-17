@@ -79,7 +79,7 @@ function [c,J] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGa
         
         sol_length = length(approx);
         
-        F = hinvGak*evalF(approx,t,z+sol_k(:))+rhs_k(:)-M*z;
+        F = hinvGak*evalF(t,z+sol_k(:),approx)+rhs_k(:)-M*z;
         
         F = reshape(F,sol_length,num_sols);
         

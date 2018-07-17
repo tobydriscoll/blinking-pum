@@ -40,7 +40,7 @@ odetol = 1e-3;
 tspan = [0 0.5];
 
 opt = odeset('mass',M,'reltol',odetol,'abstol',odetol,'jacobian',@(t,y,approx)BurgersJacobian(t,y,approx,R),'BDF','on');
-[t,U] = ASode15s(@(Approx,t,y) BurgersEvaluation(Approx,t,y,R),tspan,y0,F,2,opt);
+[t,U] = ASode15s(@(t,y,Approx) BurgersEvaluation(Approx,t,y,R),tspan,y0,F,2,opt);
 
 %opt = odeset('mass',M{1},'reltol',odetol,'abstol',odetol,'jacobian',@(t,y)BurgersJacobian(t,y,Tree,R),'BDF','on');
 %[t,U] = ode15s(@(t,y) BurgersEvaluation(Tree,t,y,R),tspan,y0,opt);

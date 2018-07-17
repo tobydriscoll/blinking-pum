@@ -15,6 +15,19 @@ classdef Heart
             ind = rho<= obj.mult*sin(theta)-sin(obj.mult*theta);
         end
         
+        function bound = Boundary(obj,N)
+            
+            THo = linspace(-pi,pi,N)';
+            
+            
+            bound_r = (cos(TH).^(2/3)+sin(TH).^(2/3)).^(-3/2);
+            
+            [x,y] = pol2cart(THo,bound_r);
+            
+            bound = [x(:) y(:)];
+            
+        end
+        
         function plot(obj)
             
             Nxf = 66;

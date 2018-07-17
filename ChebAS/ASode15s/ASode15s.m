@@ -182,8 +182,12 @@ end
 printstats = strcmp(odeget(options,'Stats','off','fast'),'on');
 
 % Handle the event function NO!
-%[haveEventFcn,eventFcn,eventArgs,valt,teout,yeout,ieout] = ...
-%    odeevents(FcnHandlesUsed,odeFcn,t0,y0,options,varargin);
+[haveEventFcn,eventFcn,eventArgs,valt,teout,yeout,ieout] = ...
+    odeeventsAS(FcnHandlesUsed,odeFcn,t0,y0,options,varargin);
+%haveEventFcn = false;
+%teout = [];
+%yeout = [];
+%ieout = [];
 
 % Handle the mass matrix NO! Mtype = 1 (constant). Assume cell array of mass matrices
 % is passed through (one for each patch).
@@ -195,7 +199,7 @@ Mtype = 1;
 
 % Non-negative solution components NO! We don't worry about this
 %
-% idxNonNegative = odeget(options,'NonNegative',[],'fast');
+ idxNonNegative = odeget(options,'NonNegative',[],'fast');
 % nonNegative = ~isempty(idxNonNegative);
 % if nonNegative  
 %   if Mtype == 0
@@ -1072,7 +1076,7 @@ while ~done
   
 end % while ~done
 
-solver_output = odefinalize(solver_name, sol,...
+solver_output = odefinalizeAS(solver_name, sol,...
                             outputFcn, outputArgs,...
                             printstats, [nsteps, nfailed, nfevals,...
                                          npds, ndecomps, nsolves],...
@@ -1085,44 +1089,6 @@ end
 
 end
 
-function [R,J] = ODEandJac(approx,ODEfun,JACfun,t,u)
-    R = ODEfun(approx,t,u);
-    J = JACfun(approx,t,u);
-end
-
-function dfdy = ComputeJac(Jac,num_sols,PUApprox,t,y)
-
-
-step = zeros(length(PUApprox.leafArray),1);
-
-%Figure out starting index for each patch
-for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + num_sols*length(PUApprox.leafArray{k-1});
-end
-
-
-for i=1:length(PUApprox.leafArray)
-    %Figure out how to make this; force it if need be.
-    ind = step(k)+(1:(num_sols*length(PUApprox.leafArray{i})));
-    dfdy{i} = Jac(t,y(ind),PUApprox.leafArray{i});
-end
-
-end
-
-function D = timeDiff(PUApprox,Mt,dfdy,hinvGak)
-for i=1:length(PUApprox.leafArray)
-    %Figure out how to make this; force it if need be.
-    D{i} = Mt{i} - hinvGak * dfdy{i};
-end    
-end
-
-function [RowScale,J] = RowScales(PUApprox,Miter,num_sols)
-for i=1:length(PUApprox.leafArray)
-    RowScale{i} = 1 ./ max(abs(Miter{i}),[],2);
-    one2neq = 1:PUApprox.leafArray{i}.length*num_sols;
-    J{i} = 2.* Miter{i};
-end
-end
 
 function [L,U,p] = LUarray(PUApprox,Miter)
 for i=1:length(PUApprox.leafArray)
