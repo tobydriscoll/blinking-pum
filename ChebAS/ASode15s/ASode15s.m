@@ -1,4 +1,4 @@
-function varargout = ASode15s(ode,tspan,y0,PUApprox,num_sols,options,varargin)
+function varargout = ASode15s(ode,tspan,y0,PUApprox,options,varargin)
 %ODE15S Solve stiff differential equations and DAEs, variable order method.
 %   [TOUT,YOUT] = ODE15S(ODEFUN,TSPAN,Y0) with TSPAN = [T0 TFINAL] integrates 
 %   the system of differential equations y' = f(t,y) from time T0 to TFINAL 
@@ -109,7 +109,7 @@ function varargout = ASode15s(ode,tspan,y0,PUApprox,num_sols,options,varargin)
 
 solver_name = 'ode15s';
 
-if nargin < 6
+if nargin < 5
   options = [];
   if nargin < 3
     y0 = [];
@@ -320,7 +320,7 @@ for i = 1:length(warnoffId)
 end
 
 
-yp0 = ParLocalResidual(t0,y0,PUApprox,ode,num_sols);
+yp0 = ParLocalResidual(t0,y0,PUApprox,ode);
 % NO! we assum yp0_ok = true
 %
 % Get the initial slope yp. For DAEs the default is to compute
@@ -559,21 +559,8 @@ while ~done
     nconhk = 0;
     
     %cell array with local linear operators for time step integration
- %   Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
+    %Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
     
-% NO! we assume Mtype==1    
-%     if Mtype == 4
-%       Miter = Miter + dMpsidy;
-%     end
-
-    if DAE
-      %[RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);
-    end
-%     if issparse(Miter)
-%       [L,U,P,Q,R] = lu(Miter);
-%     else  
-%       %[L,U,p] = LUarray(PUApprox,Miter);
-%     end  
     ndecomps = ndecomps + 1;            
     havrate = false;
   end
@@ -610,43 +597,13 @@ while ~done
         minnrm = 100*eps*norm(ynew .* invwt,inf);
       end
 
-      % NO! we assume Mtype == 1
-      % Mtnew is required in the RHS function evaluation.
-%       if Mtype == 2  % state-independent
-%         if FcnHandlesUsed
-%           Mtnew = feval(Mfun,tnew,Margs{:}); % mass(t,p1,p2...)
-%         else                                     
-%           Mtnew = feval(Mfun,tnew,ynew,Margs{:}); % mass(t,y,'mass',p1,p2...)
-%         end
-%       end
-      
-      % Iterate with simplified Newton method.
-      
-
-
       tooslow = false;
       for iter = 1:maxit
-          
-%         Mtype          
-%         if Mtype >= 3 
-%           Mtnew = feval(Mfun,tnew,ynew,Margs{:}); % state-dependent
-%         end
-
 
         %make sure signes match. 
-        R = Masstimes(PUApprox,num_sols,Mtnew,psi+difkp1);
-        [rhs,J] = ParPreconditionedNewtonForwardTime(tnew,ynew,-R,PUApprox,ode,num_sols,hinvGak,Jac,Mtnew);
+        R = Masstimes(PUApprox,Mtnew,psi+difkp1);
+        [rhs,L,U,p] = ParPreconditionedNewtonForwardTime(tnew,ynew,-R,PUApprox,ode,hinvGak,Jac,Mtnew);
         
-        
-        %rhs = hinvGak*feval(odeFcn,tnew,ynew,odeArgs{:}) -  Mtnew*(psi+difkp1);
-        
-       %[RowScale,J] = RowScales(PUApprox,J,num_sols);
-       
-       [L,U,p] = LUarray(PUApprox,J);
-       
-       %rhs = 2*rhs;
-       
-       %rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);
        
         if DAE                          % Account for row scaling.
             
@@ -657,16 +614,9 @@ while ~done
         [lastmsg,lastid] = lastwarn('');
         warning(warnoff);
         
-        %HEY! replace with gmres jacobian function. use LU decomp of each
-        %local operator.
         
-        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x,num_sols),-rhs,[],1e-14);
-%        del = -del;
-%         if issparse(Miter)
-%           del = Q * (U \ (L \ (P * (R \ rhs))));
-%         else  
-%           del = U \ (L \ rhs(p));
-%         end  
+        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-rhs,[],1e-14);
+
 
         warning(warnstat);
         
@@ -1096,7 +1046,9 @@ for i=1:length(PUApprox.leafArray)
 end
 end
 
-function R = Masstimes(PUApprox,num_sols,M,y)
+function R = Masstimes(PUApprox,M,y)
+
+num_sols = length(y)/length(PUApprox);
 
 step = zeros(length(PUApprox.leafArray),1);
 

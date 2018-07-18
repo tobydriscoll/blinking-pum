@@ -11,7 +11,9 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,J] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,num_sols,hinvGak,Jac,M)
+function [z,l,u,p] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,hinvGak,Jac,M)
+
+num_sols = length(sol)/length(PUApprox);
 
 step = zeros(length(PUApprox.leafArray),1);
 
@@ -48,7 +50,7 @@ leafs = PUApprox.leafArray;
 
 for k=1:length(leafs)
     
-    [z{k},J{k}] = local_inverse(leafs{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,Jac,M{k});
+    [z{k},l{k},u{k},p{k}] = local_inverse(leafs{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,Jac,M{k});
     
     z{k} = reshape(z{k},length(leafs{k}),num_sols);
 end
@@ -70,12 +72,12 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c,J] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGak,num_sols,Jac,M)
+function [c,l,u,p] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGak,num_sols,Jac,M)
 
 %The residul is F(sol_k+z_k)
 %            sol_k(border_k)+z_k(border_k)-B_k*u
 %            (iterfacing at the zone interface)
-    function [F,J] = residual(z)
+    function [F] = residual(z)
         
         sol_length = length(approx);
         
@@ -89,6 +91,12 @@ function [c,J] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGa
         
         F = F(:);
         
+    end
+
+    function J = jac_fun(z)
+        
+        sol_length = length(approx);
+        
         J = hinvGak*Jac(t,z(:),approx)-M;
         
         E = eye(sol_length);
@@ -100,14 +108,16 @@ function [c,J] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGa
             J(ind,:) = zeros(sum(ind),num_sols*sol_length);
             J(ind,(i-1)*sol_length+(1:sol_length)) = E(border_k,:);
         end
-        
     end
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-14,'Display','off');
+%options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-14,'Display','off');
+%[s,~,~,~,J] = fsolve(@residual,zeros(numel(sol_k),1),options);
 
-[s,~,~,~,J] = fsolve(@residual,zeros(numel(sol_k),1),options);
+params = [20,-1,.5,0];
+tol = [1e-4 1e-4];
+[c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
 
-c = s(:,end);
+%c = s(:,end);
 end
 
 

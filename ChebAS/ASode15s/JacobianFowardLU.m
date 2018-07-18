@@ -6,8 +6,9 @@
 % NOTE x is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
-function [ output ] = JacobianFowardLU(PUApprox,L,U,p,x,num_sols)
+function [ output ] = JacobianFowardLU(PUApprox,L,U,p,x)
 
+num_sols = length(x)/length(PUApprox);
 
 output = zeros(length(PUApprox),num_sols);
 

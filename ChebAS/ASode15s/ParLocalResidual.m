@@ -11,9 +11,11 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z] = ParLocalResidual(t,sol,PUApprox,evalF,num_sols)
+function [z] = ParLocalResidual(t,sol,PUApprox,evalF)
 
 %PUApprox.sample(sol);
+
+num_sols = length(sol)/length(PUApprox);
 
 step = zeros(length(PUApprox.leafArray),1);
 

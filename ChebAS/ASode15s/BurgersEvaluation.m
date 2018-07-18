@@ -37,5 +37,6 @@ g = @(x,y,t) 3/4 + 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
     F2(out_border) = v(out_border) - g(X(out_border),Y(out_border),t);
     
     output = [F1(:);F2(:)];
+    
 end
 
