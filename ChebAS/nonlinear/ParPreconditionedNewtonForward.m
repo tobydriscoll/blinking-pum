@@ -1,5 +1,5 @@
 % INPUT:
-%      PUApprox: PUApprox approximation        
+%      PUApprox: PUApprox approximation
 %         sol: given solution
 %       evalF: residual function which returns Jacobian
 %    num_sols: number of solutions
@@ -7,62 +7,60 @@
 % OUTPUT:
 %          z: correction of solution
 %          J: cell array of local Jacobians
-function [z,J] = ParPreconditionedNewtonForward(PUApprox,sol,evalF,num_sols)
+%
+% NOTE sol is presumed to be ordered by solution first, then patch.
+%      For example, suppose there are two patches p1, p2 each with
+%      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
+function [z,l,u,p] = ParPreconditionedNewtonForward(sol,PUApprox,evalF,Jac)
 
-%PUApprox.sample(sol);
+num_sols = length(sol)/length(PUApprox);
 
 step = zeros(length(PUApprox.leafArray),1);
 
+sol = reshape(sol,length(PUApprox),num_sols);
+
 %Figure out starting index for each patch
 for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + num_sols*length(PUApprox.leafArray{k-1});
+    step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
 end
 
 for k=1:length(PUApprox.leafArray)
     
     degs = PUApprox.leafArray{k}.degs;
     
-    sol_loc{k} = [];
-    diff{k} = [];
+    %This will be sol_length*num_sols
+    sol_loc{k} = sol(step(k)+(1:prod(degs)),:);
+
     
     %This function returns the logical indicies of the gamma and outer
     %boundry interface. Out put is given for all indicies, as well as the
     %indicies along each of the sides
     [~,~,in_border{k},~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
     
-    loc_sol_step = 0;
-    sol_step = 0;
     
-    %Some care is given when the PDE has multiple functions to solve for.
-    %Here interfacing is precomputed for each solution.
-    %
-    % NOTE: I assume each solution has the same length for simplicity
-    for j=1:num_sols
-        tmp = sol(loc_sol_step+step(k)+(1:prod(degs)));
-        sol_loc{k} = [sol_loc{k};tmp];
-        
-        %This computes solution interpolated on the zone interface of the
-        %patch.
-        diff{k} = [diff{k};PUApprox.leafArray{k}.Binterp*sol(sol_step+(1:length(PUApprox)))];
-        loc_sol_step = loc_sol_step + prod(degs);
-        sol_step = sol_step + length(PUApprox);
-    end
+    %This will be (interface length)*num_sols
+    diff{k} = PUApprox.leafArray{k}.Binterp*sol;
     
 end
 
 %parallel step
-for k=1:length(PUApprox.leafArray)
+
+leafs = PUApprox.leafArray;
+
+for k=1:length(leafs)
     
-    [z{k},J{k}] = local_inverse(PUApprox.leafArray{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,length(PUApprox.leafArray{k}));
+    [z{k},l{k},u{k},p{k}] = local_inverse(leafs{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,Jac);
     
+    z{k} = reshape(z{k},length(leafs{k}),num_sols);
 end
 
 z = cell2mat(z');
+z = z(:);
 
 end
 
 % INPUT:
-%      approx: leaf approximation        
+%      approx: leaf approximation
 %       sol_k: given solution
 %    border_k: border index for interface
 %      diff_k: precomputed interface zone interpolation
@@ -73,41 +71,54 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c,Jk] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,sol_length)
+function [c,l,u,p] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,Jac)
 
-    %The residul is F(sol_k+z_k) 
-    %            sol_k(border_k)+z_k(border_k)-B_k*u 
-    %            (iterfacing at the zone interface)
-    function [F,J] = residual(z)
+%The residul is F(sol_k+z_k)
+%            sol_k(border_k)+z_k(border_k)-B_k*u
+%            (iterfacing at the zone interface)
+    function [F] = residual(z)
         
-        z = z+sol_k;
+        sol_length = length(approx);
         
-        [F,J] = evalF(approx,z);
+        F = evalF(z+sol_k(:),approx);
         
-        sol_step = 0;
+        F = reshape(F,sol_length,num_sols);
         
-        diff_len = length(diff_k)/num_sols;
-        diff_step = 0;
+        z = reshape(z,sol_length,num_sols)+sol_k;
         
-        %For each solution, we account for the interfacing.
-        %
-        % NOTE: I assume each solution has the same length for simplicity
-        for i=1:num_sols
-            F_s{i} = F(sol_step+(1:sol_length));
-            F_s{i}(border_k) = z(border_k) - diff_k(diff_step+(1:diff_len));
-            sol_step = sol_step+sol_length;
-            diff_step = diff_step + diff_len;
-        end
+        F(border_k,:) = z(border_k,:) - diff_k;
         
-        F = cell2mat(F_s');
+        F = F(:);
         
     end
 
-    options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',10000,'FunctionTolerance',1e-4);
+    function J = jac_fun(z)
+        
+        sol_length = length(approx);
+        
+        J = Jac(z(:),approx);
+        
+        E = eye(sol_length);
+        
+        for i=1:num_sols
+            ind = false(sol_length*num_sols,1);
+            ind((i-1)*sol_length+(1:sol_length)) = border_k;
+            
+            J(ind,:) = zeros(sum(ind),num_sols*sol_length);
+            J(ind,(i-1)*sol_length+(1:sol_length)) = E(border_k,:);
+        end
+    end
 
-    [s,~,~,~,Jk] = fsolve(@residual,zeros(size(sol_k)),options);
-    
-    c = s(:,end);
+%options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-14,'Display','off');
+%[s,~,~,~,J] = fsolve(@residual,zeros(numel(sol_k),1),options);
+
+params = [20,-1,.5,0];
+tol = [1e-4 1e-4];
+[c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
+
+%c = s(:,end);
 end
+
+
 
 
