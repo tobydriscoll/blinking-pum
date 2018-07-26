@@ -36,8 +36,8 @@ Jac = @(u) CavityFlowJacobian(1,u,Tree);
 
 %sol = nsoldAS(zeros(length(F)*3,1),f,Jac,tol,parms);
 
-%fJ = @(u) sol_and_jac(f,Jac,u);
-%sol = nsold(zeros(length(F)*3,1),fJ,tol,parms);
+fJ = @(u) sol_and_jac(f,Jac,u);
+sol = nsold(zeros(length(F)*3,1),fJ,tol,parms);
 
 options = optimoptions('fsolve','SpecifyObjectiveGradient',true);
 sol_f = fsolve(@(u)sol_and_jac(f,Jac,u),rand(length(F)*3,1),options);
