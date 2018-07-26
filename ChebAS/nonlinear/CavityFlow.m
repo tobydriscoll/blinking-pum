@@ -5,7 +5,7 @@ function [F] = CavityFlow(Re,y,leaf)
     [out_border_s,~,~,in_border_s] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);    
     
     east_west_south = out_border_s{1} | out_border_s{2} | out_border_s{3};
-    north = in_border_s{4};
+    north = out_border_s{4};
     
     Dx = diffmat(degs(1),1,leaf.domain(1,:));
     Dy = diffmat(degs(2),1,leaf.domain(2,:));
@@ -28,7 +28,7 @@ function [F] = CavityFlow(Re,y,leaf)
     f1 = -(uxx+uyy)-wy;
     f1 = f1(:);
     f1(east_west_south) = u(east_west_south);
-    f1(north) = f1(north) - ones(sum(north),1);
+    f1(north) = u(north) - ones(sum(north),1);
     
     f2 = -(vxx+vyy)+wx;
     f2 = f2(:);
@@ -37,7 +37,7 @@ function [F] = CavityFlow(Re,y,leaf)
     
     f3 = -1/Re*(wxx+wyy)+u.*wx+v.*wy;
     f3 = f3(:);
-    f3(east_west_south | north) = f3(east_west_south | north) + uy(east_west_south | north) - vx(east_west_south | north);
+    f3(east_west_south | north) = w(east_west_south | north) + uy(east_west_south | north) - vx(east_west_south | north);
     
     F =[f1;f2;f3];
     
