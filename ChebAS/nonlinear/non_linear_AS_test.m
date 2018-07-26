@@ -8,7 +8,7 @@ cheb_struct.tol = 1e-4;
 
 %Test with 4 patches
 Tree = ChebPatch(cheb_struct);
-%Tree = Tree.split(1);
+Tree = Tree.split(1);
 %Tree.split(2);
 %Tree.split(1);
 %Tree.split(2);
@@ -22,26 +22,6 @@ parms = [20,-1,.5,0];
 
 setInterpMatrices(F);
 
-%[sol, ~, ~, ~] = nsoldPAR_AS(zeros(length(Tree),1),@SimpNonlinear,@SimpNonlinearJac,F,tol_n,parms);
-
-
-%f = @(u,leaf) CavityFlow(1,u,leaf);
-%Jac = @(u,leaf) CavityFlowJacobian(1,u,leaf);
-%[sol, ~, ~, ~] = nsoldPAR_AS(zeros(3*length(F),1),f,Jac,F,tol_n,parms);
-
-tol = [1e-10,1e-9];  param = [40, 1000, .5, 0];  % give exact Jacobian
-
-f = @(u) CavityFlow(1,u,Tree);
-Jac = @(u) CavityFlowJacobian(1,u,Tree);
-
-%sol = nsoldAS(zeros(length(F)*3,1),f,Jac,tol,parms);
-
-fJ = @(u) sol_and_jac(f,Jac,u);
-sol = nsold(zeros(length(F)*3,1),fJ,tol,parms);
-
-options = optimoptions('fsolve','SpecifyObjectiveGradient',true);
-sol_f = fsolve(@(u)sol_and_jac(f,Jac,u),rand(length(F)*3,1),options);
-
-
-%options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',10000,'FunctionTolerance',1e-9);
-%[s,~,~,~,~] = fsolve(@(x) SimpNonlinear(Tree,x),zeros(length(Tree),1),options);
+f = @(u,leaf) CavityFlow(1,u,leaf);
+Jac = @(u,leaf) CavityFlowJacobian(1,u,leaf);
+[sol, ~, ~, ~] = nsoldPAR_AS(rand(3*length(F),1),f,Jac,F,tol_n,parms);
