@@ -11,7 +11,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z] = ParResidual(sol,PUApprox,evalF)
+function [z] = ParResidualFun(sol,PUApprox,evalF)
 
 %PUApprox.sample(sol);
 
@@ -36,19 +36,13 @@ for k=1:length(PUApprox.leafArray)
     [~,~,in_border{k},~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
     
     sol_loc{k} = sol(step(k)+(1:prod(degs)),:);
-
-    if ~PUApprox.iscoarse
-        diff{k} = PUApprox.leafArray{k}.Binterp*sol;
-    else
-        diff{k} = PUApprox.leafArray{k}.CBinterp*sol;
-    end
     
 end
 
 %parallel step
 for k=1:length(PUApprox.leafArray)
     
-    [z{k}] = local_residual(PUApprox.leafArray{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols);
+    [z{k}] = local_residual(PUApprox.leafArray{k},sol_loc{k},in_border{k},evalF,num_sols);
     
 end
 
@@ -69,7 +63,7 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function F = local_residual(approx,sol_k,border_k,diff_k,evalF,num_sols)
+function F = local_residual(approx,sol_k,border_k,evalF,num_sols)
      
         F = evalF(sol_k(:),approx);  
         
@@ -77,7 +71,9 @@ function F = local_residual(approx,sol_k,border_k,diff_k,evalF,num_sols)
 
         F = reshape(F,sol_length,num_sols);
         
-        F(border_k,:) = sol_k(border_k,:) - diff_k;
+        F(border_k,:) = sol_k(border_k,:);
               
 end
+
+
 
