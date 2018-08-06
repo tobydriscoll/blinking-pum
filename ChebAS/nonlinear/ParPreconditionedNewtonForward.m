@@ -51,7 +51,7 @@ for k=1:length(leafs)
     
     [z{k},l{k},u{k},p{k}] = local_inverse(leafs{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,Jac);
     
-    z{k} = reshape(z{k},length(leafs{k}),num_sols);
+    z{k} = sol_loc{k}-reshape(z{k},length(leafs{k}),num_sols);
 end
 
 z = cell2mat(z');
@@ -80,11 +80,11 @@ function [c,l,u,p] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,J
         
         sol_length = length(approx);
         
-        F = evalF(z+sol_k(:),approx);
+        F = evalF(z,approx);
         
         F = reshape(F,sol_length,num_sols);
         
-        z = reshape(z,sol_length,num_sols)+sol_k;
+        z = reshape(z,sol_length,num_sols);
         
         F(border_k,:) = z(border_k,:) - diff_k;
         
@@ -114,6 +114,7 @@ function [c,l,u,p] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,J
 
 params = [20,-1,.5,0];
 tol = [1e-4 1e-4];
+
 [c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
 
 %c = s(:,end);

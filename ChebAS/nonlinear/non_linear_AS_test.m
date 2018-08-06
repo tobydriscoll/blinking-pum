@@ -1,7 +1,7 @@
 domain = [0 1;0 1];
 deg_in = [5 5];
 cheb_struct.domain = domain;
-cheb_struct.degs = [32 32];
+cheb_struct.degs = [12 12];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
 cheb_struct.tol = 1e-4;
