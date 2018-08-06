@@ -1,12 +1,11 @@
-% INPUT:
-%      PUApprox: PUApprox approximation        
-%         sol: given solution
-%       evalF: residual function which returns Jacobian
-%    num_sols: number of solutions
+% INPUT:     
+%      sol: given solution at patches
+%      sol2: second given solution 
+%      PUApprox: PUApprox approximation   
+%      evalF: residual function which returns Jacobian
 %
 % OUTPUT:
-%          z: correction of solution
-%          J: cell array of local Jacobians
+%          z: returns sol, with sol-sol2 of inner boundary of patches
 %
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
@@ -49,6 +48,7 @@ end
 %parallel step
 for k=1:length(PUApprox.leafArray)
     
+    %Assume z is of the form [u1 u2 ... un]
     [z{k}] = local_residual(sol_loc{k},in_border{k},diff{k});
     
 end

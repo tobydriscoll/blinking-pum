@@ -807,6 +807,24 @@ classdef PUPatch<Patch
                 obj.children{k}.Coarsen();
             end
             obj.cheb_length = length(obj.children{1})+length(obj.children{2});
+            obj.iscoarse = obj.children{1}.iscoarse & obj.children{2}.iscoarse;
+        end
+        
+        %Coarsens the leaves of the patch.
+        function cvals = Fine2Coarse(obj,vals)
+            for k=1:2
+                cvals1 = obj.children{1}.Fine2Coarse(vals(1:length(obj.children{1})));
+                cvals2 = obj.children{2}.Fine2Coarse(vals(length(obj.children{1})+1:end));
+            end
+            cvals = [cvals1;cvals2];
+        end
+        
+        function rvals = Coarse2Fine(obj,vals)
+            for k=1:2
+                rvals1 = obj.children{1}.Coarse2Fine(vals(1:length(obj.children{1})));
+                rvals2 = obj.children{2}.Coarse2Fine(vals(length(obj.children{1})+1:end));
+            end
+            rvals = [rvals1;rvals2];
         end
         
         %Refines the leaves of the patch.
@@ -815,6 +833,7 @@ classdef PUPatch<Patch
                 obj.children{k}.Refine();
             end
             obj.cheb_length = length(obj.children{1})+length(obj.children{2});
+            obj.iscoarse = obj.children{1}.iscoarse & obj.children{2}.iscoarse;
         end
         
         %Method returns vector of values of interpolating points of patch.

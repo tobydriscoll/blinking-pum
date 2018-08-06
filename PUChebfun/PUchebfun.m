@@ -37,6 +37,7 @@ classdef PUchebfun < PUfun
         tol
         domain = [];
         grid_opt = false;
+        iscoarse = false;
     end
     
     methods
@@ -83,7 +84,7 @@ classdef PUchebfun < PUfun
                         elseif strcmpi(args{1}, 'tol')
                             obj.tol = args{2};
                             cheb_struct.tol = args{2};
-                        elseif strcmpi(args{1}, 'CourseDegree')
+                        elseif strcmpi(args{1}, 'CoarseDegree')
                             cheb_struct.cdegs = args{2};
                         else
                             error(strcat(args{1},' is not a valid parameter.'));
@@ -241,13 +242,23 @@ classdef PUchebfun < PUfun
         % This method Coarsens each of the patches
         function Coarsen(obj)
             obj.ChebRoot.Coarsen();
+            obj.iscoarse = true;
             obj.clean();
+        end
+        
+        function cvals = Fine2Coarse(obj,vals)
+            cvals = obj.ChebRoot.Fine2Coarse(vals);
+        end
+        
+        function rvals = Coarse2Fine(obj,vals)
+            rvals = obj.ChebRoot.Coarse2Fine(vals);
         end
         
         % Refines(obj)
         % This method Refines each of the patches
         function Refine(obj)
             obj.ChebRoot.Refine();
+            obj.iscoarse = false;
             obj.clean();
         end
         

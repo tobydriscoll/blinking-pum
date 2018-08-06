@@ -10,12 +10,15 @@
 %    dt,t: time step and current time
 %  output:
 %     rhs: returns RHS for the theta method.
-function [] = setInterpMatrices(PUfun)
+function [] = setInterpMatrices(PUfun,coarse_too)
+
+if nargin==1
+    coarse_too = false;
+end
 
 for k=1:length(PUfun.leafArray)
     
     points = PUfun.leafArray{k}.points;
-    
     
     if ~PUfun.ChebRoot.is_leaf
                 degs = PUfun.leafArray{k}.degs;
@@ -24,6 +27,26 @@ for k=1:length(PUfun.leafArray)
     end
     
 end
+
+if coarse_too
+    
+    PUfun.Coarsen();
+   
+    for k=1:length(PUfun.leafArray)
+    
+    points = PUfun.leafArray{k}.points;
+    
+    if ~PUfun.ChebRoot.is_leaf
+                degs = PUfun.leafArray{k}.degs;
+                [~,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUfun.leafArray{k}.domain,PUfun.leafArray{k}.outerbox);
+                PUfun.leafArray{k}.CBinterp = PUfun.ChebRoot.interpSparseMatrixZone(points(in_border,:));
+    end
+    
+    end
+
+    PUfun.Refine();
+end
+
 
 end
 

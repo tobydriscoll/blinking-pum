@@ -29,11 +29,11 @@ classdef ChebPatch<LeafPatch
 % 33 in each direction.
     properties
         swap_degs %temp holder for degs
-        iscoarse = false;
         linOp
         linOp_f
         ClinOp
         Binterp
+        CBinterp
         orig_degs
         orig_deg_in
         local_max

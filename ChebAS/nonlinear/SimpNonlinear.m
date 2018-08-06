@@ -13,7 +13,9 @@ function [fv,J] = SimpNonlinear(u,leaf)
     u  = reshape(u,leaf.degs);
     ux = Dx*u; uxx = Dx*ux; uy = u*Dy'; uyy = uy*Dy';
     
-    fv = uxx+uyy-u.^2;
+    [X,Y] = ndgrid(leaf.leafGrids{:});
+    
+    fv = uxx+uyy-u.^2-(4-4*(X.^2+Y.^2).^2)./(1+(X.^2+Y.^2).^2).^2+bound(X,Y).^2;
     
     fv = fv(:);
     points = leaf.points;

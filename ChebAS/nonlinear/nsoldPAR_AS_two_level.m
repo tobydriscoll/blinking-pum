@@ -97,6 +97,7 @@ isham = -1;
 rsham = .5;
 jdiff = 1;
 iband = 0;
+jac_age = -1;
 
 l = []; u = [];
 

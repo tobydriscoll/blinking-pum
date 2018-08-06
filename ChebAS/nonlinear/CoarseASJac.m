@@ -1,14 +1,16 @@
-% This method sets up the linear operators to be used in the patches for
-% the theta method.
+% INPUT:     
+%      sol: given solution at patches
+%      sol2: second given solution 
+%      PUApprox: PUApprox approximation   
+%      jac_f(x,leaf): function that returns jacobian given local solution x and
+%      patch leaf.
 %
-%   input:
-%    Tree: Tree that has the current time step stored
-%       L: Operator of PDE u_t = L u
-%       B: cell array of boundary condition operator in order NORTH SOUTH EAST WEST
-%   theta: parameter used in theta method
-%    dt,t: time step and current time
-%  output:
-%     MAT: returns the coarse matrix for the theta method
+% OUTPUT:
+%          Mat: sparse matrix used for Jacobian of Coarse correction.
+%
+% NOTE sol is presumed to be ordered by solution first, then patch.
+%      For example, suppose there are two patches p1, p2 each with
+%      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
 function [ Mat ] = CoarseASJac(PUApprox,jac_f,sol,sol2)
 %assume sol is the correct coarse length
 num_sols = length(sol)/length(PUApprox);

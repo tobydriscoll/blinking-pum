@@ -1,4 +1,4 @@
-function [sol,l,u,p,it_hist, ierr, x_hist] = nsoldAS(x,f,jac_f,tol,parms)
+function [sol,l,u,p,jac, ierr, x_hist] = nsoldAS(x,f,jac_f,tol,parms)
 % NSOLD  Newton-Armijo nonlinear solver
 %
 % Factor Jacobians with Gaussian Elimination
@@ -113,7 +113,7 @@ if nargin >= 5 & length(parms) ~= 0
 rtol = tol(2); atol = tol(1);
 it_hist = [];
 n = length(x);
-if nargout == 7, x_hist = x; end
+if nargout == 8, x_hist = x; end
 fnrm = 1;
 itc = 0;
 %

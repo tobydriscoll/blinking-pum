@@ -465,9 +465,30 @@ classdef LeafPatch<Patch
                 
                 obj.cheb_length = prod(obj.cdegs);
             end
-
+            
         end
         
+        function cvals = Fine2Coarse(obj,vals)
+            
+            if ~obj.iscoarse
+                
+                obj.swap_degs = obj.degs;
+                
+                obj.degs = obj.cdegs;
+                
+                grid = obj.leafGrids();
+                
+                obj.degs = obj.swap_degs;
+                
+                cvals = obj.evalfBaryGrid(grid,reshape(vals,obj.degs));
+                
+                cvals = cvals(:);
+                
+            end
+            
+        end
+        
+       
         % Construct for the ChebPatch
         %
         % This method refines the patch, resampling the patches values
@@ -489,7 +510,22 @@ classdef LeafPatch<Patch
                 
                 obj.cheb_length = prod(obj.degs);
             end
-
+        end
+        
+        function rvals = Coarse2Fine(obj,vals)
+            
+            if obj.iscoarse
+                
+                obj.degs = obj.swap_degs;
+                
+                grid = obj.leafGrids();
+                
+                obj.degs = obj.cdegs;
+                
+                rvals = obj.evalfBaryGrid(grid,reshape(vals,obj.degs));
+                
+                rvals = rvals(:);
+            end
             
         end
         

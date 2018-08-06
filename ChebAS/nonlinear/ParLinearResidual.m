@@ -1,7 +1,7 @@
 % INPUT:     
 %      sol: given solution at patches
 %      PUApprox: PUApprox approximation   
-%      evalF: residual function which returns Jacobian
+%      J: Jacobian function for leaf
 %
 % OUTPUT:
 %          z: residual of solution, identity at inner boundary of patches

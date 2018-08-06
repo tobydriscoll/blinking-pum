@@ -12,6 +12,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
         is_leaf
         is_refined = false
         is_geometric_refined = false
+        iscoarse = false;
         dim
         tol
         outerbox
