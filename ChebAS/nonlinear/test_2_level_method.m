@@ -29,18 +29,44 @@ Jac = @ SimpNonlinearJac;
 F.sample(bound);
 init = F.Getvalues();
 
-[f0,L,U,p] = ParPreconditionedNewtonForward(init,F,f,Jac);
+% [f0,L,U,p] = ParPreconditionedNewtonForward(init,F,f,Jac);
+% 
+% E = eye(length(F));
+% J = zeros(length(F));
+% 
+% for i=1:length(F)
+%     J(:,i) = JacobianFowardLU(F,L,U,p,E(:,i));
+% end
+% 
+% RES = @(sol) ParPreconditionedNewtonForward(sol,F,f,Jac);
+% 
+% AJ = jacobi(RES,init);
+
+
+%Course Correction
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[c_sol,J_v_pls_er ] = CoarseCorrect(F,init,f,Jac);
+
+T_hat  = CoarseInterfaceInterp(F,1);
+
+[FJv,FJv_hat] = ComputeJac(F,Jac,init);
+
+FJv_hat = blkdiag(FJv_hat{:});
 
 E = eye(length(F));
 J = zeros(length(F));
 
 for i=1:length(F)
-    J(:,i) = JacobianFowardLU(F,L,U,p,E(:,i));
+    J(:,i) = LinearCoarseCorrect( F, E(:,i),J_v_pls_er,T_hat,FJv,FJv_hat);
 end
 
-RES = @(sol) ParPreconditionedNewtonForward(sol,F,f,Jac);
+RES = @(sol) CoarseCorrect(F,sol,f,Jac);
 
 AJ = jacobi(RES,init);
+
 
 % Two level
 %

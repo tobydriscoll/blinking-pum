@@ -117,6 +117,7 @@ tol = [1e-4 1e-4];
 
 [c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
 
+[l,u,p] = lu(jac_fun(c),'vector');
 %c = s(:,end);
 end
 

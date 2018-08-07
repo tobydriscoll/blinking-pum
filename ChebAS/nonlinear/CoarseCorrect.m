@@ -35,7 +35,9 @@ r_hat = r_hat - ParResidualFun(v_hat,PUApprox,evalf);
 params = [20,-1,.5,0];
 tol = [1e-10 1e-11];
 
-[er,~,~,~,J_v_pls_er] = nsoldAS(rand(size(v_hat)),@(er)Residual(er,v_hat,r_hat,PUApprox,evalf),@(er)CoarseASJac(PUApprox,jacf,er,v_hat),tol,params);
+[er,~,~,~,~] = nsoldAS(rand(size(v_hat)),@(er)Residual(er,v_hat,r_hat,PUApprox,evalf),@(er)CoarseASJac(PUApprox,jacf,er,v_hat),tol,params);
+
+J_v_pls_er = CoarseASJac(PUApprox,jacf,er,v_hat);
 
 r_er = [];
 
