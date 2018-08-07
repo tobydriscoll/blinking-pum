@@ -113,7 +113,7 @@ function [c,l,u,p] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,J
 %[s,~,~,~,J] = fsolve(@residual,zeros(numel(sol_k),1),options);
 
 params = [20,-1,.5,0];
-tol = [1e-4 1e-4];
+tol = [1e-3 1e-3];
 
 [c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
 

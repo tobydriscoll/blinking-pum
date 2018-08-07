@@ -1,7 +1,7 @@
 domain = [0 1;0 1];
 deg_in = [5 5];
 cheb_struct.domain = domain;
-cheb_struct.degs = [12 12];
+cheb_struct.degs = [20 20];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
 cheb_struct.tol = 1e-4;
@@ -25,22 +25,22 @@ F.sample(@(x,y) zeros(size(x)));
 
 setInterpMatrices(F,true);
 
-%f = @(u,leaf) CavityFlow(1,u,leaf);
-%Jac = @(u,leaf) CavityFlowJacobian(1,u,leaf);
+f = @(u,leaf) CavityFlow(1,u,leaf);
+Jac = @(u,leaf) CavityFlowJacobian(1,u,leaf);
 
-f = @ SimpNonlinear;
-Jac = @ SimpNonlinearJac;
+%f = @ SimpNonlinear;
+%Jac = @ SimpNonlinearJac;
 
-%[sol, ~, ~, ~] = nsoldPAR_AS(rand(length(F),1),f,Jac,F,tol_n,parms);
+init = zeros(3*length(F),1);
 
-
-
-%init = rand(length(F),1);
-
-F.sample(bound);
-init = F.Getvalues();
-
-[sol, ~, ~, ~] = nsoldPAR_AS_two_level(zeros(length(F),1),f,Jac,F,tol_n,parms);
+%F.sample(bound);
+%init = F.Getvalues();
 
 
-F.sample(sol);
+[sol, ~, ~, ~] = nsoldPAR_AS(init,f,Jac,F,tol_n,parms);
+
+
+%[sol, ~, ~, ~] = nsoldPAR_AS_two_level(init,f,Jac,F,tol_n,parms);
+
+
+%F.sample(sol);

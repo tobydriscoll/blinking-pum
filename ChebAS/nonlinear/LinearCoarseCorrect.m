@@ -31,7 +31,7 @@ end
 
 PUApprox.Coarsen();
 
-b_hat = -((Jac_hat+T_hat-FJv_hat)*w_hat+r_hat);
+b_hat = FJv_hat*w_hat-r_hat-(Jac_hat-T_hat)*w_hat;
 
 y_hat = (Jac_hat)\b_hat;
 

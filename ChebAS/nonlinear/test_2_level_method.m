@@ -23,11 +23,17 @@ F.sample(@(x,y) zeros(size(x)));
 
 setInterpMatrices(F,true);
 
-f = @ SimpNonlinear;
-Jac = @ SimpNonlinearJac;
+%f = @ SimpNonlinear;
+%Jac = @ SimpNonlinearJac;
 
-F.sample(bound);
-init = F.Getvalues();
+f = @(u,leaf) CavityFlow(1,u,leaf);
+Jac = @(u,leaf) CavityFlowJacobian(1,u,leaf);
+
+%F.sample(bound);
+%init = F.Getvalues();
+
+num_sols = 3;
+init = zeros(num_sols*length(F),1);
 
 % [f0,L,U,p] = ParPreconditionedNewtonForward(init,F,f,Jac);
 % 
@@ -48,33 +54,7 @@ init = F.Getvalues();
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[c_sol,J_v_pls_er ] = CoarseCorrect(F,init,f,Jac);
-
-T_hat  = CoarseInterfaceInterp(F,1);
-
-[FJv,FJv_hat] = ComputeJac(F,Jac,init);
-
-FJv_hat = blkdiag(FJv_hat{:});
-
-E = eye(length(F));
-J = zeros(length(F));
-
-for i=1:length(F)
-    J(:,i) = LinearCoarseCorrect( F, E(:,i),J_v_pls_er,T_hat,FJv,FJv_hat);
-end
-
-RES = @(sol) CoarseCorrect(F,sol,f,Jac);
-
-AJ = jacobi(RES,init);
-
-
-% Two level
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% [f0,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(init,F,f,Jac);
+% [c_sol,J_v_pls_er ] = CoarseCorrect(F,init,f,Jac);
 % 
 % T_hat  = CoarseInterfaceInterp(F,1);
 % 
@@ -86,9 +66,35 @@ AJ = jacobi(RES,init);
 % J = zeros(length(F));
 % 
 % for i=1:length(F)
-%     J(:,i) = JacobianFoward2Level(F,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,E(:,i));
+%     J(:,i) = LinearCoarseCorrect( F, E(:,i),J_v_pls_er,T_hat,FJv,FJv_hat);
 % end
 % 
-% RES = @(sol) ParPreconditionedTwoLevel(sol,F,f,Jac);
+% RES = @(sol) CoarseCorrect(F,sol,f,Jac);
 % 
 % AJ = jacobi(RES,init);
+
+
+% Two level
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[f0,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(init,F,f,Jac);
+
+T_hat  = CoarseInterfaceInterp(F,num_sols);
+
+[FJv,FJv_hat] = ComputeJac(F,Jac,init);
+
+FJv_hat = blkdiag(FJv_hat{:});
+
+E = eye(num_sols*length(F));
+J = zeros(num_sols*length(F));
+
+for i=1:length(F)
+    J(:,i) = JacobianFoward2Level(F,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,E(:,i));
+end
+
+RES = @(sol) ParPreconditionedTwoLevel(sol,F,f,Jac);
+
+AJ = jacobi(RES,init);
