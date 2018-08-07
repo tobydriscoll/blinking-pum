@@ -25,22 +25,24 @@ F.sample(@(x,y) zeros(size(x)));
 
 setInterpMatrices(F,true);
 
-f = @(u,leaf) CavityFlow(1,u,leaf);
-Jac = @(u,leaf) CavityFlowJacobian(1,u,leaf);
+%f = @(u,leaf) CavityFlow(1,u,leaf);
+%Jac = @(u,leaf) CavityFlowJacobian(1,u,leaf);
 
-%f = @ SimpNonlinear;
-%Jac = @ SimpNonlinearJac;
+f = @ SimpNonlinear;
+Jac = @ SimpNonlinearJac;
 
-init = zeros(3*length(F),1);
+init = zeros(length(F),1);
 
 %F.sample(bound);
 %init = F.Getvalues();
 
 
-[sol, ~, ~, ~] = nsoldPAR_AS(init,f,Jac,F,tol_n,parms);
+%[sol, ~, ~, ~] = nsoldPAR_AS(init,f,Jac,F,tol_n,parms);
 
 
-%[sol, ~, ~, ~] = nsoldPAR_AS_two_level(init,f,Jac,F,tol_n,parms);
+[sol, ~, ~, ~] = nsoldPAR_AS_two_level(init,f,Jac,F,tol_n,parms);
 
-
+%sol = reshape(sol,length(F),3);
+F.sample(sol(:,1));
+plot(F);
 %F.sample(sol);
