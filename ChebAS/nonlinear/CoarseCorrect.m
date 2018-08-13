@@ -11,21 +11,21 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [ r_er,J_v_pls_er ] = CoarseCorrect( PUApprox, v,evalf,jacf)
+function [ r_er,J_v_pls_er ] = CoarseCorrect( PUApprox, v,evalf,jacf,j)
 
 
 num_sols = length(v)/length(PUApprox);
 
 v_hat = [];
 for i=1:num_sols
-    v_hat = [v_hat;PUApprox.Fine2Coarse(v((1:length(PUApprox)) + (i-1)*length(PUApprox)))];
+    v_hat = [v_hat;PUApprox.Fine2Coarse(v((1:length(PUApprox)) + (i-1)*length(PUApprox)),j)];
 end
 
 r = ParResidual(v,PUApprox,evalf);
 
 r_hat = [];
 for i=1:num_sols
-    r_hat = [r_hat;PUApprox.Fine2Coarse(r((1:length(PUApprox)) + (i-1)*length(PUApprox)))];
+    r_hat = [r_hat;PUApprox.Fine2Coarse(r((1:length(PUApprox)) + (i-1)*length(PUApprox)),j)];
 end
 
 PUApprox.Coarsen();
@@ -33,11 +33,19 @@ PUApprox.Coarsen();
 r_hat = r_hat - ParResidualFun(v_hat,PUApprox,evalf);
 
 params = [20,-1,.5,0];
-tol = [1e-10 1e-11];
+tol = [1e-5 1e-4];
 
-[er,~,~,~,~] = nsoldAS(rand(size(v_hat)),@(er)Residual(er,v_hat,r_hat,PUApprox,evalf),@(er)CoarseASJac(PUApprox,jacf,er,v_hat),tol,params);
+RES = @(er)Residual(er,v_hat,r_hat,PUApprox,evalf);
+JAC = @(er)CoarseASJac(PUApprox,jacf,er,v_hat);
 
-J_v_pls_er = CoarseASJac(PUApprox,jacf,er,v_hat);
+[er,~,~,~,~] = nsoldAS(zeros(size(v_hat)),RES,JAC,tol,params);
+
+%options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-3);
+%er = fsolve(@(er)sol_and_jac(@(er)RES(er),@(er)JAC(er),er),zeros(size(v_hat)),options);
+
+%er = er(:,end);
+
+J_v_pls_er = JAC(er);
 
 r_er = [];
 

@@ -468,22 +468,40 @@ classdef LeafPatch<Patch
             
         end
         
-        function cvals = Fine2Coarse(obj,vals)
+        function cvals = Fine2Coarse(obj,vals,k)
+            
+            if 2==nargin
+                k=0;
+            end
             
             if ~obj.iscoarse
                 
-                obj.swap_degs = obj.degs;
-                
-                obj.degs = obj.cdegs;
-                
-                grid = obj.leafGrids();
-                
-                obj.degs = obj.swap_degs;
-                
-                cvals = obj.evalfBaryGrid(grid,reshape(vals,obj.degs));
+                if k==0
+                    obj.swap_degs = obj.degs; 
+                    
+                    obj.degs = obj.cdegs;
+                    
+                    grid = obj.leafGrids();
+                    
+                    obj.degs = obj.swap_degs;
+                    
+                    cvals = obj.evalfBaryGrid(grid,reshape(vals,obj.degs));
+                    
+                else
+                    
+                    vals = reshape(vals,obj.degs);
+                    
+                    if obj.dim==1
+                        cvals = vals(1:2^k:end);
+                    elseif obj.dim==2
+                        cvals = vals(1:2^k:end,1:2^k:end);
+                    else
+                        cvals = vals(1:2^k:end,1:2^k:end,1:2^k:end);
+                    end
+                    
+                end
                 
                 cvals = cvals(:);
-                
             end
             
         end
@@ -516,15 +534,21 @@ classdef LeafPatch<Patch
             
             if obj.iscoarse
                 
-                obj.degs = obj.swap_degs;
-                
-                grid = obj.leafGrids();
-                
-                obj.degs = obj.cdegs;
-                
-                rvals = obj.evalfBaryGrid(grid,reshape(vals,obj.degs));
+                vals = reshape(vals,obj.degs);
+                scoeffs = zeros(obj.swap_degs);
+                scoeffs(1:obj.degs(1),1:obj.degs(2)) = chebfun2.vals2coeffs(vals);
+                rvals = chebfun2.coeffs2vals(scoeffs);
                 
                 rvals = rvals(:);
+                %obj.degs = obj.swap_degs;
+                
+                %grid = obj.leafGrids();
+                
+                %obj.degs = obj.cdegs;
+                
+                %rvals = obj.evalfBaryGrid(grid,reshape(vals,obj.degs));
+                
+                %rvals = rvals(:);
             end
             
         end

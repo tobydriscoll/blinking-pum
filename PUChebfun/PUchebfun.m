@@ -246,8 +246,11 @@ classdef PUchebfun < PUfun
             obj.clean();
         end
         
-        function cvals = Fine2Coarse(obj,vals)
-            cvals = obj.ChebRoot.Fine2Coarse(vals);
+        function cvals = Fine2Coarse(obj,vals,k)
+            if 2==nargin
+                k=0;
+            end
+            cvals = obj.ChebRoot.Fine2Coarse(vals,k);
         end
         
         function rvals = Coarse2Fine(obj,vals)

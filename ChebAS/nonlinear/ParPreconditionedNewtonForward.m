@@ -38,8 +38,11 @@ for k=1:length(PUApprox.leafArray)
     [~,~,in_border{k},~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
     
     
-    %This will be (interface length)*num_sols
-    diff{k} = PUApprox.leafArray{k}.Binterp*sol;
+    if ~PUApprox.iscoarse
+        diff{k} = PUApprox.leafArray{k}.Binterp*sol;
+    else
+        diff{k} = PUApprox.leafArray{k}.CBinterp*sol;
+    end
     
 end
 
@@ -114,10 +117,14 @@ function [c,l,u,p] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,J
 %c = c(:,end);
 
 params = [20,-1,.5,0];
-tol = [1e-11 1e-10];
-[c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
+tol = [1e-5 1e-4];
 
-[l,u,p] = lu(jac_fun(c),'vector');
+c = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
+
+J = jac_fun(c);
+
+[l,u,p] = lu(J,'vector');
+
 end
 
 

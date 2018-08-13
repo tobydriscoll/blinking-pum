@@ -1,7 +1,7 @@
 domain = [0 1;0 1];
 deg_in = [5 5];
 cheb_struct.domain = domain;
-cheb_struct.degs = [20 20];
+cheb_struct.degs = [33 33];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
 cheb_struct.tol = 1e-4;
@@ -9,15 +9,18 @@ cheb_struct.tol = 1e-4;
 %Test with 4 patches
 Tree = ChebPatch(cheb_struct);
 Tree = Tree.split(1);
+Tree.split(2);
+Tree.split(1);
+Tree.split(2);
+Tree.split(1);
 %Tree.split(2);
-%Tree.split(1);
-%Tree.split(2);
+
 bound = @(x,y) atan(x.^2+y.^2);
 
 F = PUchebfun(Tree);
 
 
-tol_n = [1e-5,1e-4];
+tol_n = [1e-10,1e-9];
 
 parms = [20,-1,.5,0];
 
@@ -31,18 +34,20 @@ setInterpMatrices(F,true);
 f = @ SimpNonlinear;
 Jac = @ SimpNonlinearJac;
 
-init = zeros(length(F),1);
+init = ones(length(F),1);
 
 %F.sample(bound);
 %init = F.Getvalues();
 
 
-%[sol, ~, ~, ~] = nsoldPAR_AS(init,f,Jac,F,tol_n,parms);
+[ sol,normres,normstep,numgm ] = PreconditionedNewton(f,Jac,init,F,1e-12);
 
+%[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevel(f,Jac,init,F,1e-12,2);
 
-[sol, ~, ~, ~] = nsoldPAR_AS_two_level(init,f,Jac,F,tol_n,parms);
+%ParPreconditionedTwoLevelG(init,F,f,Jac);
+
+%[sol, ~, ~, ~] = nsoldPAR_AS_two_level(init,f,Jac,F,tol_n,parms);
 
 %sol = reshape(sol,length(F),3);
 F.sample(sol(:,1));
 plot(F);
-%F.sample(sol);

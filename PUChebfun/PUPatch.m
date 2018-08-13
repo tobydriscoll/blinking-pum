@@ -811,10 +811,10 @@ classdef PUPatch<Patch
         end
         
         %Coarsens the leaves of the patch.
-        function cvals = Fine2Coarse(obj,vals)
+        function cvals = Fine2Coarse(obj,vals,j)
             for k=1:2
-                cvals1 = obj.children{1}.Fine2Coarse(vals(1:length(obj.children{1})));
-                cvals2 = obj.children{2}.Fine2Coarse(vals(length(obj.children{1})+1:end));
+                cvals1 = obj.children{1}.Fine2Coarse(vals(1:length(obj.children{1})),j);
+                cvals2 = obj.children{2}.Fine2Coarse(vals(length(obj.children{1})+1:end),j);
             end
             cvals = [cvals1;cvals2];
         end

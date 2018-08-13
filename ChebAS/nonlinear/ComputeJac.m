@@ -24,9 +24,6 @@ for k=2:length(PUApprox.leafArray)
     step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
 end
 
-ii = [];
-jj = [];
-zz = [];
 
 for k=1:length(PUApprox.leafArray)
     

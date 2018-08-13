@@ -47,7 +47,7 @@ for k=1:length(PUApprox.leafArray)
         %current solution, then patch
         ii = [ii;index_n(iib)+(i-1)*length(PUApprox)+step(k)];
         jj = [jj;jjb+(i-1)*length(PUApprox)];
-        zz = [zz;-zzb];
+        zz = [zz;zzb];
     end
     
 end

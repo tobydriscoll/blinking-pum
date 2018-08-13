@@ -97,7 +97,7 @@ isham = -1;
 rsham = .5;
 jdiff = 1;
 iband = 0;
-
+jac_age = -1;
 l = []; u = [];
 
 if nargin >= 6 & length(parms) ~= 0
@@ -143,6 +143,7 @@ while(fnrm > stop_tol & itc < maxit)
     outstat(itc+1, :) = [itc fnrm rat];
     fnrmo = fnrm; 
     itc = itc+1;
+    
 %
 % evaluate and factor the Jacobian
 % on the first iteration, every isham iterates, or
