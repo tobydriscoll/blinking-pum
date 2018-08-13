@@ -97,7 +97,7 @@ function [c,l,u,p] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hi
         
         sol_length = length(approx);
         
-        J = hinvGak*Jac(t,z(:),approx)-M;
+        J = hinvGak*Jac(t,z+sol_k(:),approx)-M;
         
         E = eye(sol_length);
         
