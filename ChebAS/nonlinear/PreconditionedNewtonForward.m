@@ -1,4 +1,4 @@
-function [ u,normres,normstep,numgm ] = PreconditionedNewton(f,Jac,init,PUApprox,tol)
+function [ u,normres,normstep,numgm ] = PreconditionedNewtonForward(f,Jac,init,PUApprox,tol)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -9,13 +9,15 @@ u = init;
 
 % solve for the new value using plain Newton
 for k = 1:100
+    
     % evaluate the local corrections/solve local nonlinear problems
-    [z,L,U,p] = ParPreconditionedNewtonForward(u,PUApprox,f,Jac);
+    z = ParResidual(u,PUApprox,f);
     normres(k) = norm(z);
     
     normres(k)
     
     if normres(k) < tol, break, end
+    
     
     % find overall Newton step by GMRES
     tol_g = min(0.1,1e-10*norm(u)/normres(k));
@@ -23,12 +25,15 @@ for k = 1:100
     if 0 == tol_g
         tol_g = 0.1;
     end
+        
+    [J,L,U,p] = ComputeJacs(u,PUApprox,Jac); 
     
-    [s,~,~,~,gmhist] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-z,[],tol_g,100);
+    
+    [s,~,~,~,gmhist] = gmres(@(x)JacobianFoward(PUApprox,J,x),-z,[],tol_g,100,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     
-     numgm(k)
+    numgm(k)
      
     % update
     u = u+s;

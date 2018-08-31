@@ -1,12 +1,12 @@
 % INPUT:
 %      PUApprox: PUApprox approximation        
-%         J: cell array of local Jacobians
-%         x: solution
+%         U,L,p: L U decomposition for jacobian.
+%             x: solution
 %
 % NOTE x is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
-function [ output ] = JacobianFowardLU(PUApprox,L,U,p,x)
+function [ output ] = ASPreconditionerMultSols(PUApprox,U,L,p,x)
 
 num_sols = length(x)/length(PUApprox);
 
@@ -21,22 +21,6 @@ for k=2:length(PUApprox.leafArray)
     step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
 end
 
-%non parallel part
-for k=1:length(PUApprox.leafArray)
-    degs = PUApprox.leafArray{k}.degs;
-    [~,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
-    
-    z{k} = zeros(prod(degs),num_sols);
-    
-    
-    if ~PUApprox.iscoarse
-        z{k}(in_border,:) = PUApprox.leafArray{k}.Binterp*x;
-    else
-        z{k}(in_border,:) = PUApprox.leafArray{k}.CBinterp*x;
-    end
-    
-    z{k} = z{k}(:);
-end
 
 %Parallel part
 for k=1:length(PUApprox.leafArray)
@@ -45,9 +29,10 @@ for k=1:length(PUApprox.leafArray)
     
     x_k = x(ind_k,:);
     
-    output(ind_k,:) = reshape(U{k}\(L{k}\z{k}(p{k})),length(PUApprox.leafArray{k}),num_sols)-x_k;
+    x_k = x_k(:);
+    
+    output(ind_k,:) = reshape(U{k}\(L{k}\x_k(p{k})),length(PUApprox.leafArray{k}),num_sols);
     
 end
 
 output = output(:);
-

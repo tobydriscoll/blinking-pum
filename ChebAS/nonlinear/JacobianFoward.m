@@ -6,7 +6,7 @@
 % NOTE x is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
-function [ output ] = JacobianFowardLU(PUApprox,L,U,p,x)
+function [ output ] = JacobianFoward(PUApprox,J,x)
 
 num_sols = length(x)/length(PUApprox);
 
@@ -35,7 +35,6 @@ for k=1:length(PUApprox.leafArray)
         z{k}(in_border,:) = PUApprox.leafArray{k}.CBinterp*x;
     end
     
-    z{k} = z{k}(:);
 end
 
 %Parallel part
@@ -45,9 +44,11 @@ for k=1:length(PUApprox.leafArray)
     
     x_k = x(ind_k,:);
     
-    output(ind_k,:) = reshape(U{k}\(L{k}\z{k}(p{k})),length(PUApprox.leafArray{k}),num_sols)-x_k;
+   
+    output(ind_k,:) =  reshape(J{k}*x_k(:),length(PUApprox.leafArray{k}),num_sols) - z{k};
     
 end
 
 output = output(:);
+
 

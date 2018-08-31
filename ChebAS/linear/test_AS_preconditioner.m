@@ -5,7 +5,7 @@ domain = [-1 1;-1 1];
 degs = [32 32];
 cdegs = [10 10];
 split_flag = [1 1];
-tol = 1e-10;
+tol = 1e-9;
 gmres_tol = 5e-11;
 maxit = 1200;
 
@@ -98,7 +98,7 @@ msz = 8;       % MarkerSize
 
 xc = -1;
 yc = -1;
-alpha = 10;
+alpha = 5;
 r0 = 1;
  
 f2 = @(x,y) ((x+(-1).*xc).^2+(y+(-1).*yc).^2).^(-1/2).*(alpha+alpha.^3.*( ...
@@ -147,14 +147,16 @@ while ~is_refined
         
     else
         
-        init = F.Getvalues;
+        %init = F.Getvalues;
+        init = zeros(length(F),1);
         [rhs] = setLinOps(F,L,B,force,border);
         Mat = CoarseASMat(F,L,B );
         
         A = @(sol) ParSchwarzForward(F,sol);
-        M = @(rhs) CoarseCorrection(F,rhs,Mat);
+        %M = @(rhs) CoarseCorrection(F,rhs,Mat);
+        M = @(rhs) ASPreconditioner(F,rhs);
         
-        [sol,~,~,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],init);
+        [sol,~,relres,~,rvec] = gmres(A,rhs,[],gmres_tol,maxit,M,[],init);
         
         gmres_it = [gmres_it length(rvec)];
         

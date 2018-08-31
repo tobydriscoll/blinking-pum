@@ -11,7 +11,7 @@ function [J] = SimpNonlinearJac(u,leaf)
     
     E = eye(prod(degs));
     
-    J = Dxx+Dyy-diag(2*u);
+    J = 0.2*(Dxx+Dyy)-diag(2*u);
     
     J(in_border | out_border,:) = E(in_border | out_border,:);
 end

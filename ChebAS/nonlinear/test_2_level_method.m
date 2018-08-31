@@ -80,7 +80,7 @@ num_sols = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[ r_er, g_mat,g_p_mat,J_er] = CoarseCorrect2(F,init,f,Jac);
+%[ r_er, g_mat,g_p_mat,J_er] = CoarseCorrect2(F,init,f,Jac);
 
 % T_hat = CoarseInterfaceInterp(F,num_sols);
 % 
@@ -101,21 +101,44 @@ num_sols = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[z,L,U,p,g_mat,g_p_mat,J_er] = ParPreconditionedTwoLevelG(init,F,f,Jac);
+% [z,L,U,p,g_mat,g_p_mat,J_er] = ParPreconditionedTwoLevelG(init,F,f,Jac);
+% % 
+% T_hat  = CoarseInterfaceInterp(F,num_sols);
 % 
-T_hat  = CoarseInterfaceInterp(F,num_sols);
+% [FJv,FJv_hat] = ComputeJac(F,Jac,init);
+% 
+% FJv_hat = blkdiag(FJv_hat{:});
+% 
+% E = eye(num_sols*length(F));
+% J = zeros(num_sols*length(F));
+% 
+% for i=1:length(F)
+%     J(:,i) = JacobianFoward2LevelG(F,L,U,p,g_mat,g_p_mat,J_er,T_hat,E(:,i));
+% end
+% 
+% RES = @(sol) ParPreconditionedTwoLevelG(sol,F,f,Jac);
+% 
+% AJ = jacobi(RES,init);
 
-[FJv,FJv_hat] = ComputeJac(F,Jac,init);
+%Course Correction 2
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-FJv_hat = blkdiag(FJv_hat{:});
+f0 = ParResidual(init,F,f);
+[J,L,U,p] = ComputeJacs(init,F,Jac); 
 
-E = eye(num_sols*length(F));
-J = zeros(num_sols*length(F));
+E = eye(length(F));
+JG = zeros(length(F));
 
 for i=1:length(F)
-    J(:,i) = JacobianFoward2LevelG(F,L,U,p,g_mat,g_p_mat,J_er,T_hat,E(:,i));
+    JG(:,i) = JacobianFoward(F,J,E(:,i));
 end
 
-RES = @(sol) ParPreconditionedTwoLevelG(sol,F,f,Jac);
+RES = @(sol) ParResidual(sol,F,f);
 
-AJ = jacobi(RES,init);
+AGJ = jacobi(RES,init);
+
+
+
+

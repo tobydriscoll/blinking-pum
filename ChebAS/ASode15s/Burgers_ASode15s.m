@@ -3,7 +3,7 @@ split_flag = [false false];
 degs = [10 10];
 cdegs = [9 9];
 tol = 1e-8;
-R = 80;
+R = 160;
 
 f = @(x,y,t) 3/4 - 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
 g = @(x,y,t) 3/4 + 1./(4*(1+exp((R*(4*y-4*x-t)/32))));

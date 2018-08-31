@@ -29,6 +29,7 @@ for k = 1:100
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     
+    numgm(k)
     % update
     u = u+s;
 end
