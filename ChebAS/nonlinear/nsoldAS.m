@@ -112,6 +112,7 @@ if nargin >= 5 & length(parms) ~= 0
     end
 rtol = tol(2); atol = tol(1);
 it_hist = [];
+
 n = length(x);
 if nargout == 8, x_hist = x; end
 fnrm = 1;
@@ -212,6 +213,9 @@ if isempty(l)
     end
 end
 
+if(itc==maxit)
+   disp('max iterations'); 
+end
 
 if debug == 1, disp(outstat); end
 %

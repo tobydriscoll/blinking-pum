@@ -1,71 +1,120 @@
-domain = [-1 1;-0.5 0.5];
+domain = [0 1;0 1];
 deg_in = [5 5];
 cheb_struct.domain = domain;
 cheb_struct.degs = [33 33];
+cheb_struct.cdegs = [5 5];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
 cheb_struct.tol = 1e-4;
 
-%Test with 4 patches
-Tree = ChebPatch(cheb_struct);
-Tree = Tree.split(1);
-Tree.split(2);
+tol_n = [1e-5,1e-4];
+parms = [20,-1,.5,0];
+
+% %Test with 4 patches
+ Tree = ChebPatch(cheb_struct);
+ Tree = Tree.split(1);
+ Tree.split(2);
 %Tree.split(1);
 %Tree.split(2);
 %Tree.split(1);
 %Tree.split(2);
+
+%Tree = ChebPatch(cheb_struct);
+%Tree = Tree.split(2);
+%Tree.children{2} = Tree.children{2}.split(2);
+%Tree.children{2}.children{2} = Tree.children{2}.children{2}.split(2);
+%Tree.children{2}.children{2}.children{2} = Tree.children{2}.children{2}.children{2}.split(2);
+%Tree.children{2}.children{2}.children{2}.children{2} = Tree.children{2}.children{2}.children{2}.children{2}.split(2);
+Tree.clean();
+
+
+F = PUchebfun(Tree);
+F.sample(@(x,y) zeros(size(x)));
+
+
+
+
+
+setInterpMatrices(F,true);
+
+Re  = 1000;
+steep = 0.08;
+f = @(u,leaf) CavityFlow(Re,u,leaf,steep);
+Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
+
+%f = @ SimpNonlinear;
+%Jac = @ SimpNonlinearJac;
 
 % Re = 50;
 % a = [2.43e+05 0 0 1.6e5 1];
 % lambda = 6;
 % x_0 = 1;
-
-Re = 10;
-a = [20 10 -7 3 5];
-lambda = 1;
-x_0 = 1;
-
-bound = @(x,y) atan(x.^2+y.^2);
-
-F = PUchebfun(Tree);
+%f = @(u,leaf) SteadyStateBurgers(Re,u,leaf,a,x_0,lambda);
+%Jac = @(u,leaf) SteadyStateBurgersJacobian(Re,u,leaf);
+%init = zeros(length(F)*3,1);
 
 
-tol_n = [1e-10,1e-9];
+    
+init = [];
 
-parms = [20,-1,.5,0];
+for i=1:length(F.leafArray)
+    
+    leaf = F.leafArray{i};
+    
+    degs = leaf.degs;
+    [out_border_s,~,~,~,border] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);
+    
+    east_west = out_border_s{1} | out_border_s{2};
+    south = out_border_s{3};
+    north = out_border_s{4};
+    
+    u = zeros(degs);
+    u(north) = 1;
+    
+    P = leaf.points();
+    u = reshape(SideBumpFunc(P(:,2),[0 1],steep),degs);
+    
+    v = zeros(degs);
+    w = zeros(degs);
+    
+    init = [init;u(:) v(:) w(:)];
+    
+end
 
-F.sample(@(x,y) zeros(size(x)));
+init = init(:);
 
-setInterpMatrices(F,true);
+%init = zeros(length(F)*3,1);
+%
 
-%f = @(u,leaf) CavityFlow(1,u,leaf);
-%Jac = @(u,leaf) CavityFlowJacobian(1,u,leaf);
-
-%f = @ SimpNonlinear;
-%Jac = @ SimpNonlinearJac;
-
-f = @(u,leaf) SteadyStateBurgers(Re,u,leaf,a,x_0,lambda);
-Jac = @(u,leaf) SteadyStateBurgersJacobian(Re,u,leaf);
-
-init = zeros(length(F)*2,1);
-
-%F.sample(bound);
-%init = F.Getvalues();
-
+%tic;
+%[ sol,normres,normstep,numgm ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-5 1e-5]);
+%toc
 
 tic;
-[ sol,normres,normstep,numgm ] = PreconditionedNewtonForward(f,Jac,init,F,1e-10);
+[ sol,normres,normstep,numgm ] = PreconditionedNewton(f,Jac,init,F,1e-5,[1e-10 1e-10]);
 toc
 
-% tic;
-% [ sol,normres,normstep,numgm ] = PreconditionedNewton(f,Jac,init,F,1e-10);
-% toc
-
-%[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevel(f,Jac,init,F,1e-5,2);
+%tic;
+%[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevelG(f,Jac,init,F,[1e-8 1e-8],1e-5,2);
+%toc
 
 %ParPreconditionedTwoLevelG(init,F,f,Jac);
 
 %[sol, ~, ~, ~] = nsoldPAR_AS_two_level(init,f,Jac,F,tol_n,parms);
+
+%tic;
+%[sol, it_hist, ierr, x_hist] = nsoldPAR_AS(init,f,Jac,F,[1e-6 1e-5],parms,[1e-10 1e-9]);
+%toc
+
+%tic;
+%[sol, it_hist, ierr, x_hist] = nsoldPAR_AS_forward(init,f,Jac,F,[1e-10 1e-9],parms);
+%toc
+
+%[sol, it_hist, ierr,x_hist] = nsoldAS(init,@(u)f(u,Tree),@(u)Jac(u,Tree),tol_n,parms);
+
+%tol = norm(f(init,Tree))*1e-3;
+%options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',5000,'FunctionTolerance',tol,'Display','iter');
+%sol = fsolve(@(u)sol_and_jac(@(u)f(u,Tree),@(u)Jac(u,Tree),u),init,options);
 
 % for i=1:1000000
 %     new_sol = ParNonLinForward(init,F,f,Jac);
@@ -79,6 +128,6 @@ toc
 %     res(i)
 % end
 
-sol = reshape(sol,length(F),2);
+sol = reshape(sol,length(F),3);
 F.sample(sol(:,1));
 plot(F);

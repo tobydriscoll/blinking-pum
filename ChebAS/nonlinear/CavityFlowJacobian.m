@@ -4,7 +4,7 @@ function [J] = CavityFlowJacobian(Re,y,leaf)
     
     Len = prod(degs);
     
-    [~,out_border,in_border,~] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);
+    [~,out_border,in_border,~,border] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);
     
     border = out_border | in_border;
     

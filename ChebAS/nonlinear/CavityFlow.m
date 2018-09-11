@@ -1,10 +1,11 @@
-function [F] = CavityFlow(Re,y,leaf)
+function [F] = CavityFlow(Re,y,leaf,steep)
     
     degs = leaf.degs;
     
-    [out_border_s,~,~,in_border_s] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);    
+    [out_border_s,~,~,~,border] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);    
     
-    east_west_south = out_border_s{1} | out_border_s{2} | out_border_s{3};
+    east_west = out_border_s{1} | out_border_s{2};
+    south = out_border_s{3};
     north = out_border_s{4};
     
     Dx = diffmat(degs(1),1,leaf.domain(1,:));
@@ -25,19 +26,24 @@ function [F] = CavityFlow(Re,y,leaf)
     vx = Dx*v; vxx = Dx*vx; vy = v*Dy'; vyy = vy*Dy';
     wx = Dx*w; wxx = Dx*wx; wy = w*Dy'; wyy = wy*Dy';
    
+    P = leaf.points();
+      
     f1 = -(uxx+uyy)-wy;
     f1 = f1(:);
-    f1(east_west_south) = u(east_west_south);
+    
+    
+    f1(east_west) = u(east_west) - SideBumpFunc(P(east_west,2),[0 1],steep);
+    f1(south) = u(south);
     f1(north) = u(north) - ones(sum(north),1);
     
     f2 = -(vxx+vyy)+wx;
     f2 = f2(:);
-    f2(east_west_south | north) = v(east_west_south | north);
+    f2(border) = v(border);
     
     
     f3 = -1/Re*(wxx+wyy)+u.*wx+v.*wy;
     f3 = f3(:);
-    f3(east_west_south | north) = w(east_west_south | north) + uy(east_west_south | north) - vx(east_west_south | north);
+    f3(border) = w(border) + uy(border) - vx(border);
     
     F =[f1;f2;f3];
     

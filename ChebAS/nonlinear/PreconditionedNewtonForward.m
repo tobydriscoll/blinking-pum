@@ -16,20 +16,20 @@ for k = 1:100
     
     normres(k)
     
-    if normres(k) < tol, break, end
+    if normres(k) < tol(1), break, end
     
     
     % find overall Newton step by GMRES
     tol_g = min(0.1,1e-10*norm(u)/normres(k));
     
     if 0 == tol_g
-        tol_g = 0.1;
+        tol_g = 1e-10;
     end
         
     [J,L,U,p] = ComputeJacs(u,PUApprox,Jac); 
     
     
-    [s,~,~,~,gmhist] = gmres(@(x)JacobianFoward(PUApprox,J,x),-z,[],tol_g,100,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
+    [s,~,~,~,gmhist] = gmres(@(x)JacobianFoward(PUApprox,J,x),-z,[],tol_g,300,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     

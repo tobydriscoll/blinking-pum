@@ -6,7 +6,7 @@
 %
 %  out_border_s, in_border_s: cell array for east,west,south,north sides (in
 %  that order) for the outer boundary and interface.
-function [out_border_s,out_border,in_border,in_border_s] = FindBoundaryIndex2DSides(degs,domain,out_domain)
+function [out_border_s,out_border,in_border,in_border_s,border] = FindBoundaryIndex2DSides(degs,domain,out_domain)
 
 out_border = false(degs);
 in_border = false(degs);

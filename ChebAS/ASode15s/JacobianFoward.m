@@ -5,14 +5,20 @@
 function [ output ] = JacobianFoward(PUApprox,J,x)
 
 
-output = zeros(length(PUApprox),1);
+num_sols = length(x)/length(PUApprox);
+
+output = zeros(length(PUApprox),num_sols);
 
 step = zeros(length(PUApprox.leafArray),1);
+
+x = reshape(x,length(PUApprox),num_sols);
 
 %Figure out starting index for each patch
 for k=2:length(PUApprox.leafArray)
     step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
 end
+
+
 
 %non parallel part
 for k=1:length(PUApprox.leafArray) 

@@ -1,4 +1,4 @@
-function [ u,normres,normstep,numgm ] = PreconditionedNewtonTwoLevel(f,Jac,init,PUApprox,tol,j)
+function [ u,normres,normstep,numgm ] = PreconditionedNewtonTwoLevel(f,Jac,init,PUApprox,tol,tol_c,j)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -14,22 +14,22 @@ T_hat  = CoarseInterfaceInterp(PUApprox,num_sols);
 % solve for the new value using plain Newton
 for k = 1:100
     % evaluate the local corrections/solve local nonlinear problems
-    [z,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(u,PUApprox,f,Jac,j);
+    [z,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(u,PUApprox,f,Jac,j,tol,tol_c);
     
     normres(k) = norm(z);
     
     normres(k)
     
-    if normres(k) < tol, break, end
+    if normres(k) < tol(1), break, end
     
     % find overall Newton step by GMRES
-    tol_g = min(0.1,1e-10*norm(u)/normres(k));    
+    tol_g = min(0.1,tol(1)*norm(u)+tol(2));    
     
     [FJv,FJv_hat] = ComputeJac(PUApprox,Jac,u);
     
     FJv_hat = blkdiag(FJv_hat{:});
     
-    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j),-z,[],tol_g,100);
+    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j),-z,[],tol_g,300);
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     

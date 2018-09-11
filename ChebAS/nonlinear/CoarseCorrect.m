@@ -11,7 +11,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [ r_er,J_v_pls_er ] = CoarseCorrect( PUApprox, v,evalf,jacf,j)
+function [ r_er,J_v_pls_er ] = CoarseCorrect( PUApprox, v,evalf,jacf,j,tol_c)
 
 
 num_sols = length(v)/length(PUApprox);
@@ -38,11 +38,10 @@ tol = [1e-5 1e-4];
 RES = @(er)Residual(er,v_hat,r_hat,PUApprox,evalf);
 JAC = @(er)CoarseASJac(PUApprox,jacf,er,v_hat);
 
-[er,~,~,~,~] = nsoldAS(zeros(size(v_hat)),RES,JAC,tol,params);
+[er,~,~,~,~] = nsoldAS(zeros(size(v_hat)),RES,JAC,[tol_c 10*tol_c],params);
 
-%options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-3);
+%options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',50,'FunctionTolerance',tol_c,'Display','iter');
 %er = fsolve(@(er)sol_and_jac(@(er)RES(er),@(er)JAC(er),er),zeros(size(v_hat)),options);
-
 %er = er(:,end);
 
 J_v_pls_er = JAC(er);
