@@ -13,12 +13,13 @@ T_hat  = CoarseInterfaceInterp(PUApprox,num_sols);
 
 % solve for the new value using plain Newton
 for k = 1:100
-    % evaluate the local corrections/solve local nonlinear problems
-    [z,L,U,p,g_mat,g_p_mat,J_er] = ParPreconditionedTwoLevelG(u,PUApprox,f,Jac,tol,tol_c,j);
-    
-    normres(k) = norm(z);
+    normres(k) = norm(ParResidual(u,PUApprox,f));
     
     normres(k)
+        
+    % evaluate the local corrections/solve local nonlinear problems
+    [z,L,U,p,g_mat,g_p_mat,J_er] = ParPreconditionedTwoLevelG(u,PUApprox,f,Jac,tol,tol_c,j);    
+
     
     if normres(k) < tol, break, end
     

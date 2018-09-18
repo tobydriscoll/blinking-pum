@@ -2,7 +2,7 @@ domain = [0 1;0 1];
 deg_in = [5 5];
 cheb_struct.domain = domain;
 cheb_struct.degs = [33 33];
-cheb_struct.cdegs = [5 5];
+cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
 cheb_struct.tol = 1e-4;
@@ -14,8 +14,8 @@ parms = [20,-1,.5,0];
  Tree = ChebPatch(cheb_struct);
  Tree = Tree.split(1);
  Tree.split(2);
-%Tree.split(1);
-%Tree.split(2);
+ Tree.split(1);
+ Tree.split(2);
 %Tree.split(1);
 %Tree.split(2);
 
@@ -25,7 +25,16 @@ parms = [20,-1,.5,0];
 %Tree.children{2}.children{2} = Tree.children{2}.children{2}.split(2);
 %Tree.children{2}.children{2}.children{2} = Tree.children{2}.children{2}.children{2}.split(2);
 %Tree.children{2}.children{2}.children{2}.children{2} = Tree.children{2}.children{2}.children{2}.children{2}.split(2);
-Tree.clean();
+%Tree.clean();
+
+leaf_struct.domain = domain;
+leaf_struct.degs = [20 20];
+leaf_struct.split_flag = [true true];
+leaf_struct.cdeg_in = deg_in;
+leaf_struct.tol = 1e-4;
+
+Leaf = ChebPatch(leaf_struct);
+G = Leaf.leafGrids();
 
 
 F = PUchebfun(Tree);
@@ -91,11 +100,15 @@ init = init(:);
 %toc
 
 tic;
-[ sol,normres,normstep,numgm ] = PreconditionedNewton(f,Jac,init,F,1e-5,[1e-10 1e-10]);
+[ sol,normres,normstep,numgm ] = PreconditionedNewton(f,Jac,init,F,1e-5,[1e-5 1e-5],Leaf,G);
 toc
 
 %tic;
-%[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevelG(f,Jac,init,F,[1e-8 1e-8],1e-5,2);
+%[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevelG(f,Jac,init,F,[1e-5 1e-5],1e-5,2);
+%toc
+
+%tic;
+%[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevel3(f,Jac,init,F,Leaf,G,[1e-5 1e-5],1e-5,2);
 %toc
 
 %ParPreconditionedTwoLevelG(init,F,f,Jac);

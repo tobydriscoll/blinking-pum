@@ -6,9 +6,17 @@ cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
 cheb_struct.tol = 1e-4;
 
-
 Tree = ChebPatch(cheb_struct);
 Tree = Tree.split(1);
+
+leaf_struct.domain = domain;
+leaf_struct.degs = [17 17];
+leaf_struct.split_flag = [true true];
+leaf_struct.cdeg_in = deg_in;
+leaf_struct.tol = 1e-4;
+
+Leaf = ChebPatch(leaf_struct);
+G = Leaf.leafGrids();
 
 bound = @(x,y) atan(x.^2+y.^2);
 
@@ -125,20 +133,40 @@ num_sols = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-f0 = ParResidual(init,F,f);
-[J,L,U,p] = ComputeJacs(init,F,Jac); 
+% f0 = ParResidual(init,F,f);
+% [J,L,U,p] = ComputeJacs(init,F,Jac); 
+% 
+% E = eye(length(F));
+% JG = zeros(length(F));
+% 
+% for i=1:length(F)
+%     JG(:,i) = JacobianFoward(F,J,E(:,i));
+% end
+% 
+% RES = @(sol) ParResidual(sol,F,f);
+% 
+% AGJ = jacobi(RES,init);
 
-E = eye(length(F));
-JG = zeros(length(F));
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[z,l,u,p,Jac_hat] = ParPreconditionedTwoLevel3(init,F,Leaf,G,f,Jac,1e-3,1e-3);
+
+[FJv,FJv_hat] = ComputeJac3(F,Leaf,G,Jac,init);
+ 
+E = eye(num_sols*length(F));
+J = zeros(num_sols*length(F));
 
 for i=1:length(F)
-    JG(:,i) = JacobianFoward(F,J,E(:,i));
+    J(:,i) = JacobianFoward2Level3(F,Leaf,G,l,u,p,Jac_hat,FJv,FJv_hat,E(:,i));
 end
+% 
+RES = @(sol) ParPreconditionedTwoLevel3(sol,F,Leaf,G,f,Jac,1e-3,1e-3);
 
-RES = @(sol) ParResidual(sol,F,f);
-
-AGJ = jacobi(RES,init);
-
+% 
+% AJ = jacobi(RES,init);
 
 
 

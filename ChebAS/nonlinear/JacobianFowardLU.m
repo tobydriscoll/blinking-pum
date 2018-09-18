@@ -45,7 +45,7 @@ for k=1:length(PUApprox.leafArray)
     
     x_k = x(ind_k,:);
     
-    output(ind_k,:) = x_k-reshape(U{k}\(L{k}\z{k}(p{k})),length(PUApprox.leafArray{k}),num_sols);
+    output(ind_k,:) = reshape(U{k}\(L{k}\z{k}(p{k})),length(PUApprox.leafArray{k}),num_sols)-x_k;
     
 end
 

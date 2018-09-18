@@ -10,8 +10,9 @@ u = init;
 % solve for the new value using plain Newton
 for k = 1:100
     
-    % evaluate the local corrections/solve local nonlinear problems
+     % evaluate the local corrections/solve local nonlinear problems
     z = ParResidual(u,PUApprox,f);
+    
     normres(k) = norm(z);
     
     normres(k)
@@ -20,16 +21,15 @@ for k = 1:100
     
     
     % find overall Newton step by GMRES
-    tol_g = min(0.1,1e-10*norm(u)/normres(k));
+    tol_g = min(0.1,tol(1)*norm(u)/normres(k)+tol(2));
     
     if 0 == tol_g
         tol_g = 1e-10;
     end
         
-    [J,L,U,p] = ComputeJacs(u,PUApprox,Jac); 
+    [J,L,U,p] = ComputeJacs(u,PUApprox,Jac);  
     
-    
-    [s,~,~,~,gmhist] = gmres(@(x)JacobianFoward(PUApprox,J,x),-z,[],tol_g,300,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
+    [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-z,[],tol_g,300,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     

@@ -1,9 +1,9 @@
-function [ output ] = CoarseGlobalCorrection(rhs,tree)
+function [ output ] = CoarseGlobalCorrection(rhs,L,U,p,PUApprox)
 
-cs = ASCoarseGlobalPreconditioner(tree,rhs);
+cs = LinearGlobalCoarseCorrect( PUApprox, Leaf, G, rhs,Jac_hat);
 
-z = rhs - LaplacianForward(tree,cs);
+z = rhs - ParSchwarzForward(PUApprox,L,U,p,cs);
 
-output = cs + ASPreconditioner(tree,z);
+output = cs + ASPreconditioner(PUApprox,L,U,p,z);
 end
 

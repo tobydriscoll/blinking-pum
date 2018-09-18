@@ -11,7 +11,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,l,u,p] = ParPreconditionedNewtonForward(sol,PUApprox,evalF,Jac,tol_n)
+function [z,l,u,p,J] = ParPreconditionedNewtonForward(sol,PUApprox,evalF,Jac,tol_n)
 
 num_sols = length(sol)/length(PUApprox);
 
@@ -52,9 +52,9 @@ leafs = PUApprox.leafArray;
 
 for k=1:length(leafs)
     
-    [z{k},l{k},u{k},p{k}] = local_inverse(leafs{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,Jac,tol_n);
+    [z{k},l{k},u{k},p{k},J{k}] = local_inverse(leafs{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,Jac,tol_n);
     
-    z{k} = sol_loc{k} - reshape(z{k},length(leafs{k}),num_sols);
+    z{k} = reshape(z{k},length(leafs{k}),num_sols);
 end
 
 z = cell2mat(z');
@@ -74,7 +74,7 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c,l,u,p] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,Jac,tol_n)
+function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,Jac,tol_n)
 
 %The residul is F(sol_k+z_k)
 %            sol_k(border_k)+z_k(border_k)-B_k*u
@@ -83,13 +83,13 @@ function [c,l,u,p] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,J
         
         sol_length = length(approx);
         
-        F = evalF(z,approx);
+        F = evalF(sol_k(:)-z,approx);
         
         F = reshape(F,sol_length,num_sols);
         
         z = reshape(z,sol_length,num_sols);
         
-        F(border_k,:) = z(border_k,:) - diff_k;
+        F(border_k,:) = sol_k(border_k,:)-z(border_k,:) - diff_k;
         
         F = F(:);
         
@@ -99,7 +99,7 @@ function [c,l,u,p] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,J
         
         sol_length = length(approx);
         
-        J = Jac(z(:),approx);
+        J = -Jac(sol_k(:)-z(:),approx);
         
         E = eye(sol_length);
         
@@ -108,13 +108,14 @@ function [c,l,u,p] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,J
             ind((i-1)*sol_length+(1:sol_length)) = border_k;
             
             J(ind,:) = zeros(sum(ind),num_sols*sol_length);
-            J(ind,(i-1)*sol_length+(1:sol_length)) = E(border_k,:);
+            J(ind,(i-1)*sol_length+(1:sol_length)) = -E(border_k,:);
         end
+        
     end
 
 %tol = 1e-3*norm(residual(sol_k(:)));
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',400,'FunctionTolerance',tol_n(1),'Display','off');
-c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),sol_k(:),options);
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',100,'FunctionTolerance',tol_n(1),'Display','iter');
+c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
 c = c(:,end);
 
 %[out_border_s,~,~,~] = FindBoundaryIndex2DSides(approx.degs,approx.domain,approx.outerbox);
@@ -130,7 +131,9 @@ c = c(:,end);
 
 %R = residual(c);
 
-J = jac_fun(c);
+J = -jac_fun(c);
+
+%AJ = jacobi(@residual,c);
 
 [l,u,p] = lu(J,'vector');
 
