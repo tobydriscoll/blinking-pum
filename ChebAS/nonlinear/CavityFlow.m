@@ -32,9 +32,10 @@ function [F] = CavityFlow(Re,y,leaf,steep)
     f1 = f1(:);
     
     
-    f1(east_west) = u(east_west) - SideBumpFunc(P(east_west,2),[0 1],steep);
-    f1(south) = u(south);
-    f1(north) = u(north) - ones(sum(north),1);
+    %f1(east_west) = u(east_west) - SideBumpFunc(P(east_west,2),[0 1],steep);
+    %f1(south) = u(south);
+    %f1(north) = u(north) - ones(sum(north),1);
+    f1(border) = u(border)-1;
     
     f2 = -(vxx+vyy)+wx;
     f2 = f2(:);

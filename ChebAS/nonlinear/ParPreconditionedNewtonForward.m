@@ -53,7 +53,6 @@ leafs = PUApprox.leafArray;
 for k=1:length(leafs)
     
     [z{k},l{k},u{k},p{k},J{k}] = local_inverse(leafs{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,Jac,tol_n);
-    
     z{k} = reshape(z{k},length(leafs{k}),num_sols);
 end
 
@@ -113,8 +112,8 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
         
     end
 
-%tol = 1e-3*norm(residual(sol_k(:)));
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',100,'FunctionTolerance',tol_n(1),'Display','iter');
+tol_c = tol_n(1)*norm(residual(sol_k(:)))+tol_n(2);
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',100,'FunctionTolerance',tol_c,'Display','off');
 c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
 c = c(:,end);
 

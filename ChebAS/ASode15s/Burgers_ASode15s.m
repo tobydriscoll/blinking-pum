@@ -1,12 +1,17 @@
 domain = [0 1;0 1];
 split_flag = [false false];
-degs = [10 10];
+degs = [33 33];
 cdegs = [9 9];
 tol = 1e-8;
-R = 160;
+R = 80;
 
 f = @(x,y,t) 3/4 - 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
 g = @(x,y,t) 3/4 + 1./(4*(1+exp((R*(4*y-4*x-t)/32))));
+
+%A
+ep = 0.05;
+%f = @(x,y) tanh((0.25-sqrt((x-0.5).^2+(y-0.5).^2))/(sqrt(2)*ep));
+
 
 cheb_struct.domain = domain;
 cheb_struct.degs = degs;
@@ -17,6 +22,8 @@ cheb_struct.tol = tol;
 Tree = ChebPatch(cheb_struct);
 Tree = Tree.split(1);
 Tree.split(2);
+%Tree.split(1);
+%Tree.split(2);
 
 F = PUchebfun(Tree);
 %set mass matricies
@@ -31,16 +38,20 @@ v0 = F.Getvalues();
 
 y0 = [u0;v0];
 
-
 %set interpolation matrices
 setInterpMatrices(F);
 
-odetol = 1e-3;
+odetol = 1e-4;
+tspan = [0 5];
 
-tspan = [0 0.5];
-
-opt = odeset('mass',M,'reltol',odetol,'abstol',odetol,'jacobian',@(t,y,approx)BurgersJacobian(t,y,approx,R),'BDF','on');
+opt = odeset('mass',M,'reltol',odetol,'abstol',odetol,'jacobian',@(t,y,approx)BurgersJacobian(t,y,approx,R));
 [t,U] = ASode15s(@(t,y,Approx) BurgersEvaluation(Approx,t,y,R),tspan,y0,F,opt);
+
+%f = @(t,u,leaf) AllenCahn(leaf,t,u,ep);
+%Jac = @(t,u,leaf) AllenCahnJacobian(t,u,leaf,ep);
+
+%opt = odeset('mass',M,'reltol',odetol,'abstol',odetol,'jacobian',Jac,'BDF','on');
+%[t,U] = ASode15s(f,tspan,u0,F,opt);
 
 %opt = odeset('mass',M{1},'reltol',odetol,'abstol',odetol,'jacobian',@(t,y)BurgersJacobian(t,y,Tree,R),'BDF','on');
 %[t,U] = ode15s(@(t,y) BurgersEvaluation(Tree,t,y,R),tspan,y0,opt);

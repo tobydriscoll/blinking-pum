@@ -131,7 +131,7 @@ stop_tol = atol+rtol*fnrm;
 % main iteration loop
 %
 while(fnrm > stop_tol & itc < maxit)
-   fnrm
+   fnrm;
 %
 % keep track of the ratio (rat = fnrm/frnmo)
 % of successive residual norms and 

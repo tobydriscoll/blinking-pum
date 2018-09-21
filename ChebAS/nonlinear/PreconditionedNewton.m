@@ -37,23 +37,23 @@ for k = 1:100
     
     sol_hat = [];
     
-    num_sols = length(u)/Len;
-    
-    for i=1:num_sols
-        PUApprox.sample( u((1:Len) + (i-1)*Len) - z((1:Len) + (i-1)*Len));
-        F = PUApprox.evalfGrid(G);
-        sol_hat = [sol_hat;F(:)];
-    end
-    
-    
-    Jac_hat = Jac(sol_hat,Leaf);
+%     num_sols = length(u)/Len;
+%     
+%     for i=1:num_sols
+%         PUApprox.sample( u((1:Len) + (i-1)*Len) - z((1:Len) + (i-1)*Len));
+%         F = PUApprox.evalfGrid(G);
+%         sol_hat = [sol_hat;F(:)];
+%     end
     
     
-    %[s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-fz,[],tol_g,300,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
+    %Jac_hat = Jac(sol_hat,Leaf);
     
-    [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-fz,[],tol_g,300,@(x)CoarseGlobalCorrection(x,J,L,U,p,Jac_hat,PUApprox,Leaf,G));
     
-    %   [s,~,~,~,gmhist] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-z,[],tol_g,300);
+    [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-fz,[],tol_g,300,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
+    
+    %[s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-fz,[],tol_g,300,@(x)CoarseGlobalCorrection(x,J,L,U,p,Jac_hat,PUApprox,Leaf,G));
+    
+    %[s,~,~,~,gmhist] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-z,[],tol_g,300);
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     

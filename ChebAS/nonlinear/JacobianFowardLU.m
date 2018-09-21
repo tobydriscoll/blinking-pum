@@ -49,5 +49,5 @@ for k=1:length(PUApprox.leafArray)
     
 end
 
-output = output(:);
+output = -output(:);
 

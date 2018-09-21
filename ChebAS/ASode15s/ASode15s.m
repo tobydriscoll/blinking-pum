@@ -577,6 +577,7 @@ while ~done
 
       % Predict a solution at t+h.
       tnew = t + h;
+      tnew
       if done
         tnew = tfinal;   % Hit end point exactly.
       end
@@ -1064,7 +1065,7 @@ y = reshape(y,length(PUApprox),num_sols);
 for i=1:length(PUApprox.leafArray)
     sol_len = length(PUApprox.leafArray{i});
     tmp = y(step(i)+(1:sol_len),:);
-    R = [R;reshape(M{i}*tmp(:),sol_len,2)];
+    R = [R;reshape(M{i}*tmp(:),sol_len,num_sols)];
 end
 
 R = R(:);

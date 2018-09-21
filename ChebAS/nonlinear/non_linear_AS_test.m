@@ -1,7 +1,7 @@
 domain = [0 1;0 1];
 deg_in = [5 5];
 cheb_struct.domain = domain;
-cheb_struct.degs = [33 33];
+cheb_struct.degs = [50 50];
 cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
@@ -14,10 +14,10 @@ parms = [20,-1,.5,0];
  Tree = ChebPatch(cheb_struct);
  Tree = Tree.split(1);
  Tree.split(2);
- Tree.split(1);
- Tree.split(2);
-%Tree.split(1);
-%Tree.split(2);
+ %Tree.split(1);
+ %Tree.split(2);
+ %Tree.split(1);
+ %Tree.split(2);
 
 %Tree = ChebPatch(cheb_struct);
 %Tree = Tree.split(2);
@@ -28,7 +28,7 @@ parms = [20,-1,.5,0];
 %Tree.clean();
 
 leaf_struct.domain = domain;
-leaf_struct.degs = [20 20];
+leaf_struct.degs = [33 33];
 leaf_struct.split_flag = [true true];
 leaf_struct.cdeg_in = deg_in;
 leaf_struct.tol = 1e-4;
@@ -36,13 +36,8 @@ leaf_struct.tol = 1e-4;
 Leaf = ChebPatch(leaf_struct);
 G = Leaf.leafGrids();
 
-
 F = PUchebfun(Tree);
 F.sample(@(x,y) zeros(size(x)));
-
-
-
-
 
 setInterpMatrices(F,true);
 
@@ -50,6 +45,15 @@ Re  = 1000;
 steep = 0.08;
 f = @(u,leaf) CavityFlow(Re,u,leaf,steep);
 Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
+
+%f = @(u,leaf) AllenCahn(leaf,0,u,ep);
+%Jac = @(u,leaf) AllenCahnJacobian(0,u,leaf,ep);
+
+lambda = 6.808;
+
+f = @(u,leaf) LGB(u,leaf,lambda);
+Jac = @(u,leaf) LGBJacobian(u,leaf,lambda);
+
 
 %f = @ SimpNonlinear;
 %Jac = @ SimpNonlinearJac;
@@ -90,9 +94,14 @@ for i=1:length(F.leafArray)
     
 end
 
-init = init(:);
+init = init(:,1);
 
-%init = zeros(length(F)*3,1);
+init = zeros(length(F),1);
+
+%F.sample(@(x,y) exp(-((x-0.5)/0.5).^2./(1-((x-0.5)/0.5).^2)).*exp(-((y-0.5)/0.5).^2./(1-((y-0.5)/0.5).^2)));
+
+%init = F.Getvalues();
+
 %
 
 %tic;
@@ -141,6 +150,6 @@ toc
 %     res(i)
 % end
 
-sol = reshape(sol,length(F),3);
+sol = reshape(sol,length(F),1);
 F.sample(sol(:,1));
 plot(F);
