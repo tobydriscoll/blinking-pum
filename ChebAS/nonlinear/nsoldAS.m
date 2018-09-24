@@ -199,6 +199,7 @@ itsham = itsham-1;
 % end while
 end
 sol = x;
+itc
 
 if isempty(l)
     if jdiff == 1
@@ -395,6 +396,8 @@ xp = x; fp = f0;
         end
     end
     xp = xt; fp = ft;
+    
+    
 %
 %   end of line search
 %

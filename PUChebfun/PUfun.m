@@ -218,7 +218,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             
             if T_1.is_leaf && T_2.is_leaf
                 T_merge.degs = max(T_1.degs,T_2.degs);
-                
+                T_merge.orig_degs = T_merge.degs;
                     T_merge.coeffs = zeros(T_merge.degs);
                     
                     if isequal(T_1.domain,T_2.domain)
@@ -324,7 +324,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             
             if T_1.is_leaf && T_2.is_leaf
                 T_merge.degs = max(T_1.degs,T_2.degs);
-                
+                T_merge.orig_degs = T_merge.degs;
                 T_merge.coeffs = zeros(T_merge.degs);
                     
                     if isequal(T_1.domain,T_2.domain)
@@ -431,6 +431,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             if T_1.is_leaf && T_2.is_leaf
                 
                 T_merge.degs = max(T_1.degs,T_2.degs);
+                T_merge.orig_degs = T_merge.degs;
                 T_merge = T_merge.refine(@(x)T_1.evalfGrid(x).*T_2.evalfGrid(x),true,true);
                 
             elseif T_1.is_leaf && ~T_2.is_leaf
@@ -511,6 +512,7 @@ classdef (Abstract) PUfun < handle & matlab.mixin.Copyable
             if T_1.is_leaf && T_2.is_leaf
                 
                 T_merge.degs = max(T_1.degs,T_2.degs);
+                T_merge.orig_degs = T_merge.degs;
                 T_merge = T_merge.refine(@(x)T_1.evalfGrid(x)./T_2.evalfGrid(x),true,true);
                 
             elseif T_1.is_leaf && ~T_2.is_leaf

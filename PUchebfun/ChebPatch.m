@@ -65,7 +65,7 @@ classdef ChebPatch<LeafPatch
         function obj = ChebPatch(var_struct)
             %Call superclass constructor
             obj = obj@LeafPatch(var_struct);
-            
+            obj.orig_degs = obj.degs;
             obj.is_refined = false;
             obj.is_geometric_refined = true;
         end
@@ -357,7 +357,6 @@ classdef ChebPatch<LeafPatch
             obj.is_refined = false;
             obj.is_geometric_refined = false;
             obj.degs = obj.orig_degs;
-            obj.deg_in = obj.orig_deg_in;
             obj.split_flag = ones(obj.dim,1);
         end
        

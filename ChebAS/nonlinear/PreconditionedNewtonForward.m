@@ -21,7 +21,8 @@ for k = 1:100
     
     
     % find overall Newton step by GMRES
-    tol_g = min(0.1,tol(1)*norm(u)/normres(k)+tol(2));
+    % find overall Newton step by GMRES
+    tol_g = min(0.1,norm(u)/norm(z)*1e-10);
     
     if 0 == tol_g
         tol_g = 1e-10;

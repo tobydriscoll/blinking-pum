@@ -112,9 +112,11 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
         
     end
 
-tol_c = tol_n(1)*norm(residual(sol_k(:)))+tol_n(2);
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',100,'FunctionTolerance',tol_c,'Display','off');
+tol_c = tol_n(1)*norm(residual(zeros(numel(sol_k(:)),1)))+tol_n(2);
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',500,'TolFun',tol_c,'Display','iter');
+
 c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
+
 c = c(:,end);
 
 %[out_border_s,~,~,~] = FindBoundaryIndex2DSides(approx.degs,approx.domain,approx.outerbox);
@@ -124,7 +126,7 @@ c = c(:,end);
 %params = [200,-1,.5,0];
 %tol = [1e-3 1e-2];
 
-%c = nsoldAS(sol_k(:),@residual,@jac_fun,tol_n,params);
+%c2 = nsoldAS(sol_k(:),@residual,@jac_fun,tol_n,params);
 
 %norm_c = norm(residual(c));
 
