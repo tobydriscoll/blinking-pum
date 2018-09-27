@@ -13,18 +13,19 @@ T_hat  = CoarseInterfaceInterp(PUApprox,num_sols);
 
 % solve for the new value using plain Newton
 for k = 1:100
-    normres(k) = norm(ParResidual(u,PUApprox,f));
-    
-    normres(k)
+
         
     % evaluate the local corrections/solve local nonlinear problems
     [z,L,U,p,g_mat,g_p_mat,J_er] = ParPreconditionedTwoLevelG(u,PUApprox,f,Jac,tol,tol_c,j);    
-
+    
+    normres(k) = norm(z);
+    
+    normres(k)
     
     if normres(k) < tol, break, end
     
     % find overall Newton step by GMRES
-    tol_g = min(0.1,tol(1)*norm(z)+tol(2));    
+    tol_g = min(0.1,norm(u)/norm(z)*1e-10); 
     
     [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2LevelG(PUApprox,L,U,p,g_mat,g_p_mat,J_er,T_hat,w,j),-z,[],tol_g,100);
     

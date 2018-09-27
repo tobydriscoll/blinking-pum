@@ -32,7 +32,7 @@ PUApprox.Coarsen();
 
 r_hat = r_hat - ParResidualFun(v_hat,PUApprox,evalf);
 
-params = [20,-1,.5,0];
+params = [100,-1,.5,0];
 tol = [1e-5 1e-4];
 
 RES = @(er)Residual(er,v_hat,r_hat,PUApprox,evalf);
@@ -40,7 +40,7 @@ JAC = @(er)CoarseASJac(PUApprox,jacf,er,v_hat);
 
 %[er,~,~,~,~] = nsoldAS(zeros(size(v_hat)),RES,JAC,[tol_c 10*tol_c],params);
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',500,'FunctionTolerance',tol_c,'Display','iter');
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',600,'FunctionTolerance',tol_c,'Display','iter');
 er = fsolve(@(er)sol_and_jac(@(er)RES(er),@(er)JAC(er),er),zeros(size(v_hat)),options);
 er = er(:,end);
 

@@ -47,7 +47,7 @@ JAC = @(er)jacf(v_hat+er,Leaf);
 
 %[er,~,~,~,~] = nsoldAS(zeros(size(v_hat)),RES,JAC,[tol_c 10*tol_c],params);
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',20,'FunctionTolerance',tol_c,'Display','iter');
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',500,'FunctionTolerance',tol_c,'Display','iter');
 er = fsolve(@(er)sol_and_jac(@(er)RES(er),@(er)JAC(er),er),zeros(size(v_hat)),options);
 er = er(:,end);
 

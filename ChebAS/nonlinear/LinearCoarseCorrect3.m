@@ -38,7 +38,7 @@ end
 
 b_hat = FJv_hat*w_hat-r_hat;
 
-y_hat = (Jac_hat)\b_hat - w_hat;
+y_hat = Jac_hat.U\Jac_hat.L\b_hat(Jac_hat.p) - w_hat;
 
 Len = length(Leaf);
 

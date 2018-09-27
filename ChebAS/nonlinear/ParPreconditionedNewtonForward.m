@@ -53,7 +53,7 @@ leafs = PUApprox.leafArray;
 for k=1:length(leafs)
     
     [z{k},l{k},u{k},p{k},J{k}] = local_inverse(leafs{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,Jac,tol_n);
-    z{k} = reshape(z{k},length(leafs{k}),num_sols);
+    z{k} = sol_loc{k} - reshape(z{k},length(leafs{k}),num_sols);
 end
 
 z = cell2mat(z');
@@ -82,13 +82,13 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
         
         sol_length = length(approx);
         
-        F = evalF(sol_k(:)-z,approx);
+        F = evalF(z,approx);
         
         F = reshape(F,sol_length,num_sols);
         
         z = reshape(z,sol_length,num_sols);
         
-        F(border_k,:) = sol_k(border_k,:)-z(border_k,:) - diff_k;
+        F(border_k,:) = z(border_k,:) - diff_k;
         
         F = F(:);
         
@@ -98,7 +98,7 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
         
         sol_length = length(approx);
         
-        J = -Jac(sol_k(:)-z(:),approx);
+        J = Jac(z(:),approx);
         
         E = eye(sol_length);
         
@@ -107,17 +107,17 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
             ind((i-1)*sol_length+(1:sol_length)) = border_k;
             
             J(ind,:) = zeros(sum(ind),num_sols*sol_length);
-            J(ind,(i-1)*sol_length+(1:sol_length)) = -E(border_k,:);
+            J(ind,(i-1)*sol_length+(1:sol_length)) = E(border_k,:);
         end
         
     end
 
-tol_c = tol_n(1)*norm(residual(zeros(numel(sol_k(:)),1)))+tol_n(2);
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',500,'TolFun',tol_c,'Display','iter');
 
-c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',500,'FunctionTolerance',tol_n(1),'Display','iter');
 
-c = c(:,end);
+c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),sol_k(:),options);
+
+%c = c(:,end);
 
 %[out_border_s,~,~,~] = FindBoundaryIndex2DSides(approx.degs,approx.domain,approx.outerbox);
 
@@ -126,13 +126,13 @@ c = c(:,end);
 %params = [200,-1,.5,0];
 %tol = [1e-3 1e-2];
 
-%c2 = nsoldAS(sol_k(:),@residual,@jac_fun,tol_n,params);
+%c = nsoldAS(sol_k(:),@residual,@jac_fun,tol_n,params);
 
 %norm_c = norm(residual(c));
 
 %R = residual(c);
 
-J = -jac_fun(c);
+J = jac_fun(c);
 
 %AJ = jacobi(@residual,c);
 

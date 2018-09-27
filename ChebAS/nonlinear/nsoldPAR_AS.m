@@ -120,8 +120,8 @@ itc = 0;
 %f0 = feval(f,x);
 [f0,L,U,p] = ParPreconditionedNewtonForward(x,PUApprox,evalf,Jac,tol2);
 
-%fnrm = norm(f0);
-fnrm = norm(ParResidual(x,PUApprox,evalf));
+fnrm = norm(f0);
+%fnrm = norm(ParResidual(x,PUApprox,evalf));
 it_hist = [fnrm,0];
 fnrmo = 1;
 itsham = isham;
@@ -201,8 +201,8 @@ while(fnrm > stop_tol & itc < maxit)
           return
        end
     end
-    %fnrm = norm(f0);
-    fnrm = norm(ParResidual(x,PUApprox,evalf));
+    fnrm = norm(f0);
+    %fnrm = norm(ParResidual(x,PUApprox,evalf));
     it_hist = [it_hist',[fnrm,iarm]']';
     if nargout == 4, x_hist = [x_hist,x]; end
     rat = fnrm/fnrmo;

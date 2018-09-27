@@ -64,7 +64,7 @@ num_sols = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% [c_sol,J_v_pls_er ] = CoarseCorrect(F,init,f,Jac);
+% [c_sol,J_v_pls_er ] = CoarseCorrect(F,init,f,Jac,1,1e-5);
 % 
 % T_hat  = CoarseInterfaceInterp(F,1);
 % 
@@ -76,12 +76,29 @@ num_sols = 1;
 % JC = zeros(length(F));
 % 
 % for i=1:length(F)
-%     JC(:,i) = LinearCoarseCorrect( F, E(:,i),J_v_pls_er,T_hat,FJv,FJv_hat);
+%     JC(:,i) = LinearCoarseCorrect( F, E(:,i),J_v_pls_er,T_hat,FJv,FJv_hat,1);
 % end
 % 
-% RES = @(sol) CoarseCorrect(F,sol,f,Jac);
+% RES = @(sol) CoarseCorrect(F,sol,f,Jac,1,1e-5);
 % AJC = jacobi(RES,init);
 
+[z,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(init,F,f,Jac,1,[1e-5 1e-5],1e-5);
+
+T_hat  = CoarseInterfaceInterp(F,1);
+[FJv,FJv_hat] = ComputeJac(F,Jac,init);
+FJv_hat = blkdiag(FJv_hat{:});
+
+E = eye(length(F));
+JC = zeros(length(F));
+
+for i=1:length(F)
+    JC(:,i) = JacobianFoward2Level(F,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,E(:,i),1);
+
+end
+
+RES = @(sol) ParPreconditionedTwoLevel(sol,F,f,Jac,1,[1e-5 1e-5],1e-5);
+
+AJC = jacobi(RES,init);
 
 %Course Correction 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -152,18 +169,18 @@ num_sols = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[z,l,u,p,Jac_hat] = ParPreconditionedTwoLevel3(init,F,Leaf,G,f,Jac,1e-3,1e-3);
-
-[FJv,FJv_hat] = ComputeJac3(F,Leaf,G,Jac,init);
- 
-E = eye(num_sols*length(F));
-J = zeros(num_sols*length(F));
-
-for i=1:length(F)
-    J(:,i) = JacobianFoward2Level3(F,Leaf,G,l,u,p,Jac_hat,FJv,FJv_hat,E(:,i));
-end
+% [z,l,u,p,Jac_hat] = ParPreconditionedTwoLevel3(init,F,Leaf,G,f,Jac,1e-3,1e-3);
 % 
-RES = @(sol) ParPreconditionedTwoLevel3(sol,F,Leaf,G,f,Jac,1e-3,1e-3);
+% [FJv,FJv_hat] = ComputeJac3(F,Leaf,G,Jac,init);
+%  
+% E = eye(num_sols*length(F));
+% J = zeros(num_sols*length(F));
+% 
+% for i=1:length(F)
+%     J(:,i) = JacobianFoward2Level3(F,Leaf,G,l,u,p,Jac_hat,FJv,FJv_hat,E(:,i));
+% end
+% % 
+% RES = @(sol) ParPreconditionedTwoLevel3(sol,F,Leaf,G,f,Jac,1e-3,1e-3);
 
 % 
 % AJ = jacobi(RES,init);

@@ -51,7 +51,7 @@ JAC = @(u)CoarseASJac(PUApprox,jacf,u,R);
 
 %[u,~,~,~,~] = nsoldAS(v_hat,RES,JAC,tol,params);
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',30,'FunctionTolerance',tol_c,'Display','iter');
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',30,'FunctionTolerance',tol_c,'Display','off');
 u = fsolve(@(er)sol_and_jac(@(er)RES(er),@(er)JAC(er),er),zeros(size(v_hat)),options);
 u = u(:,end);
 
