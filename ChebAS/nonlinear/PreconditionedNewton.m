@@ -1,19 +1,16 @@
-function [ u,normres,normstep,numgm ] = PreconditionedNewton(f,Jac,init,PUApprox,tol,tol_n,Leaf,G)
+function [ u,normres,normstep,numgm,normresf ] = PreconditionedNewton(f,Jac,init,PUApprox,tol,tol_n,Leaf,G)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
 %%
-normres = []; normstep = [];  numgm = [];
+normres = []; normstep = [];  numgm = []; normresf = [];
 
 u = init;
 
 % solve for the new value using plain Newton
 for k = 1:100
 
-    %normres(k) = norm(ParResidual(u,PUApprox,f));
-
-
-
+    normresf(k) = norm(ParResidual(u,PUApprox,f));
     
     % evaluate the local corrections/solve local nonlinear problems
     [z,L,U,p,J] = ParPreconditionedNewtonForward(u,PUApprox,f,Jac,tol_n);
@@ -21,7 +18,12 @@ for k = 1:100
     normres(k) = norm(z);
     
     
+    if k==1
+        stop_tol = norm(z)*tol(1)+tol(2);
+    end
+    
     normres(k)
+    normresf(k)
     
         if normres(k) < tol, break, end
         

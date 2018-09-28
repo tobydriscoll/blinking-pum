@@ -1,4 +1,4 @@
-function [sol, it_hist, ierr, x_hist] = nsoldPAR_AS(x,evalf,Jac,PUApprox,tol,parms,tol2)
+function [sol, it_hist, ierr, x_hist] = nsoldPAR_AS_2_level(x,evalf,Jac,PUApprox,tol,parms,tol2,tol_c,j_in)
 % NSOLD  Newton-Armijo nonlinear solver
 %
 % Factor Jacobians with Gaussian Elimination
@@ -118,14 +118,16 @@ itc = 0;
 % compute the stop tolerance
 %
 %f0 = feval(f,x);
-[f0,L,U,p] = ParPreconditionedNewtonForward(x,PUApprox,evalf,Jac,tol2);
-
+%[f0,L,U,p] = ParPreconditionedNewtonForward(x,PUApprox,evalf,Jac,tol2);
+[f0,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(x,PUApprox,evalf,Jac,j_in,tol,tol_c);
 fnrm = norm(f0);
 fnrm2 = norm(ParResidual(x,PUApprox,evalf));
 it_hist = [fnrm,fnrm2,0];
 fnrmo = 1;
 itsham = isham;
 stop_tol = atol+rtol*fnrm;
+T_hat  = CoarseInterfaceInterp(PUApprox,length(x)/length(PUApprox));
+
 %
 % main iteration loop
 %
@@ -173,7 +175,11 @@ while(fnrm > stop_tol & itc < maxit)
         tol_g = 1e-10;
     end
     
-    [direction,~,~,~,gmhist] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-f0,[],tol_g,300);
+    [FJv,FJv_hat] = ComputeJac(PUApprox,Jac,x);
+    
+    FJv_hat = blkdiag(FJv_hat{:});
+    
+    [direction,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j_in),-f0,[],tol_g,180);
     
     
     length(gmhist)-1
@@ -185,7 +191,8 @@ while(fnrm > stop_tol & itc < maxit)
 %
     jac_age = jac_age+1;
     xold = x; fold = f0;
-    [step,iarm,x,f0,armflag] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2);
+
+    [step,iarm,x,f0,armflag] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2,tol_c,j_in,T_hat);
 %
 % If the line search fails and the Jacobian is old, update it.
 % If the Jacobian is fresh; you're dead.
@@ -346,7 +353,7 @@ z = (f1 - f0)/epsnew;
 %
 % Compute the step length with the three point parabolic model.
 %
-function [step,iarm,xp,fp,armflag,L,U,p] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2)
+function [step,iarm,xp,fp,armflag,L,U,p,J_v_pls_er] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2,tol_c,j_in,T_hat)
 iarm = 0;
 sigma1 = .5;
 alpha = 1.d-4;
@@ -359,8 +366,8 @@ xp = x; fp = f0;
     xt = x + step;
    % ft = feval(f,xt);
     
-    [ft,L,U,p] = ParPreconditionedNewtonForward(xt,PUApprox,evalf,Jac,tol2);
-    
+    %[ft,L,U,p] = ParPreconditionedNewtonForward(xt,PUApprox,evalf,Jac,tol2);
+    [ft,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(xt,PUApprox,evalf,Jac,j_in,tol,tol_c);
     nft = norm(ft); nf0 = norm(f0); ff0 = nf0*nf0; ffc = nft*nft; ffm = nft*nft;
     while nft >= (1 - alpha*lambda) * nf0;
 %
@@ -383,8 +390,8 @@ xp = x; fp = f0;
 %
         %ft = feval(f,xt);
         
-        [ft,L,U,p] = ParPreconditionedNewtonForward(xt,PUApprox,evalf,Jac,tol2);
-        
+        %[ft,L,U,p] = ParPreconditionedNewtonForward(xt,PUApprox,evalf,Jac,tol2);
+        [ft,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(xt,PUApprox,evalf,Jac,j_in,tol2,tol_c);
         nft = norm(ft);
         ffm = ffc;
         ffc = nft*nft;

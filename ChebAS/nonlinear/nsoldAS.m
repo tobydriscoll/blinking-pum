@@ -199,7 +199,6 @@ itsham = itsham-1;
 % end while
 end
 sol = x;
-itc
 
 if isempty(l)
     if jdiff == 1

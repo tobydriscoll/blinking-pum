@@ -1,4 +1,4 @@
-function [sol, it_hist, ierr, x_hist] = nsoldPAR_AS(x,evalf,Jac,PUApprox,tol,parms,tol2)
+function [sol,it_hist, ierr] = nsoldAS_NK(x,PUApprox,evalf,jac_f,tol,parms)
 % NSOLD  Newton-Armijo nonlinear solver
 %
 % Factor Jacobians with Gaussian Elimination
@@ -97,7 +97,12 @@ isham = -1;
 rsham = .5;
 jdiff = 1;
 iband = 0;
-if nargin >= 4 & length(parms) ~= 0
+
+l = []; u = [];
+
+f = @(u) ParResidual(u,PUApprox,evalf);
+
+if nargin >= 5 & length(parms) ~= 0
     maxit = parms(1); isham = parms(2); rsham = parms(3); 
         if length(parms) >= 4
             jdiff = parms(4);
@@ -109,20 +114,18 @@ if nargin >= 4 & length(parms) ~= 0
     end
 rtol = tol(2); atol = tol(1);
 it_hist = [];
+
 n = length(x);
-if nargout == 4, x_hist = x; end
+if nargout == 8, x_hist = x; end
 fnrm = 1;
 itc = 0;
 %
 % evaluate f at the initial iterate
 % compute the stop tolerance
 %
-%f0 = feval(f,x);
-[f0,L,U,p] = ParPreconditionedNewtonForward(x,PUApprox,evalf,Jac,tol2);
-
+f0 = feval(f,x);
 fnrm = norm(f0);
-fnrm2 = norm(ParResidual(x,PUApprox,evalf));
-it_hist = [fnrm,fnrm2,0];
+it_hist = [fnrm,0];
 fnrmo = 1;
 itsham = isham;
 stop_tol = atol+rtol*fnrm;
@@ -130,6 +133,7 @@ stop_tol = atol+rtol*fnrm;
 % main iteration loop
 %
 while(fnrm > stop_tol & itc < maxit)
+   fnrm;
 %
 % keep track of the ratio (rat = fnrm/frnmo)
 % of successive residual norms and 
@@ -144,48 +148,40 @@ while(fnrm > stop_tol & itc < maxit)
 % on the first iteration, every isham iterates, or
 % if the ratio of successive residual norm is too large
 %
-    if(itc == 1 | rat > rsham | itsham == 0 | armflag == 1)
-        itsham = isham;
+if(itc == 1 | rat > rsham | itsham == 0 | armflag == 1)
+    itsham = isham;
     jac_age = -1;
-%     if jdiff == 1 
-%             if iband == 0
-%             [l, u] = diffjac(x,f,f0);
-%             else
-%             jacb = bandjac(f,x,f0,nl,nu); 
-%             [l,u] = lu(jacb);
-%             end
-%         else
-%             [fv,jac] = feval(f,x);
-%         [l,u] = lu(jac);
-%         end
-    end
-    itsham = itsham-1;
-%
-% compute the Newton direction 
-%
-%    tmp = -l\f0;
-%    direction = u\tmp;
-    
+    %jac = jac_f(x);
+    %[l,u,p] = lu(jac,'vector');
+    [J,L,U,p] = ComputeJacs(x,PUApprox,jac_f);
+
+end
+itsham = itsham-1;
+
     % find overall Newton step by GMRES
-    tol_g = min(0.1,1e-10*norm(x)/norm(f0));
+    tol_g = min(0.1,norm(x)/norm(f0)*1e-10);
     
     if 0 == tol_g
         tol_g = 1e-10;
     end
     
-    [direction,~,~,~,gmhist] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-f0,[],tol_g,300);
-    
-    
-    length(gmhist)-1
-    fnrm
-    
+%
+% compute the Newton direction
+%
+   % tmp = -l\f0(p);
+   % direction = u\tmp;
+   [direction,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-f0,[],tol_g,300,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
+   length(gmhist)-1
+   fnrm
+   
+   
 %
 % Add one to the age of the Jacobian after the factors have been
 % used in a solve. A fresh Jacobian has an age of -1 at birth.
 %
     jac_age = jac_age+1;
     xold = x; fold = f0;
-    [step,iarm,x,f0,armflag] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2);
+    [step,iarm,x,f0,armflag] = armijo(direction,x,f0,f,maxarm);
 %
 % If the line search fails and the Jacobian is old, update it.
 % If the Jacobian is fresh; you're dead.
@@ -203,17 +199,34 @@ while(fnrm > stop_tol & itc < maxit)
        end
     end
     fnrm = norm(f0);
-    fnrm2 = norm(ParResidual(x,PUApprox,evalf));
-    
-    %fnrm = norm(ParResidual(x,PUApprox,evalf));
-    it_hist = [it_hist',[fnrm,fnrm2,iarm]']';
-    if nargout == 4, x_hist = [x_hist,x]; end
+    it_hist = [it_hist',[fnrm,iarm]']';
+    if nargout == 7, x_hist = [x_hist,x]; end
     rat = fnrm/fnrmo;
     if debug == 1, disp([itc fnrm rat]); end
     outstat(itc+1, :) = [itc fnrm rat];
 % end while
 end
 sol = x;
+itc
+
+% if isempty(l)
+%     if jdiff == 1
+%         if iband == 0
+%             [l, u,p] = diffjac(x,f,f0);
+%         else
+%             jacb = bandjac(f,x,f0,nl,nu);
+%             [l,u,p] = lu(jacb,'vector');
+%         end
+%     else
+%         jac = jac_f(x);
+%         [l,u,p] = lu(jac,'vector');
+%     end
+% end
+
+if(itc==maxit)
+   disp('max iterations'); 
+end
+
 if debug == 1, disp(outstat); end
 %
 % on failure, set the error flag
@@ -222,7 +235,7 @@ if fnrm > stop_tol, ierr = 1; end
 %
 %
 %
-function [l, u] = diffjac(x, f, f0)
+function [l, u,p] = diffjac(x, f, f0)
 % Compute a forward difference dense Jacobian f'(x), return lu factors.
 %
 % uses dirder
@@ -242,7 +255,7 @@ for j = 1:n
     zz(j) = 1;
     jac(:,j) = dirder(x,zz,f,f0);
 end
-[l, u] = lu(jac);
+[l, u,p] = lu(jac,'vector');
 function jac = bandjac(f,x,f0,nl,nu)
 % BANDJAC  Compute a banded Jacobian f'(x) by forward differeneces.
 %
@@ -346,7 +359,7 @@ z = (f1 - f0)/epsnew;
 %
 % Compute the step length with the three point parabolic model.
 %
-function [step,iarm,xp,fp,armflag,L,U,p] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2)
+function [step,iarm,xp,fp,armflag] = armijo(direction,x,f0,f,maxarm)
 iarm = 0;
 sigma1 = .5;
 alpha = 1.d-4;
@@ -357,10 +370,7 @@ xp = x; fp = f0;
     lambda = 1; lamm = 1; lamc = lambda; iarm = 0;
     step = lambda*direction;
     xt = x + step;
-   % ft = feval(f,xt);
-    
-    [ft,L,U,p] = ParPreconditionedNewtonForward(xt,PUApprox,evalf,Jac,tol2);
-    
+    ft = feval(f,xt);
     nft = norm(ft); nf0 = norm(f0); ff0 = nf0*nf0; ffc = nft*nft; ffm = nft*nft;
     while nft >= (1 - alpha*lambda) * nf0;
 %
@@ -381,10 +391,7 @@ xp = x; fp = f0;
 %
 % Keep the books on the function norms.
 %
-        %ft = feval(f,xt);
-        
-        [ft,L,U,p] = ParPreconditionedNewtonForward(xt,PUApprox,evalf,Jac,tol2);
-        
+        ft = feval(f,xt);
         nft = norm(ft);
         ffm = ffc;
         ffc = nft*nft;
@@ -397,6 +404,8 @@ xp = x; fp = f0;
         end
     end
     xp = xt; fp = ft;
+    
+    
 %
 %   end of line search
 %

@@ -13,6 +13,8 @@ function [ F ] = LGB(u,Approx,lambda)
 
     uxx = Dx^2*u; uyy = u*(Dy')^2;
     
+    [X,Y] = ndgrid(Approx.leafGrids{:});
+        
     F = uxx+uyy+lambda*exp(u);
     
     F(border) = u(border);

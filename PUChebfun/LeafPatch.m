@@ -28,7 +28,8 @@ classdef LeafPatch<Patch
     properties (Constant)
         %standard_variables = load('cheb_points_matrices.mat');
         %standard_degs = [3 5 9 17 33 65 129];
-        cheb_bump = @(x) exp(1-1./(1-x.^2));
+        %cheb_bump = @(x) exp(1-1./(1-x.^2));
+        cheb_bump = chebfun( {0,@(x) exp(1-1./(1-x.^2)),0},[-20 -1 1 20]);
         invf = @(x,dom) 2/diff(dom)*x-sum(dom)/diff(dom); %takes points from a domain to [-1 1]
         forf = @(x,dom) 0.5*diff(dom)*x+0.5*sum(dom); %takes points from [-1 1] to a domain
     end
@@ -85,22 +86,36 @@ classdef LeafPatch<Patch
             
             obj.bump = cell(3,1);
             
+            %             for k=1:obj.dim
+            %                 % if isequal(obj.domain(k,:),obj.outerbox(k,:))
+            %                 %     w = @(x) ones(size(x));
+            %                 if isequal(obj.domain(k,:),obj.outerbox(k,:))
+            %                     w = @(x)obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
+            %                     obj.bump{k} = @(x) (x<=obj.domain(k,1)) + (x>=obj.domain(k,2)) + (x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
+            %                 elseif obj.domain(k,1) == obj.outerbox(k,1)
+            %                     w = @(x)obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
+            %                     obj.bump{k} = @(x) (x<=obj.domain(k,1)) + (x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
+            %                 elseif obj.domain(k,2) == obj.outerbox(k,2)
+            %                     w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))-1)/2);
+            %                     obj.bump{k} = @(x)(x>=obj.domain(k,2))+(x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
+            %                 else
+            %                     w = @(x) obj.cheb_bump(obj.invf(x,obj.domain(k,:)));
+            %                     obj.bump{k} = @(x)(x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
+            %                 end
+            %             end
+            
+            
             for k=1:obj.dim
                 % if isequal(obj.domain(k,:),obj.outerbox(k,:))
                 %     w = @(x) ones(size(x));
-                if isequal(obj.domain(k,:),obj.outerbox(k,:))
-                    w = @(x)obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
-                    obj.bump{k} = @(x) (x<=obj.domain(k,1)) + (x>=obj.domain(k,2)) + (x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
-                elseif obj.domain(k,1) == obj.outerbox(k,1)
-                    w = @(x)obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
-                    obj.bump{k} = @(x) (x<=obj.domain(k,1)) + (x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
+                if obj.domain(k,1) == obj.outerbox(k,1)
+                    w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))+1)/2);
                 elseif obj.domain(k,2) == obj.outerbox(k,2)
                     w = @(x) obj.cheb_bump((obj.invf(x,obj.domain(k,:))-1)/2);
-                    obj.bump{k} = @(x)(x>=obj.domain(k,2))+(x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
                 else
                     w = @(x) obj.cheb_bump(obj.invf(x,obj.domain(k,:)));
-                    obj.bump{k} = @(x)(x>obj.domain(k,1) & x<obj.domain(k,2)).*w(x);
                 end
+                obj.bump{k} = w;
             end
         end
         
@@ -218,7 +233,7 @@ classdef LeafPatch<Patch
             C = cell(obj.dim,1);
             
             for i=1:obj.dim
-               C{i} = chebpts(obj.degs(i),obj.domain(i,:));
+                C{i} = chebpts(obj.degs(i),obj.domain(i,:));
             end
             [out{1:obj.dim}] = ndgrid(C{:});
             
@@ -243,7 +258,7 @@ classdef LeafPatch<Patch
             ln = prod(obj.degs);
         end
         
-                % TODO. Figure out what to do here!
+        % TODO. Figure out what to do here!
         function ef = evalf(obj,X,G)
             if nargin<3
                 G = obj.coeffs;
@@ -314,16 +329,16 @@ classdef LeafPatch<Patch
                 order = 1;
             end
             
-            unContractedModes = [1:diff_dim-1, diff_dim+1:obj.dim];  
+            unContractedModes = [1:diff_dim-1, diff_dim+1:obj.dim];
             
             G = chebfun3t.unfold(obj.coeffs,diff_dim);
             
             for i=1:order
-            G = obj.computeDiffCoeffs(G);
+                G = obj.computeDiffCoeffs(G);
             end
             
             G = chebfun3t.fold(G,obj.degs,diff_dim,unContractedModes)/diff(obj.domain(diff_dim,:)/2)^order;
-
+            
             if nargin<4
                 ef = G;
             else
@@ -343,11 +358,11 @@ classdef LeafPatch<Patch
                 order = 1;
             end
             
-            unContractedModes = [1:diff_dim-1, diff_dim+1:obj.dim];  
+            unContractedModes = [1:diff_dim-1, diff_dim+1:obj.dim];
             G = chebfun3t.unfold(obj.coeffs,diff_dim);
             
             for i=1:order
-            G = obj.computeDiffCoeffs(G);
+                G = obj.computeDiffCoeffs(G);
             end
             
             G = chebfun3t.fold(G,obj.degs,diff_dim,unContractedModes)/diff(obj.domain(diff_dim,:)/2)^order;
@@ -359,7 +374,7 @@ classdef LeafPatch<Patch
             end
         end
         
-                %  interpMatrixPoints(obj,X)
+        %  interpMatrixPoints(obj,X)
         %  This method creates a interpolating matrix given a list of
         %  points.
         %
@@ -400,7 +415,7 @@ classdef LeafPatch<Patch
                 M = kron(barymat(grid{3},G{3}),kron(barymat(grid{2},G{2}),barymat(grid{1},G{1})));
             end
         end
-       
+        
         % Evaluates the approximant on a grid.
         %
         %  Input:
@@ -477,7 +492,7 @@ classdef LeafPatch<Patch
             if ~obj.iscoarse
                 
                 if k==0
-                    obj.swap_degs = obj.degs; 
+                    obj.swap_degs = obj.degs;
                     
                     obj.degs = obj.cdegs;
                     
@@ -506,7 +521,7 @@ classdef LeafPatch<Patch
             
         end
         
-       
+        
         % Construct for the ChebPatch
         %
         % This method refines the patch, resampling the patches values

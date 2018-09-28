@@ -2,14 +2,14 @@ domain = [0 1;0 1];
 %domain = [-0.1 0.1;-0.05 0.05];
 deg_in = [5 5];
 cheb_struct.domain = domain;
-cheb_struct.degs = [17 17];
-cheb_struct.cdegs = [5 5];
+cheb_struct.degs = [41 41];
+cheb_struct.cdegs = [11 11];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
 cheb_struct.tol = 1e-4;
 
 tol_n = [1e-5,1e-4];
-parms = [20,-1,.5,0];
+parms = [1000,-1,.5,0];
 
 % %Test with 4 patches
  Tree = ChebPatch(cheb_struct);
@@ -17,8 +17,8 @@ parms = [20,-1,.5,0];
  Tree.split(2);
  Tree.split(1);
  Tree.split(2);
- %Tree.split(1);
- %Tree.split(2);
+% Tree.split(1);
+% Tree.split(2);
 
 %Tree = ChebPatch(cheb_struct);
 %Tree = Tree.split(2);
@@ -47,13 +47,14 @@ setInterpMatrices(F,true);
 %f = @(u,leaf) AllenCahn(leaf,0,u,ep);
 %Jac = @(u,leaf) AllenCahnJacobian(0,u,leaf,ep);
 
-%lambda =  6.808124423;
-%f = @(u,leaf) LGB(u,leaf,lambda);
-%Jac = @(u,leaf) LGBJacobian(u,leaf,lambda);
+% lambda =  6.808124423;
+% lambda = lambda-0.01;
+% f = @(u,leaf) LGB(u,leaf,lambda);
+% Jac = @(u,leaf) LGBJacobian(u,leaf,lambda);
 
-%nu = 1/500;
-%f = @(u,leaf)Burgers(u,leaf,nu);
-%Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
+nu = 1/200;
+f = @(u,leaf)Burgers(u,leaf,nu);
+Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
 
 %f = @ SimpNonlinear;
 %Jac = @ SimpNonlinearJac;
@@ -67,41 +68,41 @@ setInterpMatrices(F,true);
 %init = zeros(length(F)*3,1);
 
 
-Re  = 200;
-steep = 0.08;
-f = @(u,leaf) CavityFlow(Re,u,leaf,steep);
-Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
-
+%  Re  = 1000;
+%  steep = 0.08;
+%  f = @(u,leaf) CavityFlow(Re,u,leaf,steep);
+%  Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
+% 
+% %     
+% init = [];
+% 
+% for i=1:length(F.leafArray)
 %     
-init = [];
+%     leaf = F.leafArray{i};
+%     
+%     degs = leaf.degs;
+%     [out_border_s,~,~,~,border] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);
+%     
+%     east_west = out_border_s{1} | out_border_s{2};
+%     south = out_border_s{3};
+%     north = out_border_s{4};
+%     
+%     u = zeros(degs);
+%     u(north) = 1;
+%     
+%     P = leaf.points();
+%     u = reshape(SideBumpFunc(P(:,2),[0 1],steep),degs);
+%     
+%     v = zeros(degs);
+%     w = zeros(degs);
+%     
+%     init = [init;u(:) v(:) w(:)];
+%     
+% end
+% 
+% init = init(:);
 
-for i=1:length(F.leafArray)
-    
-    leaf = F.leafArray{i};
-    
-    degs = leaf.degs;
-    [out_border_s,~,~,~,border] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);
-    
-    east_west = out_border_s{1} | out_border_s{2};
-    south = out_border_s{3};
-    north = out_border_s{4};
-    
-    u = zeros(degs);
-    u(north) = 1;
-    
-    P = leaf.points();
-    u = reshape(SideBumpFunc(P(:,2),[0 1],steep),degs);
-    
-    v = zeros(degs);
-    w = zeros(degs);
-    
-    init = [init;u(:) v(:) w(:)];
-    
-end
-
-init = init(:);
-
-%init = zeros(3*length(F),1);
+init = zeros(length(F),1);
 %init = -ParResidual(zeros(length(F),1),F,f);
 %sol = -f(zeros(length(F),1),Tree);
 %init = rand(length(F),1);
@@ -113,15 +114,15 @@ init = init(:);
 %
 
 %tic;
-%[ sol,normres,normstep,numgm ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-7 1e-7]);
+%[ sol,normres1,normstep1,numgm1 ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-5 1e-5]);
 %toc
 
-tic;
-[ sol,normres,normstep,numgm ] = PreconditionedNewton(f,Jac,init,F,1e-8,[1e-10 1e-10],Leaf,G);
-toc
+%tic;
+%[ sol,normres2,normstep2,numgm2,normresf2 ] = PreconditionedNewton(f,Jac,init,F,[1e-5 1e-5],[1e-5 1e-5],Leaf,G);
+%toc
 
 %tic;
-%[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevel(f,Jac,init,F,1e-5,[1e-5 1e-5],1e-5,2);
+%[ sol,normres3,normstep3,numgm3 ] = PreconditionedNewtonTwoLevel(f,Jac,init,F,1e-5,[1e-10 1e-10],1e-7,2);
 %toc
 
 %tic;
@@ -136,13 +137,19 @@ toc
 
 %[sol, ~, ~, ~] = nsoldPAR_AS_two_level(init,f,Jac,F,tol_n,parms);
 
-%tic;
-%[sol, it_hist, ierr, x_hist] = nsoldPAR_AS(init,f,Jac,F,[1e-6 1e-5],parms,[1e-6 1e-5]);
-%toc
 
-%tic;
-%[sol, it_hist, ierr, x_hist] = nsoldPAR_AS_forward(init,f,Jac,F,[1e-10 1e-9],parms);
-%toc
+ %tic;
+ %[sol2,it_hist2, ierr2] = nsoldAS_NK(init,F,f,Jac,[1e-10 1e-9],parms);
+ %toc 
+
+
+% tic;
+% [sol, it_hist, ierr, x_hist] = nsoldPAR_AS(init,f,Jac,F,[1e-10 1e-9],parms,[1e-7 1e-6]);
+% toc
+
+tic;
+[sol, it_hist3, ierr3, x_hist3] = nsoldPAR_AS_2_level(init,f,Jac,F,[1e-10 1e-10],parms,[1e-7 1e-6],1e-7,2);
+toc
 
 %[sol, it_hist, ierr,x_hist] = nsoldAS(init,@(u)f(u,Tree),@(u)Jac(u,Tree),tol_n,parms);
 

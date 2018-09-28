@@ -30,7 +30,7 @@ for k = 1:100
     
     FJv_hat = blkdiag(FJv_hat{:});
     
-    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j),-z,[],tol_g,80);
+    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j),-z,[],tol_g,180);
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     

@@ -7,17 +7,22 @@ normres = []; normstep = [];  numgm = [];
 
 u = init;
 
+
 % solve for the new value using plain Newton
 for k = 1:100
     
      % evaluate the local corrections/solve local nonlinear problems
     z = ParResidual(u,PUApprox,f);
     
+    if k==1
+        stop_tol = norm(z)*tol(1)+tol(2);
+    end
+    
     normres(k) = norm(z);
     
     normres(k)
     
-    if normres(k) < tol(1), break, end
+    if normres(k) < stop_tol, break, end
     
     
     % find overall Newton step by GMRES
