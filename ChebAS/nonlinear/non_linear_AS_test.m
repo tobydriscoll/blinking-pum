@@ -47,10 +47,10 @@ setInterpMatrices(F,true);
 %f = @(u,leaf) AllenCahn(leaf,0,u,ep);
 %Jac = @(u,leaf) AllenCahnJacobian(0,u,leaf,ep);
 
-% lambda =  6.808124423;
-% lambda = lambda-0.01;
-% f = @(u,leaf) LGB(u,leaf,lambda);
-% Jac = @(u,leaf) LGBJacobian(u,leaf,lambda);
+%  lambda =  6.808124423;
+%  lambda = lambda-0.01;
+%  f = @(u,leaf) LGB(u,leaf,lambda);
+%  Jac = @(u,leaf) LGBJacobian(u,leaf,lambda);
 
 nu = 1/200;
 f = @(u,leaf)Burgers(u,leaf,nu);
@@ -113,9 +113,9 @@ init = zeros(length(F),1);
 
 %
 
-%tic;
-%[ sol,normres1,normstep1,numgm1 ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-5 1e-5]);
-%toc
+tic;
+[ sol,normres1,normstep1,numgm1 ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-5 1e-5]);
+toc
 
 %tic;
 %[ sol,normres2,normstep2,numgm2,normresf2 ] = PreconditionedNewton(f,Jac,init,F,[1e-5 1e-5],[1e-5 1e-5],Leaf,G);
@@ -138,18 +138,18 @@ init = zeros(length(F),1);
 %[sol, ~, ~, ~] = nsoldPAR_AS_two_level(init,f,Jac,F,tol_n,parms);
 
 
- %tic;
- %[sol2,it_hist2, ierr2] = nsoldAS_NK(init,F,f,Jac,[1e-10 1e-9],parms);
- %toc 
+ tic;
+ [sol2,it_hist2, ierr2] = nsoldAS_NK(init,F,f,Jac,[1e-10 1e-9],parms);
+ toc 
 
 
 % tic;
 % [sol, it_hist, ierr, x_hist] = nsoldPAR_AS(init,f,Jac,F,[1e-10 1e-9],parms,[1e-7 1e-6]);
 % toc
 
-tic;
-[sol, it_hist3, ierr3, x_hist3] = nsoldPAR_AS_2_level(init,f,Jac,F,[1e-10 1e-10],parms,[1e-7 1e-6],1e-7,2);
-toc
+%tic;
+%[sol, it_hist3, ierr3, x_hist3] = nsoldPAR_AS_2_level(init,f,Jac,F,[1e-10 1e-10],parms,[1e-7 1e-6],1e-7,2);
+%toc
 
 %[sol, it_hist, ierr,x_hist] = nsoldAS(init,@(u)f(u,Tree),@(u)Jac(u,Tree),tol_n,parms);
 

@@ -27,9 +27,9 @@ init = zeros(length(F),1);
 
 % Regular Newton Schwarz Krylov
 %
-%tic;
-%[sol2,it_hist2, ierr2] = nsoldAS_NK(init,F,f,Jac,[1e-10 1e-9],parms);
-%toc
+tic;
+[sol2,it_hist2, ierr2] = nsoldAS_NK(init,F,f,Jac,[1e-10 1e-9],parms);
+toc
 
 % New Schwarz Newton Krylov
 %
