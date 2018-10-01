@@ -32,6 +32,7 @@ function [ F ] = Burgers(u,Approx,nu)
 %     F(sides{3}) = u(sides{3})-south(P(sides{3},1));
 %     F(sides{4}) = u(sides{4})-north(P(sides{4},1));
     
-    F(border) = u(border) - 1./(exp((P(border,1)+P(border,2))/(2*nu)));
+    F(border) = u(border) - atan((P(border,1)+P(border,2)-1)*100);
+    
     F = F(:);
 end

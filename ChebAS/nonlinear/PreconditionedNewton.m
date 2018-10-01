@@ -34,6 +34,8 @@ for k = 1:100
         tol_g = 1e-10;
     end
     
+    tol_g = 1e-10;
+    
     %[J,L,U,p] = ComputeJacs(u,PUApprox,Jac);
     
     fz = ParLinearResidualFun(z,PUApprox,J);

@@ -165,6 +165,7 @@ itsham = itsham-1;
         tol_g = 1e-10;
     end
     
+tol_g = 1e-10;    
 %
 % compute the Newton direction
 %

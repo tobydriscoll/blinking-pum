@@ -53,7 +53,7 @@ leafs = PUApprox.leafArray;
 for k=1:length(leafs)
     
     [z{k},l{k},u{k},p{k},J{k}] = local_inverse(leafs{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,Jac,tol_n);
-    z{k} = sol_loc{k} - reshape(z{k},length(leafs{k}),num_sols);
+    z{k} = reshape(z{k},length(leafs{k}),num_sols);
 end
 
 z = cell2mat(z');
@@ -82,13 +82,13 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
         
         sol_length = length(approx);
         
-        F = evalF(z,approx);
+        F = evalF(sol_k(:)+z,approx);
         
         F = reshape(F,sol_length,num_sols);
         
         z = reshape(z,sol_length,num_sols);
         
-        F(border_k,:) = z(border_k,:) - diff_k;
+        F(border_k,:) = sol_k(border_k,:)+z(border_k,:) - diff_k;
         
         F = F(:);
         
@@ -98,7 +98,7 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
         
         sol_length = length(approx);
         
-        J = Jac(z(:),approx);
+        J = Jac(sol_k(:)+z(:),approx);
         
         E = eye(sol_length);
         
@@ -113,8 +113,12 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
     end
 
 
-%options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',600,'FunctionTolerance',tol_n(1),'Display','off');
-%c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),sol_k(:),options);
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',600,'FunctionTolerance',tol_n(1),'Display','iter');
+init = zeros(numel(sol_k(:)),1);
+c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),init,options);
+
+%options = optimoptions(@fsolve,'MaxIterations',600,'FunctionTolerance',tol_n(1),'Display','iter');
+%c = fsolve(@residual,sol_k(:),options);
 
 %c = c(:,end);
 
@@ -122,10 +126,10 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
 
 %north = out_border_s{4};
 
-params = [200,-1,.5,0];
+%params = [200,-1,.5,0];
 %tol = [1e-3 1e-2];
 
-c = nsoldAS(sol_k(:),@residual,@jac_fun,tol_n,params);
+%c = nsoldAS(sol_k(:),@residual,@jac_fun,tol_n,params);
 
 %norm_c = norm(residual(c));
 

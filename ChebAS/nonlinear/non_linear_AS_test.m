@@ -3,7 +3,7 @@ domain = [0 1;0 1];
 deg_in = [5 5];
 cheb_struct.domain = domain;
 cheb_struct.degs = [41 41];
-cheb_struct.cdegs = [11 11];
+cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
 cheb_struct.tol = 1e-4;
@@ -17,9 +17,11 @@ parms = [1000,-1,.5,0];
  Tree.split(2);
  Tree.split(1);
  Tree.split(2);
-% Tree.split(1);
-% Tree.split(2);
-
+ Tree.split(1);
+ Tree.split(2);
+ %Tree.split(1);
+ %Tree.split(2);
+ 
 %Tree = ChebPatch(cheb_struct);
 %Tree = Tree.split(2);
 %Tree.children{2} = Tree.children{2}.split(2);
@@ -52,7 +54,7 @@ setInterpMatrices(F,true);
 %  f = @(u,leaf) LGB(u,leaf,lambda);
 %  Jac = @(u,leaf) LGBJacobian(u,leaf,lambda);
 
-nu = 1/200;
+nu = 1/1000;
 f = @(u,leaf)Burgers(u,leaf,nu);
 Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
 
@@ -68,7 +70,7 @@ Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
 %init = zeros(length(F)*3,1);
 
 
-%  Re  = 1000;
+%  Re  = 100;
 %  steep = 0.08;
 %  f = @(u,leaf) CavityFlow(Re,u,leaf,steep);
 %  Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
@@ -102,8 +104,10 @@ Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
 % 
 % init = init(:);
 
-init = zeros(length(F),1);
-%init = -ParResidual(zeros(length(F),1),F,f);
+%init = zeros(length(F),1);
+% F.Setvalues(@(x,y)atan((x+y-1)/(2*nu)));
+% init = F.Getvalues();
+init = -ParResidual(zeros(length(F),1),F,f);
 %sol = -f(zeros(length(F),1),Tree);
 %init = rand(length(F),1);
 
@@ -114,11 +118,11 @@ init = zeros(length(F),1);
 %
 
 tic;
-[ sol,normres1,normstep1,numgm1 ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-5 1e-5]);
+[ sol,normres1,normstep1,numgm1 ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-6 1e-6]);
 toc
 
 %tic;
-%[ sol,normres2,normstep2,numgm2,normresf2 ] = PreconditionedNewton(f,Jac,init,F,[1e-5 1e-5],[1e-5 1e-5],Leaf,G);
+%[ sol,normres2,normstep2,numgm2,normresf2 ] = PreconditionedNewton(f,Jac,init,F,[1e-6 1e-6],[1e-3 1e-3],Leaf,G);
 %toc
 
 %tic;
@@ -138,13 +142,13 @@ toc
 %[sol, ~, ~, ~] = nsoldPAR_AS_two_level(init,f,Jac,F,tol_n,parms);
 
 
- tic;
- [sol2,it_hist2, ierr2] = nsoldAS_NK(init,F,f,Jac,[1e-10 1e-9],parms);
- toc 
+% tic;
+% [sol2,it_hist2, ierr2] = nsoldAS_NK(init,F,f,Jac,[1e-10 1e-9],parms);
+% toc 
 
 
 % tic;
-% [sol, it_hist, ierr, x_hist] = nsoldPAR_AS(init,f,Jac,F,[1e-10 1e-9],parms,[1e-7 1e-6]);
+% [sol, it_hist, ierr, x_hist] = nsoldPAR_AS(init,f,Jac,F,[1e-6 1e-5],parms,[1e-3 1e-2]);
 % toc
 
 %tic;
@@ -169,6 +173,6 @@ toc
 %     res(i)
 % end
 
-sol = reshape(sol,length(F),1);
-F.sample(sol(:,1));
+solr = reshape(sol,length(F),1);
+F.sample(solr(:,1));
 plot(F);
