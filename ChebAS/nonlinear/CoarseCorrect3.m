@@ -51,6 +51,8 @@ options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',5
 er = fsolve(@(er)sol_and_jac(@(er)RES(er),@(er)JAC(er),er),zeros(size(v_hat)),options);
 er = er(:,end);
 
+er = er - v_hat;
+
 J_v_pls_er = JAC(er);
 
 r_er = [];
@@ -73,6 +75,6 @@ end
 end
 
 function F = Residual(er,v,w,Leaf,evalf)    
-    F = evalf(v+er,Leaf) - w;
+    F = evalf(er,Leaf) - w;
 end
 

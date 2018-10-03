@@ -9,7 +9,7 @@ u = init;
 
 
 % solve for the new value using plain Newton
-for k = 1:100
+for k = 1:20
     
      % evaluate the local corrections/solve local nonlinear problems
     z = ParResidual(u,PUApprox,f);
@@ -32,7 +32,9 @@ for k = 1:100
     if 0 == tol_g
         tol_g = 1e-10;
     end
-        
+    
+    tol_g = 1e-10;
+    
     [J,L,U,p] = ComputeJacs(u,PUApprox,Jac);  
     
     [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-z,[],tol_g,300,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));

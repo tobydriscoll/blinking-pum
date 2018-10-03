@@ -21,10 +21,12 @@ East  = false(degs); East(end,:) = true;
 
 border = South | North | East | West;
 
-border_s{1} = West;
-border_s{2} = East;
-border_s{3} = South;
 border_s{4} = North;
+border_s{3} = South & ~ North;
+border_s{1} = West & ~(North | South);
+border_s{2} = East & ~(North | South + West);
+
+
 
 %Might have to make this more robust!
 if domain(1,1)==out_domain(1,1)

@@ -8,7 +8,7 @@ normres = []; normstep = [];  numgm = []; normresf = [];
 u = init;
 
 % solve for the new value using plain Newton
-for k = 1:100
+for k = 1:20
 
     normresf(k) = norm(ParResidual(u,PUApprox,f));
     

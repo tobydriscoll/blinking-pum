@@ -19,18 +19,20 @@ for k = 1:100
     
     normres(k) = norm(z);
     
+        if k==1
+            stop_tol = norm(z)* newn_tol(1) + newn_tol(2);
+        end
+    
     normres(k)
     
-    if normres(k) < newn_tol, break, end
+    if normres(k) < stop_tol, break, end
     
-    % find overall Newton step by GMRES
-    tol_g = min(0.1,tol(1)*norm(u)+tol(2));    
     
     [FJv,FJv_hat] = ComputeJac(PUApprox,Jac,u);
     
     FJv_hat = blkdiag(FJv_hat{:});
     
-    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j),-z,[],tol_g,180);
+    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j),-z,[],1e-10,180);
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     

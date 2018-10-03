@@ -23,7 +23,7 @@ for k=1:length(PUfun.leafArray)
     if ~PUfun.ChebRoot.is_leaf
                 degs = PUfun.leafArray{k}.degs;
                 [~,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUfun.leafArray{k}.domain,PUfun.leafArray{k}.outerbox);
-                PUfun.leafArray{k}.Binterp = PUfun.ChebRoot.interpSparseMatrixZone(points(in_border,:));
+                PUfun.leafArray{k}.Binterp = PUfun.ChebRoot.interpSparseMatrix(points(in_border,:));
     end
     
 end

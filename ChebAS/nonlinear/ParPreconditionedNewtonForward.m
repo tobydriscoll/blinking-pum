@@ -112,9 +112,10 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
         
     end
 
+init = zeros(numel(sol_k(:)),1);
 
 options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',600,'FunctionTolerance',tol_n(1),'Display','iter');
-init = zeros(numel(sol_k(:)),1);
+
 c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),init,options);
 
 %options = optimoptions(@fsolve,'MaxIterations',600,'FunctionTolerance',tol_n(1),'Display','iter');
@@ -129,7 +130,7 @@ c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),init,options);
 %params = [200,-1,.5,0];
 %tol = [1e-3 1e-2];
 
-%c = nsoldAS(sol_k(:),@residual,@jac_fun,tol_n,params);
+%c = nsoldAS(init,@residual,@jac_fun,tol_n,params);
 
 %norm_c = norm(residual(c));
 

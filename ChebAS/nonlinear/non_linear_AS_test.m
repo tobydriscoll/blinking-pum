@@ -2,7 +2,7 @@ domain = [0 1;0 1];
 %domain = [-0.1 0.1;-0.05 0.05];
 deg_in = [5 5];
 cheb_struct.domain = domain;
-cheb_struct.degs = [41 41];
+cheb_struct.degs = [33 33];
 cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
@@ -17,8 +17,8 @@ parms = [1000,-1,.5,0];
  Tree.split(2);
  Tree.split(1);
  Tree.split(2);
- Tree.split(1);
- Tree.split(2);
+ %Tree.split(1);
+ %Tree.split(2);
  %Tree.split(1);
  %Tree.split(2);
  
@@ -31,7 +31,7 @@ parms = [1000,-1,.5,0];
 %Tree.clean();
 
 leaf_struct.domain = domain;
-leaf_struct.degs = [17 17];
+leaf_struct.degs = [33 33];
 leaf_struct.split_flag = [true true];
 leaf_struct.cdeg_in = deg_in;
 leaf_struct.tol = 1e-4;
@@ -54,9 +54,9 @@ setInterpMatrices(F,true);
 %  f = @(u,leaf) LGB(u,leaf,lambda);
 %  Jac = @(u,leaf) LGBJacobian(u,leaf,lambda);
 
-nu = 1/1000;
-f = @(u,leaf)Burgers(u,leaf,nu);
-Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
+% nu = 1/400;
+% f = @(u,leaf)Burgers(u,leaf,nu);
+% Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
 
 %f = @ SimpNonlinear;
 %Jac = @ SimpNonlinearJac;
@@ -70,44 +70,44 @@ Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
 %init = zeros(length(F)*3,1);
 
 
-%  Re  = 100;
-%  steep = 0.08;
-%  f = @(u,leaf) CavityFlow(Re,u,leaf,steep);
-%  Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
+ Re  = 100;
+ steep = 0.1;
+ f = @(u,leaf) CavityFlow(Re,u,leaf,steep);
+ Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
 % 
 % %     
-% init = [];
-% 
-% for i=1:length(F.leafArray)
-%     
-%     leaf = F.leafArray{i};
-%     
-%     degs = leaf.degs;
-%     [out_border_s,~,~,~,border] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);
-%     
-%     east_west = out_border_s{1} | out_border_s{2};
-%     south = out_border_s{3};
-%     north = out_border_s{4};
-%     
-%     u = zeros(degs);
-%     u(north) = 1;
-%     
-%     P = leaf.points();
-%     u = reshape(SideBumpFunc(P(:,2),[0 1],steep),degs);
-%     
-%     v = zeros(degs);
-%     w = zeros(degs);
-%     
-%     init = [init;u(:) v(:) w(:)];
-%     
-% end
-% 
-% init = init(:);
+init = [];
 
-%init = zeros(length(F),1);
-% F.Setvalues(@(x,y)atan((x+y-1)/(2*nu)));
-% init = F.Getvalues();
-init = -ParResidual(zeros(length(F),1),F,f);
+for i=1:length(F.leafArray)
+    
+    leaf = F.leafArray{i};
+    
+    degs = leaf.degs;
+    [out_border_s,~,~,~,border] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);
+    
+    east_west = out_border_s{1} | out_border_s{2};
+    south = out_border_s{3};
+    north = out_border_s{4};
+    
+    u = zeros(degs);
+    u(north) = 1;
+    
+    P = leaf.points();
+    u = reshape(SideBumpFunc(P(:,2),[0 1],steep),degs);
+    
+    v = zeros(degs);
+    w = zeros(degs);
+    
+    init = [init;u(:) v(:) w(:)];
+    
+end
+
+init = init(:);
+
+%init = zeros(3*length(F),1);
+%  F.Setvalues(@(x,y)atan((x+y-1)/(2*nu)));
+%  init = F.Getvalues();
+%init = -ParResidual(zeros(length(F),1),F,f);
 %sol = -f(zeros(length(F),1),Tree);
 %init = rand(length(F),1);
 
@@ -116,18 +116,18 @@ init = -ParResidual(zeros(length(F),1),F,f);
 %init = F.Getvalues();
 
 %
+% 
+%  tic;
+% [ sol,normres1,normstep1,numgm1 ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-10 1e-10]);
+% toc
+% 
+%  tic;
+% [ sol,normres2,normstep2,numgm2,normresf2 ] = PreconditionedNewton(f,Jac,init,F,[1e-10 1e-10],[1e-10 1e-10],Leaf,G);
+% toc
 
 tic;
-[ sol,normres1,normstep1,numgm1 ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-6 1e-6]);
+[ sol,normres3,normstep3,numgm3 ] = PreconditionedNewtonTwoLevel(f,Jac,init,F,[1e-10 1e-10],[1e-10 1e-10],1e-3,2);
 toc
-
-%tic;
-%[ sol,normres2,normstep2,numgm2,normresf2 ] = PreconditionedNewton(f,Jac,init,F,[1e-6 1e-6],[1e-3 1e-3],Leaf,G);
-%toc
-
-%tic;
-%[ sol,normres3,normstep3,numgm3 ] = PreconditionedNewtonTwoLevel(f,Jac,init,F,1e-5,[1e-10 1e-10],1e-7,2);
-%toc
 
 %tic;
 %[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevelG(f,Jac,init,F,[1e-5 1e-5],1e-5,2);
