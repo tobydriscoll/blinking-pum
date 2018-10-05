@@ -3,31 +3,28 @@ function [ F ] = NonLinPoisson(u,Approx)
 %   Detailed explanation goes here
     degs = Approx.degs;
     
-    
     %Determine outer border
-    [~,~,~,~,border,sides] = FindBoundaryIndex2DSides(degs,Approx.domain,Approx.outerbox);
+    %[~,~,~,~,~,sides] = FindBoundaryIndex2DSides(degs,Approx.domain,Approx.outerbox);
     
+    west = false(degs); west(1,2:end-1) = true;
+    east = false(degs); east(end,2:end-1) = true;
+    
+    south = false(degs); south(:,1) = true;
     north = false(degs); north(:,end) = true;
-    rest_border = border & ~ north;
-    
     
     u = reshape(u,degs);
     
     Dx = diffmat(degs(1),1,Approx.domain(1,:));
     Dy = diffmat(degs(2),1,Approx.domain(2,:));
 
-    ux = Dx*u; uxx = Dx*ux; uy = u*Dy'; uyy = uy*Dy';
+    ux = Dx*u; uy = u*Dy';
+    [X,Y] = ndgrid(Approx.leafGrids{:});
     
-    F = nu*(uxx+uyy)-u.*(ux+uy);
-    
-    P = Approx.points();
-    
-%     F(sides{1}) = u(sides{1})-west(P(sides{1},2));
-%     F(sides{2}) = u(sides{2})-east(P(sides{2},2));
-%     F(sides{3}) = u(sides{3})-south(P(sides{3},1));
-%     F(sides{4}) = u(sides{4})-north(P(sides{4},1));
-    
-    F(border) = u(border) - atan((P(border,1)+P(border,2)-1)/(2*nu));
-    
-    F = F(:);
+    F = X.*sin(Y)-Dx*((1+u.^2).*ux)-((1+u.^2).*uy)*Dy';
+   
+    F(west) = u(west); %north
+    F(east) = u(east) - 1;
+    F(south | north) = uy(south | north); %south
+
+   F = F(:);
 end

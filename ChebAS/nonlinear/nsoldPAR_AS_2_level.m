@@ -177,7 +177,7 @@ while(fnrm > stop_tol & itc < maxit)
     
     [FJv,FJv_hat] = ComputeJac(PUApprox,Jac,x);
     
-    FJv_hat = blkdiag(FJv_hat{:});
+   % FJv_hat = blkdiag(FJv_hat{:});
     
     [direction,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j_in),-f0,[],tol_g,180);
     

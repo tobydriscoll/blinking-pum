@@ -30,7 +30,7 @@ for k = 1:100
     
     [FJv,FJv_hat] = ComputeJac(PUApprox,Jac,u);
     
-    FJv_hat = blkdiag(FJv_hat{:});
+    %FJv_hat = blkdiag(FJv_hat{:});
     
     [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j),-z,[],1e-10,180);
     
