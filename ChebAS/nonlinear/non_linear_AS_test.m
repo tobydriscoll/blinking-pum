@@ -3,7 +3,7 @@ domain = [0 1;0 1];
 deg_in = [5 5];
 cheb_struct.domain = domain;
 cheb_struct.degs = [33 33];
-cheb_struct.cdegs = [9 9];
+cheb_struct.cdegs = [17 17];
 cheb_struct.split_flag = [true true];
 cheb_struct.cdeg_in = deg_in;
 cheb_struct.tol = 1e-4;
@@ -17,7 +17,7 @@ parms = [1000,-1,.5,0];
  Tree.split(2);
  Tree.split(1);
  Tree.split(2);
- %Tree.split(1);
+ Tree.split(2);
 % Tree.split(2);
  %Tree.split(1);
  %Tree.split(2);
@@ -26,12 +26,12 @@ parms = [1000,-1,.5,0];
 % Tree = Tree.split(2);
 % Tree.children{2} = Tree.children{2}.split(2);
 % Tree.children{2}.children{2} = Tree.children{2}.children{2}.split(2);
-% %Tree.children{2}.children{2}.children{2} = Tree.children{2}.children{2}.children{2}.split(2);
-% %Tree.children{2}.children{2}.children{2}.children{2} = Tree.children{2}.children{2}.children{2}.children{2}.split(2);
-% Tree.clean();
+% Tree.children{2}.children{2}.children{2} = Tree.children{2}.children{2}.children{2}.split(2);
+% Tree.children{2}.children{2}.children{2}.children{2} = Tree.children{2}.children{2}.children{2}.children{2}.split(2);
+Tree.clean();
 
 leaf_struct.domain = domain;
-leaf_struct.degs = [50 50];
+leaf_struct.degs = [33 33];
 leaf_struct.split_flag = [true true];
 leaf_struct.cdeg_in = deg_in;
 leaf_struct.tol = 1e-4;
@@ -70,44 +70,29 @@ setInterpMatrices(F,true);
 %init = zeros(length(F)*3,1);
 
 
- Re  = 800;
- steep = 0.08;
+ Re  = 1000;
+ steep = 0.1;
  f = @(u,leaf) CavityFlow(Re,u,leaf,steep);
  Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
 
  
-f = @(u,leaf) NonLinPoisson(u,leaf);
-Jac = @(u,leaf) NonLinPoissonJac(u,leaf);
 
-% init = [];
-% for i=1:length(F.leafArray)
-%     
-%     leaf = F.leafArray{i};
-%     
-%     degs = leaf.degs;
-%     [out_border_s,~,~,~,border] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);
-%     
-%     east_west = out_border_s{1} | out_border_s{2};
-%     south = out_border_s{3};
-%     north = out_border_s{4};
-%     
-%     u = zeros(degs);
-%     u(north) = 1;
-%     
-%     P = leaf.points();
-%     u = reshape(SideBumpFunc(P(:,2),[0 1],steep),degs);
-%     
-%     v = zeros(degs);
-%     w = zeros(degs);
-%     
-%     init = [init;u(:) v(:) w(:)];
-%     
-% end
-% 
-% init = init(:);
 
- F.Setvalues(@(x,y)x);
- init = F.Getvalues();
+
+F.sample(@(x,y)SideBumpFunc(y,[0 1],steep));
+u = F.Getvalues();
+Fy = diff(F,2,1);
+w = -(Fy.Getvalues());
+v = zeros(length(F),1);
+
+init = [u;v;w];
+
+%f = @(u,leaf) NonLinPoisson(u,leaf);
+%Jac = @(u,leaf) NonLinPoissonJac(u,leaf);
+
+
+%  F.Setvalues(@(x,y)x);
+%  init = F.Getvalues();
 %init = -ParResidual(zeros(length(F),1),F,f);
 %init = zeros(length(F),1);
 %init = rand(length(F),1);
@@ -118,25 +103,25 @@ Jac = @(u,leaf) NonLinPoissonJac(u,leaf);
 
 %
 % 
-tic;
-[ sol,normres1,normstep1,numgm1 ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-7 1e-7]);
-toc
+% tic;
+% [ sol,normres1,normstep1,numgm1 ] = PreconditionedNewtonForward(f,Jac,init,F,[1e-7 1e-7]);
+% toc
 
 %  tic;
 % [ sol,normres2,normstep2,numgm2,normresf2 ] = PreconditionedNewton(f,Jac,init,F,[1e-10 1e-10],[1e-10 1e-10],Leaf,G);
 % toc
 % 
 % tic;
-% [ sol,normres3,normstep3,numgm3 ] = PreconditionedNewtonTwoLevel(f,Jac,init,F,[1e-10 1e-10],[1e-10 1e-10],1e-3,2);
+% [ sol,normres3,normstep3,numgm3 ] = PreconditionedNewtonTwoLevel(f,Jac,init,F,[1e-10 1e-10],[1e-10 1e-10],1e-3,1);
 % toc
 
 %tic;
 %[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevelG(f,Jac,init,F,[1e-5 1e-5],1e-5,2);
 %toc
 
-%tic;
-%[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevel3(f,Jac,init,F,Leaf,G,[1e-5 1e-5],1e-5,2);
-%toc
+tic;
+[ sol,normres,normstep,numgm ] = PreconditionedNewtonTwoLevel3(f,Jac,init,F,Leaf,G,[1e-5 1e-5],1e-5,2);
+toc
 
 %ParPreconditionedTwoLevelG(init,F,f,Jac);
 
