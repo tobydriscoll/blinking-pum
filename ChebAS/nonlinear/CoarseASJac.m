@@ -1,17 +1,25 @@
+% CoarseASJac
+% This method computes the Jacobian used in the nonlinear solve of the
+% coarse correction in the SNK two level method.
+%
 % INPUT:     
-%      sol: given solution at patches
-%      sol2: second given solution 
 %      PUApprox: PUApprox approximation   
-%      jac_f(x,leaf): function that returns jacobian given local solution x and
-%      patch leaf.
+%
+%      Jac: Jacobian function Jac(x,p) for solution x and local
+%             approximation p. Jac(x,p) evaluates the residual on the domain
+%             of p.
+%
+%       sol: given solution at patches
+%
+%       sol2: second given solution (this can probably be removed)
 %
 % OUTPUT:
-%          Mat: sparse matrix used for Jacobian of Coarse correction.
+%          Mat: sparse matrix used for Jacobian of coarse correction.
 %
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [ Mat,Jacs ] = CoarseASJac(PUApprox,jac_f,sol,sol2)
+function [Mat] = CoarseASJac(PUApprox,jac_f,sol,sol2)
 %assume sol is the correct coarse length
 num_sols = length(sol)/length(PUApprox);
 

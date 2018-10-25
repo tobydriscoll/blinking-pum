@@ -1,5 +1,5 @@
-function [sol, it_hist, ierr, x_hist] = nsoldPAR_AS(x,evalf,Jac,PUApprox,tol,parms,tol2)
-% NSOLD  Newton-Armijo nonlinear solver
+function [sol, it_hist, ierr, x_hist] = nsoldSNK(x,evalf,Jac,PUApprox,tol,parms,tol2)
+% NSOLD  Newton-Armijo nonlinear solver for SNK method.
 %
 % Factor Jacobians with Gaussian Elimination
 %
@@ -13,9 +13,17 @@ function [sol, it_hist, ierr, x_hist] = nsoldPAR_AS(x,evalf,Jac,PUApprox,tol,par
 %
 % inputs:
 %        initial iterate = x
-%        function = f
+%        function evalf: nonlinear residual function evalf(x,p) for solution x and local
+%             approximation p. evalf(x,p) evaluates the residual on the domain
+%             of p.
+%
+%         Jacobian function Jac: Jacobian function Jac(x,p) for solution x and local
+%             approximation p. Jac(x,p) evaluates the residual on the domain
+%             of p.
 %        tol = [atol, rtol] relative/absolute
 %                           error tolerances
+%        tol2 = [atol, rtol] relative/absolute
+%                           error tolerances for local solves
 %        parms = [maxit, isham, rsham, jdiff, nl, nu]
 %        maxit = maxmium number of iterations
 %                default = 40

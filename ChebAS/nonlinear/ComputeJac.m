@@ -1,12 +1,22 @@
+% ComputeJac
+% Auxiliary function used to compute Jacobians needed in two level method. 
+%
 % INPUT:     
-%      sol: given solution at patches
-%      sol2: second given solution 
 %      PUApprox: PUApprox approximation   
-%      jac_f(x,leaf): function that returns jacobian given local solution x and
-%      patch leaf.
+%      
+%      evalF: nonlinear residual function f(x,p) for solution x and local
+%             approximation p. f(x,p) evaluates the residual on the domain
+%             of p.
+%
+%      jac_f: Jacobian function jac_f(x,p) for solution x and local
+%             approximation p. jac_f(x,p) evaluates the residual on the domain
+%             of p.
+%
+%      sol: given solution at patches.
 %
 % OUTPUT:
-%          Mat: sparse matrix used for Jacobian of Coarse correction.
+%          J, Jc: cell array of Jacobians on the fine and coarse grid
+%                 respectively.
 %
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with

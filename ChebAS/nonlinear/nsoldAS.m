@@ -1,5 +1,6 @@
 function [sol,l,u,p,jac, ierr, x_hist] = nsoldAS(x,f,jac_f,tol,parms)
-% NSOLD  Newton-Armijo nonlinear solver
+% NSOLDAS  Newton-Armijo nonlinear solver, where residual and Jacobian
+% functions are seperated.
 %
 % Factor Jacobians with Gaussian Elimination
 %
@@ -14,6 +15,7 @@ function [sol,l,u,p,jac, ierr, x_hist] = nsoldAS(x,f,jac_f,tol,parms)
 % inputs:
 %        initial iterate = x
 %        function = f
+%        Jacobian functions= jac_f
 %        tol = [atol, rtol] relative/absolute
 %                           error tolerances
 %        parms = [maxit, isham, rsham, jdiff, nl, nu]

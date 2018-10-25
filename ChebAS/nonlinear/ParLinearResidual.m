@@ -1,7 +1,11 @@
+% ParLinearResidual
+%
+% This method computes the residual the linearized PDE
+%
 % INPUT:     
 %      sol: given solution at patches
 %      PUApprox: PUApprox approximation   
-%      J: Jacobian function for leaf
+%      J: Jcell array of the local Jacobians.
 %
 % OUTPUT:
 %          z: residual of solution, identity at inner boundary of patches

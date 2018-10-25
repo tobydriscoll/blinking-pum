@@ -1,8 +1,18 @@
+% CoarseCorrect
+% This method solves for the nonlinear coarse correction used in the 2
+% level SNK method.
+% 
 % INPUT:
 %      PUApprox: PUApprox approximation
 %             v: given solution
-%         evalF: residual function for leaf
-%           Jac: jacobian function for leaf
+%
+%             f: nonlinear residual function f(x,p) for solution x and local
+%             approximation p. f(x,p) evaluates the residual on the domain
+%             of p.
+%
+%            Jac: Jacobian function Jac(x,p) for solution x and local
+%             approximation p. Jac(x,p) evaluates the residual on the domain
+%             of p.
 %
 % OUTPUT:
 %          r_er: correction of solution
@@ -11,7 +21,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [ r_er,J_v_pls_er ] = CoarseCorrect( PUApprox, v,evalf,jacf,j,tol_c)
+function [ r_er,J_v_pls_er ] = CoarseCorrect( PUApprox, v,f,Jac,j,tol_c)
 
 
 num_sols = length(v)/length(PUApprox);
@@ -21,7 +31,7 @@ for i=1:num_sols
     v_hat = [v_hat;PUApprox.Fine2Coarse(v((1:length(PUApprox)) + (i-1)*length(PUApprox)),j)];
 end
 
-r = ParResidual(v,PUApprox,evalf);
+r = ParResidual(v,PUApprox,f);
 
 r_hat = [];
 for i=1:num_sols
@@ -30,15 +40,10 @@ end
 
 PUApprox.Coarsen();
 
-r_hat = r_hat - ParResidual(v_hat,PUApprox,evalf);
+r_hat = r_hat - ParResidual(v_hat,PUApprox,f);
 
-params = [100,-1,.5,0];
-tol = [1e-5 1e-4];
-
-RES = @(er)Residual(er,v_hat,r_hat,PUApprox,evalf);
-JAC = @(er)CoarseASJac(PUApprox,jacf,er,v_hat);
-
-%[er,~,~,~,~] = nsoldAS(zeros(size(v_hat)),RES,JAC,[tol_c 10*tol_c],params);
+RES = @(er)Residual(er,v_hat,r_hat,PUApprox,f);
+JAC = @(er)CoarseASJac(PUApprox,Jac,er,v_hat);
 
 options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',600,'FunctionTolerance',tol_c,'Display','iter');
 er = fsolve(@(er)sol_and_jac(@(er)RES(er),@(er)JAC(er),er),zeros(size(v_hat)),options);

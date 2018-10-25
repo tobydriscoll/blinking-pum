@@ -1,3 +1,6 @@
+% ASPreconditionerMultSols
+% 
+% Alternating Schwarz linear preconditioner.
 % INPUT:
 %      PUApprox: PUApprox approximation        
 %         U,L,p: L U decomposition for jacobian.

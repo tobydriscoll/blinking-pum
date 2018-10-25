@@ -1,7 +1,10 @@
+% JacobianFowardLU
+% Matrix free evaluation for the Jacobian of the SNK method.
+%
 % INPUT:
 %      PUApprox: PUApprox approximation        
-%         J: cell array of local Jacobians
-%         x: solution
+%         L,U,p: cell array of the LU decomposition of the local Jacobians. 
+%             x: solution
 %
 % NOTE x is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with

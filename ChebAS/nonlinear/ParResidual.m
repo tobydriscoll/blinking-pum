@@ -1,7 +1,15 @@
+% ParResidual
+% This method computes the residual of a PDE, as well as the boundary
+% differences along the interface boundaries.
+%
 % INPUT:     
-%      sol: given solution at patches
-%      PUApprox: PUApprox approximation   
-%      evalF: residual function which returns Jacobian
+%           sol: given solution at patches
+%
+%      PUApprox: PUApprox approximation
+%
+%             f: nonlinear residual function f(x,p) for solution x and local
+%             approximation p. f(x,p) evaluates the residual on the domain
+%             of p.
 %
 % OUTPUT:
 %          z: residual of solution, identity at inner boundary of patches
@@ -9,7 +17,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z] = ParResidual(sol,PUApprox,evalF)
+function [z] = ParResidual(sol,PUApprox,f)
 
 %PUApprox.sample(sol);
 
@@ -47,7 +55,7 @@ end
 for k=1:length(PUApprox.leafArray)
     
     %Assume z is of the form [u1 u2 ... un]
-    [z{k}] = local_residual(PUApprox.leafArray{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols);
+    [z{k}] = local_residual(PUApprox.leafArray{k},sol_loc{k},in_border{k},diff{k},f,num_sols);
     
 end
 

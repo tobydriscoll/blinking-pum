@@ -1,16 +1,29 @@
+% LinearCoarseCorrect
+% This methods computes the linear coarse correction for the two level SNK
+% method.
+%
 % INPUT:
 %      PUApprox: PUApprox approximation        
-%            w: solution to be applied to Jacobian
-%               patches of f(v+e)
-%      Jac_hat: f_hat'(v+e)-T_hat
-%        T_hat: T_hat
-%          FJv: cell array of f'(v_j)
-%       FJ_hat: sparse matrix of f_hat'(v_hat)
+%            w: the solution.
+%
+%      Jac_hat: Jacobian used for the nonlinear coarse correction.
+%
+%          FJv: cell array of local jacobians on fine grid.
+%
+%       FJ_hat: cell array of local jacobians on the coarse grid.
+%
+%            j: difference by power of two between coarse and fine grids.
+%               Grids are chosen from 2,5,9,33... . For example if we
+%               have coarse and fine grids of 9,33 (in each dimension)
+%               then j=2. (This should just be apart of PUApprox).
+%
+% OUTPUT:
+%            y: linear coarse correction.
 %
 % NOTE x is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
-function [ y ] = LinearCoarseCorrect( PUApprox, w,Jac_hat,T_hat,FJv,FJv_hat,j)
+function [ y ] = LinearCoarseCorrect( PUApprox, w,Jac_hat,FJv,FJv_hat,j)
 
 
 num_sols = length(w)/length(PUApprox);
