@@ -136,27 +136,7 @@ options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',6
 
 c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),init,options);
 
-%options = optimoptions(@fsolve,'MaxIterations',600,'FunctionTolerance',tol_n(1),'Display','iter');
-%c = fsolve(@residual,sol_k(:),options);
-
-%c = c(:,end);
-
-%[out_border_s,~,~,~] = FindBoundaryIndex2DSides(approx.degs,approx.domain,approx.outerbox);
-
-%north = out_border_s{4};
-
-%params = [200,-1,.5,0];
-%tol = [1e-3 1e-2];
-
-%c = nsoldAS(init,@residual,@jac_fun,tol_n,params);
-
-%norm_c = norm(residual(c));
-
-%R = residual(c);
-
 J = jac_fun(c);
-
-%AJ = jacobi(@residual,c);
 
 [l,u,p] = lu(J,'vector');
 

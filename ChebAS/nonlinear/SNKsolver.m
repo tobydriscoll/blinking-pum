@@ -1,9 +1,9 @@
 function [ u,normres,normstep,numgm,normresf ] = SNKsolver(f,Jac,init,PUApprox,tol_n)
 % SNKsolver
-% The Schwarz Newton Krylov (SNK) solves nonlinear PDEs by nonlinear
-% preconditioning the PDE with the alternating Schwarz process. With this
-% method, the PDE is solved for overlaping subdomains with independent
-% grids.
+% The Schwarz Newton Krylov  method (SNK) solves nonlinear PDEs by nonlinear
+% preconditioning Newton's method via a alternating Schwarz process.
+% With this method, the PDE is solved for overlaping subdomains with 
+% independent grids.
 %
 %
 % INPUT:     

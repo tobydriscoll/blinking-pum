@@ -1,4 +1,4 @@
-function [ F ] = Burgers(u,Approx,nu)
+function [ F ] = Burgers(u,Approx,nu,bound_f)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
     degs = Approx.degs;
@@ -32,7 +32,7 @@ function [ F ] = Burgers(u,Approx,nu)
 %     F(sides{3}) = u(sides{3})-south(P(sides{3},1));
 %     F(sides{4}) = u(sides{4})-north(P(sides{4},1));
     
-    F(border) = u(border) - atan((P(border,1)+P(border,2)-1)/(2*nu));
+    F(border) = u(border) - bound_f(P(border,1),P(border,2));
     
     F = F(:);
 end
