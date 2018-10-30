@@ -5,15 +5,15 @@ cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.tol = 1e-4;
 
-% %Test with 16 patches
-Tree = ChebPatch(cheb_struct);
-Tree = Tree.split(1);
-Tree.split(2);
-Tree.split(1);
-Tree.split(2);
-Tree.split(1);
-Tree.split(2);
-
+%Test with 16 patches
+ Tree = ChebPatch(cheb_struct);
+ Tree = Tree.split(1);
+ Tree.split(2);
+ Tree.split(1);
+ Tree.split(2);
+ Tree.split(1);
+ Tree.split(2);
+ 
 F = PUchebfun(Tree);
 F.sample(@(x,y) zeros(size(x)));
 
@@ -33,23 +33,23 @@ setInterpMatrices(F,true);
 % init = [u;v;w];
 
 bound_f = @(x,y) atan((cos(pi*3/16)*x+sin(pi*3/16)*y)*1);
-nu = 1/5000;
+nu = 1/2;
 f = @(u,leaf) Burgers(u,leaf,nu,bound_f);
 Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
 F.Setvalues(bound_f);
 init = F.Getvalues();
 
-tic;
-[ sol,normres1,normstep1,numgm1 ] = NSKsolver(f,Jac,init,F,[1e-10 1e-10]);
-toc
-
- tic;
-[ sol,normres2,normstep2,numgm2,normresf2 ] = SNKsolver(f,Jac,init,F,[1e-10 1e-10]);
-toc
-
 % tic;
-% [ sol,normres3,normstep3,numgm3 ] = SNK2levelsolver(f,Jac,init,F,[1e-10 1e-10],1e-3,2);
+% [ sol,normres1,normstep1,numgm1 ] = NSKsolver(f,Jac,init,F,[1e-10 1e-10]);
 % toc
+% 
+%  tic;
+% [ sol,normres2,normstep2,numgm2,normresf2 ] = SNKsolver(f,Jac,init,F,[1e-10 1e-10]);
+% toc
+
+tic;
+[ sol,normres3,normstep3,numgm3 ] = SNK2levelsolver(f,Jac,init,F,[1e-10 1e-10],1e-3,2);
+toc
 
 solr = reshape(sol,length(F),1);
 F.sample(solr(:,1));
