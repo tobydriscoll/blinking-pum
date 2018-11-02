@@ -6,16 +6,19 @@ cheb_struct.split_flag = [true true];
 cheb_struct.tol = 1e-4;
 
 %Test with 16 patches
- Tree = ChebPatch(cheb_struct);
- Tree = Tree.split(1);
- Tree.split(2);
- Tree.split(1);
- Tree.split(2);
- Tree.split(1);
- Tree.split(2);
- 
-F = PUchebfun(Tree);
-F.sample(@(x,y) zeros(size(x)));
+%  Tree = ChebPatch(cheb_struct);
+%  Tree = Tree.split(1);
+%  Tree.split(2);
+%  Tree.split(1);
+%  Tree.split(2);
+%  Tree.split(1);
+%  Tree.split(2);
+%  
+% F = PUchebfun(Tree);
+% F.sample(@(x,y) zeros(size(x)));
+
+F = PUchebfun(@(x,y)atan((x+y)*5),[-1 1;-1 1],'Degree',[33 33],'tol',1e-7);
+F.reset;
 
 setInterpMatrices(F,true);
 
@@ -42,6 +45,7 @@ init = F.Getvalues();
 % tic;
 % [ sol,normres1,normstep1,numgm1 ] = NSKsolver(f,Jac,init,F,[1e-10 1e-10]);
 % toc
+
 % 
 %  tic;
 % [ sol,normres2,normstep2,numgm2,normresf2 ] = SNKsolver(f,Jac,init,F,[1e-10 1e-10]);

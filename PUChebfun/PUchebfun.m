@@ -187,6 +187,13 @@ classdef PUchebfun < PUfun
             subTree = PUchebfun(subTreeRoot);
         end
         
+        % Coarsen(obj)
+        % This method Coarsens each of the patches
+        function reset(obj)
+            obj.ChebRoot.reset();
+            obj.ChebRoot.clean();
+        end
+        
         % MultTree = mtimes(obj,Tree2)
         % This method multiplies obj and Tree2
         %Input:
