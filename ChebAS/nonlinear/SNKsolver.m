@@ -61,8 +61,9 @@ for k = 1:20
     
     if normres(k) < stop_tol, break, end
 
-    tol_g = 1e-10;
-    
+   % tol_g = 1e-10;
+   tol_g = min(max(1e-10,1e-10/normres(k)*norm(u)),1e-9);
+   tol_g 
     %solve the newton step
     [s,~,~,~,gmhist] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-z,[],tol_g,200);
     

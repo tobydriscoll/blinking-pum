@@ -52,14 +52,8 @@ for k = 1:20
     
     if normres(k) < stop_tol, break, end
     
-    % find overall Newton step by GMRES
-    tol_g = min(0.1,norm(u)/norm(z)*1e-10);
     
-    if 0 == tol_g
-        tol_g = 1e-10;
-    end
-    
-    tol_g = 1e-10;
+    tol_g = min(max(1e-10,1e-10/normres(k)*norm(u)),1e-9);
     
     [J,L,U,p] = ComputeJacs(u,PUApprox,Jac);  
     
