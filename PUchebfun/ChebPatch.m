@@ -34,8 +34,6 @@ classdef ChebPatch<LeafPatch
         ClinOp
         Binterp
         CBinterp
-        orig_degs
-        orig_cdegs
         orig_deg_in
         local_max
         L
@@ -66,8 +64,6 @@ classdef ChebPatch<LeafPatch
         function obj = ChebPatch(var_struct)
             %Call superclass constructor
             obj = obj@LeafPatch(var_struct);
-            obj.orig_degs = obj.degs;
-            obj.orig_cdegs = obj.cdegs;
             obj.is_refined = false;
             obj.is_geometric_refined = true;
         end
@@ -82,7 +78,7 @@ classdef ChebPatch<LeafPatch
             p_struct.cdegs = obj.cdegs;
             p_struct.degs = obj.degs;
             p_struct.orig_degs = obj.orig_degs;
-            p_struct.orig_cdegs = obj.cdegs;
+            p_struct.orig_cdegs = obj.orig_cdegs;
         end
         
         % Sets the values to be used for interpolation

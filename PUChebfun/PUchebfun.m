@@ -80,11 +80,13 @@ classdef PUchebfun < PUfun
                             obj.grid_opt = args{2};
                         elseif strcmpi(args{1}, 'Degree')
                             obj.degs = args{2};
+                            cheb_struct.orig_degs = args{2};
                             cheb_struct.degs = args{2};
                         elseif strcmpi(args{1}, 'tol')
                             obj.tol = args{2};
                             cheb_struct.tol = args{2};
                         elseif strcmpi(args{1}, 'CoarseDegree')
+                            cheb_struct.orig_cdegs = args{2};
                             cheb_struct.cdegs = args{2};
                         else
                             error(strcat(args{1},' is not a valid parameter.'));

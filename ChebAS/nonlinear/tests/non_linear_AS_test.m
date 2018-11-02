@@ -18,7 +18,7 @@ cheb_struct.tol = 1e-4;
 % F.sample(@(x,y) zeros(size(x)));
 
 %F = PUchebfun(@(x,y)atan((x+y)*5),[-1 1;-1 1],'Degree',[33 33],'tol',1e-7);
-F = PUchebfun(@(x,y)SideBumpFunc(y,[0 1],0.1),[0 1;0 1],'Degree',[33 33],'tol',1e-5);
+F = PUchebfun(@(x,y)SideBumpFunc(y,[0 1],0.1),[0 1;0 1],'Degree',[65 65],'CoarseDegree',[17 17],'tol',1e-5);
 F.reset;
 
 setInterpMatrices(F,true);
@@ -43,18 +43,18 @@ init = [u;v;w];
 % F.Setvalues(bound_f);
 % init = F.Getvalues();
 
- tic;
- [ sol,normres1,normstep1,numgm1 ] = NSKsolver(f,Jac,init,F,[1e-10 1e-10]);
- toc
+%  tic;
+%  [ sol,normres1,normstep1,numgm1 ] = NSKsolver(f,Jac,init,F,[1e-10 1e-10]);
+%  toc
 
 % 
 %   tic;
 %  [ sol,normres2,normstep2,numgm2,normresf2 ] = SNKsolver(f,Jac,init,F,[1e-10 1e-10]);
 % toc
 
-%tic;
-%[ sol,normres3,normstep3,numgm3 ] = SNK2levelsolver(f,Jac,init,F,[1e-10 1e-10],1e-3,2);
-%toc
+tic;
+[ sol,normres3,normstep3,numgm3 ] = SNK2levelsolver(f,Jac,init,F,[1e-10 1e-10],1e-3,2);
+toc
 
 solr = reshape(sol,length(F),3);
 F.sample(solr(:,1));

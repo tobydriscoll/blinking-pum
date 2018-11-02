@@ -22,7 +22,9 @@ classdef LeafPatch<Patch
         is_interp
         % deg_in %index for the standard degrees
         degs %array of degrees along the dimensions
-        cdegs
+        cdegs %coarse degrees
+        orig_degs %original max degrees
+        orig_cdegs %coarse max degrees
     end
     
     properties (Constant)
@@ -47,9 +49,15 @@ classdef LeafPatch<Patch
             obj.split_flag = true(obj.dim,1);
             obj.degs  = zeros(1,obj.dim);
             obj.cdegs  = zeros(1,obj.dim);
+            obj.orig_degs  = zeros(1,obj.dim);
+            obj.orig_cdegs  = zeros(1,obj.dim);
+            
             obj.tol = 1e-12;
             obj.degs(:) = 128;
             obj.cdegs(:) = 9;
+            
+            obj.orig_degs(:) = 128;
+            obj.orig_cdegs(:) = 9;
             
             if isfield(var_struct, 'outerbox')
                 obj.outerbox = var_struct.outerbox;
@@ -67,6 +75,18 @@ classdef LeafPatch<Patch
                 obj.degs = var_struct.degs;
             end
             
+            if isfield(var_struct, 'cdegs')
+                obj.cdegs = var_struct.cdegs;
+            end
+            
+            if isfield(var_struct, 'orig_degs')
+                obj.orig_degs = var_struct.orig_degs;
+            end
+            
+            if isfield(var_struct, 'orig_cdegs')
+                obj.orig_cdegs = var_struct.orig_cdegs;
+            end
+            
             if isfield(var_struct, 'split_flag')
                 obj.split_flag = var_struct.split_flag;
             end
@@ -75,9 +95,8 @@ classdef LeafPatch<Patch
                 obj.tol = var_struct.tol;
             end
             
-            if isfield(var_struct, 'cdegs')
-                obj.cdegs = var_struct.cdegs;
-            end
+
+            
             
             
             obj.is_geometric_refined = true; %square is always geometrically refined
