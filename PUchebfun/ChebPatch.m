@@ -34,11 +34,12 @@ classdef ChebPatch<LeafPatch
         ClinOp
         Binterp
         CBinterp
-        orig_deg_in
         local_max
+        orig_deg_in
         L
         U
         p
+        split_all = false
     end
     
     properties (Access = protected)
@@ -66,6 +67,11 @@ classdef ChebPatch<LeafPatch
             obj = obj@LeafPatch(var_struct);
             obj.is_refined = false;
             obj.is_geometric_refined = true;
+            
+            if isfield(var_struct, 'split_all')
+                obj.split_all = var_struct.split_all;
+            end
+            
         end
             
         %Returns structure of parameters
@@ -79,6 +85,7 @@ classdef ChebPatch<LeafPatch
             p_struct.degs = obj.degs;
             p_struct.orig_degs = obj.orig_degs;
             p_struct.orig_cdegs = obj.orig_cdegs;
+            p_struct.split_all = obj.split_all;
         end
         
         % Sets the values to be used for interpolation
@@ -163,7 +170,7 @@ classdef ChebPatch<LeafPatch
             loc_tol = obj.tol^(7/8);
             
             cutoff = zeros(obj.dim,1);
-            isHappy = zeros(obj.dim,1);
+            isHappy = false(obj.dim,1);
             
             
             if obj.dim==1
@@ -187,8 +194,8 @@ classdef ChebPatch<LeafPatch
                         fCol = chebtech2({[],colChebtech});
                         hscale = diff(obj.domain(k,:));
                         
-                        p = chebfunpref;
-                        p.chebfuneps = loc_tol;
+                        %p = chebfunpref;
+                        %p.chebfuneps = loc_tol;
                         
                         tol = loc_tol*max(vscale./obj.local_max,hscale);
                         
@@ -242,7 +249,7 @@ classdef ChebPatch<LeafPatch
                 Child = obj;
                 %Go through and split in each unresolved direction
                 for k=1:obj.dim
-                    if obj.split_flag(k)
+                    if obj.split_flag(k) || obj.split_all
                         if Child.is_leaf
                             Child = split(obj,k,set_vals);
                         else
