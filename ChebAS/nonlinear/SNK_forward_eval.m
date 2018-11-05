@@ -132,7 +132,7 @@ function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols
 
 init = zeros(numel(sol_k(:)),1);
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',600,'FunctionTolerance',tol_n(1),'Display','iter');
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',50,'FunctionTolerance',tol_n(1),'Display','iter');
 
 c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),init,options);
 
