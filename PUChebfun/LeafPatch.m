@@ -570,10 +570,18 @@ classdef LeafPatch<Patch
                 
                 vals = reshape(vals,obj.degs);
                 scoeffs = zeros(obj.swap_degs);
-                scoeffs(1:obj.degs(1),1:obj.degs(2)) = chebfun2.vals2coeffs(vals);
-                rvals = chebfun2.coeffs2vals(scoeffs);
+
+                U = chebtech2.vals2coeffs( vals );  
+                U = chebtech2.vals2coeffs( U.' ).'; 
+                
+                scoeffs(1:obj.degs(1),1:obj.degs(2)) = U;
+                
+                
+                rvals = chebtech2.vals2coeffs( scoeffs );
+                rvals = chebtech2.vals2coeffs( rvals.' ).'; 
                 
                 rvals = rvals(:);
+                
                 %obj.degs = obj.swap_degs;
                 
                 %grid = obj.leafGrids();

@@ -57,7 +57,7 @@ for k = 1:20
     
     [J,L,U,p] = ComputeJacs(u,PUApprox,Jac);  
     
-    [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-z,[],tol_g,300,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
+    [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-z,[],tol_g,900,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     
