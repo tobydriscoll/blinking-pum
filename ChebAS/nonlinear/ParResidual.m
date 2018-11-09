@@ -56,7 +56,7 @@ for k=1:length(PUApprox.leafArray)
     
     %Assume z is of the form [u1 u2 ... un]
     [z{k}] = local_residual(PUApprox.leafArray{k},sol_loc{k},in_border{k},diff{k},f,num_sols);
-    
+    z{k} = reshape(z{k},length(PUApprox.leafArray{k}),num_sols);
 end
 
 z = cell2mat(z');
