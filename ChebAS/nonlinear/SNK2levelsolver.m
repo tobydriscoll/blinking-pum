@@ -65,7 +65,11 @@ for k = 1:100
     
     [FJv,FJv_hat] = ComputeJac(PUApprox,Jac,u);
     
-    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,FJv,FJv_hat,w,j),-z,[],1e-10,180);
+    [Lc,Uc,Pc,Qc] = lu(J_v_pls_er);
+
+    
+    
+    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j),-z,[],1e-10,180);
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     

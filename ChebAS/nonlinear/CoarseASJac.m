@@ -19,14 +19,13 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [Mat] = CoarseASJac(PUApprox,jac_f,sol,sol2)
+function [Mat] = CoarseASJac(PUApprox,jac_f,sol)
 %assume sol is the correct coarse length
 num_sols = length(sol)/length(PUApprox);
 
 step = zeros(length(PUApprox.leafArray),1);
 
 sol = reshape(sol,length(PUApprox),num_sols);
-sol2 = reshape(sol2,length(PUApprox),num_sols);
 
 %Figure out starting index for each patch
 for k=2:length(PUApprox.leafArray)
@@ -42,7 +41,6 @@ for k=1:length(PUApprox.leafArray)
     degs = PUApprox.leafArray{k}.cdegs;
     
     sol_loc = sol(step(k)+(1:prod(degs)),:);
-    sol2_loc = sol2(step(k)+(1:prod(degs)),:);
     
     %Figure out indicies of boundary and interface points
     [~,~,in_border,~]  = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
@@ -63,7 +61,7 @@ for k=1:length(PUApprox.leafArray)
         zz = [zz;-zzb];
     end
      
-    J = jac_f(sol_loc(:)+sol2_loc(:),PUApprox.leafArray{k});
+    J = jac_f(sol_loc(:),PUApprox.leafArray{k});
     
     sol_length = prod(degs);
     

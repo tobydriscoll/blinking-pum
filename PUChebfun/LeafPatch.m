@@ -577,8 +577,8 @@ classdef LeafPatch<Patch
                 scoeffs(1:obj.degs(1),1:obj.degs(2)) = U;
                 
                 
-                rvals = chebtech2.vals2coeffs( scoeffs );
-                rvals = chebtech2.vals2coeffs( rvals.' ).'; 
+                rvals = chebtech2.coeffs2vals( scoeffs );
+                rvals = chebtech2.coeffs2vals( rvals.' ).'; 
                 
                 rvals = rvals(:);
                 

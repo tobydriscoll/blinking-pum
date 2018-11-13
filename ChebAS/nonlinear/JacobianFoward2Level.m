@@ -6,7 +6,8 @@
 %      PUApprox: PUApprox approximation        
 %        L,U,p: cellarray of LU matrices and permutation vector for
 %               patches of f(v+e)
-%      Jac_hat: Jacobian used for the nonlinear coarse correction
+% Lc, Uc Pc Qc: LU decomposition with row, column permutation matrices of
+%                jacoabian used for coarse solve
 %          FJv: cell array of local jacobians on fine grid
 %       FJ_hat: cell array of local jacobians on the coarse grid
 %            w: solution
@@ -18,9 +19,9 @@
 % NOTE x is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
-function [ y ] = JacobianFoward2Level(PUApprox,L,U,p,Jac_hat,FJv,FJv_hat,w,j)
+function [ y ] = JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j)
 
-c_w = LinearCoarseCorrect( PUApprox, w,Jac_hat,FJv,FJv_hat,j);
+c_w = LinearCoarseCorrect( PUApprox, w,Lc,Uc,Pc,Qc,FJv,FJv_hat,j);
 
 y = c_w + JacobianFowardLU(PUApprox,L,U,p,w+c_w);
 
