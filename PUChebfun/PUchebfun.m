@@ -258,14 +258,52 @@ classdef PUchebfun < PUfun
         end
         
         function cvals = Fine2Coarse(obj,vals,k)
+            
             if 2==nargin
                 k=0;
             end
-            cvals = obj.ChebRoot.Fine2Coarse(vals,k);
+            
+            cvals = cell(length(obj.leafArray),1);
+
+            step = zeros(length(obj.leafArray),1);
+            
+            %Figure out starting index for each patch
+            for j=2:length(obj.leafArray)
+                step(j) = step(j-1) + length(obj.leafArray{j-1});
+            end
+
+
+            for i=1:length(obj.leafArray)
+                sub_ind = (1:length(obj.leafArray{i}))+step(i);
+                cvals{i} = obj.leafArray{i}.Fine2Coarse(vals(sub_ind),k);
+            end
+            
+            cvals = cell2mat(cvals);
+            
         end
         
         function rvals = Coarse2Fine(obj,vals)
-            rvals = obj.ChebRoot.Coarse2Fine(vals);
+            
+           % rvals = obj.ChebRoot.Coarse2Fine(vals);
+            
+                        
+            rvals = cell(length(obj.leafArray),1);
+
+            step = zeros(length(obj.leafArray),1);
+            
+            %Figure out starting index for each patch
+            for j=2:length(obj.leafArray)
+                step(j) = step(j-1) + length(obj.leafArray{j-1});
+            end
+
+
+            for i=1:length(obj.leafArray)
+                sub_ind = (1:length(obj.leafArray{i}))+step(i);
+                rvals{i} = obj.leafArray{i}.Coarse2Fine(vals(sub_ind));
+            end
+            
+            rvals = cell2mat(rvals);
+            
         end
         
         % Refines(obj)

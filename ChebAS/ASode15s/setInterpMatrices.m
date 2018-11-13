@@ -30,6 +30,18 @@ end
 
 if coarse_too
     
+    
+    for k=1:length(PUfun.leafArray)
+        
+        Grid = PUfun.leafArray{k}.leafGrids();
+        
+        PUfun.leafArray{k}.Coarsen();
+        
+        PUfun.leafArray{k}.C2FinterpMat = PUfun.leafArray{k}.interpMatrixGrid(Grid);  
+        
+        PUfun.leafArray{k}.Refine();
+    end
+    
     PUfun.Coarsen();
    
     for k=1:length(PUfun.leafArray)
@@ -40,11 +52,15 @@ if coarse_too
                 degs = PUfun.leafArray{k}.degs;
                 [~,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUfun.leafArray{k}.domain,PUfun.leafArray{k}.outerbox);
                 PUfun.leafArray{k}.CBinterp = PUfun.ChebRoot.interpSparseMatrixZone(points(in_border,:));
+                
     end
+    
     
     end
 
     PUfun.Refine();
+    
+    
 end
 
 

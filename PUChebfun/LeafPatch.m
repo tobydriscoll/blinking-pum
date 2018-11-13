@@ -25,6 +25,7 @@ classdef LeafPatch<Patch
         cdegs %coarse degrees
         orig_degs %original max degrees
         orig_cdegs %coarse max degrees
+        C2FinterpMat %Coarse to fine interpolation matrix
     end
     
     properties (Constant)
@@ -447,9 +448,9 @@ classdef LeafPatch<Patch
             for k=1:obj.dim
                 %Shift the points to the right domain
                 points = obj.invf(X{k},obj.domain(k,:));
-                x = chebpts(obj.degs(k));
-                w = chebtech2.barywts(obj.degs(k));
-                f = bary(points,eye(obj.degs(k)),x,w);
+                %x = chebpts(obj.degs(k));
+               % w = chebtech2.barywts(obj.degs(k));
+                f = bary(points,eye(obj.degs(k)));
                 
                 if length(X{k})==1
                     f = f.';
@@ -487,13 +488,13 @@ classdef LeafPatch<Patch
                 
                 obj.swap_degs = obj.degs;
                 
-                obj.degs = obj.cdegs;
-                
-                grid = obj.leafGrids();
-                
-                obj.degs = obj.swap_degs;
-                
-                obj.values = obj.evalfBaryGrid(grid,obj.values);
+%                 obj.degs = obj.cdegs;
+%                 
+%                 grid = obj.leafGrids();
+%                 
+%                 obj.degs = obj.swap_degs;
+%                 
+%                 obj.values = obj.evalfBaryGrid(grid,obj.values);
                 
                 obj.degs = obj.cdegs;
                 
@@ -550,13 +551,13 @@ classdef LeafPatch<Patch
                 
                 obj.iscoarse = false;
                 
-                obj.degs = obj.swap_degs;
-                
-                grid = obj.leafGrids();
-                
-                obj.degs = obj.cdegs;
-                
-                obj.values = obj.evalfBaryGrid(grid,obj.values);
+%                 obj.degs = obj.swap_degs;
+%                 
+%                 grid = obj.leafGrids();
+%                 
+%                 obj.degs = obj.cdegs;
+%                 
+%                 obj.values = obj.evalfBaryGrid(grid,obj.values);
                 
                 obj.degs = obj.swap_degs;
                 
@@ -567,30 +568,33 @@ classdef LeafPatch<Patch
         function rvals = Coarse2Fine(obj,vals)
             
             if obj.iscoarse
+                 rvals = obj.C2FinterpMat*vals;
+                 
+%                 vals = reshape(vals,obj.degs);
+%                 scoeffs = zeros(obj.swap_degs);
+% 
+%                 U = chebtech2.vals2coeffs( vals );  
+%                 U = chebtech2.vals2coeffs( U.' ).'; 
+%                 
+%                 scoeffs(1:obj.degs(1),1:obj.degs(2)) = U;
+%                 
+%                 
+%                 rvals = chebtech2.coeffs2vals( scoeffs );
+%                 rvals = chebtech2.coeffs2vals( rvals.' ).'; 
+%                 
+%                 rvals = rvals(:);
                 
-                vals = reshape(vals,obj.degs);
-                scoeffs = zeros(obj.swap_degs);
 
-                U = chebtech2.vals2coeffs( vals );  
-                U = chebtech2.vals2coeffs( U.' ).'; 
                 
-                scoeffs(1:obj.degs(1),1:obj.degs(2)) = U;
-                
-                
-                rvals = chebtech2.coeffs2vals( scoeffs );
-                rvals = chebtech2.coeffs2vals( rvals.' ).'; 
-                
-                rvals = rvals(:);
-                
-                %obj.degs = obj.swap_degs;
-                
-                %grid = obj.leafGrids();
-                
-                %obj.degs = obj.cdegs;
-                
-                %rvals = obj.evalfBaryGrid(grid,reshape(vals,obj.degs));
-                
-                %rvals = rvals(:);
+%                 obj.degs = obj.swap_degs;
+%                 
+%                 grid = obj.leafGrids();
+%                 
+%                 obj.degs = obj.cdegs;
+%                 
+%                 rvals = obj.evalfBaryGrid(grid,reshape(vals,obj.degs));
+%                 
+%                 rvals = rvals(:);
             end
             
         end
