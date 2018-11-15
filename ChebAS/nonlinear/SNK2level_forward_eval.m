@@ -44,8 +44,7 @@ function [z,l,u,p,J_v_pls_er] = SNK2level_forward_eval(sol,PUApprox,evalF,Jac,j,
 
 [z,l,u,p] = SNK_forward_eval(sol+c_sol,PUApprox,evalF,Jac,tol);
 
-z  = c_sol + z;
-
+%z  = c_sol + z;
 end
 
 

@@ -69,7 +69,7 @@ for k = 1:100
 
     tol_g = min(max(1e-10,1e-10/normres(k)*norm(u)),1e-9);
     
-    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j),-z,[],tol_g,180);
+    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j),-z,[],tol_g,600);
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     

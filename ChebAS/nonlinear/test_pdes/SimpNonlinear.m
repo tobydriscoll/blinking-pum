@@ -5,7 +5,7 @@ function [fv,J] = SimpNonlinear(u,leaf)
     
     degs = leaf.degs;
     
-    [~,out_border,in_border,~] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);    
+    [~,~,~,~,border] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);    
     
     Dx = diffmat(degs(1),1,leaf.domain(1,:));
     Dy = diffmat(degs(2),1,leaf.domain(2,:));
@@ -13,18 +13,14 @@ function [fv,J] = SimpNonlinear(u,leaf)
     u  = reshape(u,leaf.degs);
     ux = Dx*u; uxx = Dx*ux; uy = u*Dy'; uyy = uy*Dy';
     
-    [X,Y] = ndgrid(leaf.leafGrids{:});
-    
-    fv = 0.2*(uxx+uyy)-u.^2-(4-4*(X.^2+Y.^2).^2)./(1+(X.^2+Y.^2).^2).^2+bound(X,Y).^2;
+    fv = 0.2*(uxx+uyy)-u.^2;
     
     fv = fv(:);
     points = leaf.points;
     x = points(:,1);
     y = points(:,2);
     
-    fv(out_border) = u(out_border) - bound(x(out_border),y(out_border));
-    
-    fv(in_border) = u(in_border);
+    fv(border) = u(border) - bound(x(border),y(border));
     
 end
 
