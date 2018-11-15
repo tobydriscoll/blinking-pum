@@ -568,22 +568,22 @@ classdef LeafPatch<Patch
         function rvals = Coarse2Fine(obj,vals)
             
             if obj.iscoarse
-                 rvals = obj.C2FinterpMat*vals;
+%                 rvals = obj.C2FinterpMat*vals;
                  
-%                 vals = reshape(vals,obj.degs);
-%                 scoeffs = zeros(obj.swap_degs);
-% 
-%                 U = chebtech2.vals2coeffs( vals );  
-%                 U = chebtech2.vals2coeffs( U.' ).'; 
-%                 
-%                 scoeffs(1:obj.degs(1),1:obj.degs(2)) = U;
-%                 
-%                 
-%                 rvals = chebtech2.coeffs2vals( scoeffs );
-%                 rvals = chebtech2.coeffs2vals( rvals.' ).'; 
-%                 
-%                 rvals = rvals(:);
+                vals = reshape(vals,obj.degs);
+                scoeffs = zeros(obj.swap_degs);
+
+                U = chebtech2.vals2coeffs( vals );  
+                U = chebtech2.vals2coeffs( U.' ).'; 
                 
+                scoeffs(1:obj.degs(1),1:obj.degs(2)) = U;
+                
+                
+                rvals = chebtech2.coeffs2vals( scoeffs );
+                rvals = chebtech2.coeffs2vals( rvals.' ).'; 
+                
+                rvals = rvals(:);
+%                 
 
                 
 %                 obj.degs = obj.swap_degs;
