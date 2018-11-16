@@ -25,6 +25,7 @@
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
 function [ y ] = LinearCoarseCorrect( PUApprox, w,Lc,Uc,Pc,Qc,FJv,FJv_hat,j)
+%function [ y ] = LinearCoarseCorrect( PUApprox, w,Jc,FJv,FJv_hat,j)
 
 
 num_sols = length(w)/length(PUApprox);
@@ -48,6 +49,8 @@ PUApprox.Coarsen();
 b_hat = ParLinearResidual(w_hat,PUApprox,FJv_hat)-r_hat;
 
 y_hat = Qc*(Uc\(Lc\(Pc*b_hat)))-w_hat;
+
+%y_hat = Jc\b_hat-w_hat;
 
 y = [];
 

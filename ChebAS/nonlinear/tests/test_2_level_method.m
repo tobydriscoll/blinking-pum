@@ -20,18 +20,18 @@ F.sample(@(x,y) zeros(size(x)));
 
 setInterpMatrices(F,true);
 
-f = @ SimpNonlinear;
-Jac = @ SimpNonlinearJac;
-F.sample(bound);
-init = F.Getvalues();
-
-
-% nu = 1/100;
-% f = @(u,leaf) Burgers(u,leaf,nu,bound_f);
-% Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
-% bound_f = @(x,y) atan((cos(pi*3/16)*x+sin(pi*3/16)*y)*1);
-% F.sample(bound_f);
+% f = @(u,leaf) u.^2;
+% Jac = @(u,leaf) diag(2*u);
+% F.sample(bound);
 % init = F.Getvalues();
+
+
+nu = 20;
+bound_f = @(x,y) atan((cos(pi*3/16)*x+sin(pi*3/16)*y)*1);
+f = @(u,leaf) Burgers(u,leaf,nu,bound_f);
+Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
+F.sample(bound_f);
+init = F.Getvalues();
 
 
 % [f0,L,U,p] = SNK_forward_eval(init,F,f,Jac,tol_n);
@@ -47,6 +47,42 @@ init = F.Getvalues();
 % 
 % AGJ = jacobi(RES,init);
 
+%linear residual
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [FJv,FJv_hat] = ComputeJacs(F,Jac,init);
+% 
+% E = eye(length(F));
+% JC = zeros(length(F));
+% 
+% for i=1:length(F)
+%     JC(:,i) = ParLinearResidual(E(:,i),F,FJv);
+% end
+% 
+% RES = @(sol) ParResidual(sol,F,f);
+% 
+% AJC = jacobi(RES,init);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% init_hat = F.Fine2Coarse(init);
+% 
+% F.Coarsen();
+% 
+% E = eye(length(F));
+% JC_hat = zeros(length(F));
+% 
+% for i=1:length(F)
+%     JC_hat(:,i) = ParLinearResidual(E(:,i),F,FJv_hat);
+% end
+% 
+% RES = @(sol) ParResidual(sol,F,f);
+% 
+% AJC_hat = jacobi(RES,init_hat);
+
+F.Refine();
 %coarse correct
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
