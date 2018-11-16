@@ -23,8 +23,8 @@ function [ y ] = JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j
 
 c_w = LinearCoarseCorrect( PUApprox, w,Lc,Uc,Pc,Qc,FJv,FJv_hat,j);
 
-%y = c_w + JacobianFowardLU(PUApprox,L,U,p,w+c_w);
+y = c_w + JacobianFowardLU(PUApprox,L,U,p,w+c_w);
 
-y = JacobianFowardLU(PUApprox,L,U,p,w+c_w);
+%y = JacobianFowardLU(PUApprox,L,U,p,w+c_w);
 end
 

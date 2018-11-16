@@ -20,7 +20,7 @@ cheb_struct.tol = 1e-4;
 %F = PUchebfun(@(x,y)atan((x+y)*5),[-1 1;-1 1],'Degree',[33 33],'tol',1e-7);
 %F = PUchebfun(@(x,y)SideBumpFunc(y,[0 1],0.1),[0 1;0 1],'Degree',[33 33],'CoarseDegree',[9 9],'tol',1e-16);
 %F = PUchebfun(@(x,y)exp(-y.^20./(1-y.^20)),[0 1;0 1],'Degree',[33 33],'tol',1e-6,'SplitAll',true);
-F = PUchebfun(@(x,y)exp(-x.^20./(1-x.^20)).*exp(-y.^20./(1-y.^20)),[-1 1;-1 1],'Degree',[33 33],'CoarseDegree',[9 9],'tol',1e-4);
+F = PUchebfun(@(x,y)exp(-x.^20./(1-x.^20)).*exp(-y.^20./(1-y.^20)),[-1 1;-1 1],'Degree',[33 33],'CoarseDegree',[9 9],'tol',1e-9);
 
 F.reset;
 
@@ -40,7 +40,7 @@ setInterpMatrices(F,true);
 % init = [u;v;w];
 
 bound_f = @(x,y) atan((cos(pi*3/16)*x+sin(pi*3/16)*y)*1);
-nu = 1/10;
+nu = 1/1000;
 f = @(u,leaf) Burgers(u,leaf,nu,bound_f);
 Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
 F.sample(bound_f);

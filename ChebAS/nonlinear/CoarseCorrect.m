@@ -46,7 +46,7 @@ RES = @(u) ParResidual(u,PUApprox,f)+r_hat;
 JAC = @(u)CoarseASJac(PUApprox,Jac,u);
 
 %options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',50,'FunctionTolerance',tol_c,'Display','off');
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',50,'Display','off');
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',50,'Display','iter');
 er = fsolve(@(u)sol_and_jac(@(u)RES(u),@(u)JAC(u),u),v_hat,options);
 
 J_v_pls_er = JAC(er);
