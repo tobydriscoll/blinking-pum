@@ -50,7 +50,7 @@ num_sols = length(u)/length(PUApprox);
 for k = 1:100
     
     % evaluate the local corrections/solve local nonlinear problems
-    [z,L,U,p,J_v_pls_er] = SNK2level_forward_eval(u,PUApprox,f,Jac,j,newn_tol,tol_c);
+    [z,L,U,p,J_v_pls_er,c_sol] = SNK2level_forward_eval(u,PUApprox,f,Jac,j,newn_tol,tol_c);
     
     normres(k) = norm(z);
     
@@ -67,7 +67,9 @@ for k = 1:100
     
     [Lc,Uc,Pc,Qc] = lu(J_v_pls_er);
 
-    tol_g = min(max(1e-10,1e-10/normres(k)*norm(u)),1e-9);
+    tol_g = min(max(1e-10,1e-4/normres(k)*norm(u)),1e-1);
+    
+    tol_g = 1e-4;
     
     [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j),-z,[],tol_g,600);
     

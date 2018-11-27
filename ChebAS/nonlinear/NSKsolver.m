@@ -53,8 +53,8 @@ for k = 1:20
     if normres(k) < stop_tol, break, end
     
     
-    tol_g = min(max(1e-10,1e-10/normres(k)*norm(u)),1e-9);
-    
+    %tol_g = min(max(1e-10,1e-10/normres(k)*norm(u)),1e-9);
+    tol_g = 1e-4;
     [J,L,U,p] = ComputeJacs(u,PUApprox,Jac);  
     
     [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-z,[],tol_g,900,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
