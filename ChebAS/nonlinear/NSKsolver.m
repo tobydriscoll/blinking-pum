@@ -1,4 +1,4 @@
-function [ u,normres,normstep,numgm ] = NSKsolver(f,Jac,init,PUApprox,tol_n)
+function [ u,normres,normstep,numgm,tol_g ] = NSKsolver(f,Jac,init,PUApprox,tol_n)
 % NKSsolver
 % The Newton Schwarz Krylov (NKS) solves nonlinear PDEs by
 % preconditioning the linear solve for the Newton step. With method, the
@@ -31,7 +31,7 @@ function [ u,normres,normstep,numgm ] = NSKsolver(f,Jac,init,PUApprox,tol_n)
 % NOTE u,init is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
-normres = []; normstep = [];  numgm = [];
+normres = []; normstep = [];  numgm = []; linres = [];
 
 u = init;
 
@@ -54,10 +54,21 @@ for k = 1:20
     
     
     %tol_g = min(max(1e-10,1e-10/normres(k)*norm(u)),1e-9);
-    tol_g = 1e-4;
+    %tol_g = min(max(1e-5,1e-5/normres(k)*norm(u)),1e-2);
+    %tol_g = 1e-4;
+    if k==1
+        tol_g(k) = 1e-2;
+    else
+        tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+    end
+    
+    tol_g(k)
+    
     [J,L,U,p] = ComputeJacs(u,PUApprox,Jac);  
     
-    [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-z,[],tol_g,900,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
+    [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-z,[],tol_g(k),900,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
+    
+    linres(k) = gmhist(end);
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
     

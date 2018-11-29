@@ -19,7 +19,7 @@ cheb_struct.tol = 1e-4;
 
 %F = PUchebfun(@(x,y)atan((x+y)*5),[-1 1;-1 1],'Degree',[33 33],'tol',1e-7);
 %F = PUchebfun(@(x,y)SideBumpFunc(y,[0 1],0.1),[0 1;0 1],'Degree',[33 33],'CoarseDegree',[9 9],'tol',1e-16);
-%F = PUchebfun(@(x,y)exp(-y.^20./(1-y.^20)),[0 1;0 1],'Degree',[33 33],'tol',1e-7,'SplitAll',true);
+%F = PUchebfun(@(x,y)exp(-y.^20./(1-y.^20)),[0 1;0 1],'Degree',[33 33],'tol',1e-6,'SplitAll',true);
 F = PUchebfun(@(x,y)exp(-x.^20./(1-x.^20)).*exp(-y.^20./(1-y.^20)),[-1 1;-1 1],'Degree',[33 33],'CoarseDegree',[9 9],'tol',1e-10);
 
 F.reset;
@@ -47,17 +47,21 @@ F.sample(bound_f);
 init = F.Getvalues();
 
 
- tic;
- [ sol,normres1,normstep1,numgm1 ] = NSKsolver(f,Jac,init,F,[1e-10 1e-10]);
- toc
-
+%  tic;
+%  [ sol,normres1,normstep1,numgm1,tolg1 ] = NSKsolver(f,Jac,init,F,[1e-10 1e-10]);
+%  toc
+% 
 % tic;
-%  [ sol,normres2,normstep2,numgm2,normresf2 ] = SNKsolver(f,Jac,init,F,[1e-10 1e-10]);
+%  [ sol,normres2,normstep2,numgm2,normresf2,tolg2 ] = SNKsolver(f,Jac,init,F,[1e-10 1e-10]);
 % toc
 
-% tic;
-% [ sol,normres3,normstep3,numgm3 ] = SNK2levelsolver(f,Jac,init,F,[1e-10 1e-10],1e-4,2);
-% toc
+tic;
+[ sol,normres3,normstep3,numgm3,tolg3 ] = SNK2levelsolver(f,Jac,init,F,[1e-10 1e-10],1e-10,2);
+toc
+
+parms = [50 1 0.5 0];
+
+%[sol, it_hist, ierr, x_hist] = nsoldSNK2level(init,f,Jac,F,[1e-10 1e-10],parms,[1e-10 1e-10],1e-4,2);
 
 solr = reshape(sol,length(F),1);
 F.sample(solr(:,1));

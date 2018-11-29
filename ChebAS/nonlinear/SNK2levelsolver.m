@@ -1,4 +1,4 @@
-function [ u,normres,normstep,numgm ] = SNK2levelsolver(f,Jac,init,PUApprox,newn_tol,tol_c,j)
+function [ u,normres,normstep,numgm,tol_g ] = SNK2levelsolver(f,Jac,init,PUApprox,newn_tol,tol_c,j)
 % SNKsolver
 % The Schwarz Newton Krylov 2 level method (SNK2level) solves nonlinear 
 % PDEs by nonlinear preconditioning the PDE with the a 2 level FAS method 
@@ -40,7 +40,7 @@ function [ u,normres,normstep,numgm ] = SNK2levelsolver(f,Jac,init,PUApprox,newn
 % NOTE u,init is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
-normres = []; normstep = [];  numgm = [];
+normres = []; normstep = [];  numgm = []; linres = []; tol_g = [];
 
 u = init;
 
@@ -67,13 +67,25 @@ for k = 1:100
     
     [Lc,Uc,Pc,Qc] = lu(J_v_pls_er);
 
-    tol_g = min(max(1e-10,1e-4/normres(k)*norm(u)),1e-1);
+%     tol_g = min(max(1e-5,1e-5/normres(k)*norm(u)),1e-2);
+%     
+%     tol_g
     
-    tol_g = 1e-4;
+    if k==1
+        tol_g(k) = 1e-2;
+    else
+        tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+    end
     
-    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j),-z,[],tol_g,600);
+    tol_g(k)
+    
+    [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j),-z,[],tol_g(k),600);
+    
+    linres(k) = gmhist(end);
     
     normstep(k) = norm(s);  numgm(k) = length(gmhist) - 1;
+    
+    linres(k)
     
     numgm(k)
     

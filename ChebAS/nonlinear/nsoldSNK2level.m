@@ -128,7 +128,8 @@ itc = 0;
 %
 %f0 = feval(f,x);
 %[f0,L,U,p] = ParPreconditionedNewtonForward(x,PUApprox,evalf,Jac,tol2);
-[f0,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(x,PUApprox,evalf,Jac,j_in,tol,tol_c);
+%[f0,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(x,PUApprox,evalf,Jac,j_in,tol,tol_c);
+[f0,L,U,p,J_v_pls_er] = SNK2level_forward_eval(x,PUApprox,evalf,Jac,j_in,tol,tol_c);
 fnrm = norm(f0);
 fnrm2 = norm(ParResidual(x,PUApprox,evalf));
 it_hist = [fnrm,fnrm2,0];
@@ -178,18 +179,19 @@ while(fnrm > stop_tol & itc < maxit)
 %    direction = u\tmp;
     
     % find overall Newton step by GMRES
-    tol_g = min(0.1,1e-10*norm(x)/norm(f0));
+%     tol_g = min(0.1,1e-10*norm(x)/norm(f0));
+%     
+%     if 0 == tol_g
+%         tol_g = 1e-10;
+%     end
+
+    tol_g = 1e-4;
     
-    if 0 == tol_g
-        tol_g = 1e-10;
-    end
+    [FJv,FJv_hat] = ComputeJac(PUApprox,Jac,u);
     
-    [FJv,FJv_hat] = ComputeJac(PUApprox,Jac,x);
+    [Lc,Uc,Pc,Qc] = lu(J_v_pls_er);
     
-   % FJv_hat = blkdiag(FJv_hat{:});
-    
-    [direction,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,J_v_pls_er,T_hat,FJv,FJv_hat,w,j_in),-f0,[],tol_g,180);
-    
+    [direction,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j_in),-f0,[],tol_g,180);
     
     length(gmhist)-1
     fnrm
@@ -201,7 +203,7 @@ while(fnrm > stop_tol & itc < maxit)
     jac_age = jac_age+1;
     xold = x; fold = f0;
 
-    [step,iarm,x,f0,armflag] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2,tol_c,j_in,T_hat);
+    [step,iarm,x,f0,armflag] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2,tol_c,j_in);
 %
 % If the line search fails and the Jacobian is old, update it.
 % If the Jacobian is fresh; you're dead.
@@ -362,7 +364,7 @@ z = (f1 - f0)/epsnew;
 %
 % Compute the step length with the three point parabolic model.
 %
-function [step,iarm,xp,fp,armflag,L,U,p,J_v_pls_er] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2,tol_c,j_in,T_hat)
+function [step,iarm,xp,fp,armflag,L,U,p,J_v_pls_er] = armijo(direction,x,f0,evalf,Jac,PUApprox,maxarm,tol,tol2,tol_c,j_in)
 iarm = 0;
 sigma1 = .5;
 alpha = 1.d-4;
@@ -376,7 +378,9 @@ xp = x; fp = f0;
    % ft = feval(f,xt);
     
     %[ft,L,U,p] = ParPreconditionedNewtonForward(xt,PUApprox,evalf,Jac,tol2);
-    [ft,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(xt,PUApprox,evalf,Jac,j_in,tol,tol_c);
+    %[ft,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(xt,PUApprox,evalf,Jac,j_in,tol,tol_c);
+    [ft,L,U,p,J_v_pls_er] = SNK2level_forward_eval(sol,PUApprox,evalF,Jac,j_in,tol,tol_c);
+    
     nft = norm(ft); nf0 = norm(f0); ff0 = nf0*nf0; ffc = nft*nft; ffm = nft*nft;
     while nft >= (1 - alpha*lambda) * nf0;
 %
@@ -400,7 +404,8 @@ xp = x; fp = f0;
         %ft = feval(f,xt);
         
         %[ft,L,U,p] = ParPreconditionedNewtonForward(xt,PUApprox,evalf,Jac,tol2);
-        [ft,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(xt,PUApprox,evalf,Jac,j_in,tol2,tol_c);
+        %[ft,L,U,p,J_v_pls_er] = ParPreconditionedTwoLevel(xt,PUApprox,evalf,Jac,j_in,tol2,tol_c);
+        [ft,L,U,p,J_v_pls_er] = SNK2level_forward_eval(sol,PUApprox,evalF,Jac,j_in,tol,tol_c);
         nft = norm(ft);
         ffm = ffc;
         ffc = nft*nft;
