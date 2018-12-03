@@ -72,12 +72,11 @@ for k = 1:100
 %     tol_g
     
     if k==1
-        tol_g(k) = 1e-2;
+        tol_g(k) = 1e-4;
     else
-        tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+        %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+        tol_g(k) = max(min(tol_g(k-1),1e-4*(normres(k)/normres(k-1))^2),1e-10);
     end
-    
-    tol_g(k)
     
     [s,~,~,~,gmhist] = gmres(@(w)JacobianFoward2Level(PUApprox,L,U,p,Lc,Uc,Pc,Qc,FJv,FJv_hat,w,j),-z,[],tol_g(k),600);
     

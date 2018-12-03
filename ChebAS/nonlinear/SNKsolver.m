@@ -62,11 +62,13 @@ for k = 1:20
     if normres(k) < stop_tol, break, end
 
     if k==1
-        tol_g(k) = 1e-2;
+        tol_g(k) = 1e-4;
     else
-        tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+        %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+        tol_g(k) = max(min(tol_g(k-1),1e-4*(normres(k)/normres(k-1))^2),1e-10);
     end
     
+    tol_g(k)
     
     [s,~,~,~,gmhist] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-z,[],tol_g(k),200);
     

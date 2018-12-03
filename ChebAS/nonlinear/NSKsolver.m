@@ -57,9 +57,10 @@ for k = 1:20
     %tol_g = min(max(1e-5,1e-5/normres(k)*norm(u)),1e-2);
     %tol_g = 1e-4;
     if k==1
-        tol_g(k) = 1e-2;
+        tol_g(k) = 1e-4;
     else
-        tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+        %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+        tol_g(k) = max(min(tol_g(k-1),1e-4*(normres(k)/normres(k-1))^2),1e-10);
     end
     
     tol_g(k)
