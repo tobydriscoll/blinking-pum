@@ -403,24 +403,29 @@ We first test the 2D functions $\log(1+(x^2+y^4)/10^{-5})$, $\arctan((x+y^2)/10^
   \begin{tabular}{c|c|c|c|c|c}
     \multirow{2}{*}{Function} & \multirow{2}{*}{Alg.} & \multirow{2}{*}{Error} & Build & Eval & Points /  \\
                             & &  & time & time & Rank  \\ \hline
-    \multirow{2}{*}{$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$} &  T & 1.05$\times 10^{-13}$ & 0.64 & 0.063 & 110496 \Tstrut  \\
+    \multirow{2}{*}{$\log(1+\frac{x_1^2+x_2^4}{10^{-5}})$} &  T & 1.16$\times 10^{-15}$ &	0.525 &	0.1235 & 69800 \Tstrut  \\
                               & C & 1.14$\times 10^{-6}$ & 2.30 & 0.10 & 30 \\ \hline
-    \multirow{2}{*}{$\arctan(\frac{x_1+x_2^2}{10^{-2}})$} & T & 2.15$\times 10^{-12}$ & 2.97 & 0.31 & 1553816 \Tstrut\\
+    \multirow{2}{*}{$\arctan(\frac{x_1+x_2^2}{10^{-2}})$} & T & 1.83$\times 10^{-14}$ &	2.241 & 0.3590	& 917515 \Tstrut\\
                               & C & 7.09$\times 10^{-12}$ & 150 & 5.0 & 816 \\ \hline
-    \multirow{2}{*}{$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$} & T & 1.01$\times 10^{-11}$ & 0.73 & 0.11 & 145280 \Tstrut\\
+    \multirow{2}{*}{$\frac{10^{-4}}{(10^{-4}+x_1^2)(10^{-4}+x_2^2)}$} & T & 1.86$\times 10^{-15}$ & 0.606 & 0.0728 & 	117056 \Tstrut\\
                               & C & 5.44$\times 10^{-15}$ & 0.049 & 0.0037 & 1 \\ \hline
-    \multirow{2}{*}{franke} & T & 4.22$\times 10^{-15}$ & 0.012 & 0.0045 & 16641 \Tstrut\\
+    \multirow{2}{*}{franke} & T & 1.33$\times 10{-15}$ & 	0.061 &	0.0069 &	9270 \Tstrut\\
                               & C & 1.33$\times 10^{-15}$ & 0.020 & 0.0024 & 4 \\ \hline
-    \multirow{2}{*}{$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$} & T & 2.65$\times 10^{-14}$ & 0.013 & 0.0025 & 1089 \Tstrut\\
+    \multirow{2}{*}{$\cos(u_1\pi + \sum_{i=1}^2 a_i x_i)$} & T & 23.00$\times 10^{-15}$ &	0.007 &	0.0012 & 	972 \Tstrut\\
                               & C & 4.47$\times 10^{-14}$ & 0.016 & 0.0020 & 2 \\ \hline
-    \multirow{2}{*}{$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$} & T & 5.00$\times 10^{-12}$ & 0.056 & 0.016 & 29283 \Tstrut\\
+    \multirow{2}{*}{$\prod_{i=1}^2 (a_i^{-2}+(x_i-u_i)^2)^{-1}$} & T & 2.01$\times 10^{-15}$ &	0.063 &	0.0099 & 21232 \Tstrut\\
                               & C & 1.59$\times 10^{-12}$ & 0.020 & 0.0022 & 1 \\ \hline
-    \multirow{2}{*}{$(1+\sum_{i=1}^2 a_i x_i)^{-3}$} & T & 2.27$\times 10^{-12}$ & 0.012 & 0.00090 & 25 \Tstrut\\
+    \multirow{2}{*}{$(1+\sum_{i=1}^2 a_i x_i)^{-3}$} & T & 3.33$\times 10^{-16}$ &	0.006 &	0.0004 &	 25 \Tstrut\\
                               & C & 2.27$\times 10^{-12}$ & 0.012 & 0.0021 & 4 \\ \hline
-    \multirow{2}{*}{$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$} & T & 1.65$\times 10^{-14}$ & 0.013 & 0.0026 & 2145 \Tstrut\\
-                              & C & 4.44$\times 10^{-16}$ & 0.015 & 0.0022 & 1 
+    \multirow{2}{*}{$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$} & T & 7.77$\times 10{-16}$ & 0.005 &	0.0012 & 	1862 \Tstrut\\
+                              & C & 4.44$\times 10^{-16}$ & 0.015 & 0.0022 & 1 \\  \hline
+    \multirow{2}{*}{square peg} & T & 2.22$\times 10^{-15}$ & 0.126 &	0.0264 & 111188 \Tstrut\\
+                              & C & 1.22 $\times 10^{-15}$ &	0.023 &	0.0012 & 	1 \\ \hline
+    \multirow{2}{*}{tilted peg} & T & 2.00$\times 10^{-15}$ &	0.214 &	0.0375 & 117544 \Tstrut\\
+                              & C & 7.68$\times 10^{-14}$ & 0.265 & 	0.0181 & 100
+                              
   \end{tabular}
-  \caption{Observed error and wall-clock times for the tree-based (T) and Chebfun2 (C) algorithms with target tolerance $10^{-12}$ and $\nmax=129$. Build time is for constructing the approximation object, and eval time for evaluating an approximant on a 200x200 uniform grid (all times in seconds). Also shown: for the tree-based method, the total number of stored sampled function values, and for Chebfun2, the numerically determined rank of the function. Here $u=[0.75,0.25]$ and $a=[5,10]$.}
+  \caption{Observed error and wall-clock times for the tree-based (T) and Chebfun2 (C) algorithms with target tolerance $10^{-16}$ and $\nmax=129$. Build time is for constructing the approximation object, and eval time for evaluating an approximant on a 200x200 uniform grid (all times in seconds). Also shown: for the tree-based method, the total number of stored sampled function values, and for Chebfun2, the numerically determined rank of the function. Here $u=[0.75,0.25]$ and $a=[5,10]$.}
   \label{tab:timing2D}
 % \begin{tabular}{r|c|c|c|c|c|c}
 % Function & method & error & construct time & eval time & int time & points \\[5pt] \hline
@@ -444,6 +449,33 @@ We first test the 2D functions $\log(1+(x^2+y^4)/10^{-5})$, $\arctan((x+y^2)/10^
 % \caption{Observed error and wall-clock time for the tree method to construct tree-based and Chebfun2 approximations with target tolerance $10^{-12}$ and $\nmax=129$, and to evaluate it on a 200x200 uniform grid. Also shown is the total number of sampled function values stored over all the leaves of the tree. Here $u=[0.75,0.25]$, and $a=[5,10]$.}
 % \label{putable}
 \end{table}
+
+%\begin{table}
+%\begin{tabular}{cccccc}
+%& Algorithm & relative error & build time & eval time & rank \\
+%log(1+(x^2+y^4)/1e-5) & T & 1.16E-15 & 0.525 & 0.1235 & 69800 \\
+%& C & 1.68E-06 & 3.201 & 0.0885 & 27 \\
+%arctan((x+y^2)/1e-1) & T & 1.83E-14 & 2.241 & 0.3590 & 917515 \\
+%& C & 2.55E-12 & 177.081 & 1.3498 & 816 \\
+%1e-4/((1e-4+x^2)(1e-4+y^2)) & T & 1.86E-15 & 0.606 & 0.0728 & 117056 \\
+%& C & 9.28E-15 & 0.068 & 0.0038 & 1 \\
+%franke & T & 1.33E-15 & 0.061 & 0.0069 & 9270 \\
+%& C & 6.65E-16 & 0.037 & 0.0023 & 4 \\
+%Gens f1 & T & 3.00E-15 & 0.007 & 0.0012 & 972 \\
+%& C & 3.17E-15 & 0.022 & 0.0016 & 2 \\
+%Gens f2 & T & 2.01E-15 & 0.063 & 0.0099 & 21232 \\
+%& C & 7.29E-16 & 0.026 & 0.0014 & 1 \\
+%Gens f3 & T & 3.33E-16 & 0.006 & 0.0004 & 25 \\
+%& C & 4.44E-16 & 0.014 & 0.0012 & 4 \\
+%Gens f4 & T & 7.77E-16 & 0.005 & 0.0012 & 1862 \\
+%& C & 4.44E-16 & 0.019 & 0.0021 & 1 \\
+%square peg & T & 2.22E-15 & 0.126 & 0.0264 & 111188 \\
+%& C & 1.22E-15 & 0.023 & 0.0012 & 1 \\
+%tilted peg & T & 2.00E-15 & 0.214 & 0.0375 & 117544 \\
+%& C & 7.68E-14 & 0.265 & 0.0181 & 100 \\
+%\end{tabular}
+%  \caption{Observed error and wall-clock times for the tree-based (T) and Chebfun2 (C) algorithms with target tolerance $10^{-12}$ and $\nmax=129$. Build time is for constructing the approximation object, and eval time for evaluating an approximant on a 200x200 uniform grid (all times in seconds). Also shown: for the tree-based method, the total number of stored sampled function values, and for Chebfun2, the numerically determined rank of the function. Here $u=[0.75,0.25]$ and $a=[5,10]$.}
+%\end{table}
 
 
 \begin{figure}
@@ -526,20 +558,20 @@ We next test the 3D functions $1/(\cosh(5(x+y+z)))^2$, $\arctan(5(x+y)+z)$, and 
   \begin{tabular}{c|c|c|c|c|c}
     \multirow{2}{*}{Function} & \multirow{2}{*}{Alg.} & \multirow{2}{*}{Error} & Build & Eval & Points /  \\
  & &  & time & time &Rank  \\ \hline
-    \multirow{2}{*}{$\cos(u_1\pi + \sum_{i=1}^3 a_i x_i)$} & T & 2.27$\times 10^{-13}$ & 0.15 & 0.12 & 275000 \Tstrut\\
+    \multirow{2}{*}{$\cos(u_1\pi + \sum_{i=1}^3 a_i x_i)$} & T & 3.00$\times 10^{-14}$ &	0.760	0.121 &	2197000 \Tstrut\\
     & C & 2.16$\times 10^{-14}$ & 0.061 & 0.15 & 2  \\ \hline
-    \multirow{2}{*}{$\prod_{i=1}^3 (a_i^{-2}+(x_i-u_i)^2)^{-1}$} & T & 1.52$\times 10^{-5}$ & 7.20 & 1.31 & 10400000 \Tstrut\\
+    \multirow{2}{*}{$\prod_{i=1}^3 (a_i^{-2}+(x_i-u_i)^2)^{-1}$} & T & 4.47$\times 10^{-7}$	 & 17.240 & 0.854 & 22553706 \Tstrut\\
     & C & 5.66$\times 10^{-7}$ & 0.057 & 0.14 & 1 \\ \hline
-    \multirow{2}{*}{$(1+\sum_{i=1}^3 a_i x_i)^{-3}$} & T & 4.66$\times 10^{-10}$ & 0.17 & 0.033 & 125 \Tstrut\\
+    \multirow{2}{*}{$(1+\sum_{i=1}^3 a_i x_i)^{-3}$} & T & 2.62$\times 10^{-10}$ &	0.147	& 0.007 & 125 \Tstrut\\
     & C & 4.07$\times 10^{-10}$ & 0.038 & 0.14 & 4 \\ \hline
-    \multirow{2}{*}{$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$} & T & 3.11$\times 10^{-15}$ & 0.082 & 0.078 & 275000 \Tstrut  \\
+    \multirow{2}{*}{$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$} & T & 2.00$\times 10^{-15}$ &	0.688 &	0.103 &	834568 \Tstrut  \\
     & C & 7.77$\times 10^{-16}$ & 0.047 & 0.14 & 1 \\ \hline
-    \multirow{2}{*}{$1/(\cosh(5(x+y+z)))^2$} & T & 1.14$\times 10^{-14}$ & 0.71 & 0.55 & 2200000 \Tstrut\\
+    \multirow{2}{*}{$1/(\cosh(5(x+y+z)))^2$} & T & 3.33$\times 10^{-15}$ & 5.882 & 0.387 & 12740192 \Tstrut\\
     & C & 3.69$\times 10^{-13}$ & 81 & 0.40 & 93 \\ \hline
-    \multirow{2}{*}{$\arctan(5(x+y)+z)$} & T & 7.60$\times 10^{-13}$ & 0.75 & 0.030 & 549153 \Tstrut\\
+    \multirow{2}{*}{$\arctan(5(x+y)+z)$} & T & 4.88$\times 10^{-15}$ & 2.287 &	0.184 &	3083990 \Tstrut\\
     & C & 4.69$\times 10^{-13}$ & 90 & 0.10 & 110 
   \end{tabular}
-  \caption{Observed error and wall-clock times for the tree-based (T) and Chebfun3 (C) algorithms with target tolerance $10^{-12}$ and $\nmax=65$. Build time is for constructing the approximation object, and eval time for evaluating an approximant on a $200^3$ uniform grid (all times in seconds). Also shown: for the tree-based method, the total number of stored sampled function values, and for Chebfun3, the numerically determined rank of the function. Here $u=[0.75,0.25,-0.75]$ and $a=[25,25,25]$.} 
+  \caption{Observed error and wall-clock times for the tree-based (T) and Chebfun3 (C) algorithms with target tolerance $10^{-16}$ and $\nmax=65$. Build time is for constructing the approximation object, and eval time for evaluating an approximant on a $200^3$ uniform grid (all times in seconds). Also shown: for the tree-based method, the total number of stored sampled function values, and for Chebfun3, the numerically determined rank of the function. Here $u=[0.75,0.25,-0.75]$ and $a=[25,25,25]$.} 
   \label{tab:timing3D}
 \end{table}
 
