@@ -561,18 +561,18 @@ We next test the 3D functions $1/(\cosh(5(x+y+z)))^2$, $\arctan(5(x+y)+z)$, and 
   \begin{tabular}{c|c|c|c|c|c}
     \multirow{2}{*}{Function} & \multirow{2}{*}{Alg.} & \multirow{2}{*}{Error} & Build & Eval & Points /  \\
  & &  & time & time &Rank  \\ \hline
-    \multirow{2}{*}{$\cos(u_1\pi + \sum_{i=1}^3 a_i x_i)$} & T & 3.00$\times 10^{-14}$ &	0.760 &	0.121 &	2197000 \Tstrut\\
-    & C & 2.16$\times 10^{-14}$ & 0.061 & 0.15 & 2  \\ \hline
-    \multirow{2}{*}{$\prod_{i=1}^3 (a_i^{-2}+(x_i-u_i)^2)^{-1}$} & T & 4.47$\times 10^{-7}$	 & 17.240 & 0.854 & 22553706 \Tstrut\\
-    & C & 5.66$\times 10^{-7}$ & 0.057 & 0.14 & 1 \\ \hline
-    \multirow{2}{*}{$(1+\sum_{i=1}^3 a_i x_i)^{-3}$} & T & 2.62$\times 10^{-10}$ &	0.147	& 0.007 & 125 \Tstrut\\
-    & C & 4.07$\times 10^{-10}$ & 0.038 & 0.14 & 4 \\ \hline
-    \multirow{2}{*}{$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$} & T & 2.00$\times 10^{-15}$ &	0.688 &	0.103 &	834568 \Tstrut  \\
-    & C & 7.77$\times 10^{-16}$ & 0.047 & 0.14 & 1 \\ \hline
-    \multirow{2}{*}{$1/(\cosh(5(x+y+z)))^2$} & T & 3.33$\times 10^{-15}$ & 5.882 & 0.387 & 12740192 \Tstrut\\
-    & C & 3.69$\times 10^{-13}$ & 81 & 0.40 & 93 \\ \hline
-    \multirow{2}{*}{$\arctan(5(x+y)+z)$} & T & 4.88$\times 10^{-15}$ & 2.287 &	0.184 &	3083990 \Tstrut\\
-    & C & 4.69$\times 10^{-13}$ & 90 & 0.10 & 110 
+    \multirow{2}{*}{$\cos(u_1\pi + \sum_{i=1}^3 a_i x_i)$} & T & $3.16 \times 10^{-14}$ &	2.958 &	0.240 &	561495 \Tstrut\\
+    & C & $2.19 \times 10^{-14}$ 	& 0.460 &	0.036 &	2 \\ \hline
+    \multirow{2}{*}{$\prod_{i=1}^3 (a_i^{-2}+(x_i-u_i)^2)^{-1}$} & T & $2.37 \times 10^{-15}$ 	& 9.917 & 0.764 & 7751626 \Tstrut\\
+    & C & $2.63 \times 10^{-15}$	 &  0.148 &	0.030 &	1 \\ \hline
+    \multirow{2}{*}{$(1+\sum_{i=1}^3 a_i x_i)^{-3}$} & T & $3.98 \times 10^{-16}$ 	& 0.317	& 0.011	& 125 \Tstrut\\
+    & C & $7.96 \times 10^{-16}$ 	& 0.175	& 0.022 &	4\\ \hline
+    \multirow{2}{*}{$\exp(-\sum_{i=1}^2 a_i^2 (x_i-u_i)^2)$} & T & $1.45\times 10^{-15}$ &	0.566 &	0.097 &	293305 \Tstrut  \\
+    & C & $7.80 \times 10^{-16}$ &	0.066 &	0.018 & 1 \\ \hline
+    \multirow{2}{*}{$1/(\cosh(5(x+y+z)))^2$} & T & $2.00\times 10^{-15}$	 & 4.337	 & 0.325 &	3450018 \Tstrut\\
+    & C & $3.66 \times 10^{-13}$ 	& 74.446	 &0.050 &	93 \\ \hline
+    \multirow{2}{*}{$\arctan(5(x+y)+z)$} & T & $1.95 \times 10^{-15}$ &	0.758	& 0.145	& 1132326 \Tstrut\\
+    & C & $3.17\times 10^{-13}$	& 75.313	 & 0.033	& 110
   \end{tabular}
   \caption{Observed error and wall-clock times for the tree-based (T) and Chebfun3 (C) algorithms with target tolerance $10^{-16}$ and $\nmax=65$. Build time is for constructing the approximation object, and eval time for evaluating an approximant on a $200^3$ uniform grid (all times in seconds). Also shown: for the tree-based method, the total number of stored sampled function values, and for Chebfun3, the numerically determined rank of the function. Here $u=[0.75,0.25,-0.75]$ and $a=[25,25,25]$.} 
   \label{tab:timing3D}

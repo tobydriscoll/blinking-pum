@@ -23,6 +23,10 @@ INTERP_TIME_CHEB = zeros(length(test_funs),1);
 INTERP_ERROR_CHEB = zeros(length(test_funs),1);
 RANK_CHEB =  zeros(length(test_funs),1);
 
+CON_TIME_TENS  = zeros(length(test_funs),1);
+INTERP_TIME_TENS = zeros(length(test_funs),1);
+INTERP_ERROR_TENS = zeros(length(test_funs),1);
+RANK_TENS =  zeros(length(test_funs),1);
 x = linspace(-1,1,100)';
 G = {x x x};
 [X,Y,Z] = ndgrid(x,x,x);
@@ -33,7 +37,7 @@ for i=1:length(test_funs)
     
     M = max(abs(FV(:)));
     
-    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1;-1 1],'Degree',[129 129 129],'tol',tol); CON_TIME_PU(i) = toc;  
+    tic,TREE = PUchebfun(test_funs{i},[-1 1;-1 1;-1 1],'Degree',[65 65 65],'tol',tol); CON_TIME_PU(i) = toc;  
     tic,ef = TREE.evalfGrid(G);INTERP_TIME_PU(i) = toc;
     if any(isnan(ef(:)))
         error('found a nan');
@@ -45,7 +49,14 @@ for i=1:length(test_funs)
     tic; ef = F(X,Y,Z); INTERP_TIME_CHEB(i) = toc;
     E = abs(ef-FV); INTERP_ERROR_CHEB(i) = max(E(:))/M;
     RANK_CHEB(i) = rank(F);
+
+    tic, F = chebfun3t(test_funs{i}); CON_TIME_TENS(i) = toc;
+    CON_TIME_TENS(i)
+    tic; ef = F(X,Y,Z); INTERP_TIME_TENS(i) = toc;
+    E = abs(ef-FV); INTERP_ERROR_TENS(i) = max(E(:))/M;
+    RANK_TENS(i) = numel(F.coeffs);
 end
+CHEB_TENS = [INTERP_ERROR_TENS CON_TIME_TENS INTERP_TIME_TENS RANK_TENS];
 
 PU_TABLE = [INTERP_ERROR_PU CON_TIME_PU INTERP_TIME_PU NUM_PTS_PU];
 CHEB_TABLE = [INTERP_ERROR_CHEB CON_TIME_CHEB INTERP_TIME_CHEB RANK_CHEB];
