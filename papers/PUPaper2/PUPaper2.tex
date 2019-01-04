@@ -272,6 +272,16 @@ We have $\sum_{\nu\in \text{leaves}(\ct)} w_\nu(\vect{x}) = 1$, which makes $\{w
 \end{equation}
 Despite consisting of separate local approximations from a partitioned domain, the global approximation (\ref{eq:pu-approx}) remains infinitely smooth while avoiding explicit global matching constraints. This permits rapid (in principle, beyond all orders) convergence to smooth functions, as well as generating continuous derivative approximations~\cite{wendland2004scattered}.
 
+ While this approximation is globally continuous it is still local in some sense. As an example, in Figure~\ref{overlap_plot} we plot the overlapping patches on the domain of a local patch $\nu$ for the partition of unity approximation of $\arctan(3(y^2+x))$ (which can be seen in (\ref{TANFUN1})). We see that in the interior of the patch that (\ref{eq:pu-approx}) would consist only of the local polynomial approximation $s_\nu(\vect{x})$ in the interior, and in the overlap would blend neighboring approximations with the partition of unity.
+
+
+\begin{figure}
+\centering
+\includegraphics[scale = 0.5]{overlap.eps}
+\caption{Plot of the subdomains formed from the partition of unity method for $\arctan(3(y^2+x))$ on the domain of a local patch with domain $[-1 , -0.46] \times [-0.54 , 0.04]$.}
+\label{overlap_plot}
+\end{figure}
+
 Next we describe efficient algorithms using the tree representation of the global approximant to perform common numerical operations such as evaluation at points, basic binary arithmetic operations on functions, differentiation, and integration.
 
 \subsection{Evaluation}
