@@ -61,7 +61,7 @@ grid settings.) It also surprises me that the authors did
 not include as one of their 2D tests the "square peg" and
 "tilted peg" examples from that paper, which are available
 in the Chebfun2 gallery of functions. }
-We included the square and tilted peg examples in 2D. This can be seen in Table 4.1. We added a reference to the peg examples on line 241. The paper \textit{Cubature, approximation, and isotropy in the hypercube} is referenced on line 41 for the isotropy properties of the approximations and line 241 to reference the peg examples.
+We included the square and tilted peg examples in 2D. This can be seen in Table 4.1. We added a reference to the peg examples on line 247. The paper \textit{Cubature, approximation, and isotropy in the hypercube} is referenced on line 43 for the isotropy properties of the approximations and line 247 to reference the peg examples.
 \end{response}
 
 \item \begin{response}{ I don't think the authors discuss the choice of $N$, though I notice $N$=129 in the 2D table and $N$=65 in the
@@ -79,9 +79,9 @@ of a figure along the lines of Figure 4.1(b), which one
 could talk through to illustrate how some parts of the
 region have a single Chebyshev representation whereas
 other use blends of several?}
-On line 155 we add sentences to elaborate on why what we have is a partition of unity. We also explain why the domains have to overlap for the weights to be smooth. On line 166 we add sentences to explain the properties of the partition of unity approximation itself i.e. that it is smooth, and does not require matching.
+On lines 155-158 we elaborate on why the Shepard's weights form a partition of unity. We also explain some of the properties of the partition of unity as well as why overlap is needed for the functions to be smooth. On line 166 we explain the properties of the partition of unity approximation itself i.e. that it is smooth, and does not require matching.
 
-On lines 166-170, we use the Referee's suggestion of presenting a larger version of Figure 4.1(b) and explaining how the partition of unity approximation consists of a single polynomial in the interior and a blending of polynomials in the overlap.
+On lines 166-170, we use the referee's suggestion of presenting a larger version of Figure 4.1(b) and explain how the partition of unity approximation consists of a single polynomial in the interior and a blending of polynomials in the overlap.
 \end{response}
 
 \item \begin{response}{In section 3.3, on differentiation, one of the
@@ -124,7 +124,7 @@ I regret to say that I believe the authors need to rerun
 every experiment in this paper to make sure their results
 are reported correctly.}
 
-The exponents for the 7th example in Table 4.2 should be $-3$, while the third example in 4.2 should be $-4$; this is the corner peak example from the Genz test package. This mistake is corrected in the table. We redid the tests so the tree based methods used the same relative tolerance as Chebfun (i.e. the tolerance dictated in the preferences). This can be seen in Table 4.1 and Table 4.2. The description of the 2D results (Lines 238-244) are updated to reflect this. On Lines 273-282 the description of the 3D results are similarly updated.
+The exponents for the 7th example in Table 4.2 should be $-3$, while the third example in 4.2 should be $-4$; this is the corner peak example from the Genz test package. This mistake is corrected in the table. We redid the tests so the tree based methods used the same relative tolerance as Chebfun (i.e. the tolerance dictated in the preferences). This can be seen in Table 4.1 and Table 4.2. The description of the 2D results on lines 245-256 are updated to reflect this. On lines 273-282 the description of the 3D results are similarly updated.
 
 \end{response}
 
