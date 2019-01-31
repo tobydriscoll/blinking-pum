@@ -32,6 +32,7 @@ classdef ChebPatch<LeafPatch
         linOp
         linOp_f
         ClinOp
+        NonLinOp
         Binterp
         CBinterp
         local_max
