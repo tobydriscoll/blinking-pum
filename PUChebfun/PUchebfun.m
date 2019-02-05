@@ -38,6 +38,7 @@ classdef PUchebfun < PUfun
         domain = [];
         grid_opt = false;
         iscoarse = false;
+        is_packed = false;
     end
     
     methods
@@ -152,9 +153,43 @@ classdef PUchebfun < PUfun
         end
         
         function v = Getvalues(obj)
-            v = obj.ChebRoot.Getvalues(); 
+            v = obj.ChebRoot.Getvalues();
         end
         
+        function show(obj,level,step)
+            if nargin==1  % user call
+                level = 0;
+                step = 1;
+            elseif nargin==2
+                step = 1;
+            end
+            
+            show(obj.ChebRoot,level,step)
+        end
+        
+        %This method 'packs' the tree.
+        function pack(obj)
+            
+            for i=1:length(obj.leafArray)
+                obj.leafArray{i}.is_packed = true;
+            end
+            
+            obj.ChebRoot.clean();
+            
+            obj.is_packed = true;
+        end
+                
+        %This method 'packs' the tree.
+        function unpack(obj)
+            
+            for i=1:length(obj.leafArray)
+                obj.leafArray{i}.is_packed = false;
+            end
+            
+            obj.ChebRoot.clean();
+            
+            obj.is_packed = false;
+        end
         
         % addTree = plus(obj,Tree2)
         % This method adds obj and Tree2
@@ -331,19 +366,6 @@ classdef PUchebfun < PUfun
             obj.ChebRoot.Setvalues(f);
         end
         
-            
-        % disp(obj)
-        % Returns color plot of patches
-        function show(obj,level,step)
-            if nargin==1  % user call
-                level = 0;
-                step = 1;
-            elseif nargin==2
-                step = 1;
-            end
-            
-            show(obj.ChebRoot,level,step)
-        end
         
         % plot(obj)
         % Returns a plot of the function in 2D

@@ -21,9 +21,13 @@ for k=1:length(PUfun.leafArray)
     points = PUfun.leafArray{k}.points;
     
     if ~PUfun.ChebRoot.is_leaf
-                degs = PUfun.leafArray{k}.degs;
-                [~,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUfun.leafArray{k}.domain,PUfun.leafArray{k}.outerbox);
+        
+                [~,out_border,in_border,~] = FindBoundaryIndex2DSides(PUfun.leafArray{k});
                 PUfun.leafArray{k}.Binterp = PUfun.ChebRoot.interpSparseMatrixZone(points(in_border,:));
+                
+                PUfun.leafArray{k}.outer_boundry = out_border;
+                PUfun.leafArray{k}.inner_boundry = in_border;
+                
     end
     
 end
@@ -49,9 +53,13 @@ if coarse_too
     points = PUfun.leafArray{k}.points;
     
     if ~PUfun.ChebRoot.is_leaf
+        
                 degs = PUfun.leafArray{k}.degs;
-                [~,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUfun.leafArray{k}.domain,PUfun.leafArray{k}.outerbox);
+                [~,out_border,in_border,~] = FindBoundaryIndex2DSides(degs,PUfun.leafArray{k}.domain,PUfun.leafArray{k}.outerbox);
                 PUfun.leafArray{k}.CBinterp = PUfun.ChebRoot.interpSparseMatrixZone(points(in_border,:));
+                
+                PUfun.leafArray{k}.coarse_outer_boundry = out_border;
+                PUfun.leafArray{k}.coarse_inner_boundry = in_border;
                 
     end
     

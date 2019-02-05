@@ -41,6 +41,15 @@ classdef ChebPatch<LeafPatch
         U
         p
         split_all = false
+        
+        is_packed = false
+        
+        outer_boundry = [];
+        inner_boundary = [];
+        
+        coarse_outer_boundry = [];
+        coarse_inner_boundary = [];
+        
     end
     
     properties (Access = protected)
@@ -264,6 +273,13 @@ classdef ChebPatch<LeafPatch
             end
         end
         
+        function ln=length(obj)
+            if ~obj.is_packed
+                ln = prod(obj.degs);
+            else
+                ln = nnz(~obj.outer_boundry);
+            end
+        end
         
         % The method determines will split a child into along
         % a dimension.
@@ -357,9 +373,31 @@ classdef ChebPatch<LeafPatch
         end
         
         function V = Getvalues(obj)
-            V = obj.values(:);
+            if ~obj.is_packed
+                V = obj.values(:);
+            else
+                V = obj.values(~obj.outer_boundry);
+            end
         end
         
+        
+        function Setvalues(obj,f)
+            if isnumeric(f) && obj.is_packed
+                obj.values(~obj.outer_boundry) = f;
+            elseif ~isnumeric(f) && obj.is_packed
+                if obj.dim==1
+                    obj.values(~obj.outer_boundry) = f(obj.points(~obj.outer_boundry,:));
+                elseif obj.dim==2
+                    points = obj.points(~obj.outer_boundry,:);
+                    obj.values(~obj.outer_boundry) = reshape(f(points(:,1),points(:,2)),obj.degs);
+                else
+                    points = obj.points(~obj.outer_boundry,:);
+                    obj.values = reshape(f(points(:,1),points(:,2),points(:,3)),obj.degs);
+                end
+            else
+                Setvalues@LeafPatch(obj,f);
+            end
+        end
         
         function reset(obj)
             obj.is_refined = false;

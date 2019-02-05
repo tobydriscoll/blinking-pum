@@ -6,7 +6,13 @@
 %
 %  out_border_s, in_border_s: cell array for west,east,south,north sides (in
 %  that order) for the outer boundary and interface.
-function [out_border_s,out_border,in_border,in_border_s,border,border_s] = FindBoundaryIndex2DSides(degs,domain,out_domain)
+function [out_border_s,out_border,in_border,in_border_s,border,border_s] = FindBoundaryIndex2DSides(leaf)
+
+degs = leaf.degs;
+
+domain = leaf.domain;
+
+out_domain = leaf.outerbox;
 
 out_border = false(degs);
 in_border = false(degs);

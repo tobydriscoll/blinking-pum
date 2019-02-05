@@ -1,5 +1,5 @@
 % INPUT:
-%      PUApprox: PUApprox approximation
+%      PUApprox: Cell Array of PUApprox approximation
 %         sol: given solution
 %       evalF: residual function which returns Jacobian
 %    num_sols: number of solutions
@@ -11,14 +11,20 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,l,u,p] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApprox,evalF,hinvGak,Jac,M)
+function [z,l,u,p] = ParPreconditionedNewtonForwardTime(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,Jac,M)
 
-num_sols = length(sol)/length(PUApprox);
+num_sols = length(PUApproxArray);
 
-step = zeros(length(PUApprox.leafArray),1);
+sol_lengths = zeros(num_sols,1);
 
-sol = reshape(sol,length(PUApprox),num_sols);
-rhs = reshape(rhs,length(PUApprox),num_sols);
+for i=1:num_sols
+    sol_lengths(i) = length(PUApproxArray{i});
+end
+
+start_index = zeros(num_sols,1);
+
+sol = mat2cell(sol,sol_lengths);
+rhs = mat2cell(rhs,sol_lengths);
 
 %Figure out starting index for each patch
 for k=2:length(PUApprox.leafArray)
