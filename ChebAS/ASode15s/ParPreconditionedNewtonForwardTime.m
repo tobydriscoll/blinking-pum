@@ -21,33 +21,54 @@ for i=1:num_sols
     sol_lengths(i) = length(PUApproxArray{i});
 end
 
-start_index = zeros(num_sols,1);
-
 sol = mat2cell(sol,sol_lengths);
 rhs = mat2cell(rhs,sol_lengths);
 
-%Figure out starting index for each patch
-for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
+sol_unpacked = sol;
+
+for i=1:num_sols
+    
+    if PUApproxArray{i}.is_packed
+        
+        PUApproxArray{i}.Setvalues(sol{i});
+        PUApproxArray{i}.unpack();
+        sol_unpacked{i} = PUApproxArray{i}.Getvalues();
+        PUApproxArray{i}.pack();
+        
+    else
+        
+        sol_unpacked{i} = sol{i};
+    
+    end
+    
 end
+
+start_index = zeros(num_sols,1);
 
 for k=1:length(PUApprox.leafArray)
     
-    degs = PUApprox.leafArray{k}.degs;
+    sol_loc{k} = [];
+    rhs_loc{k} = [];
+    lens{k} = [];
+    PUApproxArray{i}.leafArray{k};
     
-    %This will be sol_length*num_sols
-    sol_loc{k} = sol(step(k)+(1:prod(degs)),:);
-    rhs_loc{k} = rhs(step(k)+(1:prod(degs)),:);
+    border{k} = cellarray(1,3);
     
-    %This function returns the logical indicies of the gamma and outer
-    %boundry interface. Out put is given for all indicies, as well as the
-    %indicies along each of the sides
-    [~,~,in_border{k},~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
+    for i=1:num_sols
+        len = length(PUApproxArray{i}.leafArray{k});
+        sol_loc{k} = [sol_loc{k};sol{i}(start_index(i):start_index(i)+len)];
+        rhs_loc{k} = [rhs_loc{k};rhs{i}(start_index(i):start_index(i)+len)];
+        
+        lens = [lens len];
+
+        border{k}{i} = PUApproxArray{i}.inner_boundary;
+        
+    end
     
-    
-    %This will be (interface length)*num_sols
-    diff{k} = PUApprox.leafArray{k}.Binterp*sol;
-    
+    for i=1:num_sols
+        %This will be (interface length)*num_sols
+        diff{k}{i} = PUApproxArray{i}.leafArray{k}.Binterp*sol_unpacked{i};
+    end
 end
 
 %parallel step
@@ -56,7 +77,7 @@ leafs = PUApprox.leafArray;
 
 for k=1:length(leafs)
     
-    [z{k},l{k},u{k},p{k}] = local_inverse(leafs{k},sol_loc{k},t,rhs_loc{k},in_border{k},diff{k},evalF,hinvGak,num_sols,Jac,M{k});
+    [z{k},l{k},u{k},p{k}] = local_inverse(leafs{k},sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,num_sols,Jac,M{k},lens);
     
     z{k} = reshape(z{k},length(leafs{k}),num_sols);
 end
@@ -78,41 +99,48 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c,l,u,p] = local_inverse(approx,sol_k,t,rhs_k,border_k,diff_k,evalF,hinvGak,num_sols,Jac,M)
+function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hinvGak,num_sols,M,lens_k)
 
 %The residul is F(sol_k+z_k)
 %            sol_k(border_k)+z_k(border_k)-B_k*u
 %            (iterfacing at the zone interface)
     function [F] = residual(z)
         
-        sol_length = length(approx);
+        F = hinvGak*NonLinOps_k(t,z+sol_k)+rhs_k(:)-M*z;
         
-        F = hinvGak*evalF(t,z+sol_k(:),approx)+rhs_k(:)-M*z;
+        F = mat2cell(F,lens_k);
         
-        F = reshape(F,sol_length,num_sols);
+        z = mat2cell(F,lens_k);
         
-        z = reshape(z,sol_length,num_sols)+sol_k;
+        sol_k =  mat2cell(F,lens_k);
         
-        F(border_k,:) = z(border_k,:) - diff_k;
+        for i=1:num_sols
+            F{i}(border_k{i}) = z{i}(border_k{i}) + sol_k{i}(border_k{i}) - diff_k{i};
+        end
         
-        F = F(:);
+        F = cell2mat(F);
         
     end
 
     function J = jac_fun(z)
         
-        sol_length = length(approx);
-        
-        J = hinvGak*Jac(t,z+sol_k(:),approx)-M;
-        
-        E = eye(sol_length);
+        J = NonLinOps_k.jac(t,z+sol_k)-M;
+
+        index = 0;
         
         for i=1:num_sols
-            ind = false(sol_length*num_sols,1);
-            ind((i-1)*sol_length+(1:sol_length)) = border_k;
             
-            J(ind,:) = zeros(sum(ind),num_sols*sol_length);
-            J(ind,(i-1)*sol_length+(1:sol_length)) = E(border_k,:);
+            E = eye(lens_k(i));
+            
+            total_length = sum(lens_k);
+            
+            ind = false(total_length,1);
+            
+            ind(index+(1:lens_k(i))) = border_k{i};
+            
+            J(ind,:) = zeros(sum(ind),total_length);
+            J(ind,index+(1:lens_k(i))) = E(border_k{i},:);
+            
         end
     end
 

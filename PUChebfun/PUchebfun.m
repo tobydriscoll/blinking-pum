@@ -172,6 +172,11 @@ classdef PUchebfun < PUfun
             
             for i=1:length(obj.leafArray)
                 obj.leafArray{i}.is_packed = true;
+                
+                in = obj.leafArray{i}.inner_boundary;
+                out = obj.leafArray{i}.outer_boundary;
+                obj.leafArray{i}.inner_boundary = in(~out);
+                
             end
             
             obj.ChebRoot.clean();
