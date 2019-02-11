@@ -44,10 +44,10 @@ classdef ChebPatch<LeafPatch
         
         is_packed = false
         
-        outer_boundry = [];
+        outer_boundary = [];
         inner_boundary = [];
         
-        coarse_outer_boundry = [];
+        coarse_outer_boundary = [];
         coarse_inner_boundary = [];
         
     end
@@ -80,6 +80,12 @@ classdef ChebPatch<LeafPatch
             
             if isfield(var_struct, 'split_all')
                 obj.split_all = var_struct.split_all;
+            end
+            
+            if obj.dim==2
+                 [~,out_border,in_border,~] = FindBoundaryIndex2DSides(obj);
+                 obj.outer_boundary = out_border;
+                 obj.inner_boundary = in_border;
             end
             
         end
@@ -277,7 +283,7 @@ classdef ChebPatch<LeafPatch
             if ~obj.is_packed
                 ln = prod(obj.degs);
             else
-                ln = nnz(~obj.outer_boundry);
+                ln = nnz(~obj.outer_boundary);
             end
         end
         
@@ -372,26 +378,33 @@ classdef ChebPatch<LeafPatch
             IsGeometricallyRefined = true;
         end
         
-        function V = Getvalues(obj)
+        function V = Getvalues(obj,unpack)
+        
+         if nargin==1
+             unpack = false;
+         end
+            
             if ~obj.is_packed
                 V = obj.values(:);
+            elseif ~unpack
+                V = obj.values(~obj.outer_boundary);
             else
-                V = obj.values(~obj.outer_boundry);
+                V = obj.values(:);
             end
         end
         
         
         function Setvalues(obj,f)
             if isnumeric(f) && obj.is_packed
-                obj.values(~obj.outer_boundry) = f;
+                obj.values(~obj.outer_boundary) = f;
             elseif ~isnumeric(f) && obj.is_packed
                 if obj.dim==1
-                    obj.values(~obj.outer_boundry) = f(obj.points(~obj.outer_boundry,:));
+                    obj.values(~obj.outer_boundary) = f(obj.points(~obj.outer_boundary,:));
                 elseif obj.dim==2
-                    points = obj.points(~obj.outer_boundry,:);
-                    obj.values(~obj.outer_boundry) = reshape(f(points(:,1),points(:,2)),obj.degs);
+                    points = obj.points(~obj.outer_boundary,:);
+                    obj.values(~obj.outer_boundary) = reshape(f(points(:,1),points(:,2)),obj.degs);
                 else
-                    points = obj.points(~obj.outer_boundry,:);
+                    points = obj.points(~obj.outer_boundary,:);
                     obj.values = reshape(f(points(:,1),points(:,2),points(:,3)),obj.degs);
                 end
             else

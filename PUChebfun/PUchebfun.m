@@ -156,6 +156,11 @@ classdef PUchebfun < PUfun
             v = obj.ChebRoot.Getvalues();
         end
         
+        function v = Getunpackedvalues(obj,sol)
+            obj.Setvalues(sol);
+            v = obj.ChebRoot.Getvalues(true);
+        end
+        
         function show(obj,level,step)
             if nargin==1  % user call
                 level = 0;

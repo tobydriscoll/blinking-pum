@@ -103,7 +103,7 @@ classdef (Abstract) Patch < handle & matlab.mixin.Copyable
         function clean(obj)
             if obj.is_leaf
                 %obj.split_flag = false(size(obj.split_flag));
-                obj.cheb_length = prod(obj.degs);
+                obj.cheb_length = length(obj);
             else
                 
                 clean(obj.children{1});

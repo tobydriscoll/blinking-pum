@@ -837,8 +837,11 @@ classdef PUPatch<Patch
         end
         
         %Method returns vector of values of interpolating points of patch.
-        function vals = Getvalues(obj)
-            vals = [obj.children{1}.Getvalues();obj.children{2}.Getvalues()];
+        function vals = Getvalues(obj,unpack)
+            if nargin == 1
+                unpack = false;
+            end
+            vals = [obj.children{1}.Getvalues(unpack);obj.children{2}.Getvalues(unpack)];
         end
         
         %Recursive method that splits the children of a patch along a given

@@ -25,8 +25,6 @@ for k=1:length(PUfun.leafArray)
                 [~,out_border,in_border,~] = FindBoundaryIndex2DSides(PUfun.leafArray{k});
                 PUfun.leafArray{k}.Binterp = PUfun.ChebRoot.interpSparseMatrixZone(points(in_border,:));
                 
-                PUfun.leafArray{k}.outer_boundry = out_border;
-                PUfun.leafArray{k}.inner_boundry = in_border;
                 
     end
     
