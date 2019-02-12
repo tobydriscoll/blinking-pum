@@ -95,7 +95,7 @@ end
 
 for k=1:num_leaves
     
-    [z{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k});
+    [z{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,[],lens{k});
     
     z{k} = reshape(z{k},length(leafs{k}),num_sols);
 end
@@ -128,19 +128,19 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
         
         num_sols = length(lens_k);
         
-        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k)+rhs_k(:)-M*z;
+        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k);
         
-        F = mat2cell(F,lens_k);
+%         F = mat2cell(F,lens_k);
+%         
+%         z = mat2cell(z,lens_k);
+%         
+%         sol_k_c =  mat2cell(sol_k,lens_k);
         
-        z = mat2cell(z,lens_k);
+%         for i=1:num_sols
+%             F{i}(border_k{i}) = z{i}(border_k{i}) + sol_k_c{i}(border_k{i}) - diff_k{i};
+%         end
         
-        sol_k_c =  mat2cell(sol_k,lens_k);
-        
-        for i=1:num_sols
-            F{i}(border_k{i}) = z{i}(border_k{i}) + sol_k_c{i}(border_k{i}) - diff_k{i};
-        end
-        
-        F = cell2mat(F);
+%        F = cell2mat(F);
         
     end
 
@@ -148,28 +148,28 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
         
         num_sols = length(lens_k);
         
-        J = NonLinOps_k.jac(t,z+sol_k)-M;
+        J = NonLinOps_k.jac(t,z+sol_k);
 
         index = 0;
         
-        %This is supposed to account for the interfacing
-        for i=1:num_sols
-            
-            E = eye(lens_k(i));
-            
-            total_length = sum(lens_k);
-            
-            ind = false(total_length,1);
-            
-            local_ind = index+(1:lens_k(i));
-            
-            ind(local_ind) = border_k{i};
-            
-            J(ind,:) = zeros(sum(ind),total_length);
-            J(ind,local_ind) = E(border_k{i},:);
-            
-            index = index+lens_k(i);
-        end
+%         %This is supposed to account for the interfacing
+%         for i=1:num_sols
+%             
+%             E = eye(lens_k(i));
+%             
+%             total_length = sum(lens_k);
+%             
+%             ind = false(total_length,1);
+%             
+%             local_ind = index+(1:lens_k(i));
+%             
+%             ind(local_ind) = border_k{i};
+%             
+%             J(ind,:) = zeros(sum(ind),total_length);
+%             J(ind,local_ind) = E(border_k{i},:);
+%             
+%             index = index+lens_k(i);
+%         end
     end
 
 
