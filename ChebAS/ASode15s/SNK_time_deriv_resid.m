@@ -40,7 +40,6 @@ for i=1:num_sols
 end
 
 sol = mat2cell(sol,sol_lengths);
-rhs = mat2cell(rhs,sol_lengths);
 
 sol_unpacked = sol;
 
@@ -60,48 +59,36 @@ for i=1:num_sols
     
 end
 
+[ sol_loc,lens ] = unpackPUvecs(cell2mat(sol),PUApproxArray);
+rhs_loc = unpackPUvecs(rhs,PUApproxArray);
 start_index = zeros(num_sols,1);
+
+diff = cell(num_leaves,num_sols);
+border = cell(num_leaves,num_sols);
 
 for k=1:num_leaves
     
-    sol_loc{k} = [];
-    rhs_loc{k} = [];
-    lens{k} = [];
-    PUApproxArray{i}.leafArray{k};
-    
-    border{k} = cell(1,num_sols);
-    
-    for i=1:num_sols
-        len = length(PUApproxArray{i}.leafArray{k});
-        sol_loc{k} = [sol_loc{k};sol{i}(start_index(i)+(1:len))];
-        rhs_loc{k} = [rhs_loc{k};rhs{i}(start_index(i)+(1:len))];
-        
-        lens{k} = [lens{k} len];
 
-        border{k}{i} = PUApproxArray{i}.leafArray{k}.inner_boundary;
-        
-    end
-    
     for i=1:num_sols
         %This will be (interface length)*num_sols
         diff{k}{i} = PUApproxArray{i}.leafArray{k}.Binterp*sol_unpacked{i};
+        border{k}{i} = PUApproxArray{i}.leafArray{k}.inner_boundary;
     end
     
     start_index = start_index + lens{k};
     
 end
 
-%parallel step
 
+
+%parallel step
 for k=1:num_leaves
     
-    [z{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,[],lens{k});
+    [z{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k});
     
-    z{k} = reshape(z{k},length(leafs{k}),num_sols);
 end
 
-z = cell2mat(z');
-z = z(:);
+z = packPUvecs(z,PUApproxArray);
 
 end
 
@@ -128,19 +115,19 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
         
         num_sols = length(lens_k);
         
-        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k);
+        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k)+rhs_k-M*z;
         
-%         F = mat2cell(F,lens_k);
-%         
-%         z = mat2cell(z,lens_k);
-%         
-%         sol_k_c =  mat2cell(sol_k,lens_k);
+        F = mat2cell(F,lens_k);
         
-%         for i=1:num_sols
-%             F{i}(border_k{i}) = z{i}(border_k{i}) + sol_k_c{i}(border_k{i}) - diff_k{i};
-%         end
+        z = mat2cell(z,lens_k);
         
-%        F = cell2mat(F);
+        sol_k_c =  mat2cell(sol_k,lens_k);
+        
+        for i=1:num_sols
+            F{i}(border_k{i}) = z{i}(border_k{i}) + sol_k_c{i}(border_k{i}) - diff_k{i};
+        end
+        
+       F = cell2mat(F);
         
     end
 
@@ -148,39 +135,32 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
         
         num_sols = length(lens_k);
         
-        J = NonLinOps_k.jac(t,z+sol_k);
+        J = hinvGak*NonLinOps_k.jac(t,z+sol_k)-M;
 
         index = 0;
         
-%         %This is supposed to account for the interfacing
-%         for i=1:num_sols
-%             
-%             E = eye(lens_k(i));
-%             
-%             total_length = sum(lens_k);
-%             
-%             ind = false(total_length,1);
-%             
-%             local_ind = index+(1:lens_k(i));
-%             
-%             ind(local_ind) = border_k{i};
-%             
-%             J(ind,:) = zeros(sum(ind),total_length);
-%             J(ind,local_ind) = E(border_k{i},:);
-%             
-%             index = index+lens_k(i);
-%         end
+        %This is supposed to account for the interfacing
+        for i=1:num_sols
+            
+            E = eye(lens_k(i));
+            
+            total_length = sum(lens_k);
+            
+            ind = false(total_length,1);
+            
+            local_ind = index+(1:lens_k(i));
+            
+            ind(local_ind) = border_k{i};
+            
+            J(ind,:) = zeros(sum(ind),total_length);
+            J(ind,local_ind) = E(border_k{i},:);
+            
+            index = index+lens_k(i);
+        end
     end
 
 
 options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-4,'Display','iter');
-
-AJ = jacobi(@residual,zeros(numel(sol_k),1));
-J = jac_fun(zeros(numel(sol_k),1));
-
-ind_1 = 1:lens_k(1);
-ind_2 = lens_k(1)+(1:lens_k(2));
-
 
 [c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
 c = c(:,end);

@@ -12,7 +12,7 @@ BoundaryH = 13;
 %Test with 2 patches
  Tree = ChebPatch(cheb_struct);
  Tree = Tree.split(1);
-% Tree.split(2);
+ Tree.split(2);
 
 H = PUchebfun(Tree);
 H.sample(@(x,y) zeros(size(x)));
@@ -44,3 +44,5 @@ Jac = @(y) Blinks{1}.jac(0,y);
 
 AJ = jacobi(residual,sol_loc{1});
 J = Jac(sol_loc{1});
+
+y02 = packPUvecs(sol_loc,{H P});

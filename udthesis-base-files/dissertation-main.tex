@@ -1,5 +1,53 @@
 % This file (dissertation-main.tex) is the main file for a dissertation.
 \documentclass {udthesis}
+
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{algorithm}[0.1]
+\usepackage{algorithmic}[0.1]
+\usepackage{subfig}
+\usepackage{graphics}
+
+\newtheorem{thm}{Theorem}[section]
+
+\DeclareGraphicsExtensions{.eps}
+
+\newcommand{\lp}{\left(}
+\newcommand{\rp}{\right)}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand\supp{\mathop{\rm supp}}
+\newcommand{\ct}{\mathcal{T}}
+\newcommand{\Tm}{\ensuremath{\nu_\text{merge}}}
+\newcommand{\num}{\ensuremath{\nu_\text{merge}}}
+
+%%
+\newcommand\Tstrut{\rule{0pt}{2.4ex}}
+
+
+\newcommand{\prop}[2]{\textsf{#1}(#2)}
+\newcommand{\pp}[2]{\frac{\partial #1}{\partial #2}}
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\plotwidth}{0.45}
+\newcommand{\WRP}{\par\qquad\(\hookrightarrow\)\enspace}
+\newcommand{\ARP}{\par\qquad\ \enspace}
+\DeclareMathOperator*{\argmax}{arg\,max}  % in your preamble
+\DeclareMathOperator*{\argmin}{arg\,min}  % in your preamble 
+%%%%% custom commands for this paper
+\newcommand{\nmax}{N}
+\newcommand{\bigo}{\mathcal{O}}
+\newcommand{\child}[1]{\textsf{child}$_{#1}$}
+\newcommand{\weight}[1]{w\textsubscript{#1}}
+%%%%%
+
 % preamble
 
 % Include graphicx package for the example image used
@@ -14,19 +62,20 @@
                    % This file (dissertation-tap.tex) contains the Title
                    % and Approval Page information for a dissertation.
 
-\include{chap1}    % This file (chap1.tex) contains the text
+%\include{Chapter1/chap1}    % This file (chap1.tex) contains the text
                    % for Chapter 1.
                    
-\include{chap2}    % This file (chap2.tex) contains the text
+\include{Chapter2/chap2}    % This file (chap2.tex) contains the text
+
                    % for Chapter 2.
 
-\include{ref}      % This file (ref.tex) contains the text
+%\include{ref}      % This file (ref.tex) contains the text
                    % for the references.
                    
 %\include{bib}      % This file (bib.tex) contains the text
                    % for a bibliography.
                                       
-%\include{bibtex}	 % This file (bibtex.tex) contains the text
+\include{bibtex}	 % This file (bibtex.tex) contains the text
                    % for a bibliography if using BibTeX with
                    % sample.bib
                                       

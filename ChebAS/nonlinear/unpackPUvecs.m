@@ -1,4 +1,16 @@
-function [ sol_loc ] = unpackPUvecs(sol,PUApproxArray)
+% INPUT:
+%                  sol: vector of all solutions
+%
+%       PUApproxArrray: Cell Array of PUApprox approximations
+%
+% OUTPUT:
+%
+%              sol_loc: cell array of local solutions
+%
+% NOTE sol is presumed to be ordered by solution first, then patch.
+%      For example, suppose there are two patches p1, p2 each with
+%      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
+function [ sol_loc,lens ] = unpackPUvecs(sol,PUApproxArray)
 
 num_sols = length(PUApproxArray);
 
@@ -11,24 +23,6 @@ for i=1:num_sols
 end
 
 sol = mat2cell(sol,sol_lengths);
-
-sol_unpacked = sol;
-
-for i=1:num_sols
-    
-    if PUApproxArray{i}.is_packed
-        
-        %pull the boundry info for the packed functions. The boundary
-        %info is stored within the tree itself.
-        sol_unpacked{i} = PUApproxArray{i}.Getunpackedvalues(sol{i});
-        
-    else
-        
-        sol_unpacked{i} = sol{i};
-    
-    end
-    
-end
 
 start_index = zeros(num_sols,1);
 
