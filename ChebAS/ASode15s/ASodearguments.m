@@ -56,20 +56,21 @@ else  % ode-file used   (ignored when solver == ODE15I)
   tfinal = tspan(end);   
   
   % The input arguments of f determine the args to use to evaluate f.
-  if (exist(ode)==2)
-    if (nargin(ode) == 2)           
-      args = {};                   % f(t,y)
-    else
-      args = [{''} extras];        % f(t,y,'',p1,p2...)
-    end
-  else  % MEX-files, etc.
-    try 
-      args = [{''} extras];        % try f(t,y,'',p1,p2...)     
-      feval(ode,tspan(1),y0(:),args{:});   
-    catch
-      args = {};                   % use f(t,y) only
-    end
-  end
+%   if (exist(ode)==2)
+%     if (nargin(ode) == 2)           
+%       args = {};                   % f(t,y)
+%     else
+%       args = [{''} extras];        % f(t,y,'',p1,p2...)
+%     end
+%   else  % MEX-files, etc.
+%     try 
+%       args = [{''} extras];        % try f(t,y,'',p1,p2...)     
+%       feval(ode,tspan(1),y0(:),args{:});   
+%     catch
+%       args = {};                   % use f(t,y) only
+%     end
+%   end
+args = {};
 end
 
 y0 = y0(:);

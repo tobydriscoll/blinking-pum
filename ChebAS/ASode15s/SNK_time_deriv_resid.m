@@ -84,11 +84,11 @@ end
 %parallel step
 for k=1:num_leaves
     
-    [z{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k});
+    [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k});
     
 end
 
-z = packPUvecs(z,PUApproxArray);
+z = packPUvecs(z_loc,PUApproxArray);
 
 end
 
@@ -115,7 +115,7 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
         
         num_sols = length(lens_k);
         
-        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k)+rhs_k-M*z;
+        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k)-M*(z+sol_k)+rhs_k;
         
         F = mat2cell(F,lens_k);
         
@@ -160,12 +160,14 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
     end
 
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-4,'Display','iter');
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-4,'Display','off');
+
 
 [c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
 c = c(:,end);
 
 J = jac_fun(c);
+%AJ = jacobi(@residual,c);
 
 [l,u,p] = lu(J,'vector');
 

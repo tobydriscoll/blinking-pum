@@ -412,6 +412,23 @@ classdef ChebPatch<LeafPatch
             end
         end
         
+        function SetBoundaryValues(obj,f)
+            if isnumeric(f)
+                obj.values(obj.outer_boundary) = f;
+            else
+                if obj.dim==1
+                    obj.values(obj.outer_boundary) = f(obj.points(obj.outer_boundary,:));
+                elseif obj.dim==2
+                    points = obj.points();
+                    points = points(obj.outer_boundary,:);
+                    obj.values(obj.outer_boundary) = f(points(:,1),points(:,2));
+                else
+                    points = obj.points(obj.outer_boundary,:);
+                    obj.values(obj.outer_boundary) = f(points(:,1),points(:,2),points(:,3));
+                end
+            end
+        end
+        
         function reset(obj)
             obj.is_refined = false;
             obj.is_geometric_refined = false;

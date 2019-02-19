@@ -54,7 +54,7 @@ for k=1:num_leaves
         
     for j=1:num_sols
         in_border = PUApproxArray{j}.leafArray{k}.inner_boundary;
-        z_loc{j}(in_border) = PUApproxArray{i}.leafArray{k}.Binterp*x_unpacked{i};
+        z_loc{j}(in_border) = PUApproxArray{j}.leafArray{k}.Binterp*x_unpacked{j};
     end
     
     z{k} = cell2mat(z_loc);
@@ -71,4 +71,3 @@ for k=1:num_leaves
 end
 
 output = packPUvecs(output,PUApproxArray);
-

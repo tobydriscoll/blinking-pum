@@ -321,6 +321,7 @@ end
 
 
 yp0 = ParLocalResidual(t0,y0,PUApprox,ode);
+
 % NO! we assum yp0_ok = true
 %
 % Get the initial slope yp. For DAEs the default is to compute
@@ -603,20 +604,20 @@ while ~done
 
         %make sure signes match. 
         R = Masstimes(PUApprox,Mtnew,psi+difkp1);
-        [rhs,L,U,p] = ParPreconditionedNewtonForwardTime(tnew,ynew,-R,PUApprox,ode,hinvGak,Jac,Mtnew);
+        [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,-R,PUApprox,ode,hinvGak,Mtnew);
         
        
-        if DAE                          % Account for row scaling.
-            
-          %rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);  
-          %rhs = RowScale .* rhs;
-        end
+%         if DAE                          % Account for row scaling.
+%             
+%           %rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);  
+%           %rhs = RowScale .* rhs;
+%         end
                 
         [lastmsg,lastid] = lastwarn('');
         warning(warnoff);
         
         
-        [del,~,~,~,~] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-rhs,[],1e-14);
+        [del,~,~,~,~] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],1e-14);
 
 
         warning(warnstat);
@@ -676,18 +677,18 @@ while ~done
         nfailed = nfailed + 1;          
         % Speed up the iteration by forming new linearization or reducing h.
         if ~Jcurrent || ~Mcurrent
-          if ~Jcurrent  
-            if Janalytic
-              %dfdy = feval(Jac,t,y,Jargs{:});
-%              dfdy = ComputeJac(PUApprox,num_sols,t,y);
-            else
-              f0 = feval(odeFcn,t,y,odeArgs{:});
-              [dfdy,Joptions.fac,nF] = odenumjac(odeFcn, {t,y,odeArgs{:}}, f0, Joptions);     
-              nfevals = nfevals + nF + 1; 
-            end             
-            npds = npds + 1;            
-            Jcurrent = true;
-          end
+%           if ~Jcurrent  
+%             if Janalytic
+%               %dfdy = feval(Jac,t,y,Jargs{:});
+% %              dfdy = ComputeJac(PUApprox,num_sols,t,y);
+%             else
+%               f0 = feval(odeFcn,t,y,odeArgs{:});
+%               [dfdy,Joptions.fac,nF] = odenumjac(odeFcn, {t,y,odeArgs{:}}, f0, Joptions);     
+%               nfevals = nfevals + nF + 1; 
+%             end             
+%             npds = npds + 1;            
+%             Jcurrent = true;
+%           end
           if ~Mcurrent
             Mt = feval(Mfun,t,y,Margs{:});
             Mcurrent = true;
@@ -1047,28 +1048,17 @@ for i=1:length(PUApprox.leafArray)
 end
 end
 
-function R = Masstimes(PUApprox,M,y)
+function R = Masstimes(PUApproxArray,M,y)
 
-num_sols = length(y)/length(PUApprox);
+[y_loc] = unpackPUvecs(y,PUApproxArray);
 
-step = zeros(length(PUApprox.leafArray),1);
+num_leaves = length(PUApproxArray{1}.leafArray);
 
-%Figure out starting index for each patch
-for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
+for i=1:num_leaves
+    R{i} = M{i}*y_loc{i};
 end
 
-R = [];
-
-y = reshape(y,length(PUApprox),num_sols);
-
-for i=1:length(PUApprox.leafArray)
-    sol_len = length(PUApprox.leafArray{i});
-    tmp = y(step(i)+(1:sol_len),:);
-    R = [R;reshape(M{i}*tmp(:),sol_len,num_sols)];
-end
-
-R = R(:);
+R = packPUvecs(R,PUApproxArray);
 
 end
 

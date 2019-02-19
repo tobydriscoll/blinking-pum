@@ -1,15 +1,17 @@
 % This file (dissertation-main.tex) is the main file for a dissertation.
 \documentclass {udthesis}
-
-\usepackage{multirow}
 \usepackage{amsmath}
+\usepackage{multirow}
 \usepackage{amsfonts}
 \usepackage{amsthm}
 \usepackage{amssymb}
+\usepackage{ amsbsy}
+\usepackage{bm}
 \usepackage{algorithm}[0.1]
 \usepackage{algorithmic}[0.1]
 \usepackage{subfig}
 \usepackage{graphics}
+\usepackage{stmaryrd}
 
 \newtheorem{thm}{Theorem}[section]
 
@@ -27,7 +29,6 @@
 \newcommand{\ct}{\mathcal{T}}
 \newcommand{\Tm}{\ensuremath{\nu_\text{merge}}}
 \newcommand{\num}{\ensuremath{\nu_\text{merge}}}
-
 %%
 \newcommand\Tstrut{\rule{0pt}{2.4ex}}
 
@@ -40,13 +41,26 @@
 \newcommand{\WRP}{\par\qquad\(\hookrightarrow\)\enspace}
 \newcommand{\ARP}{\par\qquad\ \enspace}
 \DeclareMathOperator*{\argmax}{arg\,max}  % in your preamble
-\DeclareMathOperator*{\argmin}{arg\,min}  % in your preamble 
 %%%%% custom commands for this paper
 \newcommand{\nmax}{N}
 \newcommand{\bigo}{\mathcal{O}}
 \newcommand{\child}[1]{\textsf{child}$_{#1}$}
 \newcommand{\weight}[1]{w\textsubscript{#1}}
 %%%%%
+
+\newcommand{\cat}[1]{\left \llbracket #1 \right \rrbracket}
+
+\newcommand{\ghat}{\ensuremath{\hat{\bm{g}}}}
+\newcommand{\fhat}{\ensuremath{\hat{\bm{f}}}}
+\newcommand{\That}{\ensuremath{\hat{\bm{T}}}}
+\newcommand{\Ahat}{\ensuremath{\hat{\bm{A}}}}
+\newcommand{\ehat}{\ensuremath{\hat{\bm{e}}}}
+\newcommand{\vhat}{\ensuremath{\hat{\bm{v}}}}
+\newcommand{\uhat}{\ensuremath{\hat{\bm{u}}}}
+\newcommand{\rhat}{\ensuremath{\hat{\bm{r}}}}
+\newcommand{\what}{\ensuremath{\hat{\bm{w}}}}
+
+\newcommand{\Ren}{\text{Re}}
 
 % preamble
 
@@ -65,7 +79,9 @@
 %\include{Chapter1/chap1}    % This file (chap1.tex) contains the text
                    % for Chapter 1.
                    
-\include{Chapter2/chap2}    % This file (chap2.tex) contains the text
+%\include{Chapter2/chap2}    % This file (chap2.tex) contains the text
+
+\include{Chapter3/chap3}
 
                    % for Chapter 2.
 

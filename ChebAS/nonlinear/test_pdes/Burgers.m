@@ -1,19 +1,5 @@
 function [ F ] = Burgers(u,Approx,nu,bound_f)
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
-    degs = Approx.degs;
-    
-%    west = @(y) -tanh((-0.1-0.4*y)/(2*nu));
-%    east = @(y) -tanh((0.1+0.4*y)/(2*nu));
-%    south = @(x) -tanh((x+0.02)/(2*nu));
-%    north = @(x) -tanh((x-0.02)/(2*nu));
-    
-%    west = @(y) 1./(1+exp(y/(2*nu)));
-%    east = @(y) 1./(1+exp((1+y)/(2*nu)));
-%    south = @(x) 1./(1+exp(x/(2*nu)));
-%    north = @(x) 1./(1+exp((1+x)/(2*nu)));
-    
-    %Determine outer border
+
     [~,~,~,~,border,~] = FindBoundaryIndex2DSides(degs,Approx.domain,Approx.outerbox);
     
     u = reshape(u,degs);
