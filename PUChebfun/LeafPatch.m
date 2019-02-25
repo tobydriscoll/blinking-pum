@@ -488,14 +488,6 @@ classdef LeafPatch<Patch
                 
                 obj.swap_degs = obj.degs;
                 
-%                 obj.degs = obj.cdegs;
-%                 
-%                 grid = obj.leafGrids();
-%                 
-%                 obj.degs = obj.swap_degs;
-%                 
-%                 obj.values = obj.evalfBaryGrid(grid,obj.values);
-                
                 obj.degs = obj.cdegs;
                 
                 obj.cheb_length = prod(obj.cdegs);
@@ -550,14 +542,6 @@ classdef LeafPatch<Patch
             if obj.iscoarse
                 
                 obj.iscoarse = false;
-                
-%                 obj.degs = obj.swap_degs;
-%                 
-%                 grid = obj.leafGrids();
-%                 
-%                 obj.degs = obj.cdegs;
-%                 
-%                 obj.values = obj.evalfBaryGrid(grid,obj.values);
                 
                 obj.degs = obj.swap_degs;
                 

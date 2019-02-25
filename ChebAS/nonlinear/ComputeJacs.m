@@ -14,42 +14,50 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [J,l,u,p] = ComputeJacs(sol,PUApprox,Jac)
+function [J,l,u,p] = ComputeJacs(sol,PUApproxArray,NonLinOps)
 
-num_sols = length(sol)/length(PUApprox);
-
-step = zeros(length(PUApprox.leafArray),1);
-
-sol = reshape(sol,length(PUApprox),num_sols);
-
-%Figure out starting index for each patch
-for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
+if ~iscell(PUApproxArray)
+    PUApproxArray = {PUApproxArray};
 end
 
-for k=1:length(PUApprox.leafArray)
-    
-    degs = PUApprox.leafArray{k}.degs;
-    
-    %This will be sol_length*num_sols
-    sol_loc{k} = sol(step(k)+(1:prod(degs)),:);
+%PUApprox.sample(sol);
 
+num_sols = length(PUApproxArray);
+
+num_leaves = length(PUApproxArray{1}.leafArray);
+
+sol_lengths = zeros(num_sols,1);
+
+for i=1:num_sols
+    sol_lengths(i) = length(PUApproxArray{i});
+end
+
+%if any are packed, set boundary terms.
+setBoundary(NonLinOps,PUApproxArray);
+        
+
+%Take [u1;u2;v1;v2] to {[u1;u2],[v1;v2]}
+[ sol_loc,lens ] = unpackPUvecs(sol,PUApproxArray);
+
+start_index = zeros(num_sols,1);
+
+border = cell(num_leaves,num_sols);
+
+for k=1:num_leaves
+
+    for i=1:num_sols
+        border{k}{i} = PUApproxArray{i}.leafArray{k}.inner_boundary;
+    end
     
-    %This function returns the logical indicies of the gamma and outer
-    %boundry interface. Out put is given for all indicies, as well as the
-    %indicies along each of the sides
-    [~,~,in_border{k},~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
-    
+    start_index = start_index + lens{k};
     
 end
 
 %parallel step
 
-leafs = PUApprox.leafArray;
-
-for k=1:length(leafs)
+for k=1:num_leaves
     
-    [J{k},l{k},u{k},p{k}] = local_Jac(leafs{k},sol_loc{k},in_border{k},num_sols,Jac);
+    [J{k},l{k},u{k},p{k}] = local_Jac(sol_loc{k},NonLinOps{k},border{k},lens{k});
     
 end
 
@@ -67,32 +75,40 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [J,l,u,p] = local_Jac(approx,sol_k,border_k,num_sols,Jac)
-
-
-J = jac_fun(sol_k(:));
-
-[l,u,p] = lu(J,'vector');
-
-    function J = jac_fun(z)
+    function [J,L,U,p] = local_Jac(sol_k,NonLinOps_k,border_k,lens_k)
         
-        sol_length = length(approx);
+        num_sols = length(lens_k);
         
-        J = Jac(z(:),approx);
+        J = NonLinOps_k.jac(sol_k);
+
+        index = 0;
         
-        E = eye(sol_length);
-        
+        %This is supposed to account for the interfacing
         for i=1:num_sols
-            ind = false(sol_length*num_sols,1);
-            ind((i-1)*sol_length+(1:sol_length)) = border_k;
             
-            J(ind,:) = zeros(sum(ind),num_sols*sol_length);
-            J(ind,(i-1)*sol_length+(1:sol_length)) = E(border_k,:);
+            E = eye(lens_k(i));
+            
+            total_length = sum(lens_k);
+            
+            ind = false(total_length,1);
+            
+            local_ind = index+(1:lens_k(i));
+            
+            ind(local_ind) = border_k{i};
+            
+            J(ind,:) = zeros(sum(ind),total_length);
+            J(ind,local_ind) = E(border_k{i},:);
+            
+            index = index+lens_k(i);
         end
+        
+        [L,U,p] = lu(J,'vector');
     end
-
-
-
+    
+    function setBoundary(NonLinOps,PUApproxArray)
+    for i=1:length(PUApproxArray{1}.leafArray)
+        NonLinOps{i}.SetBoundaryVals();
+    end
 end
 
 

@@ -2,55 +2,77 @@
 % Matrix free evaluation for the Jacobian of the SNK method.
 %
 % INPUT:
-%      PUApprox: PUApprox approximation        
-%         L,U,p: cell array of the LU decomposition of the local Jacobians. 
-%             x: solution
+%    PUApproxArray: cell array of PUApprox approximations
+%            L,U,p: cell array of the LU decomposition of the local Jacobians.
+%                x: solution
 %
 % NOTE x is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
-function [ output ] = JacobianFowardLU(PUApprox,L,U,p,x)
+%
+% ALSO NOTE This method takes into account of boundary info is accounted
+% for by the effect if the individual trees are packed or not.
+function [ output ] = JacobianFowardLU(PUApproxArray,L,U,p,x)
 
-num_sols = length(x)/length(PUApprox);
 
-output = zeros(length(PUApprox),num_sols);
+num_sols = length(PUApproxArray);
 
-step = zeros(length(PUApprox.leafArray),1);
+num_leaves = length(PUApproxArray{1}.leafArray);
 
-x = reshape(x,length(PUApprox),num_sols);
+sol_lengths = zeros(num_sols,1);
 
-%Figure out starting index for each patch
-for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
+for i=1:num_sols
+    sol_lengths(i) = length(PUApproxArray{i});
 end
 
-%non parallel part
-for k=1:length(PUApprox.leafArray)
-    degs = PUApprox.leafArray{k}.degs;
-    [~,~,in_border,~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
+x = mat2cell(x,sol_lengths);
+
+x_unpacked = x;
+
+for i=1:num_sols
     
-    z{k} = zeros(prod(degs),num_sols);
-    
-    
-    if ~PUApprox.iscoarse
-        z{k}(in_border,:) = PUApprox.leafArray{k}.Binterp*x;
+    if PUApproxArray{i}.is_packed
+        
+        % pull the boundry info for the packed functions. The boundary
+        % info is stored within the tree itself. 
+        % Set boundary to zero (This is important!)
+        x_unpacked{i} = PUApproxArray{i}.Getunpackedvalues(x{i},true);
+        
     else
-        z{k}(in_border,:) = PUApprox.leafArray{k}.CBinterp*x;
+        
+        x_unpacked{i} = x{i};
+        
     end
     
-    z{k} = z{k}(:);
 end
+
+%Take [u1;u2;v1;v2] to {[u1;u2],[v1;v2]}
+[x,lens] = unpackPUvecs(cell2mat(x),PUApproxArray);
+
+z = mat2cell(x,sol_lengths);
+
+%non parallel part
+for k=1:num_leaves
+    
+    z_loc = mat2cell(zeros(size(x{k})),lens{k});
+    
+    for i=1:num_sols
+        in_border = PUApproxArray{i}.leafArray{k}.inner_boundary;
+        z_loc{i}(in_border) = PUApproxArray{i}.leafArray{k}.Binterp*x_unpacked{i};
+    end
+    
+    z{k} = cell2mat(z_loc);
+    
+end
+
+output = x;
 
 %Parallel part
-for k=1:length(PUApprox.leafArray)
+for k=1:num_leaves
     
-    ind_k = step(k)+(1:length(PUApprox.leafArray{k}));
-    
-    x_k = x(ind_k,:);
-    
-    output(ind_k,:) = reshape(U{k}\(L{k}\z{k}(p{k})),length(PUApprox.leafArray{k}),num_sols)-x_k;
+    output{k} = U{k}\(L{k}\z{k}(p{k})) - x{k};
     
 end
 
-output = output(:);
-
+%Take {[u1;u2],[v1;v2]} to [u1;u2;v1;v2]
+output = packPUvecs(output,PUApproxArray);

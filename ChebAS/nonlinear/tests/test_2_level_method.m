@@ -1,6 +1,6 @@
 domain = [0 1;0 1];
 cheb_struct.domain = domain;
-cheb_struct.degs = [17 17];
+cheb_struct.degs = [10 10];
 cheb_struct.cdegs = [5 5];
 cheb_struct.split_flag = [true true];
 cheb_struct.tol = 1e-4;
@@ -34,18 +34,18 @@ F.sample(bound_f);
 init = F.Getvalues();
 
 
-% [f0,L,U,p] = SNK_forward_eval(init,F,f,Jac,tol_n);
-% 
-% E = eye(length(F));
-% JG = zeros(length(F));
-% 
-% for i=1:length(F)
-%     JG(:,i) = JacobianFowardLU(F,L,U,p,E(:,i));
-% end
-% 
-% RES = @(sol)SNK_forward_eval(sol,F,f,Jac,tol_n);
-% 
-% AGJ = jacobi(RES,init);
+[f0,L,U,p] = SNK_forward_eval(init,F,f,Jac,tol_n);
+
+E = eye(length(F));
+JG = zeros(length(F));
+
+for i=1:length(F)
+    JG(:,i) = JacobianFowardLU(F,L,U,p,E(:,i));
+end
+
+RES = @(sol)SNK_forward_eval(sol,F,f,Jac,tol_n);
+
+AGJ = jacobi(RES,init);
 
 %linear residual
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -88,21 +88,21 @@ F.Refine();
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[ r_er,J_v_pls_er ] = CoarseCorrect( F, init,f,Jac,2,tol_c);
-
-[FJv,FJv_hat] = ComputeJac(F,Jac,init);
-[Lc,Uc,Pc,Qc] = lu(J_v_pls_er);
-
-E = eye(length(F));
-JC = zeros(length(F));
-
-for i=1:length(F)
-    JC(:,i) = LinearCoarseCorrect( F, E(:,i),Lc,Uc,Pc,Qc,FJv,FJv_hat,2);
-end
-
-RES = @(sol) CoarseCorrect(F,sol,f,Jac,2,tol_c);
-
-AJC = jacobi(RES,init);
+% [ r_er,J_v_pls_er ] = CoarseCorrect( F, init,f,Jac,2,tol_c);
+% 
+% [FJv,FJv_hat] = ComputeJac(F,Jac,init);
+% [Lc,Uc,Pc,Qc] = lu(J_v_pls_er);
+% 
+% E = eye(length(F));
+% JC = zeros(length(F));
+% 
+% for i=1:length(F)
+%     JC(:,i) = LinearCoarseCorrect( F, E(:,i),Lc,Uc,Pc,Qc,FJv,FJv_hat,2);
+% end
+% 
+% RES = @(sol) CoarseCorrect(F,sol,f,Jac,2,tol_c);
+% 
+% AJC = jacobi(RES,init);
 
 
 %Two level method

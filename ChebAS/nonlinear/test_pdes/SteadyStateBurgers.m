@@ -1,12 +1,11 @@
-function [F] = SteadyStateBurgers(Re,y,leaf,a,x_0,lambda)
+function [F] = SteadyStateBurgers(y,leaf,R)
     
     degs = leaf.degs;
     
-    u_fun = @(x,y) (1/Re)*(-2*(a(2)+y*a(4)+a(5)*2*lambda*cos(y*lambda).*sinh(lambda*(x-x_0))))./(a(1)+x*a(2)+y*a(3)+x.*y*a(4)+2*a(5)*cos(y*lambda).*cosh(lambda*(x-x_0)));
-
-    v_fun = @(x,y) (1/Re)*(-2*(a(3)+x*a(4)-a(5)*2*lambda*sin(y*lambda).*cosh(lambda*(x-x_0))))./(a(1)+x*a(2)+y*a(3)+x.*y*a(4)+2*a(5)*cos(y*lambda).*cosh(lambda*(x-x_0)));
+    ub = @(x,y) 3/4 - 1./(4*( 1+ exp(R*(-0-4*x+4*y)/32)));
+    vb = @(x,y) 3/4 + 1./(4*( 1+ exp(R*(-0-4*x+4*y)/32)));
     
-    [~,in_border,out_border,~] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);    
+    [~,in_border,out_border,~] = FindBoundaryIndex2DSides(leaf);    
     
     border = in_border | out_border;
     
@@ -26,13 +25,13 @@ function [F] = SteadyStateBurgers(Re,y,leaf,a,x_0,lambda)
    
     P = leaf.points();
     
-    f1 = -(uxx+uyy)+Re*(u.*ux+v.*uy);
+    f1 = 1/R*(uxx+uyy)-(u.*ux+v.*uy)-u;
     f1 = f1(:);
-    f1(border) = u(border)-u_fun(P(border,1),P(border,2));
+    f1(border) = u(border)-ub(P(border,1),P(border,2));
     
-    f2 = -(vxx+vyy)+Re*(u.*vx+v.*vy);
+    f2 = 1/R*(vxx+vyy)-(u.*vx+v.*vy)-v;
     f2 = f2(:);
-    f2(border) = v(border)-v_fun(P(border,1),P(border,2));
+    f2(border) = v(border)-vb(P(border,1),P(border,2));
     
     F =[f1;f2];
     

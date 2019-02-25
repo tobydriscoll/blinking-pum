@@ -1,89 +1,121 @@
-% SNK_forward_eval
-%
-% The residual minimized for The Schwarz Newton Krylov (SNK) method.
-%
 % INPUT:
-%           
-%            sol: solution used for computing the residual.
+%       PUApprox: Cell Array of PUApprox approximation
 %
-%            PUApprox: PUApprox approximation 
+%           sol: given solution
 %
-%            evalF: nonlinear residual function f(x,p) for solution x and local
-%             approximation p. f(x,p) evaluates the residual on the domain
-%             of p.
+%           rhs: rhs term. Typically from time integration method
 %
-%            Jac: Jacobian function f(x,p) for solution x and local
-%             approximation p. f(x,p) evaluates the residual on the domain
-%             of p.
+% PUApproxArray: cell array of Trees for each solution. Each tree has
+%                interface indicies for each leaf, as well as boundary
+%                info if solution is to be 'packed'.
+%                 
+%                It is expected that the patch structure is the same
+%                between different solutions. Patches with respective
+%                solutions can have different number of unknowns though.
 %
-%          tol_n: [rel_tol, abs_tol] relative and absolute tolerance used
-%                 for local Newtons method.
+%     NonLinOps: cell array of Nonlin ops for each leaf (for our problem,
+%                it is the blink objects).
+%
 % OUTPUT:
 %          z: correction of solution
-%
-%      l,u,p: cell array of LU decomposition and ordering for local
-%             Jacobians.
-%
 %          J: cell array of local Jacobians
 %
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,l,u,p,J] = SNK_forward_eval(sol,PUApprox,evalF,Jac,tol_n)
+function [z,l,u,p] = SNK_forward_eval(sol,PUApproxArray,NonLinOps,rhs,params)
 
-num_sols = length(sol)/length(PUApprox);
-
-step = zeros(length(PUApprox.leafArray),1);
-
-sol = reshape(sol,length(PUApprox),num_sols);
-
-%Figure out starting index for each patch
-for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
+if ~iscell(PUApproxArray)
+    PUApproxArray = {PUApproxArray};
 end
 
-for k=1:length(PUApprox.leafArray)
-    
-    degs = PUApprox.leafArray{k}.degs;
-    
-    %This will be sol_length*num_sols
-    sol_loc{k} = sol(step(k)+(1:prod(degs)),:);
+if nargin<4
+    rhs = 0;
+end
 
+if nargin<5
+ params = [];
+end
+
+num_sols = length(PUApproxArray);
+
+num_leaves = length(PUApproxArray{1}.leafArray);
+
+sol_lengths = zeros(num_sols,1);
+
+for i=1:num_sols
+    sol_lengths(i) = length(PUApproxArray{i});
+end
+
+sol = mat2cell(sol,sol_lengths);
+
+sol_unpacked = sol;
+
+for i=1:num_sols
     
-    %This function returns the logical indicies of the gamma and outer
-    %boundry interface. Out put is given for all indicies, as well as the
-    %indicies along each of the sides
-    [~,~,in_border{k},~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
-    
-    
-    if ~PUApprox.iscoarse
-        diff{k} = PUApprox.leafArray{k}.Binterp*sol;
+    if PUApproxArray{i}.is_packed
+        
+        setBoundary(NonLinOps,PUApproxArray);
+        %pull the boundry info for the packed functions. The boundary
+        %info is stored within the tree itself.
+        sol_unpacked{i} = PUApproxArray{i}.Getunpackedvalues(sol{i});
+        
     else
-        diff{k} = PUApprox.leafArray{k}.CBinterp*sol;
+        
+        sol_unpacked{i} = sol{i};
+    
     end
     
 end
 
-%parallel step
+%Take [u1;u2;v1;v2] to {[u1;u2],[v1;v2]}
+[ sol_loc,lens ] = unpackPUvecs(cell2mat(sol),PUApproxArray);
 
-leafs = PUApprox.leafArray;
-
-for k=1:length(leafs)
-    
-    [z{k},l{k},u{k},p{k},J{k}] = local_inverse(leafs{k},sol_loc{k},in_border{k},diff{k},evalF,num_sols,Jac,tol_n);
-    z{k} = reshape(z{k},length(leafs{k}),num_sols);
+if rhs~=0
+    rhs_loc = unpackPUvecs(rhs,PUApproxArray);
 end
 
-z = cell2mat(z');
-z = z(:);
+start_index = zeros(num_sols,1);
+
+diff = cell(num_leaves,num_sols);
+border = cell(num_leaves,num_sols);
+
+for k=1:num_leaves
+
+    for i=1:num_sols
+        %This will be (interface length)*num_sols
+        diff{k}{i} = PUApproxArray{i}.leafArray{k}.Binterp*sol_unpacked{i};
+        border{k}{i} = PUApproxArray{i}.leafArray{k}.inner_boundary;
+    end
+    
+    start_index = start_index + lens{k};
+    
+end
+
+
+%parallel step
+for k=1:num_leaves
+    
+    if rhs~=0
+        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},rhs_loc{k},diff{k},border{k},NonLinOps{k},lens{k},params);
+    else
+        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},0,diff{k},border{k},NonLinOps{k},lens{k},params);
+    end
+    
+end
+
+%Take {[u1;u2],[v1;v2]} to [u1;u2;v1;v2]
+z = packPUvecs(z_loc,PUApproxArray);
 
 end
 
 % INPUT:
-%      approx: leaf approximation
 %       sol_k: given solution
-%    border_k: border index for interface
+%           t: current time
+%       rhs_k: local right hand side
 %      diff_k: precomputed interface zone interpolation
+%    border_k: border index for interface for each solution
+%   NonLinOps: 
 %       evalF: residual function which returns Jacobian
 %    num_sols: number of solutions
 %  sol_length: length of solution
@@ -91,57 +123,71 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c,l,u,p,J] = local_inverse(approx,sol_k,border_k,diff_k,evalF,num_sols,Jac,tol_n)
+function [c,l,u,p] = local_inverse(sol_k,rhs_k,diff_k,border_k,NonLinOps_k,lens_k,params)
 
 %The residul is F(sol_k+z_k)
 %            sol_k(border_k)+z_k(border_k)-B_k*u
 %            (iterfacing at the zone interface)
     function [F] = residual(z)
         
-        sol_length = length(approx);
+        num_sols = length(lens_k);
         
-        F = evalF(sol_k(:)+z,approx);
+        F = NonLinOps_k.residual(z+sol_k,params)+rhs_k;
         
-        F = reshape(F,sol_length,num_sols);
+        F = mat2cell(F,lens_k);
         
-        z = reshape(z,sol_length,num_sols);
+        z = mat2cell(z,lens_k);
         
-        F(border_k,:) = sol_k(border_k,:)+z(border_k,:) - diff_k;
+        sol_k_c =  mat2cell(sol_k,lens_k);
         
-        F = F(:);
+        for i=1:num_sols
+            F{i}(border_k{i}) = z{i}(border_k{i}) + sol_k_c{i}(border_k{i}) - diff_k{i};
+        end
+        
+       F = cell2mat(F);
         
     end
 
     function J = jac_fun(z)
         
-        sol_length = length(approx);
+        num_sols = length(lens_k);
         
-        J = Jac(sol_k(:)+z(:),approx);
+        J = NonLinOps_k.jac(z+sol_k,params);
+
+        index = 0;
         
-        E = eye(sol_length);
-        
+        %This is supposed to account for the interfacing
         for i=1:num_sols
-            ind = false(sol_length*num_sols,1);
-            ind((i-1)*sol_length+(1:sol_length)) = border_k;
             
-            J(ind,:) = zeros(sum(ind),num_sols*sol_length);
-            J(ind,(i-1)*sol_length+(1:sol_length)) = E(border_k,:);
+            E = eye(lens_k(i));
+            
+            total_length = sum(lens_k);
+            
+            ind = false(total_length,1);
+            
+            local_ind = index+(1:lens_k(i));
+            
+            ind(local_ind) = border_k{i};
+            
+            J(ind,:) = zeros(sum(ind),total_length);
+            J(ind,local_ind) = E(border_k{i},:);
+            
+            index = index+lens_k(i);
         end
-        
     end
 
-init = zeros(numel(sol_k(:)),1);
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',50,'FunctionTolerance',tol_n(1),'Display','off');
-
-c = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),init,options);
-
-J = jac_fun(c);
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-4,'Display','iter');
+[c,~,~,~,J] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
+c = c(:,end);
 
 [l,u,p] = lu(J,'vector');
-
 end
 
-
+function setBoundary(NonLinOps,PUApproxArray)
+    for i=1:length(PUApproxArray{1}.leafArray)
+        NonLinOps{i}.SetBoundaryVals();
+    end
+end
 
 

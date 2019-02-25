@@ -47,14 +47,17 @@ classdef ChebPatch<LeafPatch
         outer_boundary = [];
         inner_boundary = [];
         
-        coarse_outer_boundary = [];
-        coarse_inner_boundary = [];
-        
     end
     
     properties (Access = protected)
         cdeg_in %index for the course degrees
         swap_deg_in
+        
+        coarse_outer_boundary = [];
+        coarse_inner_boundary = [];
+        
+        swap_outer_boundary = [];
+        swap_inner_boundary = [];
     end
     
     
@@ -86,6 +89,15 @@ classdef ChebPatch<LeafPatch
                  [~,out_border,in_border,~] = FindBoundaryIndex2DSides(obj);
                  obj.outer_boundary = out_border;
                  obj.inner_boundary = in_border;
+                 
+                 obj.Coarsen();
+                 
+                 [~,out_border,in_border,~] = FindBoundaryIndex2DSides(obj);
+                 obj.coarse_outer_boundary = out_border;
+                 obj.coarse_inner_boundary = in_border;
+                 
+                 obj.Refine();
+                 
             end
             
         end
@@ -102,6 +114,70 @@ classdef ChebPatch<LeafPatch
             p_struct.orig_degs = obj.orig_degs;
             p_struct.orig_cdegs = obj.orig_cdegs;
             p_struct.split_all = obj.split_all;
+        end
+        
+        function Coarsen(obj)
+            
+        Coarsen@LeafPatch(obj);
+        
+        obj.swap_outer_boundary = obj.outer_boundary;
+        obj.swap_inner_boundary = obj.inner_boundary;
+            
+        end
+        
+        function Refine(obj)
+            Refine@LeafPatch(obj);
+            
+            if obj.iscoarse
+                
+                obj.outer_boundary = obj.swap_outer_boundary;
+                
+                obj.inner_boundary = obj.swap_inner_boundary;
+                
+            end
+            
+        end
+        
+        function v = Fine2Coarse(obj,vals,k)
+            
+            v = Fine2Coarse@LeafPatch(obj,vals,k);
+            
+            if obj.is_packed
+                v = v(~obj.outer_boundary);
+            end
+            
+        end
+        
+        function unpack(obj)
+            
+            obj.is_packed = false;
+            
+            %recalculate borders
+            if obj.dim==2
+                [~,out_border,in_border,~] = FindBoundaryIndex2DSides(obj);
+                obj.outer_boundary = out_border;
+                obj.inner_boundary = in_border;
+                
+                obj.Coarsen();
+                
+                [~,out_border,in_border,~] = FindBoundaryIndex2DSides(obj);
+                obj.coarse_outer_boundary = out_border;
+                obj.coarse_inner_boundary = in_border;
+                
+                obj.Refine();
+                
+            end
+            
+        end
+        
+        function pack(obj)
+            
+            obj.is_packed = true;
+            
+            in = obj.inner_boundary;
+            out = obj.outer_boundary;
+            obj.inner_boundary = in(~out);
+            
         end
         
         % Sets the values to be used for interpolation
@@ -378,12 +454,16 @@ classdef ChebPatch<LeafPatch
             IsGeometricallyRefined = true;
         end
         
-        function V = Getvalues(obj,unpack)
+        function V = Getvalues(obj,unpack,bound_zero)
         
-         if nargin==1
+         if nargin<2
              unpack = false;
          end
             
+         if nargin<3
+            bound_zero = false;
+         end
+         
             if ~obj.is_packed
                 V = obj.values(:);
             elseif ~unpack
@@ -391,6 +471,11 @@ classdef ChebPatch<LeafPatch
             else
                 V = obj.values(:);
             end
+            
+            if bound_zero
+                V(obj.outer_boundary) = 0;
+            end
+            
         end
         
         

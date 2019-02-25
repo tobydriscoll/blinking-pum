@@ -1,11 +1,12 @@
 function [ F ] = Burgers(u,Approx,nu,bound_f)
 
-    [~,~,~,~,border,~] = FindBoundaryIndex2DSides(degs,Approx.domain,Approx.outerbox);
+
+    [~,~,~,~,border,~] = FindBoundaryIndex2DSides(Approx);
     
-    u = reshape(u,degs);
+    u = reshape(u,Approx.degs);
     
-    Dx = diffmat(degs(1),1,Approx.domain(1,:));
-    Dy = diffmat(degs(2),1,Approx.domain(2,:));
+    Dx = diffmat(Approx.degs(1),1,Approx.domain(1,:));
+    Dy = diffmat(Approx.degs(2),1,Approx.domain(2,:));
 
     ux = Dx*u; uxx = Dx*ux; uy = u*Dy'; uyy = uy*Dy';
     

@@ -1,4 +1,4 @@
-function [ u,normres,normstep,numgm,tol_g ] = NSKsolver(f,Jac,init,PUApprox,tol_n)
+function [ u,normres,normstep,numgm,tol_g ] = NSKsolver(init,PUApproxArray,NonLinOps,tol_n)
 % NKSsolver
 % The Newton Schwarz Krylov (NKS) solves nonlinear PDEs by
 % preconditioning the linear solve for the Newton step. With method, the
@@ -31,6 +31,11 @@ function [ u,normres,normstep,numgm,tol_g ] = NSKsolver(f,Jac,init,PUApprox,tol_
 % NOTE u,init is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
+
+if ~iscell(PUApproxArray)
+    PUApproxArray = {PUApproxArray};
+end
+
 normres = []; normstep = [];  numgm = []; linres = [];
 
 u = init;
@@ -40,7 +45,7 @@ u = init;
 for k = 1:20
     
      % evaluate the local corrections/solve local nonlinear problems
-    z = ParResidual(u,PUApprox,f);
+    z = ParResidual(u,PUApproxArray,NonLinOps);
     
     if k==1
         stop_tol = norm(z)*tol_n(1)+tol_n(2);
@@ -52,10 +57,6 @@ for k = 1:20
     
     if normres(k) < stop_tol, break, end
     
-    
-    %tol_g = min(max(1e-10,1e-10/normres(k)*norm(u)),1e-9);
-    %tol_g = min(max(1e-5,1e-5/normres(k)*norm(u)),1e-2);
-    %tol_g = 1e-4;
     if k==1
         tol_g(k) = 1e-4;
     else
@@ -64,10 +65,18 @@ for k = 1:20
     end
     
     tol_g(k)
+        
+    [~,L,U,p] = ComputeJacs(u,PUApproxArray,NonLinOps);  
     
-    [J,L,U,p] = ComputeJacs(u,PUApprox,Jac);  
+    z = unpackPUvecs(z,PUApproxArray);
     
-    [s,~,~,~,gmhist] = gmres(@(x)ParLinearResidual(x,PUApprox,J),-z,[],tol_g(k),900,@(x)ASPreconditionerMultSols(PUApprox,U,L,p,x));
+    for j=1:length(PUApproxArray{1}.leafArray)
+        z{j} = U{j}\(L{j}\z{j}(p{j}));
+    end
+        
+    z = packPUvecs(z,PUApproxArray);
+    
+    [s,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApproxArray,L,U,p,-x),-z,[],tol_g(k),900);
     
     linres(k) = gmhist(end);
     
@@ -78,6 +87,8 @@ for k = 1:20
     % update
     u = u+s;
 end
+
+
 
 end
 

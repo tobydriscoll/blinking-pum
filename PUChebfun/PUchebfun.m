@@ -152,13 +152,37 @@ classdef PUchebfun < PUfun
             Patch = ChebPatch(vars);
         end
         
-        function v = Getvalues(obj)
-            v = obj.ChebRoot.Getvalues();
+        function v = Getvalues(obj,unpack,bound_zero)
+            
+            if nargin < 2
+                unpack = false;
+            end
+            
+            if nargin < 3
+                bound_zero = false;
+            end
+                
+            v = cell(length(obj.leafArray),1);
+            
+            for i=1:length(obj.leafArray)
+                
+                v{i} = obj.leafArray{i}.Getvalues(unpack,bound_zero);
+                
+            end
+            
+            v = cell2mat(v);
+            
         end
         
-        function v = Getunpackedvalues(obj,sol)
+        function v = Getunpackedvalues(obj,sol,bound_zero)
+            
+            if nargin == 2
+                bound_zero = false;
+            end
+            
             obj.Setvalues(sol);
-            v = obj.ChebRoot.Getvalues(true);
+            v = obj.Getvalues(true,bound_zero);
+            
         end
         
         function show(obj,level,step)
@@ -176,12 +200,7 @@ classdef PUchebfun < PUfun
         function pack(obj)
             
             for i=1:length(obj.leafArray)
-                obj.leafArray{i}.is_packed = true;
-                
-                in = obj.leafArray{i}.inner_boundary;
-                out = obj.leafArray{i}.outer_boundary;
-                obj.leafArray{i}.inner_boundary = in(~out);
-                
+                obj.leafArray{i}.pack();
             end
             
             obj.ChebRoot.clean();
@@ -193,7 +212,8 @@ classdef PUchebfun < PUfun
         function unpack(obj)
             
             for i=1:length(obj.leafArray)
-                obj.leafArray{i}.is_packed = false;
+                %obj.leafArray{i}.is_packed = false;
+                obj.leafArray{i}.unpack();
             end
             
             obj.ChebRoot.clean();
@@ -373,7 +393,27 @@ classdef PUchebfun < PUfun
         end
         
         function Setvalues(obj,f)
-            obj.ChebRoot.Setvalues(f);
+            
+            step = zeros(length(obj.leafArray),1);
+            
+            %Figure out starting index for each patch
+            for j=2:length(obj.leafArray)
+                step(j) = step(j-1) + length(obj.leafArray{j-1});
+            end
+                
+            
+            for i=1:length(obj.leafArray)
+                
+                subind = step(i) + (1:length(obj.leafArray{i}));
+                
+                if ~isnumeric(f)
+                    obj.leafArray{i}.Setvalues(f);
+                else
+                    obj.leafArray{i}.Setvalues(f(subind));
+                end
+                
+            end
+
         end
         
         
@@ -384,14 +424,14 @@ classdef PUchebfun < PUfun
             assert(obj.ChebRoot.dim ==2 || obj.ChebRoot.dim ==1,'Must be 1-D or 2-D');
             
             if obj.ChebRoot.dim ==1
-                domain = obj.ChebRoot.domain;
-                x = linspace(domain(1,1),domain(1,2),100)';
+                loc_domain = obj.ChebRoot.domain;
+                x = linspace(loc_domain(1,1),loc_domain(1,2),100)';
                 ef = obj.evalf(x);
                 plot(x,ef,'LineWidth',2,'color','blue');
             else
-                domain = obj.ChebRoot.domain;
-                x = linspace(domain(1,1),domain(1,2),100)';
-                y = linspace(domain(2,1),domain(2,2),100)';
+                loc_domain = obj.ChebRoot.domain;
+                x = linspace(loc_domain(1,1),loc_domain(1,2),100)';
+                y = linspace(loc_domain(2,1),loc_domain(2,2),100)';
                 ef = obj.evalfGrid({x y});
                 [X,Y] = ndgrid(x,y);
                 defaultOpts = {'facecolor', 'flat', 'edgealpha', .5, 'edgecolor', 'none'};

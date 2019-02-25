@@ -1,4 +1,4 @@
-function [ u,normres,normstep,numgm,normresf,tol_g ] = SNKsolver(f,Jac,init,PUApprox,tol_n)
+function [ u,normres,normstep,numgm,tol_g ] = SNKsolver(init,PUApproxArray,NonLinOps,tol_n)
 % SNKsolver
 % The Schwarz Newton Krylov  method (SNK) solves nonlinear PDEs by nonlinear
 % preconditioning Newton's method via a alternating Schwarz process.
@@ -37,17 +37,15 @@ function [ u,normres,normstep,numgm,normresf,tol_g ] = SNKsolver(f,Jac,init,PUAp
 % NOTE u,init is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then x = [u1;u2;v1;v2].
-normres = []; normstep = [];  numgm = []; normresf = []; linres = [];
+normres = []; normstep = [];  numgm = []; linres = [];
 
 u = init;
 
 % solve for the new value using plain Newton
 for k = 1:20
-
-    normresf(k) = norm(ParResidual(u,PUApprox,f));
     
     % evaluate the local corrections/solve local nonlinear problems
-    [z,L,U,p] = SNK_forward_eval(u,PUApprox,f,Jac,tol_n);
+    [z,L,U,p] = SNK_forward_eval(u,PUApproxArray,NonLinOps);
     
     normres(k) = norm(z);
     
@@ -57,7 +55,6 @@ for k = 1:20
     end
     
     normres(k)
-    normresf(k)
     
     if normres(k) < stop_tol, break, end
 
@@ -70,7 +67,7 @@ for k = 1:20
     
     tol_g(k)
     
-    [s,~,~,~,gmhist] = gmres(@(x)JacobianFowardLU(PUApprox,L,U,p,x),-z,[],tol_g(k),200);
+    [s,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApproxArray,L,U,p,x),-z,[],tol_g(k),200);
     
     linres(k) = gmhist(end);
     

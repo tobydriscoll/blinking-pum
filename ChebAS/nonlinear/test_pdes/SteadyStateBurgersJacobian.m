@@ -1,10 +1,10 @@
-function [J] = SteadyStateBurgersJacobian(Re,y,leaf)
+function [J] = SteadyStateBurgersJacobian(y,leaf,R)
 
 degs = leaf.degs;
     
     Len = prod(degs);
     
-    [~,out_border,in_border,~] = FindBoundaryIndex2DSides(degs,leaf.domain,leaf.outerbox);
+    [~,out_border,in_border,~] = FindBoundaryIndex2DSides(leaf);
     
     border = out_border | in_border;
     
@@ -38,10 +38,10 @@ degs = leaf.degs;
     
     Z = zeros(prod(degs));
     
-    J1du = -(Dxx+Dyy)+Re*(diag(u)*Dx+diag(ux)+diag(v)*Dy); J1dv = Re*diag(uy);
+    J1du = 1/R*(Dxx+Dyy)-(diag(u)*Dx+diag(ux)+diag(v)*Dy)-I; J1dv = -diag(uy);
     J1du(border,:) = I(border,:); J1dv(border,:) = Z(border,:);
     
-    J2du = Re*diag(vx); J2dv = -(Dxx+Dyy)+Re*(diag(u)*Dx+diag(v)*Dy+diag(vy));
+    J2du = -diag(vx); J2dv = 1/R*(Dxx+Dyy)-(diag(u)*Dx+diag(v)*Dy+diag(vy))-I;
     J2du(border,:) = Z(border,:); J2dv(border,:) = I(border,:); 
     
     
