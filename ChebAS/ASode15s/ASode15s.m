@@ -606,11 +606,18 @@ while ~done
       end
 
       tooslow = false;
+      
+      tol_g = [];
+      
+      normres = [];
+      
       for iter = 1:maxit
 
         %make sure signes match. 
         %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
         [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew);
+        
+        normres(iter) = norm(rhs);
         
        
 %         if DAE                          % Account for row scaling.
@@ -623,7 +630,16 @@ while ~done
         warning(warnoff);
         
         
-        [del,~,~,~,~] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],1e-14);
+        if iter==1
+            tol_g(iter) = 1e-4;
+        else
+            %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+            tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-10);
+        end
+    
+        tol_g(iter)
+        
+        [del,~,~,~,~] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs);
 
 
         warning(warnstat);
@@ -657,9 +673,7 @@ while ~done
           end
         elseif newnrm > 0.9*oldnrm
           tooslow = true;
-          if iter>min_iter
             break;
-          end
         else
           rate = max(0.9*rate, newnrm / oldnrm);
           havrate = true;                 
@@ -672,9 +686,7 @@ while ~done
             break;
           elseif 0.5*rtol < errit*rate^(maxit-iter)
             tooslow = true;
-            if iter>min_iter
             break;
-            end
           end
         end
         
@@ -769,7 +781,7 @@ while ~done
 %       end
 %     end
    % rtol = 5e-2;
-    if err > rtol                       % Failed step
+itu    if err > rtol                       % Failed step
       nfailed = nfailed + 1;            
       if absh <= hmin
         warning(message('MATLAB:ode15s:IntegrationTolNotMet', sprintf( '%e', t ), sprintf( '%e', hmin )));
