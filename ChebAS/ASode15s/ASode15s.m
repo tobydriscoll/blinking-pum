@@ -322,6 +322,10 @@ end
 
 yp0 = ParLocalResidual(t0,y0,PUApprox,ode);
 
+%yp0 = y0;
+
+%yp0= SNK_time_deriv_resid(t0,y0,0,PUApprox,ode,1,0);
+
 % NO! we assum yp0_ok = true
 %
 % Get the initial slope yp. For DAEs the default is to compute
@@ -566,6 +570,8 @@ while ~done
     havrate = false;
   end
   
+  min_iter = 3;
+  
   % LOOP FOR ADVANCING ONE STEP.
   nofailed = true;                      % no failed attempts
   while true                            % Evaluate the formula.
@@ -603,8 +609,8 @@ while ~done
       for iter = 1:maxit
 
         %make sure signes match. 
-        R = Masstimes(PUApprox,Mtnew,psi+difkp1);
-        [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,-R,PUApprox,ode,hinvGak,Mtnew);
+        %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
+        [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew);
         
        
 %         if DAE                          % Account for row scaling.
@@ -651,7 +657,9 @@ while ~done
           end
         elseif newnrm > 0.9*oldnrm
           tooslow = true;
+          if iter>min_iter
             break;
+          end
         else
           rate = max(0.9*rate, newnrm / oldnrm);
           havrate = true;                 
@@ -664,7 +672,9 @@ while ~done
             break;
           elseif 0.5*rtol < errit*rate^(maxit-iter)
             tooslow = true;
+            if iter>min_iter
             break;
+            end
           end
         end
         

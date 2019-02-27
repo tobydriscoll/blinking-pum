@@ -27,7 +27,15 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,l,u,p,diff] = SNK_time_deriv_resid(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M)
+function [z,l,u,p] = SNK_time_deriv_resid(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M)
+
+rhs_zero = rhs==0;
+
+if rhs_zero
+    rhs = zeros(size(sol));
+end
+
+notMat = ~iscell(M);
 
 num_sols = length(PUApproxArray);
 
@@ -60,7 +68,9 @@ for i=1:num_sols
 end
 
 [ sol_loc,lens ] = unpackPUvecs(cell2mat(sol),PUApproxArray);
+
 rhs_loc = unpackPUvecs(rhs,PUApproxArray);
+
 start_index = zeros(num_sols,1);
 
 diff = cell(num_leaves,num_sols);
@@ -84,7 +94,12 @@ end
 %parallel step
 for k=1:num_leaves
     
-    [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k});
+    if notMat
+        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k});
+    else
+        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k});
+    end
+        
     
 end
 
@@ -115,7 +130,7 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
         
         num_sols = length(lens_k);
         
-        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k)-M*(z+sol_k)+rhs_k;
+        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k)-M*(z+rhs_k);
         
         F = mat2cell(F,lens_k);
         
@@ -160,7 +175,7 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
     end
 
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-4,'Display','off');
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-14,'Display','off');
 [c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
 c = c(:,end);
 
