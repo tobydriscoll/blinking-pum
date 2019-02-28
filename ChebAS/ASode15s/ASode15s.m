@@ -631,7 +631,7 @@ while ~done
         
         
         if iter==1
-            tol_g(iter) = 1e-4;
+            tol_g(iter) = 1e-6;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
             tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-10);
@@ -765,6 +765,9 @@ while ~done
     end     % end of while loop for getting ynew
     
     % difkp1 is now the backward difference of ynew of order k+1.
+    
+    difkp1 = Masstimes(PUApprox,Mtnew,difkp1);
+    
     if normcontrol
       err = (norm(difkp1) * invwt) * erconst(k);
     else
@@ -781,7 +784,7 @@ while ~done
 %       end
 %     end
    % rtol = 5e-2;
-itu    if err > rtol                       % Failed step
+   if err > rtol                       % Failed step
       nfailed = nfailed + 1;            
       if absh <= hmin
         warning(message('MATLAB:ode15s:IntegrationTolNotMet', sprintf( '%e', t ), sprintf( '%e', hmin )));
@@ -1072,12 +1075,23 @@ end
 
 function R = Masstimes(PUApproxArray,M,y)
 
-[y_loc] = unpackPUvecs(y,PUApproxArray);
+[y_loc,lens] = unpackPUvecs(y,PUApproxArray);
 
 num_leaves = length(PUApproxArray{1}.leafArray);
 
+num_sols = length(PUApproxArray);
+
 for i=1:num_leaves
-    R{i} = M{i}*y_loc{i};
+    
+    R_i = M{i}*y_loc{i};
+    R_i = mat2cell(R_i,lens{i});
+    
+    for j=1:num_sols
+       R_i{j}(~PUApproxArray{j}.leafArray{i}.inner_boundary) = 0;
+    end
+    
+    R{i} = cell2mat(R_i);
+    
 end
 
 R = packPUvecs(R,PUApproxArray);

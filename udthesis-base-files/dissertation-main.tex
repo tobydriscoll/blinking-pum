@@ -12,7 +12,8 @@
 \usepackage{subfig}
 \usepackage{graphics}
 \usepackage{stmaryrd}
-
+\usepackage[export]{adjustbox}
+\usepackage{forest}
 \newtheorem{thm}{Theorem}[section]
 
 \DeclareGraphicsExtensions{.eps}
@@ -41,6 +42,7 @@
 \newcommand{\WRP}{\par\qquad\(\hookrightarrow\)\enspace}
 \newcommand{\ARP}{\par\qquad\ \enspace}
 \DeclareMathOperator*{\argmax}{arg\,max}  % in your preamble
+\DeclareMathOperator*{\argmin}{arg\,min}
 %%%%% custom commands for this paper
 \newcommand{\nmax}{N}
 \newcommand{\bigo}{\mathcal{O}}
@@ -76,7 +78,7 @@
                    % This file (dissertation-tap.tex) contains the Title
                    % and Approval Page information for a dissertation.
 
-%\include{Chapter1/chap1}    % This file (chap1.tex) contains the text
+\include{Chapter1/chap1}    % This file (chap1.tex) contains the text
                    % for Chapter 1.
                    
 \include{Chapter2/chap2}    % This file (chap2.tex) contains the text
