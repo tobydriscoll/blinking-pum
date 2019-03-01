@@ -1,6 +1,6 @@
 domain = [-1 1;-1 1];
 cheb_struct.domain = domain;
-cheb_struct.degs = [10 10];
+cheb_struct.degs = [33 33];
 cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.tol = 1e-4;
@@ -46,3 +46,4 @@ AJ = jacobi(residual,sol_loc{1});
 J = Jac(sol_loc{1});
 
 y02 = packPUvecs(sol_loc,{H P});
+
