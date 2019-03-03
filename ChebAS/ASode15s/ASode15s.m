@@ -320,9 +320,9 @@ for i = 1:length(warnoffId)
 end
 
  
-yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode));
+%yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode));
 
-%[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol);
+[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol);
 
 %yp0 = y0;
 
@@ -650,11 +650,11 @@ while ~done
         tol_g(iter);
         
         if if_snk
-            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],tol_g(iter),100);
+            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],tol_g(iter),200);
         else
             [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew);
             
-            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x),-rhs,[],tol_g(iter),200,@(u)ASPreconditionerTime(PUApprox,L,U,p,u),100);
+            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x),-rhs,[],tol_g(iter),200,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
         end
        
         

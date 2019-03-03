@@ -187,15 +187,15 @@ In words, the zone is extended on both sides by an amount proportional, up to th
 
 We define a binary tree $T$ with each node $\nu$ having the following properties:
 \begin{itemize}
-\item domain($\nu$):=the domain of the patch
-\item zone($\nu$):=the zone of the patch
+\item \textsf{domain}($\nu$):=the domain of the patch
+\item \textsf{zone}($\nu$):=the zone of the patch
 \item \child{0}($\nu$),\child{1}($\nu$):=respective left and right subtrees of $\nu$ (if split)
 \item \weight{0}($\nu$),\weight{1}($\nu$):=respective left and right weights of $\nu$ (if split)
-\item interpolant($\nu$):=Chebyshev interpolant on domain($\nu$) if $\nu$ is a leaf
-\item values($\nu$):=values of the function we are approximating at the Chebyshev points of $\nu$.
+\item \textsf{interpolant}($\nu$):=Chebyshev interpolant on \textsf{domain}($\nu$) if $\nu$ is a leaf
+\item \textsf{\textsf{values}}($\nu$):=values of the function we are approximating at the Chebyshev points of $\nu$.
 \end{itemize}
 
-For a node $\nu$ we recursively define the approximation on domain($\nu$) as
+For a node $\nu$ we recursively define the approximation on \textsf{domain}($\nu$) as
 \begin{align}
 s_{\nu}(x) = \weight{0}(\nu) s_{\text{\child{0}($\nu$)}}(x) + \weight{1}(\nu) s_{\text{\child{1}($\nu$)}}(x)
 \end{align}
@@ -205,30 +205,30 @@ where approximations on leaves are defined to be Chebyshev polynomials. We prove
 \caption{refine($\nu$,$f$,$\nmax$,$t$)}
 \label{alg2}
 \begin{algorithmic}
-\IF{$\nu$ is a leaf and $f$ cannot be resolved by interpolant($\nu$)}
+\IF{$\nu$ is a leaf and $f$ cannot be resolved by \textsf{interpolant}($\nu$)}
 \STATE Define new nodes $\nu_0$, $\nu_1$.
-\STATE $[a,b]$:=domain($\nu$)
+\STATE $[a,b]$:=\textsf{domain}($\nu$)
 \STATE $m = \frac{a+b}{2}$
-\STATE zone(\child{0}($\nu$)) = $[b,m]$
-\STATE zone(\child{1}($\nu$)) = $[m,a]$
-\STATE domain(\child{0}($\nu$)), domain(\child{1}($\nu$)) are formed as in (\ref{eq:zone_extend1d})
-\STATE domain($\nu$) = domain(\child{0}($\nu$)) $\cup$ domain(\child{1}($\nu$))
+\STATE \textsf{zone}(\child{0}($\nu$)) = $[b,m]$
+\STATE \textsf{zone}(\child{1}($\nu$)) = $[m,a]$
+\STATE \textsf{domain}(\child{0}($\nu$)), \textsf{domain}(\child{1}($\nu$)) are formed as in (\ref{eq:zone_extend1d})
+\STATE \textsf{domain}($\nu$) = \textsf{domain}(\child{0}($\nu$)) $\cup$ \textsf{domain}(\child{1}($\nu$))
 \STATE \child{0}($\nu$) := $\nu_0$
 \STATE \child{1}($\nu$) := $\nu_1$
-\STATE \weight{0}($\nu$),\weight{1}($\nu$):= weights in (\ref{PUW}) defined for domain($\nu_0$), domain($\nu_1$)
-\ELSIF{$\nu$ is a leaf and $f(x)$ can be resolved by a Chebyshev interpolant with degree less than $\nmax$}
-\STATE interpolant($\nu$):=minimum degree interpolant $f(x)$ can be resolved by \ARP 
+\STATE \weight{0}($\nu$),\weight{1}($\nu$):= weights in (\ref{PUW}) defined for \textsf{domain}($\nu_0$), \textsf{domain}($\nu_1$)
+\ELSIF{$\nu$ is a leaf and $f(x)$ can be resolved by a Chebyshev \textsf{interpolant} with degree less than $\nmax$}
+\STATE \textsf{interpolant}($\nu$):=minimum degree \textsf{interpolant} $f(x)$ can be resolved by \ARP 
 as determined by Chebfun
 \ELSE
 \STATE refine(\child{0}($\nu$),$f$,$\nmax$,$t$)
 \STATE refine(\child{1}($\nu$),$f$,$\nmax$,$t$)
-\STATE domain($\nu$) = domain(\child{0}($\nu$)) $\cup$ domain(\child{1}($\nu$))
+\STATE \textsf{domain}($\nu$) = \textsf{domain}(\child{0}($\nu$)) $\cup$ \textsf{domain}(\child{1}($\nu$))
 \STATE merge($\nu$,$\nmax$)
 \ENDIF
 \end{algorithmic}
 \end{algorithm}
 
-We first initialize the tree $T$ with a single node $\nu$ where domain($\nu$)=$[a,b]$. Next we repeatedly call the refine method until each leaf of $T$ has a Chebyshev interpolant that can resolve $f(x)$ with degree less than $\nmax$, as seen in Algorithm~\ref{alg2}. For a leaf $\nu$, we determine if a Chebyshev interpolant can resolve $f(x)$ using Chebfun's standardChop method with values($\nu$) (as described in Section~\ref{sec_cheb}). Using $T$ we can evaluate $s_{[a,b]}(x)$ recursively as demonstrated in Algorithm~\ref{alg3}. 
+We first initialize the tree $T$ with a single node $\nu$ where \textsf{domain}($\nu$)=$[a,b]$. Next we repeatedly call the refine method until each leaf of $T$ has a Chebyshev interpolant that can resolve $f(x)$ with degree less than $\nmax$, as seen in Algorithm~\ref{alg2}. For a leaf $\nu$, we determine if a Chebyshev interpolant can resolve $f(x)$ using Chebfun's standardChop method with \textsf{values}($\nu$) (as described in Section~\ref{sec_cheb}). Using $T$ we can evaluate $s_{[a,b]}(x)$ recursively as demonstrated in Algorithm~\ref{alg3}. 
 
 %\begin{algorithm}[!h]
 %\caption{$T$=refine($\nmax$,$t$,$f(x)$)}
@@ -250,7 +250,7 @@ We first initialize the tree $T$ with a single node $\nu$ where domain($\nu$)=$[
 \label{alg3}
 \begin{algorithmic}
 \IF{$\nu$ is a leaf}
-\STATE $p$:=interpolant($\nu$)
+\STATE $p$:=\textsf{interpolant}($\nu$)
 \STATE v:= $p(x)$
 \ELSE
 \STATE $v_0,v_1$:=0
@@ -258,7 +258,7 @@ We first initialize the tree $T$ with a single node $\nu$ where domain($\nu$)=$[
 \STATE $w_0$:=\weight{0}($\nu$)
 \STATE $w_1$:=\weight{1}($\nu$)
 \FOR{$k=0,1$}
-\IF{$x \in$ domain(\child{k}($\nu$))}
+\IF{$x \in$ \textsf{domain}(\child{k}($\nu$))}
 \STATE $v_k$:=eval(\child{k}($\nu$),$x$)
 \ENDIF
 \ENDFOR
@@ -395,18 +395,18 @@ can be used to approximate  $f(x)$ on $[a,b_{21}]$ since $f(x)$ is resolved at t
 \begin{algorithmic}
 \IF{\child{0}($\nu$) and \child{0}(\child{1}($\nu$)) (child and grandchild of $\nu$) are leaves and both of the intervals of the leaves can be resolved on}
 \STATE Define a new leaf $\nu_0$
-\STATE $p_0(x)$:=interpolant(\child{0}($\nu$))
-\STATE $p_1(x)$:=interpolant(\child{1}(\child{0}($\nu$)))
+\STATE $p_0(x)$:=\textsf{interpolant}(\child{0}($\nu$))
+\STATE $p_1(x)$:=\textsf{interpolant}(\child{1}(\child{0}($\nu$)))
 \STATE $w_0(x)$:= \weight{0}($\nu$)
 \STATE $w_1(x)$:= \weight{1}($\nu$)
 \STATE $\hat{s}(x)$:=$w_0(x)p_0(x)+w_1(x)p_1(x)$
-\IF{$\hat{s}(x)$ can be resolved by a Chebyshev interpolant $p(x)$ with degree less than $\nmax$}
-\STATE domain($\nu_0$):=domain(\child{0}($\nu$))$\cup$domain(\child{0}(\child{1}($\nu$)))
-\STATE interpolant($\nu_0$):=$p(x)$
-\STATE points($\nu_0$):=Chebyshev grid of length deg($p(x)$) on $[a_0,b_1]$
+\IF{$\hat{s}(x)$ can be resolved by a Chebyshev \textsf{interpolant} $p(x)$ with degree less than $\nmax$}
+\STATE \textsf{domain}($\nu_0$):=\textsf{domain}(\child{0}($\nu$))$\cup$\textsf{domain}(\child{0}(\child{1}($\nu$)))
+\STATE \textsf{interpolant}($\nu_0$):=$p(x)$
+\STATE \textsf{points}($\nu_0$):=Chebyshev grid of length deg($p(x)$) on $[a_0,b_1]$
 \STATE $\hat{w}_0(x)$:=  \weight{0}(\child{1}($\nu$))
 \STATE $\hat{w}_1(x)$:=  \weight{1}(\child{1}($\nu$))
-\STATE \weight{0}($\nu$):= extend($\hat{w}_0(x)$,domain($\nu_0$))
+\STATE \weight{0}($\nu$):= extend($\hat{w}_0(x)$,\textsf{domain}($\nu_0$))
 \STATE \weight{1}($\nu$):= $\hat{w}_1(x)$
 \STATE \child{0}($\nu$):= $\nu_0$
 \STATE \child{1}($\nu$):= \child{1}(\child{1}($\nu$))
@@ -438,10 +438,10 @@ can be used to approximate  $f(x)$ on $[a,b_{21}]$ since $f(x)$ is resolved at t
 
 Next we demonstrate how to construct a first derivative matrix; higher derivative matrices can be similarly constructed.  Suppose we have constructed a splitting represented with the tree $T$. For each node $\nu$ of the tree, we add the following methods:
 \begin{itemize}
-\item points($\nu$):= provides the Chebyshev points of the leaves of $\nu$
-\item leafpoints($\nu$):= provides the Chebyshev points of $T$ in domain($\nu$) i.e. \newline $\text{points(root($T$))} \cap \text{domain($\nu$)}$
-\item pointindex($\nu$):=gives the index of points($\nu$) with respect to the points of the parent of $\nu$ (if $\nu$ is a child)
-\item leafpointindex($\nu$):=gives the index of leafpoints($\nu$) with respect to the leafpoints of the parent of $\nu$ (if $\nu$ is a child).
+\item \textsf{points}($\nu$):= provides the Chebyshev points of the leaves of $\nu$
+\item \textsf{leafpoints}($\nu$):= provides the Chebyshev points of $T$ in \textsf{domain}($\nu$) i.e. \newline $\text{\textsf{points}(root($T$))} \cap \text{\textsf{domain}($\nu$)}$
+\item \textsf{pointindex}($\nu$):=gives the index of \textsf{points}($\nu$) with respect to the points of the parent of $\nu$ (if $\nu$ is a child)
+\item \textsf{leafpointindex}($\nu$):=gives the index of \textsf{leafpoints}($\nu$) with respect to the leafpoints of the parent of $\nu$ (if $\nu$ is a child).
 \end{itemize}
 
 
@@ -479,38 +479,38 @@ Next we demonstrate how to construct a first derivative matrix; higher derivativ
 %\caption{The PUM approximation $s_{[a,b]}(x)$ is represented as a tree rooted at $[a,b]$; the diameter $r=(1+t) \frac{a+b}{2}$, where $t$ is the overlap parameter. Each node has its respective approximate, weight function, differentiation matrix,interpolation matrix and Chebyshev points for all its leaves (shown in that order).}
 %\label{PUMTREEDIFF}
 %\end{figure}
-Let $[\alpha,\beta]=\text{domain($\nu$)}$. We want to construct matrices $M,D$ such that 
+Let $[\alpha,\beta]=\text{\textsf{domain}($\nu$)}$. We want to construct matrices $M,D$ such that 
 \begin{equation}
 \begin{aligned}
-M \left . f(x) \right |_{\text{points($\nu$)}} &= \left . s_{[\alpha,\beta]}(x) \right |_{\text{leafpoints($\nu$)}}, \\
-D \left . f(x) \right |_{\text{points($\nu$)}} &= \left . \frac{d}{dx} s_{[\alpha,\beta]}(x) \right |_{\text{leafpoints($\nu$)}}.
+M \left . f(x) \right |_{\text{\textsf{points}($\nu$)}} &= \left . s_{[\alpha,\beta]}(x) \right |_{\text{\textsf{leafpoints}($\nu$)}}, \\
+D \left . f(x) \right |_{\text{\textsf{points}($\nu$)}} &= \left . \frac{d}{dx} s_{[\alpha,\beta]}(x) \right |_{\text{\textsf{leafpoints}($\nu$)}}.
 \end{aligned}
 \end{equation}
 
-Let $I_k = \text{domain(\child{k}($\nu$))}$, $w_k(x)=\text{\weight{k}($\nu$)}$ for $k=0,1$. Then
+Let $I_k = \text{\textsf{domain}(\child{k}($\nu$))}$, $w_k(x)=\text{\weight{k}($\nu$)}$ for $k=0,1$. Then
 \begin{equation}
 \begin{aligned}
-\left . s_{[\alpha,\beta]}(x) \right |_{\text{leafpoints($\nu$)}} &= \sum_{k=0}^1 \left . w_k(x) s_{I_k}(x) \right |_{\text{leafpoints($\nu$)}}, \\
-\left . \frac{d}{dx} s_{[\alpha,\beta]}(x) \right |_{\text{leafpoints($\nu$)}} &= \sum_{k=0}^1 \lp \left . w_k(x)  \frac{d}{dx} s_{I_k}(x) + \frac{d}{dx} w_k(x)  s_{I_k}(x) \rp \right |_{\text{leafpoints($\nu$)}} .
+\left . s_{[\alpha,\beta]}(x) \right |_{\text{\textsf{leafpoints}($\nu$)}} &= \sum_{k=0}^1 \left . w_k(x) s_{I_k}(x) \right |_{\text{\textsf{leafpoints}($\nu$)}}, \\
+\left . \frac{d}{dx} s_{[\alpha,\beta]}(x) \right |_{\text{\textsf{leafpoints}($\nu$)}} &= \sum_{k=0}^1 \lp \left . w_k(x)  \frac{d}{dx} s_{I_k}(x) + \frac{d}{dx} w_k(x)  s_{I_k}(x) \rp \right |_{\text{\textsf{leafpoints}($\nu$)}} .
 \end{aligned}
 \label{sum_eval}
 \end{equation}
-Thus we can recursively build up the differentiation matrix through the tree $T$. Due to the support of the weights, for each term in (\ref{sum_eval}) we only need evaluate the approximation $s_{I_k}(x)$ (or its derivative) for $\text{leafpoints($\nu$)} \cap I_k$, i.e. leafpoints(\child{k}($\nu$)). We describe how to construct the differentiation recursively in Algorithm~\ref{alg4}, using MATLAB notation for matrices. At each leaf the interpolation matrix $M$ has entries given by the barycentric interpolation formula based on second-kind Chebyshev points, as produced by the Chebfun command {\tt barymat} \cite{driscoll2015rectangular}.
+Thus we can recursively build up the differentiation matrix through the tree $T$. Due to the support of the weights, for each term in (\ref{sum_eval}) we only need evaluate the approximation $s_{I_k}(x)$ (or its derivative) for $\text{\textsf{leafpoints}($\nu$)} \cap I_k$, i.e. \textsf{leafpoints}(\child{k}($\nu$)). We describe how to construct the differentiation recursively in Algorithm~\ref{alg4}, using MATLAB notation for matrices. At each leaf the interpolation matrix $M$ has entries given by the barycentric interpolation formula based on second-kind Chebyshev points, as produced by the Chebfun command {\tt barymat} \cite{driscoll2015rectangular}.
 
 \begin{algorithm}
 \caption{[$M,D$]=diffmatrix($\nu$)}
 \label{alg4}
 \begin{algorithmic}
 \IF{$\nu$ is a leaf}
-\STATE $M$:= the Chebyshev barycentric matrix from points($\nu$) to leafpoints($\nu$)
-\STATE $D_x$:= Chebyshev differentiation matrix with grid points($\nu$).
+\STATE $M$:= the Chebyshev barycentric matrix from \textsf{points}($\nu$) to \textsf{\textsf{leafpoints}}($\nu$)
+\STATE $D_x$:= Chebyshev differentiation matrix with grid \textsf{points}($\nu$).
 \STATE $D$:=$M D_x$.
 \ELSE
-\STATE $M,D$:=zeros(length(leafpoints($\nu$)),length(points($\nu$)))
+\STATE $M,D$:=zeros(length(\textsf{leafpoints}($\nu$)),length(\textsf{points}($\nu$)))
 \FOR{$k=0,1$}
 \STATE [$M_k$,$D_k$]:= diffmatrix(\child{k}($\nu$))
-\STATE $M$(leafpointindex(\child{k}($\nu$)),pointindex(\child{k}($\nu$))) = \WRP \text{diag} $\lp \left . w_k \right |_{\text{leafpoints(\child{k}($\nu$))}} \rp$*$M_k$;
-\STATE $D$(leafpointindex(\child{k}($\nu$)),pointindex(\child{k}($\nu$))) = \WRP \text{diag} $\lp \left . w_k \right |_{\text{leafpoints(\child{k}($\nu$))}}  \rp$*$D_k$+ \WRP \text{diag} $\lp \frac{d}{dx} \left . w_k \right |_{\text{leafpoints(\child{k}($\nu$))}} \rp$*$M_k$;
+\STATE $M$(\textsf{leafpointindex}(\child{k}($\nu$)),\textsf{pointindex}(\child{k}($\nu$))) = \WRP \text{diag} $\lp \left . w_k \right |_{\text{\textsf{leafpoints}(\child{k}($\nu$))}} \rp$*$M_k$;
+\STATE $D$(\textsf{leafpointindex}(\child{k}($\nu$)),\textsf{pointindex}(\child{k}($\nu$))) = \WRP \text{diag} $\lp \left . w_k \right |_{\text{\textsf{leafpoints}(\child{k}($\nu$))}}  \rp$*$D_k$+ \WRP \text{diag} $\lp \frac{d}{dx} \left . w_k \right |_{\text{\textsf{leafpoints}(\child{k}($\nu$))}} \rp$*$M_k$;
 \ENDFOR
 \ENDIF
 \end{algorithmic}
