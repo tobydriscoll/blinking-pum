@@ -11,7 +11,11 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z] = ParLocalResidual(t,sol,PUApproxArray,NonLinOps)
+function [z] = ParLocalResidual(t,sol,dt,PUApproxArray,NonLinOps)
+
+if nargin<6
+    set_interface = false;
+end
 
 num_sols = length(PUApproxArray);
 
@@ -68,7 +72,7 @@ end
 %parallel step
 for k=1:num_leaves
     
-    z{k} = local_resid(sol_loc{k},t,diff{k},border{k},NonLinOps{k},lens{k});
+    z{k} = local_resid(sol_loc{k},t,dt,diff{k},border{k},NonLinOps{k},lens{k},set_interface);
     
 end
 
@@ -76,18 +80,20 @@ z = packPUvecs(z,PUApproxArray);
 
 end
 
-function F = local_resid(sol_k,t,diff_k,border_k,NonLinOps_k,lens_k)
+function F = local_resid(sol_k,t,dt,diff_k,border_k,NonLinOps_k,lens_k,set_interface)
         
         num_sols = length(lens_k);
         
-        F = NonLinOps_k.timederiv(t,sol_k);
+        F = dt*NonLinOps_k.timederiv(t,sol_k);
         
         F = mat2cell(F,lens_k);
         
         sol_k_c =  mat2cell(sol_k,lens_k);
         
         for i=1:num_sols
+
             F{i}(border_k{i}) = sol_k_c{i}(border_k{i}) - diff_k{i};
+        
         end
         
        F = cell2mat(F);

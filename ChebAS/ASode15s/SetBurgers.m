@@ -11,12 +11,24 @@ for i=1:length(U_tree.leafArray)
     [U,V] = Burger{i}.initial();
     
     U_tree.leafArray{i}.Setvalues(U(:));
-    U_tree.leafArray{i}.sample(U(:));
+    U_tree.leafArray{i}.Setvalues(U(:));
     
-    V_tree.leafArray{i}.Setvalues(V(:));
     V_tree.leafArray{i}.sample(V(:));
-     
+    U_tree.leafArray{i}.sample(U(:)); 
+    
 end
+
+% for i=1:length(U_tree.leafArray)
+%         
+%     G = U_tree.leafArray{1}.leafGrids();
+%     
+%     pu_vals = U_tree.evalfGrid(G);
+%     U_tree.leafArray{i}.Setvalues(pu_vals(:));
+%     
+%     pu_vals = V_tree.evalfGrid(G);
+%     V_tree.leafArray{i}.Setvalues(pu_vals(:));
+%      
+% end
 
 if is_pack
     U_tree.pack();

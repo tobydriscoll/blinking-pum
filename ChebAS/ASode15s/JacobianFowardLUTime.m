@@ -76,7 +76,7 @@ for k=1:num_leaves
     
     output{k} = U{k}\(L{k}\z{k}(p{k})) - x{k};
     
-   % output{k} = z{k} - L{k}*U{k}*(x{k}(P{k}));
+   % output{k} =  L{k}*(U{k}*z{k}(p{k}))*x{k}-z{k};
     
 end
 

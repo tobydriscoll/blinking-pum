@@ -1,4 +1,4 @@
-function varargout = ASode15s(ode,tspan,y0,PUApprox,options,varargin)
+function varargout = ASode15s(if_snk,ode,tspan,y0,PUApprox,options,varargin)
 %ODE15S Solve stiff differential equations and DAEs, variable order method.
 %   [TOUT,YOUT] = ODE15S(ODEFUN,TSPAN,Y0) with TSPAN = [T0 TFINAL] integrates 
 %   the system of differential equations y' = f(t,y) from time T0 to TFINAL 
@@ -319,12 +319,12 @@ for i = 1:length(warnoffId)
   warnoff(i).state = 'off';
 end
 
+ 
+yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode));
 
-yp0 = ParLocalResidual(t0,y0,PUApprox,ode);
+%[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol);
 
 %yp0 = y0;
-
-%yp0= SNK_time_deriv_resid(t0,y0,0,PUApprox,ode,1,0);
 
 % NO! we assum yp0_ok = true
 %
@@ -403,10 +403,12 @@ if isempty(htry)
   % Compute an initial step size h using yp = y'(t).
   if normcontrol
     wt = max(normy,threshold);
-    rh = 1.25 * (norm(yp) / wt) / sqrt(rtol);  % 1.25 = 1 / 0.8
+    yp_n = norm(Masstimes(PUApprox,Mt,yp));
+    rh = 1.25 * (norm(yp_n) / wt) / sqrt(rtol);  % 1.25 = 1 / 0.8
   else
     wt = max(abs(y),threshold);
-    rh = 1.25 * norm(yp ./ wt,inf) / sqrt(rtol);
+    yp_n = norm(Masstimes(PUApprox,Mt,yp));
+    rh = 1.25 * norm(yp_n ./ wt,inf) / sqrt(rtol);
   end
   absh = min(hmax, htspan);
   if absh * rh > 1
@@ -570,7 +572,7 @@ while ~done
     havrate = false;
   end
   
-  min_iter = 3;
+  min_iter = 2;
   
   % LOOP FOR ADVANCING ONE STEP.
   nofailed = true;                      % no failed attempts
@@ -582,9 +584,12 @@ while ~done
       % Compute the constant terms in the equation for ynew.
       psi = dif(:,K) * (G(K) * invGa(k));
 
+      t 
+      h
+      
       % Predict a solution at t+h.
       tnew = t + h;
-      tnew
+
       if done
         tnew = tfinal;   % Hit end point exactly.
       end
@@ -615,8 +620,13 @@ while ~done
 
         %make sure signes match. 
         %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
-        [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew);
+        if if_snk
+            [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew);
+        else
+            rhs = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode)-Masstimes(PUApprox,Mtnew,psi+difkp1);
+        end
         
+
         normres(iter) = norm(rhs);
         
        
@@ -631,17 +641,23 @@ while ~done
         
         
         if iter==1
-            tol_g(iter) = 1e-6;
+            tol_g(iter) = 1e-4;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
             tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-10);
         end
     
-        tol_g(iter)
+        tol_g(iter);
         
-        [del,~,~,~,~] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs);
-
-
+        if if_snk
+            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],tol_g(iter),100);
+        else
+            [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew);
+            
+            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x),-rhs,[],tol_g(iter),200,@(u)ASPreconditionerTime(PUApprox,L,U,p,u),100);
+        end
+       
+        
         warning(warnstat);
         
         % If no new warnings or a muted warning, restore previous lastwarn.
@@ -672,8 +688,10 @@ while ~done
             rate = 0;
           end
         elseif newnrm > 0.9*oldnrm
-          tooslow = true;
-            break;
+          if iter>min_iter  
+            tooslow = true;
+                break;
+          end
         else
           rate = max(0.9*rate, newnrm / oldnrm);
           havrate = true;                 
@@ -685,8 +703,10 @@ while ~done
             tooslow = true;
             break;
           elseif 0.5*rtol < errit*rate^(maxit-iter)
-            tooslow = true;
-            break;
+            if iter>min_iter  
+                tooslow = true;
+                break;
+            end
           end
         end
         
@@ -698,28 +718,28 @@ while ~done
       if tooslow
         nfailed = nfailed + 1;          
         % Speed up the iteration by forming new linearization or reducing h.
-        if ~Jcurrent || ~Mcurrent
-%           if ~Jcurrent  
-%             if Janalytic
-%               %dfdy = feval(Jac,t,y,Jargs{:});
-% %              dfdy = ComputeJac(PUApprox,num_sols,t,y);
-%             else
-%               f0 = feval(odeFcn,t,y,odeArgs{:});
-%               [dfdy,Joptions.fac,nF] = odenumjac(odeFcn, {t,y,odeArgs{:}}, f0, Joptions);     
-%               nfevals = nfevals + nF + 1; 
-%             end             
-%             npds = npds + 1;            
-%             Jcurrent = true;
-%           end
-          if ~Mcurrent
-            Mt = feval(Mfun,t,y,Margs{:});
-            Mcurrent = true;
-            if Mtype == 4
-              [dMpsidy,dMoptions.fac] = odenumjac(@odemxv, {Mfun,t,y,psi,Margs{:}}, Mt*psi, ...
-                                                  dMoptions);      
-            end
-          end                       
-        elseif absh <= hmin
+%         if ~Jcurrent || ~Mcurrent
+% %           if ~Jcurrent  
+% %             if Janalytic
+% %               %dfdy = feval(Jac,t,y,Jargs{:});
+% % %              dfdy = ComputeJac(PUApprox,num_sols,t,y);
+% %             else
+% %               f0 = feval(odeFcn,t,y,odeArgs{:});
+% %               [dfdy,Joptions.fac,nF] = odenumjac(odeFcn, {t,y,odeArgs{:}}, f0, Joptions);     
+% %               nfevals = nfevals + nF + 1; 
+% %             end             
+% %             npds = npds + 1;            
+% %             Jcurrent = true;
+% %           end
+%           if ~Mcurrent
+%             Mt = feval(Mfun,t,y,Margs{:});
+%             Mcurrent = true;
+%             if Mtype == 4
+%               [dMpsidy,dMoptions.fac] = odenumjac(@odemxv, {Mfun,t,y,psi,Margs{:}}, Mt*psi, ...
+%                                                   dMoptions);      
+%             end
+%           end                       
+        if absh <= hmin
           warning(message('MATLAB:ode15s:IntegrationTolNotMet', sprintf( '%e', t ), sprintf( '%e', hmin )));         
           solver_output = odefinalize(solver_name, sol,...
                                       outputFcn, outputArgs,...
@@ -1063,38 +1083,6 @@ solver_output = odefinalizeAS(solver_name, sol,...
 if nargout > 0
     varargout = solver_output;
 end
-
-end
-
-
-function [L,U,p] = LUarray(PUApprox,Miter)
-for i=1:length(PUApprox.leafArray)
-    [L{i},U{i},p{i}] = lu(Miter{i},'vector');
-end
-end
-
-function R = Masstimes(PUApproxArray,M,y)
-
-[y_loc,lens] = unpackPUvecs(y,PUApproxArray);
-
-num_leaves = length(PUApproxArray{1}.leafArray);
-
-num_sols = length(PUApproxArray);
-
-for i=1:num_leaves
-    
-    R_i = M{i}*y_loc{i};
-    R_i = mat2cell(R_i,lens{i});
-    
-    for j=1:num_sols
-       R_i{j}(~PUApproxArray{j}.leafArray{i}.inner_boundary) = 0;
-    end
-    
-    R{i} = cell2mat(R_i);
-    
-end
-
-R = packPUvecs(R,PUApproxArray);
 
 end
 

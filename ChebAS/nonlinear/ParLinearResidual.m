@@ -17,41 +17,53 @@ function [z] = ParLinearResidual(sol,PUApprox,J)
 
 %PUApprox.sample(sol);
 
-num_sols = length(sol)/length(PUApprox);
+num_sols = length(PUApproxArray);
 
-step = zeros(length(PUApprox.leafArray),1);
+num_leaves = length(PUApproxArray{1}.leafArray);
 
-sol = reshape(sol,length(PUApprox),num_sols);
+sol_lengths = zeros(num_sols,1);
 
-%Figure out starting index for each patch
-for k=2:length(PUApprox.leafArray)
-    step(k) = step(k-1) + length(PUApprox.leafArray{k-1});
+for i=1:num_sols
+    sol_lengths(i) = length(PUApproxArray{i});
 end
 
-for k=1:length(PUApprox.leafArray)
-    
-    degs = PUApprox.leafArray{k}.degs;
-    
-    %This function returns the logical indicies of the gamma and outer
-    %boundry interface. Out put is given for all indicies, as well as the
-    %indicies along each of the sides
-    [~,~,in_border{k},~] = FindBoundaryIndex2DSides(degs,PUApprox.leafArray{k}.domain,PUApprox.leafArray{k}.outerbox);
-    
-    sol_loc{k} = sol(step(k)+(1:prod(degs)),:);
+sol = mat2cell(sol,sol_lengths);
 
-    if ~PUApprox.iscoarse
-        diff{k} = PUApprox.leafArray{k}.Binterp*sol;
+sol_unpacked = sol;
+
+for i=1:num_sols
+    
+    if PUApproxArray{i}.is_packed
+        
+        %pull the boundry info for the packed functions. The boundary
+        %info is stored within the tree itself.
+        sol_unpacked{i} = PUApproxArray{i}.Getunpackedvalues(sol{i},true);
+        
     else
-        diff{k} = PUApprox.leafArray{k}.CBinterp*sol;
+        
+        sol_unpacked{i} = sol{i};
+    
     end
     
 end
 
+[ sol_loc,lens ] = unpackPUvecs(cell2mat(sol),PUApproxArray);
+
+start_index = zeros(num_sols,1);
+
+diff = cell(num_leaves,num_sols);
+border = cell(num_leaves,num_sols);
+
 %parallel step
-for k=1:length(PUApprox.leafArray)
+for k=1:num_leaves
+
+    for i=1:num_sols
+        %This will be (interface length)*num_sols
+        diff{k}{i} = PUApproxArray{i}.leafArray{k}.Binterp*sol_unpacked{i};
+        border{k}{i} = PUApproxArray{i}.leafArray{k}.inner_boundary;
+    end
     
-    %Assume z is of the form [u1 u2 ... un]
-    [z{k}] = local_residual(PUApprox.leafArray{k},sol_loc{k},in_border{k},diff{k},J{k},num_sols);
+    start_index = start_index + lens{k};
     
 end
 
