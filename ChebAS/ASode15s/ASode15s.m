@@ -320,9 +320,9 @@ for i = 1:length(warnoffId)
 end
 
  
-%yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode));
+yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode));
 
-[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol);
+%[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol);
 
 %yp0 = y0;
 
