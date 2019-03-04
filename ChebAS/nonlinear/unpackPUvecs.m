@@ -16,7 +16,7 @@ num_sols = length(PUApproxArray);
 
 num_leaves = length(PUApproxArray{1}.leafArray);
 
-sol_lengths = zeros(num_sols,1);
+sol_lengths = zeros(1,num_sols);
 
 for i=1:num_sols
     sol_lengths(i) = length(PUApproxArray{i});
@@ -24,7 +24,7 @@ end
 
 sol = mat2cell(sol,sol_lengths);
 
-start_index = zeros(num_sols,1);
+start_index = zeros(1,num_sols);
 
 for k=1:num_leaves
     

@@ -1,4 +1,4 @@
-function [Blinks,M,y0] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS)
+function [Blinks,M,y0] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he)
 %This function sets up the blink objects for each leaf. Here 'blink' is set
 %to the NonlinOp property. adsfasdf
 
@@ -11,7 +11,7 @@ result.n = [33 33];
 result.boundaryH = 13;
 result.percentClosed = pctClosed;
 result.odetol = 1e-4;
-result.h_e = 2;   
+result.h_e = he;   
 result.initcond = 'flat';
 
 domain = [-1 1;-1 1];
@@ -37,6 +37,7 @@ for i=1:length(H_tree.leafArray)
     
     Blinks{i}.pA = pA;
     Blinks{i}.pS = pS;
+    Blinks{i}.h_e = he;
     
     G = H_tree.leafArray{i}.leafGrids();
     
@@ -50,12 +51,8 @@ for i=1:length(H_tree.leafArray)
     P_tree.leafArray{i}.Setvalues(P(:));
     P_tree.leafArray{i}.sample(P(:));
     
-    
-    
     outer_boundary = H_tree.leafArray{i}.outer_boundary;
-        
-        
-        %Blinks{i}.disc.boundary = struct('N',north,'S',south,'E',east,'W',west);
+    
     Blinks{i}.disc.boundary.loc_outer = outer_boundary;  
         
 end

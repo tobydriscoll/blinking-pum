@@ -650,11 +650,18 @@ while ~done
         tol_g(iter);
         
         if if_snk
-            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],tol_g(iter),200);
+           % [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],tol_g(iter),20);
+           %[J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew);
+           [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
+           del = JG\J_rhs;
+           
         else
+            
+          %JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
+          % del = -(JG\rhs);
             [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew);
             
-            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x),-rhs,[],tol_g(iter),200,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x),-rhs,[],tol_g(iter),500,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
         end
        
         
@@ -674,9 +681,10 @@ while ~done
         difkp1 = difkp1 + del;
         ynew = pred + difkp1;
         
+        
         if newnrm <= minnrm
-          gotynew = true;
-          break;
+            gotynew = true;
+            break;
         elseif iter == 1
           if havrate
             errit = newnrm * rate / (1 - rate);

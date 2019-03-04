@@ -19,9 +19,19 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [Mat] = ASJacTime(PUApproxArray,NonlinOp,M,dt,t,sol)
+function [Mat,J_sol] = ASJacTime(PUApproxArray,NonlinOp,M,dt,t,sol,rhs)
 %assume sol is the correct coarse length
 
+J_sol = [];
+
+find_J_rhs = false;
+
+if nargin>6
+    find_J_rhs = true;
+    
+    rhs_loc = unpackPUvecs(rhs,PUApproxArray);
+end
+    
 if ~iscell(PUApproxArray)
     PUApproxArray = {PUApproxArray};
 end
@@ -48,6 +58,8 @@ sub_ind = cell(1,num_sols);
 
 
 
+%We need to ignore outer boundary data on patches that are packed, i.e.
+%solutions with assumed dirichlet data
 for i=1:num_sols
     
     sub_ind{i} = true(0,1);
@@ -123,6 +135,10 @@ for k=1:num_leaves
     
     J = loc_jacobian(NonlinOp{k},sol_loc{k},t,dt,M{k},len_loc{k},border{k});
     
+    if find_J_rhs
+        J_sol{k} = J*rhs_loc{k};
+    end
+    
     [iid,jjd,zzd] = find(J);
     
     shift_idd = iid;
@@ -169,6 +185,10 @@ for k=1:num_leaves
 end    
 
 Mat = sparse(ii,jj,zz,sum(sol_lengths),sum(sol_lengths));
+
+if find_J_rhs
+    J_sol = packPUvecs(J_sol,PUApproxArray);
+end
 
 end
 
