@@ -26,14 +26,12 @@ overlap = Tree.overlap;
 %Tree.split(1);
 %Tree.split(2);
 
-Tree = Tree.split(2);
-Tree.split(2,false,0.1);
 
-Tree.children{1}.split(1);
-Tree.children{2}.split(1);
-
-Tree.children{1}.children{2}.split(1,false,0.1);
-Tree.children{2}.children{1}.split(1,false,0.1);
+Tree.split(2,false,0.08);
+Tree.children{1}.children{2} = Tree.children{1}.children{2}.split(1);
+Tree.children{2}.children{1} = Tree.children{2}.children{1}.split(1);
+Tree.children{1}.children{2}.split(1,false,0.08);
+Tree.children{2}.children{1}.split(1,false,0.08);
 Tree.clean();
 
 H = PUchebfun(Tree);
