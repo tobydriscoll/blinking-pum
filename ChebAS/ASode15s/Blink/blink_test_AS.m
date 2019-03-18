@@ -17,12 +17,23 @@ he = 2;
 BoundaryH = 13;
 
 %Test with 4 patches
- Tree = ChebPatch(cheb_struct);
- Tree = Tree.split(1);
- Tree.split(2);
- %Tree.split(1);
- %Tree.split(2);
- 
+Tree = ChebPatch(cheb_struct);
+
+overlap = Tree.overlap;
+
+%Tree = Tree.split(1);
+%Tree.split(2);
+%Tree.split(1);
+%Tree.split(2);
+
+Tree = Tree.split(2);
+Tree.split(2,false,0.08);
+Tree.children{1}.children{2} = Tree.children{1}.children{2}.split(1);
+Tree.children{2}.children{1} = Tree.children{2}.children{1}.split(1);
+Tree.children{1}.children{2}.split(1,false,0.08);
+Tree.children{2}.children{1}.split(1,false,0.08);
+Tree.clean();
+
 H = PUchebfun(Tree);
 
 %H = PUchebfun(@(x,y)exp(-x.^20./(1-x.^20)).*exp(-y.^20./(1-y.^20)),[-1 1;-1 1],'Degree',[20 20],'CoarseDegree',[9 9],'tol',1e-3);
@@ -40,5 +51,5 @@ setInterpMatrices(P,false);
 %[y,yp] = GetInitialSlope(M,y0,zeros(length(y0),1),0,{H,P},Blinks,1e-3);
 
  opt = odeset('mass',M,'reltol',odetol,'abstol',odetol);
- [t,U] = ASode15s(false,Blinks,tspan,y0,{H,P},opt);
+ [t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},opt);
 

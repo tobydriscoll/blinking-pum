@@ -371,10 +371,16 @@ classdef ChebPatch<LeafPatch
         %
         %    Output:
         %     Child: the PUPatch with the two new children.
-        function Child = split(obj,split_dim,set_vals)
+        function Child = split(obj,split_dim,set_vals,split_from_border_dist)
             
-            if nargin == 2
+            if nargin < 3
                 set_vals = false;
+            end
+            
+            split_from_border = false;
+            
+            if nargin > 3
+                split_from_border = true;
             end
             
             Children = cell(1,2);
@@ -388,7 +394,28 @@ classdef ChebPatch<LeafPatch
             region0 = obj.domain;
             region1 = obj.domain;
             
-            m = sum(obj.zone(split_dim,:))/2;
+            
+            if split_from_border
+                
+                %we are refining towards the boarder
+                if abs(obj.zone(1,1)-obj.outerbox(1,1))<eps && split_dim==1
+                    m = obj.outerbox(1,1)+split_from_border_dist;
+                elseif abs(obj.zone(1,2)-obj.outerbox(1,2))<eps && split_dim==1
+                    m = obj.outerbox(1,2)-split_from_border_dist;
+                elseif abs(obj.zone(2,1)-obj.outerbox(2,1))<eps && split_dim==2
+                    m = obj.outerbox(2,1)+split_from_border_dist;
+                elseif abs(obj.zone(2,2)-obj.outerbox(2,2))<eps && split_dim==2
+                     m = obj.outerbox(2,2)-split_from_border_dist;
+                else
+                     m = sum(obj.zone(split_dim,:))/2;
+                end
+                
+                
+            else
+                
+                m = sum(obj.zone(split_dim,:))/2;
+                
+            end
             
             zone0(split_dim,:) = [obj.zone(split_dim,1) m];
             zone1(split_dim,:) = [m obj.zone(split_dim,2)];

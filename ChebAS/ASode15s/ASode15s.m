@@ -644,26 +644,26 @@ while ~done
             tol_g(iter) = 1e-4;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
-            tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-10);
+            tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
         end
     
         tol_g(iter);
         
         if if_snk
-          %  [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],tol_g(iter),500);
-           [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
-           del = JG\J_rhs;
+            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],tol_g(iter),500);
+        %   [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
+        %   del = JG\J_rhs;
            
         else
             
-          JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
-           del = -(JG\rhs);
-          %  [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew);
+         % JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
+         %  del = -(JG\rhs);
+            [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew);
             
-     %       [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x),-rhs,[],tol_g(iter),500,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x),-rhs,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
         end
        
-        %length(gmhist)
+        length(gmhist)
         
         
         warning(warnstat);
