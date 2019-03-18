@@ -640,7 +640,9 @@ classdef PUPatch<Patch
             jj = [];
             zz = [];
             
-            mid_point = mean(obj.zone(obj.splitting_dim,:));
+            %mid_point = mean(obj.zone(obj.splitting_dim,:));
+            
+            mid_point = obj.children{1}.zone(obj.splitting_dim,2);
             
             ind(:,1) = X(:,obj.splitting_dim)<mid_point;
             ind(:,2) = ~ind(:,1);
@@ -851,17 +853,41 @@ classdef PUPatch<Patch
         %   split_dim: splitting dimension
         %    set_vals: indicator if new children will have values
         %              interpolated from the parent.
-        function split(obj,split_dim,set_vals)
+        function split(obj,split_dim,set_vals,split_from_border_dist)
             
-            if nargin==2
+            if nargin<3
                 set_vals = false;
+            end
+            
+            split_from_border = false;
+            
+            if nargin>3
+                split_from_border = true;
             end
             
             for k=1:2
                 if obj.children{k}.is_leaf && ~obj.children{k}.is_null
-                    obj.children{k} = obj.children{k}.split(split_dim,set_vals);
+                    
+                    if ~split_from_border
+                        obj.children{k} = obj.children{k}.split(split_dim,set_vals);
+                    else
+                        if ~split_from_border
+                            obj.children{k} = obj.children{k}.split(split_dim,set_vals);
+                        else
+                            obj.children{k} = obj.children{k}.split(split_dim,set_vals,split_from_border_dist);
+                        end
+                    end
+                
                 elseif ~obj.children{k}.is_null
-                    obj.children{k}.split(split_dim,set_vals);
+                    
+                     if ~split_from_border
+                        obj.children{k}.split(split_dim,set_vals);
+                     else
+                        obj.children{k}.split(split_dim,set_vals,split_from_border_dist);
+                     end
+                    
+                    
+                    
                 end
             end
             obj.cheb_length = length(obj.children{1})+length(obj.children{2});
