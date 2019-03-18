@@ -226,7 +226,65 @@ The SNK method can be expected to require coarse correction steps to cope with a
 We have found that it is simpler and successful to apply the FAS correction in the form of the original NKS method, as given in section~\ref{sec:NKS-two-level}. All we need to do is replace $\bm{f}(\bm{u})-\bm{T}\bm{u}$ and $\bm{f}'-\bm{T}$ in~(\ref{eq:2level-residual}) and~(\ref{eq:2level-jac})  by $\bm{g}$ and $\bm{g}'$, respectively. 
 
 
+\section{Integration with ode15s}
+The ode15s function in MATLAB that finds the solution to initial value problems
+\begin{align}
+M(t,\bm{x}) u'=\phi(t,\bm{x},u), \qquad \bm{x} \in \Omega
+\label{stiff_ode}
+\end{align}
+on a time interval $[t_0,t_f]$, given initial values $u(t_0)=u_0$ and mass matrix $M(t,\bm{x})$. For a step from $(t_n,u_n)$ to $(t_{n+1},u_{n+1})$, ode15s finds $u_{n+1}$ that solves
+\begin{align}
+ M(t_{n+1},\bm{x}) \sum_{m=1}^{k} \frac{1}{m} \nabla^m u_{n+1} - h \phi(t_{n+1},\bm{x},u_{n+1}) = 0 \qquad \bm{x} \in \Omega
+ \label{ode15s_step}
+\end{align}
+with Newton's method \cite{shampine1997matlab}, where the initial solution is
+\begin{align}
+u_{n+1}^{(0)} = \sum_{m=0}^k \nabla^m u_n.
+\end{align}
 
+With $\gamma_k = \sum_{j=1}^k \frac{1}{j}$ we have the identity
+\begin{equation}
+	\sum_{m=1}^{k} \frac{1}{m} \nabla^m u_{n+1} = \gamma_k(u_{n+1}-u_n^{(0)}) + \sum_{m=1}^{k} \frac{1}{m} \gamma_m \nabla^m u_{n}.
+\end{equation}
+If we let
+\begin{equation}
+\Psi =  \frac{1}{\gamma_k}(\sum_{m=1}^{k} \frac{1}{m} \gamma_m \nabla^m u_{n} - u_n^{(0)})
+\end{equation}
+then
+(\ref{ode15s_step}) can be written as
+\begin{align}
+M(t_{n+1},\bm{x}) u_{n+1} - \frac{h}{\gamma_k} \phi(t_{n+1},\bm{x},u_{n+1}) + M(t_{n+1},\bm{x}) \Psi = 0 \qquad \bm{x} \in \Omega.
+ \label{ode15s_step_2}
+\end{align}
+
+\subsection{discretization}
+We coadapted the ode15s function to solve (\ref{ode15s_step_2}) with the NKS and SNK methods by discretizing (\ref{ode15s_step_2}) at the local subdomains in a similar manner to (\ref{eq:fi}). First we define a vector function $\bm{\hat{f}}_i$ as the following concatenation:
+\begin{equation}
+  \label{eq:fi_ode15s}
+  \bm{\hat{f}}_i(\bm{u}_i,t) = 
+  \begin{cases}
+    - \frac{h}{\gamma_k} \phi(t_{n+1},\bm{x},\tilde{u}_i) & \text{ for all } \bm{x} \in X_i \cup G_{i0}, \\
+    \tilde{u}_i(\bm{x}) & \text{ for all } \bm{x} \in G_{ij}, \; j=1,\ldots,i-1,i+1,\ldots,N.
+  \end{cases}
+\end{equation}
+
+Suppose $\hat{M}_i(t,\bm{x})$ is the mass matrix from (\ref{stiff_ode}) defined for the local subdomain of $\Omega_i$. We the define mass matrices $M_i(t)$ such that
+\begin{equation}
+	M_i(t,\bm{x})_{mn} = 
+  \begin{cases}
+    \hat{M}_i(t,\bm{x})_{mn}, & \text{ for all } \bm{x} \in X_i \cup G_{i0} \\
+    0 & \text{ for all } \bm{x} \in G_{ij}, \; j=1,\ldots,i-1,i+1,\ldots,N
+  \end{cases}
+\end{equation}
+which treats the interface conditions of (\ref{eq:overlapping-problem}) as algebraic within the initial value problem. We finally define vector functions $\bm{f}_i$ such that
+\begin{equation}
+	\bm{f}_i(\bm{u}_i,t) = M_i(t,\bm{x})\bm{u}_i+M_i(t,\bm{x}) \tilde{\Psi}_i+\bm{\hat{f}}_i(\bm{u}_i,t).
+\end{equation}
+Defining $\bm{f}(\bm{u},t)=\cat{\bm{f}_i(\bm{u}_i,t)}$, we have that finding $\bm{u}$ such that
+\begin{equation}
+\bm{f}(\bm{u},t) - T(\bm{u})	 = 0
+\end{equation}
+will effectively solve for (\ref{ode15s_step_2}).
 \section{Numerical experiments}
 \label{sec:experiments}
 
@@ -314,7 +372,7 @@ Convergence histories for~(\ref{simple_burgers})--(\ref{burgers_boundary}) for $
 \begin{figure}
   \centering
   \includegraphics[scale = 0.6 ]{Chapter3/BurgersGrid}
-  \caption{Subdomains for the Burgers experiments, found by adapting to the function  $\exp(-x^{20}/(1-x^{20}))exp(-y^{20}/(1-y^{20}))$ in order to increase resolution in the boundary layer.}
+  \caption{Subdomains for the Burgers experiments, found by adapting to the function  $\exp(-x^{20}/(1-x^{20}))\exp(-y^{20}/(1-y^{20}))$ in order to increase resolution in the boundary layer.}
   \label{Burger_patch_structure}
 \end{figure}
 

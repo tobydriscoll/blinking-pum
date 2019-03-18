@@ -49,15 +49,15 @@ E = eye(length(y0));
 [Jacs,l,u,p] = ComputeJacsTime(0.1,y0,{H,P},Blinks,0.1,M);
 
 
-JJ = E;
-
-for i=1:length(y0)
-   JJ(:,i) = LinearResidual({H,P},Jacs,E(:,i));
-end
-
-J = ASJacTime({H,P},Blinks,M,0.1,0.1,y0);
-% AJ = jacobi(residual,sol_loc{1});
-% J = Jac(sol_loc{1});
+% JJ = E;
+% 
+% for i=1:length(y0)
+%    JJ(:,i) = LinearResidual({H,P},Jacs,E(:,i));
+% end
+% 
+% J = ASJacTime({H,P},Blinks,M,0.1,0.1,y0);
+AJ = jacobi(residual,sol_loc{1});
+J = Jac(sol_loc{1});
 % 
 % y02 = packPUvecs(sol_loc,{H P});
 

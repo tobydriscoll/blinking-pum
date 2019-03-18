@@ -1,6 +1,6 @@
 domain = [-1 1;-1 1];
 cheb_struct.domain = domain;
-cheb_struct.degs = [15 15];
+cheb_struct.degs = [20 20];
 cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.tol = 1e-4;
@@ -10,7 +10,7 @@ tspan = [0 0.3];
 
 pctClosed = 0.75;
 
-pA = 0;
+pA = 1e-4;
 pS = 1e-3;
 he = 2;
 
@@ -20,8 +20,8 @@ BoundaryH = 13;
  Tree = ChebPatch(cheb_struct);
  Tree = Tree.split(1);
  Tree.split(2);
- Tree.split(1);
- Tree.split(2);
+ %Tree.split(1);
+ %Tree.split(2);
  
 H = PUchebfun(Tree);
 

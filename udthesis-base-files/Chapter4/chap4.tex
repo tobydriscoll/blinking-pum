@@ -1,0 +1,91 @@
+\chapter{Blinking Eye Simulation}
+
+\section{Introduction}
+
+The tear film is a very thin layer of liquid film on the ocular surface spread through blinking. It serves several vital functions including protecting the the ocular surface with moister, transporting waste, as well as providing a smooth ocular surface; within each blink cycle, a tear film that is functioning properly will maintain a balance between tear secretion and loss. \cite{holly1977tear}.
+
+	Dry eye syndrome (DES) is a collection of symptoms that include (but or not limited too) blurred vision, burning, foreign body sensation, as well as tearing and inflammation of the ocular surface. An estimated 4.91 million Americans suffer from DES (according to a study from 2007) \cite{bron2007methodologies}. A malfunctioning or deficient tear film is thought to be a cause of DES \cite{nelson2011international}, causing the ocular tear film comunity to take interest in the function of the tear film \cite{johnson2004changes} as well as the connection between tear film volume, evaporation and break up with DES \cite{bron2007methodologies}.
+	
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.6]{Chapter4/eye_model.eps}
+  \caption{Illustration of tear film with labeled layers.}
+  \label{eye_levels}
+\end{figure}
+
+	The tear film is composed of three layers, as shown in Figure~\ref{eye_levels}. The anterior surface in contact with the air is an oily lipid layer which helps reduce evaporation \cite{norn1979semiquantitative,mishima1961oily}. The middle aqueous layer is composed mostly of water, and serves to lubricate the eye, move particles as well as prevent infections. On the surface of the cornea sits the Glycocalyx layer, a a forest of proteins that moisturize the corneal surface by attracting water \cite{gipson2004distribution}. 
+	
+	A key component in simulating the tear film is developing numerical techniques that accommodate for realistic features of the underlying model. In 2008, Maki used the \textit{overset grid} method to study the effects of the tear film under reflex tearing \cite{maki2008overset}. In an overset grid method, A PDE is discretized and solved on a composite of grids to handle complex geometries and localized features of the function, where the overlapping grids are coupled through interpolation.Maki used fine boundary grids near the upper and lower eyelids in a 1D model to capture localized capillary thinning \cite{maki2008overset}.
+	
+	Maki extend this technique in 2D allowing for numerical simulations an a realistic open eye domain \cite{maki2010tear,maki2010tear2}.Using the Overature frame work from Lawrence Livermore National Laboratory, she was able to generate a set of grids adopted to the geometry of the eye \cite{chesshire1990composite}; an example of this discritization can be seen in Figure~\ref{overature_eye}. It was found that the geometry, along side a tear film thickness boundary condition, produces stronger capillary action in the vicinities of the nasal and temporal canthi \cite{maki2010tear}.
+
+Deng and Driscoll extended the one dimensional model of Braun and Li \cite{li2012model} to incorporate a moving boundary to simulating a blink, discretizing with Chebyshev polynomial approximations. Through this new model, it was observed that blinking has an effect on the cooling of the tear film \cite{deng2013model,deng2014heat}. 
+
+Driscoll was developed a spectral method for simulating parabolic flow on an Eye shaped domain with a moving boundary \cite{driscoll2018simulation}. He does this by transforming a square with a pair of A pair of orthogonal and conformal maps into an approximate representation of the exposed ocular surface of a human eye. This allows the discretized solution to be represented as a tensor product polynomial. While these approximations are accurate, the numerical methods used with them are quite expensive. It is for this reason that we explore how the thin film equations can be solved with the SNK method on the square domain. In this chapter, we introduce how the orthogonal and conformal maps are defined, as well as these mappings transform the thin film equations.
+
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.6]{Chapter4/different_domains}
+  \caption{Plot of the subdomains used in \cite{driscoll2018simulation}, where $\mathcal{C}$, $\mathcal{R}$, $\mathcal{E}$ domains are the square, infinite strip and eye shaped domain. The mappings between the domains are explained in the following sections.}
+  \label{overature_eye}
+\end{figure}
+	
+\section{model description}
+
+We numerically solve for the height of the tear film $h(x,y)$ and pressure $p(x,y)$ with the model
+\begin{align}
+\begin{aligned}
+h_t &= -\frac{1}{3} \nabla \cdot (h^3 \nabla p), \\
+p &= - \ps \nabla \cdot h - \pa h^{-3},
+\end{aligned} \quad (x,y) \in \mathcal{E}(t)
+\label{the_pde}
+\end{align}
+where Dirichlet boundary conditions are enforced on $h$, and a no flux boundary condition is enforced on $p$. The domain $\mathcal{E}(t)$ is an idealized eye shape where the top boundary moves in a prescribed motion. The domain $\mathcal{E}(t)$ is determined by a pair of two dimensional transforms.
+
+ 
+First a fixed square $\mathcal{C}=[-1,1]^2$ is mapped to an infinite strip $\mathcal{R}(t)$ by
+\begin{align}
+\mathcal{R}(t) = \{(x,y):|y|<\lambda(t)\}	
+\end{align}
+where $-1<\lambda(t)<1$ is a prescribed function satisfying $\lambda(0)=1$ (corresponding to a fully open eye). For $(\hat{x},\hat{y}) \in \mathcal{C}$, $\mathcal{C}$ is mapped to $\mathcal{R}(t)$ via
+\begin{align}
+	g_x(\hat{x}) = \frac{\gamma \hat{x}}{\alpha^2 - \hat{x}}, \quad g_y(\hat{y}) = \frac{1}{2} (\hat{y}+1)(\lambda(t)+1)-1
+\end{align}
+for some $\gamma>0$ and $\alpha \geq 1$.
+
+
+The domain $\mathcal{E}(t)$ is the image of $\mathcal{R}(t)$ under the conformal map
+\begin{align}
+f(z) = \tanh(z)	
+\end{align}
+i.e.,
+\begin{align}
+\mathcal{E}(t) = \{\operatorname{Re}(f(x+iy)),\operatorname{Im}(f(x+iy))|(x,y) \in \mathcal{R}(t)  \}.
+\end{align}
+
+If we define $\hat{\nabla}$ to be the gradient in terms of $(\hat{x},\hat{y})$ then
+%\begin{align}
+%\hat{\nabla} = \frac{\lp \cos(g_y(\hat{y}))+\cosh(g_x(\hat{x})) \rp^2}{1+\cos(g_y(\hat{y}))\cosh(g_x(\hat{x}))} \lp \frac{(\hat{x}^2+\alpha^2)\gamma}{(\hat{x}^2-\alpha^2)^2} \frac{d}{d \hat{x}}, \frac{2}{1+\lambda(t)} \frac{d}{d \hat{y}} \rp.
+%\end{align}
+
+\begin{align}
+\hat{\nabla} = \frac{1}{|f'(g_x(\hat{x})+i g_y(\hat{x}))|} \lp \frac{(\hat{x}^2+\alpha^2)\gamma}{(\hat{x}^2-\alpha^2)^2} \frac{d}{d \hat{x}}, \frac{2}{1+\lambda(t)} \frac{d}{d \hat{y}} \rp.
+\end{align}
+
+Defining $\hat{h}(\hat{x},\hat{y})=h(x,y)$, $\hat{p}(\hat{x},\hat{y})=p(x,y)$, we can determine the tear-film hight and pressure by solving the following index-1 DAE on $\mathcal{C}$:
+\begin{align}
+\begin{aligned}
+\hat{h}_t &= -\frac{1}{3} \hat{\nabla} \cdot (\hat{h}^3 \hat{\nabla} \hat{p}) -\frac{\dot{\lambda}(t)(1+\hat{y})}{\lambda(t)+1} \hat{h}_{\hat{y}} \\
+\hat{p} &= - \ps \hat{\nabla} \cdot \hat{h} - \pa \hat{h}^{-3}.
+\end{aligned}
+\end{align}
+The no-flux condition of $p(t)$ is transformed by the mappings as well. Let $\bm{q},\bm{n}$ and $\bm{v}$ denote the flux, normal, and velocity vectors in the physical domain $\mathcal{E}(t)$. Similarly let $\bm{\tilde{q}},\bm{\tilde{n}}$ and $\bm{\tilde{v}}$ represent the respective vectors in $\mathcal{R}(t)$. The no-flux condition in $\mathcal{R}(t)$ then becomes
+\begin{align}
+	0 = \frac{\bm{\tilde{n}} \cdot \bm{\tilde{q}}}{|f'(g_x(\hat{x})+i g_y(\hat{x}))|} - |f'(g_x(\hat{x})+i g_y(\hat{x}))(\bm{\tilde{n}}| \cdot \bm{\tilde{v}})h.
+\end{align}
+
+
+
+
+

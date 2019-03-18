@@ -175,7 +175,7 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
     end
 
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-6,'Display','off');
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',1000,'FunctionTolerance',1e-3,'Display','off');
 [c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
 c = c(:,end);
 
