@@ -1,6 +1,6 @@
 domain = [-1 1;-1 1];
 cheb_struct.domain = domain;
-cheb_struct.degs = [20 20];
+cheb_struct.degs = [33 33];
 cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.tol = 1e-4;
@@ -26,7 +26,7 @@ overlap = Tree.overlap;
 %Tree.split(1);
 %Tree.split(2);
 
-
+Tree = Tree.split(2);
 Tree.split(2,false,0.08);
 Tree.children{1}.children{2} = Tree.children{1}.children{2}.split(1);
 Tree.children{2}.children{1} = Tree.children{2}.children{1}.split(1);
