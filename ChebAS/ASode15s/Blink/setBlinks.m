@@ -2,12 +2,12 @@ function [Blinks,M,y0] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he)
 %This function sets up the blink objects for each leaf. Here 'blink' is set
 %to the NonlinOp property. adsfasdf
 
-result = blink(pctClosed,[128 128],[-1 1;-1 1],BoundaryH);
+result = blink(pctClosed,[33 33],[-1 1;-1 1],BoundaryH);
 
 result.pA = pA;
 result.pS = pS;
 
-result.n = [128 128];
+result.n = [33 33];
 result.boundaryH = 13;
 result.percentClosed = pctClosed;
 result.odetol = 1e-4;

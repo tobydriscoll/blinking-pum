@@ -10,8 +10,8 @@ tspan = [0 0.3];
 
 pctClosed = 0.75;
 
-pA = 1e-4;
-pS = 1e-3;
+pA = 1e-6;
+pS = 1e-6;
 he = 2;
 
 BoundaryH = 13;
@@ -50,6 +50,8 @@ setInterpMatrices(P,false);
 
 %[y,yp] = GetInitialSlope(M,y0,zeros(length(y0),1),0,{H,P},Blinks,1e-3);
 
+tspan = [0 Blinks{1}.period];
+
  opt = odeset('mass',M,'reltol',odetol,'abstol',odetol);
- [t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},opt);
+ [t,U] = ASode15s(false,Blinks,tspan,y0,{H,P},opt);
 

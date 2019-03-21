@@ -17,18 +17,26 @@ The tear film is a very thin layer of liquid film on the ocular surface spread t
 	
 	A key component in simulating the tear film is developing numerical techniques that accommodate for realistic features of the underlying model. In 2008, Maki used the \textit{overset grid} method to study the effects of the tear film under reflex tearing \cite{maki2008overset}. In an overset grid method, A PDE is discretized and solved on a composite of grids to handle complex geometries and localized features of the function, where the overlapping grids are coupled through interpolation.Maki used fine boundary grids near the upper and lower eyelids in a 1D model to capture localized capillary thinning \cite{maki2008overset}.
 	
-	Maki extend this technique in 2D allowing for numerical simulations an a realistic open eye domain \cite{maki2010tear,maki2010tear2}.Using the Overature frame work from Lawrence Livermore National Laboratory, she was able to generate a set of grids adopted to the geometry of the eye \cite{chesshire1990composite}; an example of this discritization can be seen in Figure~\ref{overature_eye}. It was found that the geometry, along side a tear film thickness boundary condition, produces stronger capillary action in the vicinities of the nasal and temporal canthi \cite{maki2010tear}.
+	Maki extend this technique in 2D allowing for numerical simulations an a realistic open eye domain \cite{maki2010tear,maki2010tear2}. Using the Overature frame work from Lawrence Livermore National Laboratory, she was able to generate a set of grids adopted to the geometry of the eye \cite{chesshire1990composite}; an example of this discritization can be seen in Figure~\ref{overature_eye}. It was found that the geometry, along side a tear film thickness boundary condition, produces stronger capillary action in the vicinities of the nasal and temporal canthi \cite{maki2010tear}.
+
 
 Deng and Driscoll extended the one dimensional model of Braun and Li \cite{li2012model} to incorporate a moving boundary to simulating a blink, discretizing with Chebyshev polynomial approximations. Through this new model, it was observed that blinking has an effect on the cooling of the tear film \cite{deng2013model,deng2014heat}. 
 
 Driscoll has developed a spectral method for simulating parabolic flow on an Eye shaped domain with a moving boundary \cite{driscoll2018simulation}. He does this by transforming a square with a pair of A pair of orthogonal and conformal maps into an approximate representation of the exposed ocular surface of a human eye. This allows the discretized solution to be represented as a tensor product polynomial. While these approximations are accurate, the numerical methods used with them are quite expensive. It is for this reason that we explore how the thin film equations can be solved with the SNK method on the square domain. In this chapter, we introduce how the orthogonal and conformal maps are defined, as well as these mappings transform the thin film equations.
 
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.6]{Chapter4/overature_eye}
+  \caption{Example of overlapping finite difference grids using Overature. }
+  \label{overature_eye}
+\end{figure}
+
 
 \begin{figure}
   \centering
   \includegraphics[scale=0.6]{Chapter4/different_domains}
-  \caption{Plot of the subdomains used in \cite{driscoll2018simulation}, where $\mathcal{C}$, $\mathcal{R}$, $\mathcal{E}$ domains are the square, infinite strip and eye shaped domain. The mappings between the domains are explained in the following sections.}
-  \label{overature_eye}
+  \caption{Plot of the subdomains used in \cite{driscoll2018simulation}, where $\mathcal{C}$, $\mathcal{R}(t)$, $\mathcal{E}(t)$ domains are the square, infinite strip and eye shaped domain. The mappings between the domains are explained in the following section.}
+  \label{driscoll_eye}
 \end{figure}
 	
 \section{model description}
