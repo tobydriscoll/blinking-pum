@@ -1,13 +1,17 @@
-function [Blinks,M,y0] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he)
+function [Blinks,M,y0,result,initial_H] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he)
 %This function sets up the blink objects for each leaf. Here 'blink' is set
 %to the NonlinOp property. adsfasdf
 
-result = blink(pctClosed,[33 33],[-1 1;-1 1],BoundaryH);
+degs = [65 65];
+
+result = blink(pctClosed,degs,[-1 1;-1 1],BoundaryH);
 
 result.pA = pA;
 result.pS = pS;
 
-result.n = [33 33];
+
+
+result.n = degs;
 result.boundaryH = 13;
 result.percentClosed = pctClosed;
 result.odetol = 1e-4;
@@ -16,7 +20,7 @@ result.initcond = 'laplace';
 
 domain = [-1 1;-1 1];
 cheb_struct.domain = domain;
-cheb_struct.degs = [33 33];
+cheb_struct.degs = degs;
 cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.tol = 1e-4;
@@ -57,7 +61,7 @@ for i=1:length(H_tree.leafArray)
         
 end
 
-    H_tree.pack();
+    %H_tree.pack();
     
     for i=1:length(H_tree.leafArray)      
         
