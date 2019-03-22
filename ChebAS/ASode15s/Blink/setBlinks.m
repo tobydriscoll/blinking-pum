@@ -61,7 +61,7 @@ for i=1:length(H_tree.leafArray)
         
 end
 
-    %H_tree.pack();
+    H_tree.pack();
     
     for i=1:length(H_tree.leafArray)      
         

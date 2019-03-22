@@ -114,9 +114,10 @@ end
         end
         
         J2 = J;
-%         if ~isempty(loc_sub_ind)
-%             J2 = J2(loc_sub_ind,loc_sub_ind);
-%         end
+        
+        if ~isempty(loc_sub_ind)
+            J2 = J2(loc_sub_ind,loc_sub_ind);
+        end
         
         [L,U,p] = lu(J2,'vector');
     end

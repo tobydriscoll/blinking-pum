@@ -46,7 +46,7 @@ function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
         [J,L,U,p] = ComputeJacsTime(t0,y,PUApproxArray,NonLinOps,1,0,locAlg);
         
         Md = @(x)ASPreconditionerTime(PUApproxArray,L,U,p,x,TotalAlg,locAlg);
-        [delY,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApproxArray,J,x,TotalAlg,locAlg),-f(TotalAlg),[],1e-5,50);
+        [delY,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApproxArray,J,x,TotalAlg,locAlg),-f(TotalAlg),[],1e-16,200,Md);
         
         res = norm(delY); 
         % Weak line search with affine invariant test.
@@ -57,7 +57,7 @@ function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
 
             fnew = ParLocalResidual(t0,ynew,1,PUApproxArray,NonLinOps);
 
-            if norm(fnew(TotalAlg)) <= 1e-3*reltol*norm(fnew)
+            if norm(fnew(TotalAlg)) <= 1e-3*reltol
                 y = ynew;
                 f = fnew;
                 yp(TotalDiff) = fnew(TotalDiff) ./ D(TotalDiff);
@@ -65,7 +65,7 @@ function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
                 return;
             end
             
-            resnew = norm(gmres(@(x)LinearResidual(PUApproxArray,J,x,TotalAlg,locAlg),-fnew(TotalAlg)),Md);
+            resnew = norm(gmres(@(x)LinearResidual(PUApproxArray,J,x,TotalAlg,locAlg),-fnew(TotalAlg),[],1e-5,200,Md));
             
             if resnew < 0.9*res
                 break;
@@ -83,7 +83,7 @@ function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
         y = ynew;
 
         f = fnew;
-        if resnew <= 1e-3*reltol*Ynorm
+        if resnew <= 1e-3*reltol
             yp(TotalDiff) = f(TotalDiff) ./ D(TotalDiff);
 
             return;
