@@ -568,11 +568,15 @@ while ~done
     %cell array with local linear operators for time step integration
     %Miter = timeDiff(PUApprox,Mt,dfdy,hinvGak);
     
-    ndecomps = ndecomps + 1;            
+    ndecomps = ndecomps + 1;
     havrate = false;
   end
   
   min_iter = 2;
+  
+  H_sol = y(1:length(PUApprox{1}));
+  PUApprox{1}.sample(H_sol);
+  int_vol = BlinkVolume(ode,PUApprox{1},t);
   
   % LOOP FOR ADVANCING ONE STEP.
   nofailed = true;                      % no failed attempts
@@ -590,7 +594,8 @@ while ~done
       H_sol = y(1:length(PUApprox{1}));
       PUApprox{1}.sample(H_sol);
       vol = BlinkVolume(ode,PUApprox{1},t);
-      vol
+      vol_percent = ((vol-int_vol)/int_vol);
+      vol_percent
 
       % Predict a solution at t+h.
       tnew = t + h;

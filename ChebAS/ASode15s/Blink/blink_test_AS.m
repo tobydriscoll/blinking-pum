@@ -8,7 +8,7 @@ cheb_struct.tol = 1e-4;
 odetol = 1e-3;
 tspan = [0 0.3];
 
-pctClosed = 0.75;
+pctClosed = 0;
 
 pA = 1e-6;
 pS = 1e-6;
