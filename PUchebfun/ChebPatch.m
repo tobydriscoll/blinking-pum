@@ -226,8 +226,21 @@ classdef ChebPatch<LeafPatch
                         end
                         obj.coeffs = chebtech2.vals2coeffs(V);
                     case 2
-                        V = reshape(f,obj.degs);
-                        obj.coeffs = chebfun2.vals2coeffs(V);
+                        
+                        if obj.is_packed
+                           
+                            V = obj.values;
+                            
+                            V(~obj.outer_boundary) = f;
+                            
+                            obj.coeffs = chebfun2.vals2coeffs(V);
+                            
+                        else
+                            
+                            V = reshape(f,obj.degs);
+                            obj.coeffs = chebfun2.vals2coeffs(V);
+                            
+                        end
                     otherwise
                         V = reshape(f,obj.degs);
                         obj.coeffs = chebfun3.vals2coeffs(V);

@@ -587,6 +587,11 @@ while ~done
       t 
       h
       
+      H_sol = y(1:length(PUApprox{1}));
+      PUApprox{1}.sample(H_sol);
+      vol = BlinkVolume(ode,PUApprox{1},t);
+      vol
+
       % Predict a solution at t+h.
       tnew = t + h;
 
