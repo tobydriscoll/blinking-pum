@@ -577,7 +577,7 @@ while ~done
   end
   
   min_iter = 3;
-  inter_tol = 1e-12;
+  inter_tol = 1e-10;
   res_tol = 1e-4;
   
   % LOOP FOR ADVANCING ONE STEP.
@@ -637,9 +637,13 @@ while ~done
         %make sure signes match. 
         %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
         if if_snk
-            [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew);
+            [rhs,L,U,p,J] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+            
+            rhs_interp = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
         else
             rhs = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
+            
+            rhs_interp = rhs;
         end
         
         if iter==1
@@ -669,7 +673,9 @@ while ~done
         tol_g(iter);
         
         if if_snk
-            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x),-rhs,[],tol_g(iter),500);
+            
+            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),-rhs_interp,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+        %    [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
         %   [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
         %   del = JG\J_rhs;
            
@@ -686,7 +692,7 @@ while ~done
         
         resnorm;
         
-        interpnorm = InterFaceError(PUApprox,rhs)/interface_scale;
+        interpnorm = InterFaceError(PUApprox,rhs_interp)/interface_scale;
         
         interpnorm;
         
@@ -706,15 +712,15 @@ while ~done
         difkp1 = difkp1 + del;
         ynew = pred + difkp1;
         
-        
-        if newnrm <= minnrm && interpnorm<inter_tol && iter>min_iter
+         %&& interpnorm<inter_tol && iter>min_iter
+        if newnrm <= minnrm && interpnorm<inter_tol
             
             gotynew = true;
             break;
         elseif iter == 1
           if havrate
             errit = newnrm * rate / (1 - rate);
-            if errit <= 0.05*rtol && interpnorm<inter_tol  && iter>min_iter     % More stringent when using old rate.
+            if errit <= 0.05*rtol && interpnorm<inter_tol     % More stringent when using old rate.
               gotynew = true;
               break;
             end
@@ -730,7 +736,7 @@ while ~done
           rate = max(0.9*rate, newnrm / oldnrm);
           havrate = true;                 
           errit = newnrm * rate / (1 - rate);
-          if errit <= 0.5*rtol && interpnorm<inter_tol && iter>min_iter         
+          if errit <= 0.5*rtol  && interpnorm<inter_tol       
              gotynew = true;
              break;
           elseif iter == maxit            

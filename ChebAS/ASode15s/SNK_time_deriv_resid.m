@@ -27,7 +27,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,l,u,p] = SNK_time_deriv_resid(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M)
+function [z,l,u,p,J] = SNK_time_deriv_resid(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M,alpha)
 
 rhs_zero = rhs==0;
 
@@ -95,9 +95,9 @@ end
 for k=1:num_leaves
     
     if notMat
-        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k});
+        [z_loc{k},l{k},u{k},p{k},J{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
     else
-        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k});
+        [z_loc{k},l{k},u{k},p{k},J{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
     end
         
     
@@ -121,7 +121,7 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hinvGak,M,lens_k)
+function [c,l,u,p,J] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hinvGak,M,lens_k,alpha)
 
 %The residul is F(sol_k+z_k)
 %            sol_k(border_k)+z_k(border_k)-B_k*u
@@ -139,7 +139,7 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
         sol_k_c =  mat2cell(sol_k,lens_k);
         
         for i=1:num_sols
-            F{i}(border_k{i}) = z{i}(border_k{i}) + sol_k_c{i}(border_k{i}) - diff_k{i};
+            F{i}(border_k{i}) = alpha*(z{i}(border_k{i}) +sol_k_c{i}(border_k{i}) - diff_k{i});
         end
         
        F = cell2mat(F);
@@ -168,7 +168,7 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
             ind(local_ind) = border_k{i};
             
             J(ind,:) = zeros(sum(ind),total_length);
-            J(ind,local_ind) = E(border_k{i},:);
+            J(ind,local_ind) = alpha*E(border_k{i},:);
             
             index = index+lens_k(i);
         end

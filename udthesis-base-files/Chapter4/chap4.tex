@@ -50,7 +50,7 @@ In this chapter, we seek to extend this method to solve a fourth order tear film
 	
 \section{model description}
 
-We numerically solve for the height of the tear film $h(x,y)$ and pressure $p(x,y)$ with the model (\ref{driscollPDE}) using flux $\bm{q} =  \frac{h^3}{3} \nabla p$, i.e.
+We numerically solve for the height of the tear film $h(x,y)$ and pressure $p(x,y)$ with the model (\ref{driscollPDE}) using flux $\bm{q} =  \frac{h^3}{3} \nabla p$ where the pressue is solved algebraically, i.e.
 \begin{align}
 \begin{aligned}
 h_t &= - \nabla \cdot \lp \frac{h^3}{3} \nabla p \rp, \\
@@ -58,7 +58,7 @@ p &= - \ps \nabla^2 h - \pa h^{-3}.
 \end{aligned} \quad (x,y) \in \mathcal{E}(t)
 \label{the_pde}
 \end{align}
-A Dirichlet boundary condition is enforced on $h$ where as $p$ has a no flux condition on $\partial \mathcal{E}(t)$, subject to a prescribed drainage. These conditions ensure that $h$ has constant volume throughout time.
+A Dirichlet boundary condition is enforced on $h$ and $p$ has a no flux condition on $\partial \mathcal{E}(t)$, subject to a prescribed drainage. These conditions ensure that the volume of $h$ is conserved after a blink cycle.
 
 The domain $\mathcal{E}(t)$ is determined by a pair of two dimensional transforms. First a fixed square $\mathcal{C}=[-1,1]^2$ is mapped to an infinite strip $\mathcal{R}(t)$ by
 \begin{align}
@@ -96,10 +96,7 @@ Defining $\hat{h}(\hat{x},\hat{y})=h(x,y)$, $\hat{p}(\hat{x},\hat{y})=p(x,y)$, w
 \hat{p} &= - \ps \hat{\nabla}^2 \hat{h} - \pa \hat{h}^{-3}.
 \end{aligned}
 \end{align}
-The no-flux condition of $p(t)$ is transformed by the mappings as well. Let $\bm{q},\bm{n}$ and $\bm{v}$ denote the flux, normal, and velocity vectors in the physical domain $\mathcal{E}(t)$. Similarly let $\bm{\tilde{q}},\bm{\tilde{n}}$ and $\bm{\tilde{v}}$ represent the respective vectors in $\mathcal{R}(t)$. The no-flux condition in $\mathcal{R}(t)$ then becomes
-\begin{align}
-	 \frac{\bm{\tilde{n}} \cdot \bm{\tilde{q}}}{|f'(g_x(\hat{x})+i g_y(\hat{x}))|} = 0
-\end{align}
+The no-flux condition of $p(t)$ is transformed by the mappings as well. Let $\bm{q},\bm{n}$ and $\bm{v}$ denote the flux, normal, and velocity vectors in the physical domain $\mathcal{E}(t)$. Similarly let $\bm{\tilde{q}},\bm{\tilde{n}}$ and $\bm{\tilde{v}}$ represent the respective vectors in $\mathcal{R}(t)$. 
 
 
 

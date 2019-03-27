@@ -1,37 +1,49 @@
-function [Blinks,M,y0,result,initial_H] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he)
+function [Blinks,M,y0,result,initial_H] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he,result)
 %This function sets up the blink objects for each leaf. Here 'blink' is set
 %to the NonlinOp property. adsfasdf
 
 degs = [20 20];
 
-result = blink(pctClosed,degs,[-1 1;-1 1],BoundaryH);
-
-result.pA = pA;
-result.pS = pS;
 
 
+    domain = [-1 1;-1 1];
+    cheb_struct.domain = domain;
+    cheb_struct.degs = degs;
+    cheb_struct.cdegs = [9 9];
+    cheb_struct.split_flag = [true true];
+    cheb_struct.tol = 1e-4;
+    
+    initial_H = ChebPatch(cheb_struct);
+    initial_P = ChebPatch(cheb_struct);
+    
+    if nargin<8
+        
+        result = blink(pctClosed,degs,[-1 1;-1 1],BoundaryH);
+        
+        result.pA = pA;
+        result.pS = pS;
+        
+        result.n = degs;
+        result.boundaryH = 13;
+        result.percentClosed = pctClosed;
+        result.odetol = 1e-4;
+        result.h_e = he;
+        result.initcond = 'laplace';
+        result.initvolume = 24;
+        [H,P] = result.initial;
+        
+        initial_H.sample(H(:));
+        initial_P.sample(P(:));
+        
+    else
+        
+        initial_H.sample(@(x,y)result.finalstate.H(x,y))
+        initial_P.sample(@(x,y)result.finalstate.P(x,y))
 
-result.n = degs;
-result.boundaryH = 13;
-result.percentClosed = pctClosed;
-result.odetol = 1e-4;
-result.h_e = he;   
-result.initcond = 'flat';
+    
+end
 
-domain = [-1 1;-1 1];
-cheb_struct.domain = domain;
-cheb_struct.degs = degs;
-cheb_struct.cdegs = [9 9];
-cheb_struct.split_flag = [true true];
-cheb_struct.tol = 1e-4;
 
-initial_H = ChebPatch(cheb_struct);
-initial_P = ChebPatch(cheb_struct);
-
-[H,P] = result.initial;
-
-initial_H.sample(H(:));
-initial_P.sample(P(:));
 
 for i=1:length(H_tree.leafArray)
     

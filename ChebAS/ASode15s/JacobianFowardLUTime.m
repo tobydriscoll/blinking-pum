@@ -12,7 +12,7 @@
 %
 % ALSO NOTE This method takes into account of boundary info is accounted
 % for by the effect if the individual trees are packed or not.
-function [ output ] = JacobianFowardLUTime(PUApproxArray,L,U,p,x)
+function [ output ] = JacobianFowardLUTime(PUApproxArray,L,U,p,x,alpha)
 
 if ~iscell(PUApproxArray)
     PUApproxArray = {PUApproxArray};
@@ -62,7 +62,7 @@ for k=1:num_leaves
     
     for i=1:num_sols
         in_border = PUApproxArray{i}.leafArray{k}.inner_boundary;
-        z_loc{i}(in_border) = PUApproxArray{i}.leafArray{k}.Binterp*x_unpacked{i};
+        z_loc{i}(in_border) = alpha*PUApproxArray{i}.leafArray{k}.Binterp*x_unpacked{i};
     end
     
     z{k} = cell2mat(z_loc);
