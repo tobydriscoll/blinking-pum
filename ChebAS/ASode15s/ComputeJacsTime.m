@@ -14,13 +14,13 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [J,l,u,p] = ComputeJacsTime(t,sol,PUApproxArray,NonLinOps,hinvGak,M,loc_sub_ind)
+function [J,l,u,p] = ComputeJacsTime(t,sol,PUApproxArray,NonLinOps,hinvGak,M,alpha,loc_sub_ind)
 
 if ~iscell(PUApproxArray)
     PUApproxArray = {PUApproxArray};
 end
 
-take_sub_ind = nargin>6;
+take_sub_ind = nargin>7;
 
 %PUApprox.sample(sol);
 
@@ -64,9 +64,9 @@ end
 for k=1:num_leaves
 
         if iscell(M)
-            [J{k},l{k},u{k},p{k}] = local_Jac(t,sol_loc{k},NonLinOps{k},border{k},lens{k},hinvGak,M{k},loc_sub_ind{k});
+            [J{k},l{k},u{k},p{k}] = local_Jac(t,sol_loc{k},NonLinOps{k},border{k},lens{k},hinvGak,M{k},alpha,loc_sub_ind{k});
         else
-            [J{k},l{k},u{k},p{k}] = local_Jac(t,sol_loc{k},NonLinOps{k},border{k},lens{k},hinvGak,M,loc_sub_ind{k});
+            [J{k},l{k},u{k},p{k}] = local_Jac(t,sol_loc{k},NonLinOps{k},border{k},lens{k},hinvGak,M,alpha,loc_sub_ind{k});
         end
     
 end
@@ -85,7 +85,7 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-    function [J,L,U,p] = local_Jac(t,sol_k,NonLinOps_k,border_k,lens_k,hinvGak,M_k,loc_sub_ind)
+    function [J,L,U,p] = local_Jac(t,sol_k,NonLinOps_k,border_k,lens_k,hinvGak,M_k,alpha,loc_sub_ind)
         
         num_sols = length(lens_k);
         
@@ -93,7 +93,7 @@ end
         J = hinvGak*NonLinOps_k.jac(t,sol_k)-M_k;
         
         index = 0;
-        
+
         %This is supposed to account for the interfacing
         for i=1:num_sols
             
@@ -108,7 +108,7 @@ end
             ind(local_ind) = border_k{i};
             
             J(ind,:) = zeros(sum(ind),total_length);
-            J(ind,local_ind) = E(border_k{i},:);
+            J(ind,local_ind) = alpha*E(border_k{i},:);
             
             index = index+lens_k(i);
         end

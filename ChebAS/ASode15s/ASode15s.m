@@ -1,4 +1,4 @@
-function varargout = ASode15s(if_snk,ode,tspan,y0,PUApprox,options,varargin)
+function varargout = ASode15s(if_snk,ode,tspan,y0,PUApprox,interface_scale,options,varargin)
 %ODE15S Solve stiff differential equations and DAEs, variable order method.
 %   [TOUT,YOUT] = ODE15S(ODEFUN,TSPAN,Y0) with TSPAN = [T0 TFINAL] integrates 
 %   the system of differential equations y' = f(t,y) from time T0 to TFINAL 
@@ -322,7 +322,7 @@ end
  
 %yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode));
 
-[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol);
+[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol,interface_scale);
 
 %yp0 = y0;
 
@@ -534,7 +534,11 @@ if haveOutputFcn
 end
 
 % THE MAIN LOOP
-
+  H_sol = y(1:length(PUApprox{1}));
+  PUApprox{1}.sample(H_sol);
+  int_vol = BlinkVolume(ode,PUApprox{1},t);
+  
+  
 done = false;
 at_hmin = false;
 while ~done
@@ -572,11 +576,9 @@ while ~done
     havrate = false;
   end
   
-  min_iter = 2;
-  
-  H_sol = y(1:length(PUApprox{1}));
-  PUApprox{1}.sample(H_sol);
-  int_vol = BlinkVolume(ode,PUApprox{1},t);
+  min_iter = 3;
+  inter_tol = 1e-12;
+  res_tol = 1e-4;
   
   % LOOP FOR ADVANCING ONE STEP.
   nofailed = true;                      % no failed attempts
@@ -626,6 +628,10 @@ while ~done
       
       normres = [];
       
+      first_res_norm = 0;
+      
+
+      
       for iter = 1:maxit
 
         %make sure signes match. 
@@ -633,9 +639,12 @@ while ~done
         if if_snk
             [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew);
         else
-            rhs = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode)-Masstimes(PUApprox,Mtnew,psi+difkp1);
+            rhs = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
         end
         
+        if iter==1
+           first_res_norm =norm(rhs); 
+        end
 
         normres(iter) = norm(rhs);
         
@@ -651,7 +660,7 @@ while ~done
         
         
         if iter==1
-            tol_g(iter) = 1e-4;
+            tol_g(iter) = 1e-7;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
             tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
@@ -666,15 +675,20 @@ while ~done
            
         else
             
-         % JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
-         %  del = -(JG\rhs);
-            [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew);
+       %   JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
+       %    del = -(JG\rhs);
+            [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
             
-            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x),-rhs,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),-rhs,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
         end
        
-        length(gmhist)
+        resnorm = normres(iter);
         
+        resnorm;
+        
+        interpnorm = InterFaceError(PUApprox,rhs)/interface_scale;
+        
+        interpnorm;
         
         warning(warnstat);
         
@@ -693,13 +707,14 @@ while ~done
         ynew = pred + difkp1;
         
         
-        if newnrm <= minnrm
+        if newnrm <= minnrm && interpnorm<inter_tol && iter>min_iter
+            
             gotynew = true;
             break;
         elseif iter == 1
           if havrate
             errit = newnrm * rate / (1 - rate);
-            if errit <= 0.05*rtol       % More stringent when using old rate.
+            if errit <= 0.05*rtol && interpnorm<inter_tol  && iter>min_iter     % More stringent when using old rate.
               gotynew = true;
               break;
             end
@@ -715,7 +730,7 @@ while ~done
           rate = max(0.9*rate, newnrm / oldnrm);
           havrate = true;                 
           errit = newnrm * rate / (1 - rate);
-          if errit <= 0.5*rtol             
+          if errit <= 0.5*rtol && interpnorm<inter_tol && iter>min_iter         
              gotynew = true;
              break;
           elseif iter == maxit            

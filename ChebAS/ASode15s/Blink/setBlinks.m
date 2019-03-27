@@ -2,7 +2,7 @@ function [Blinks,M,y0,result,initial_H] = setBlinks(H_tree,P_tree,pctClosed,Boun
 %This function sets up the blink objects for each leaf. Here 'blink' is set
 %to the NonlinOp property. adsfasdf
 
-degs = [65 65];
+degs = [20 20];
 
 result = blink(pctClosed,degs,[-1 1;-1 1],BoundaryH);
 
@@ -16,7 +16,7 @@ result.boundaryH = 13;
 result.percentClosed = pctClosed;
 result.odetol = 1e-4;
 result.h_e = he;   
-result.initcond = 'laplace';
+result.initcond = 'flat';
 
 domain = [-1 1;-1 1];
 cheb_struct.domain = domain;

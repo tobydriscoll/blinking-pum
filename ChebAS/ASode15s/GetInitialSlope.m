@@ -1,4 +1,4 @@
-function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
+function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol,alpha)
     %Assume M is diagonal
     if ~iscell(PUApproxArray)
         PUApproxArray = {PUApproxArray};
@@ -35,7 +35,7 @@ function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
     
     TotalDiff = ~TotalAlg;
 
-    f = ParLocalResidual(t0,y,1,PUApproxArray,NonLinOps);
+    f = ParLocalResidual(t0,y,1,PUApproxArray,NonLinOps,alpha);
 
     if norm(f(TotalAlg)) <= 1e-3*reltol*norm(f)
         yp(TotalDiff) = f(TotalDiff) ./ D(TotalDiff);
@@ -43,10 +43,10 @@ function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
     end
     
     for iter=1:15
-        [J,L,U,p] = ComputeJacsTime(t0,y,PUApproxArray,NonLinOps,1,0,locAlg);
+        [J,L,U,p] = ComputeJacsTime(t0,y,PUApproxArray,NonLinOps,1,0,alpha,locAlg);
         
         Md = @(x)ASPreconditionerTime(PUApproxArray,L,U,p,x,TotalAlg,locAlg);
-        [delY,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApproxArray,J,x,TotalAlg,locAlg),-f(TotalAlg),[],1e-16,200,Md);
+        [delY,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApproxArray,J,x,alpha,TotalAlg,locAlg),-f(TotalAlg),[],1e-16,200,Md);
         
         res = norm(delY); 
         % Weak line search with affine invariant test.
@@ -55,9 +55,9 @@ function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
         for probe = 1:3
             ynew(TotalAlg) = y(TotalAlg) + lambda*delY;
 
-            fnew = ParLocalResidual(t0,ynew,1,PUApproxArray,NonLinOps);
+            fnew = ParLocalResidual(t0,ynew,1,PUApproxArray,NonLinOps,alpha);
 
-            if norm(fnew(TotalAlg)) <= 1e-3*reltol
+            if norm(fnew(TotalAlg)) <= 1e-3*reltol*norm(fnew)
                 y = ynew;
                 f = fnew;
                 yp(TotalDiff) = fnew(TotalDiff) ./ D(TotalDiff);
@@ -65,7 +65,7 @@ function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
                 return;
             end
             
-            resnew = norm(gmres(@(x)LinearResidual(PUApproxArray,J,x,TotalAlg,locAlg),-fnew(TotalAlg),[],1e-5,200,Md));
+            resnew = norm(gmres(@(x)LinearResidual(PUApproxArray,J,x,alpha,TotalAlg,locAlg),-fnew(TotalAlg),[],1e-5,200,Md));
             
             if resnew < 0.9*res
                 break;
@@ -83,7 +83,7 @@ function [y,yp] = GetInitialSlope(M,y,yp,t0,PUApproxArray,NonLinOps,reltol)
         y = ynew;
 
         f = fnew;
-        if resnew <= 1e-3*reltol
+        if resnew <= 1e-3*reltol&Ynorm
             yp(TotalDiff) = f(TotalDiff) ./ D(TotalDiff);
 
             return;

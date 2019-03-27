@@ -12,13 +12,13 @@
 %
 % ALSO NOTE This method takes into account of boundary info is accounted
 % for by the effect if the individual trees are packed or not.
-function [ output ] = LinearResidual(PUApproxArray,J,x,sub_ind,loc_sub_ind)
+function [ output ] = LinearResidual(PUApproxArray,J,x,alpha,sub_ind,loc_sub_ind)
 
 if ~iscell(PUApproxArray)
     PUApproxArray = {PUApproxArray};
 end
 
-take_sub_ind = nargin>3;
+take_sub_ind = nargin>4;
 
 if take_sub_ind
     x_temp = zeros(length(sub_ind),1);
@@ -70,7 +70,7 @@ for k=1:num_leaves
     
     for i=1:num_sols
         in_border = PUApproxArray{i}.leafArray{k}.inner_boundary;
-        z_loc{i}(in_border) = PUApproxArray{i}.leafArray{k}.Binterp*x_unpacked{i};
+        z_loc{i}(in_border) = alpha*PUApproxArray{i}.leafArray{k}.Binterp*x_unpacked{i};
     end
     
     z{k} = cell2mat(z_loc);

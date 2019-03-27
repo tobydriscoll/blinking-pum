@@ -19,14 +19,14 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [Mat,J_sol] = ASJacTime(PUApproxArray,NonlinOp,M,dt,t,sol,rhs)
+function [Mat,J_sol] = ASJacTime(PUApproxArray,NonlinOp,M,dt,t,sol,alpha,rhs)
 %assume sol is the correct coarse length
 
 J_sol = [];
 
 find_J_rhs = false;
 
-if nargin>6
+if nargin>7
     find_J_rhs = true;
     
     rhs_loc = unpackPUvecs(rhs,PUApproxArray);
