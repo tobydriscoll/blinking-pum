@@ -674,7 +674,8 @@ while ~done
         
         if if_snk
             
-            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),-rhs_interp,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+            b = -LinearResi;dual(PUApprox,J,rhs,interface_scale);
+            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
         %    [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
         %   [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
         %   del = JG\J_rhs;
@@ -694,7 +695,7 @@ while ~done
         
         interpnorm = InterFaceError(PUApprox,rhs_interp)/interface_scale;
         
-        interpnorm;
+        interpnorm
         
         warning(warnstat);
         
