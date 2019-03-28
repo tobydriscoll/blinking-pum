@@ -598,6 +598,8 @@ while ~done
       vol = BlinkVolume(ode,PUApprox{1},t);
       vol_percent = ((vol-int_vol)/int_vol);
       vol_percent
+      min_H = min(H_sol);
+      min_H
 
       % Predict a solution at t+h.
       tnew = t + h;
@@ -664,7 +666,7 @@ while ~done
         
         
         if iter==1
-            tol_g(iter) = 1e-7;
+            tol_g(iter) = 1e-3;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
             tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
@@ -674,7 +676,7 @@ while ~done
         
         if if_snk
             
-            b = -LinearResi;dual(PUApprox,J,rhs,interface_scale);
+            b = BlockLinearResidual(PUApprox,J,rhs);
             [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
         %    [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
         %   [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
@@ -695,7 +697,7 @@ while ~done
         
         interpnorm = InterFaceError(PUApprox,rhs_interp)/interface_scale;
         
-        interpnorm
+        interpnorm;
         
         warning(warnstat);
         
@@ -714,14 +716,14 @@ while ~done
         ynew = pred + difkp1;
         
          %&& interpnorm<inter_tol && iter>min_iter
-        if newnrm <= minnrm && interpnorm<inter_tol
+        if resnorm<eps || newnrm <= minnrm && interpnorm<inter_tol
             
             gotynew = true;
             break;
         elseif iter == 1
           if havrate
             errit = newnrm * rate / (1 - rate);
-            if errit <= 0.05*rtol && interpnorm<inter_tol     % More stringent when using old rate.
+            if resnorm<eps || errit <= 0.05*rtol && interpnorm<inter_tol     % More stringent when using old rate.
               gotynew = true;
               break;
             end
@@ -737,7 +739,7 @@ while ~done
           rate = max(0.9*rate, newnrm / oldnrm);
           havrate = true;                 
           errit = newnrm * rate / (1 - rate);
-          if errit <= 0.5*rtol  && interpnorm<inter_tol       
+          if resnorm<eps || errit <= 0.5*rtol  && interpnorm<inter_tol       
              gotynew = true;
              break;
           elseif iter == maxit            

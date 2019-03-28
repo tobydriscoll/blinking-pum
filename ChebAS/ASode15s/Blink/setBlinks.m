@@ -48,7 +48,7 @@ end
 for i=1:length(H_tree.leafArray)
     
     %Set blink object and blink motion
-    Blinks{i} = blink(pctClosed,H_tree.leafArray{i}.degs,H_tree.leafArray{i}.domain,BoundaryH);
+    Blinks{i} = blink(pctClosed,H_tree.leafArray{i}.degs,H_tree.leafArray{i}.domain,BoundaryH,4);
     Blinks{i}.percentClosed = pctClosed;
     
     Blinks{i}.pA = pA;

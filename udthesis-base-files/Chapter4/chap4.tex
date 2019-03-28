@@ -58,7 +58,15 @@ p &= - \ps \nabla^2 h - \pa h^{-3}.
 \end{aligned} \quad (x,y) \in \mathcal{E}(t)
 \label{the_pde}
 \end{align}
-A Dirichlet boundary condition is enforced on $h$ and $p$ has a no flux condition on $\partial \mathcal{E}(t)$, subject to a prescribed drainage. These conditions ensure that the volume of $h$ is conserved after a blink cycle.
+On the boundary we enforce
+\begin{align}
+\begin{aligned}
+h &= h_{c}, \\
+\bm{n} \cdot \bm{q} &=0
+\end{aligned} \quad (x,y) \in \partial \mathcal{E}(t)
+\label{boundary_conds}
+\end{align}
+where $\bm{n}$ is the normal derivative and $h_c$ is a fixed value. These conditions ensure that the volume of $h$ is conserved after a blink cycle.
 
 The domain $\mathcal{E}(t)$ is determined by a pair of two dimensional transforms. First a fixed square $\mathcal{C}=[-1,1]^2$ is mapped to an infinite strip $\mathcal{R}(t)$ by
 \begin{align}
@@ -96,8 +104,12 @@ Defining $\hat{h}(\hat{x},\hat{y})=h(x,y)$, $\hat{p}(\hat{x},\hat{y})=p(x,y)$, w
 \hat{p} &= - \ps \hat{\nabla}^2 \hat{h} - \pa \hat{h}^{-3}.
 \end{aligned}
 \end{align}
-The no-flux condition of $p(t)$ is transformed by the mappings as well. Let $\bm{q},\bm{n}$ and $\bm{v}$ denote the flux, normal, and velocity vectors in the physical domain $\mathcal{E}(t)$. Similarly let $\bm{\tilde{q}},\bm{\tilde{n}}$ and $\bm{\tilde{v}}$ represent the respective vectors in $\mathcal{R}(t)$. 
 
+The no flux condition of (\ref{boundary_conds}) is transformed when mapped to $\mathcal{R}(t)$. If we define $\bm{\tilde{n}},\bm{\tilde{q}}$ as the normal and flux vectors in the strip domain $\mathcal{R}(t)$ then
+\begin{align}
+\bm{n} \cdot \bm{q} = \frac{\bm{\tilde{n}} \cdot \bm{\tilde{q}}}{|f'(g_x(\hat{x})+i g_y(\hat{x}))|}.
+\end{align}
+The normal vectors greatly simplify on the strip; on the moving boundary we have $\tilde{n}=<0,1>$.
 
 
 
