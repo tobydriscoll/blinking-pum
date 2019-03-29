@@ -17,7 +17,7 @@ The tear film is a very thin layer of liquid film on the ocular surface spread t
 	
 	A key component in simulating the tear film is developing numerical techniques that accommodate for realistic features of the underlying model. In 2008, Maki used the \textit{overset grid} method to study the effects of the tear film under reflex tearing \cite{maki2008overset}. In an overset grid method, A PDE is discretized and solved on a composite of grids to handle complex geometries and localized features of the function, where the overlapping grids are coupled through interpolation. Maki used fine boundary grids near the upper and lower eyelids in a 1D model to capture localized capillary thinning \cite{maki2008overset}.
 	
-	Maki extend this technique in 2D allowing for numerical simulations an a realistic open eye domain \cite{maki2010tear,maki2010tear2}. Using the Overature framework from Lawrence Livermore National Laboratory, she was able to generate a set of grids adopted to the geometry of the eye \cite{chesshire1990composite}; an example of this discritization can be seen in Figure~\ref{overature_eye}. It was found that the geometry, along side a tear film thickness boundary condition, produces stronger capillary action in the vicinities of the nasal and temporal canthi \cite{maki2010tear}. Maki later incorporated flux boundary conditions that depended both on space and time. She explored no flux boundary conditions on a realistic eye shaped domain, as well as non zero flux conditions that incorporated he influx from the lacrimal gland and puncta drainage \cite{maki2010tear2}. Li built on top these models to study the dynamics of osmolarity within the tear film \cite{li2012model,li2015computed}.
+	Maki extend this technique in 2D allowing for numerical simulations an a realistic open eye domain \cite{maki2010tear,maki2010tear2}. Using the Overature framework from Lawrence Livermore National Laboratory, she was able to generate a set of grids adopted to the geometry of the eye \cite{chesshire1990composite}; an example of this discritization can be seen in Figure~\ref{overature_eye}. It was found that the geometry, along side a tear film thickness boundary condition, produces stronger capillary action in the vicinities of the nasal and temporal canthi \cite{maki2010tear}. Maki later incorporated flux boundary conditions that depended both on space and time. She explored no flux boundary conditions on a realistic eye shaped domain, as well as non zero flux conditions that incorporated the influx from the lacrimal gland and puncta drainage \cite{maki2010tear2}. Li built on top these models to study the dynamics of osmolarity within the tear film \cite{li2012model,li2015computed}.
 	
 \begin{figure}
 	\centering
@@ -38,7 +38,7 @@ where $h$ is the prescribed film thickness and $\vect{q}$ is a known flux functi
 \end{equation}
 for constants $A$ and $B$ \cite{driscoll2018simulation}. Numerically the PDE is discritized with a Chebyshev polynomial tensor product approximation. In the case of the second order thin film analog with flux (\ref{thin_film_analog}), this led to a solution that was accurate to at least five digits.
 
-In this chapter, we seek to extend this method to solve a fourth order tear film model in a DAE where the pressure is solved algebraically. In order to meet the needed computational demands we will our new preconditioned techniques to this problem. In the following sections, we describe the fourth order tear film model, as well as briefly review how the blinking eye domain $\mathcal{E}(t)$ is transformed from the $[-1,1]^2$. We conclude with a numerical study of our method on the PDE.
+In this chapter, we seek to extend this method to solve a fourth order tear film model in a DAE where the pressure is solved algebraically. In order to meet the needed computational demands we will use our new preconditioned techniques to solve this problem. In the following sections, we describe the fourth order tear film model, as well as briefly review how the blinking eye domain $\mathcal{E}(t)$ is transformed from the $[-1,1]^2$. We conclude with a numerical study of our method on the PDE.
 
 
 \begin{figure}
@@ -50,7 +50,7 @@ In this chapter, we seek to extend this method to solve a fourth order tear film
 	
 \section{model description}
 
-We numerically solve for the height of the tear film $h(x,y)$ and pressure $p(x,y)$ with the model (\ref{driscollPDE}) using flux $\bm{q} =  \frac{h^3}{3} \nabla p$ where the pressue is solved algebraically, i.e.
+We numerically solve for the height of the tear film $h(x,y)$ and pressure $p(x,y)$ with the model (\ref{driscollPDE}) using flux $\bm{q} =  \frac{h^3}{3} \nabla p$ where the pressure is solved algebraically, i.e.
 \begin{align}
 \begin{aligned}
 h_t &= - \nabla \cdot \lp \frac{h^3}{3} \nabla p \rp, \\
@@ -58,21 +58,20 @@ p &= - \ps \nabla^2 h - \pa h^{-3}.
 \end{aligned} \quad (x,y) \in \mathcal{E}(t)
 \label{the_pde}
 \end{align}
-On the boundary we enforce
-\begin{align}
-\begin{aligned}
-h &= h_{c}, \\
-\bm{n} \cdot \bm{q} &=0
-\end{aligned} \quad (x,y) \in \partial \mathcal{E}(t)
-\label{boundary_conds}
-\end{align}
-where $\bm{n}$ is the normal derivative and $h_c$ is a fixed value. These conditions ensure that the volume of $h$ is conserved after a blink cycle.
+On the boundary we enforce a Dirichlet condition for $h$, as well as flux conditions on $p$ (with prescribed supply and drainage of fluid) that ensure that the volume of $h$ on $\mathcal{E}(t)$ is conserved over a blink cycle.
+%\begin{align}
+%\begin{aligned}
+%h &= h_{c}, \\
+%\bm{n} \cdot \bm{q} &=0
+%\end{aligned} \quad (x,y) \in \partial \mathcal{E}(t)
+%\label{boundary_conds}
+%\end{align}
 
 The domain $\mathcal{E}(t)$ is determined by a pair of two dimensional transforms. First a fixed square $\mathcal{C}=[-1,1]^2$ is mapped to an infinite strip $\mathcal{R}(t)$ by
 \begin{align}
 \mathcal{R}(t) = \{(x,y):|y|<\lambda(t)\}	
 \end{align}
-where $-1<\lambda(t)<1$ is a prescribed function satisfying $\lambda(0)=1$ (corresponding to a fully open eye). For $(\hat{x},\hat{y}) \in \mathcal{C}$, $\mathcal{C}$ is mapped to $\mathcal{R}(t)$ via
+where $-1<\lambda(t)<1$ is a prescribed function satisfying $\lambda(0)=1$ (corresponding to a fully open eye). In this chapter, we use the realistic blink motion from \cite{deng2014heat}. For $(\hat{x},\hat{y}) \in \mathcal{C}$, $\mathcal{C}$ is mapped to $\mathcal{R}(t)$ via
 \begin{align}
 	g_x(\hat{x}) = \frac{\gamma \hat{x}}{\alpha^2 - \hat{x}}, \quad g_y(\hat{y}) = \frac{1}{2} (\hat{y}+1)(\lambda(t)+1)-1
 \end{align}
@@ -105,7 +104,7 @@ Defining $\hat{h}(\hat{x},\hat{y})=h(x,y)$, $\hat{p}(\hat{x},\hat{y})=p(x,y)$, w
 \end{aligned}
 \end{align}
 
-The no flux condition of (\ref{boundary_conds}) is transformed when mapped to $\mathcal{R}(t)$. If we define $\bm{\tilde{n}},\bm{\tilde{q}}$ as the normal and flux vectors in the strip domain $\mathcal{R}(t)$ then
+The no flux condition is transformed when mapped to $\mathcal{R}(t)$. If we define $\bm{\tilde{n}},\bm{\tilde{q}}$ as the normal and flux vectors in the strip domain $\mathcal{R}(t)$ then
 \begin{align}
 \bm{n} \cdot \bm{q} = \frac{\bm{\tilde{n}} \cdot \bm{\tilde{q}}}{|f'(g_x(\hat{x})+i g_y(\hat{x}))|}.
 \end{align}
