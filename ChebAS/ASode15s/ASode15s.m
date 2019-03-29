@@ -309,7 +309,7 @@ difU = [ -1, -2, -3, -4,  -5;           % difU is its own inverse!
 maxK = 1:maxk;
 [kJ,kI] = meshgrid(maxK,maxK);
 difU = difU(maxK,maxK);
-maxit = 4;
+maxit = 8;
 
 % Adjust the warnings.
 warnoffId = { 'MATLAB:singularMatrix', 'MATLAB:nearlySingularMatrix'}; 
@@ -320,7 +320,7 @@ for i = 1:length(warnoffId)
 end
 
  
-%yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode));
+%yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode,interface_scale));
 
 [y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol,interface_scale);
 
@@ -403,12 +403,12 @@ if isempty(htry)
   % Compute an initial step size h using yp = y'(t).
   if normcontrol
     wt = max(normy,threshold);
-    yp_n = norm(Masstimes(PUApprox,Mt,yp));
-    rh = 1.25 * (norm(yp_n) / wt) / sqrt(rtol);  % 1.25 = 1 / 0.8
+   % yp_n = norm(Masstimes(PUApprox,Mt,yp));
+    rh = 1.25 * (norm(yp) / wt) / sqrt(rtol);  % 1.25 = 1 / 0.8
   else
     wt = max(abs(y),threshold);
-    yp_n = norm(Masstimes(PUApprox,Mt,yp));
-    rh = 1.25 * norm(yp_n ./ wt,inf) / sqrt(rtol);
+   % yp_n = norm(Masstimes(PUApprox,Mt,yp));
+    rh = 1.25 * norm(yp./ wt,inf) / sqrt(rtol);
   end
   absh = min(hmax, htspan);
   if absh * rh > 1
