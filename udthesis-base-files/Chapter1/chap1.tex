@@ -1,7 +1,7 @@
 %
 % This is Chapter 1 file (chap1.tex)
 %
-\chapter{1D Partition of Unity Approximations}
+\chapter{An adaptive partition of unity method for one dimensional Chebyshev polynomial interpolation}
 Chebyshev polynomial interpolants provide powerful approximation properties, both in theory and as implemented in practice by the Chebfun software system~\cite{battles2004extension}. Chebfun uses spectral collocation to provide very accurate automatic solutions to differential equations~\cite{driscoll2008chebop}. The method is not fully adaptive, though, since the refinement is limited to the degree of the global interpolant. 
 
  Chebfun includes a \textit{splitting} method that creates piecewise polynomial approximations \cite{pachon2010piecewise}. When splitting is enabled, if a Chebyshev interpolant is unable to represent the function accurately at a specified maximum degree on an interval, the interval is bisected; this process is recursively repeated on the subintervals. Afterwards adjacent subintervals are merged if the new interval allows for a Chebyshev approximation with lower degree. In effect, the method does a binary search for a good splitting location. In \cite{driscoll2014optimal} it was shown that the splitting locations are roughly optimal based on the singularity structure of the function in the complex plane. 
