@@ -1,8 +1,8 @@
-function [Blinks,M,y0,result,initial_H] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he,result)
+function [Blinks,M,y0,result,initial_H] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he,initvolume,result)
 %This function sets up the blink objects for each leaf. Here 'blink' is set
 %to the NonlinOp property. adsfasdf
 
-degs = [20 20];
+degs = [50 50];
 
 
 
@@ -16,7 +16,7 @@ degs = [20 20];
     initial_H = ChebPatch(cheb_struct);
     initial_P = ChebPatch(cheb_struct);
     
-    if nargin<8
+    if nargin<9
         
         result = blink(pctClosed,degs,[-1 1;-1 1],BoundaryH);
         
@@ -29,7 +29,7 @@ degs = [20 20];
         result.odetol = 1e-4;
         result.h_e = he;
         result.initcond = 'laplace';
-        result.initvolume = 24;
+        result.initvolume = initvolume;
         [H,P] = result.initial;
         
         initial_H.sample(H(:));
@@ -54,7 +54,7 @@ for i=1:length(H_tree.leafArray)
     Blinks{i}.pA = pA;
     Blinks{i}.pS = pS;
     Blinks{i}.h_e = he;
-    
+    Blinks{i}.initvolume = initvolume;
     G = H_tree.leafArray{i}.leafGrids();
     
     H = initial_H.evalfGrid(G);

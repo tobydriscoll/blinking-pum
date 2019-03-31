@@ -149,7 +149,8 @@ end
  options, threshold, rtol, normcontrol, normy, hmax, htry, htspan] = ...
     ASodearguments(FcnHandlesUsed, solver_name, ode, tspan, y0, options, varargin);
 nfevals = nfevals + 1;
-
+normcontrol = true;
+normy = norm(y0)/length(y0);
 %This won't work with row scale! needs to be local to each patch
 one2neq = (1:neq);
 
@@ -611,12 +612,13 @@ while ~done
       pred = y + sum(dif(:,K),2);
       ynew = pred;
       
+      
       % The difference, difkp1, between pred and the final accepted 
       % ynew is equal to the backward difference of ynew of order
       % k+1. Initialize to zero for the iteration to compute ynew.
       difkp1 = zeros(neq,1); 
       if normcontrol
-        normynew = norm(ynew);
+        normynew = norm(ynew)/length(ynew);
         invwt = 1 / max(max(normy,normynew),threshold);
         minnrm = 100*eps*(normynew * invwt);
       else
@@ -708,7 +710,7 @@ while ~done
         end        
         
         if normcontrol
-          newnrm = norm(del) * invwt;
+          newnrm = norm(del) * invwt/length(y);
         else
           newnrm = norm(del .* invwt,inf);
         end
@@ -832,7 +834,7 @@ while ~done
     difkp1 = Masstimes(PUApprox,Mtnew,difkp1);
     
     if normcontrol
-      err = (norm(difkp1) * invwt) * erconst(k);
+      err = (norm(difkp1) * invwt) * erconst(k)/length(y);
     else
       err = norm((difkp1) .* invwt,inf) * erconst(k);
     end
@@ -870,7 +872,7 @@ while ~done
         hopt = absh * max(0.1, 0.833*(rtol/err)^(1/(k+1))); % 1/1.2
         if k > 1
           if normcontrol
-            errkm1 = (norm(dif(:,k) + difkp1) * invwt) * erconst(k-1);
+            errkm1 = (norm(dif(:,k) + difkp1) * invwt) * erconst(k-1)/length(y);
           else
             errkm1 = norm((dif(:,k) + difkp1) .* invwt,inf) * erconst(k-1);
           end
