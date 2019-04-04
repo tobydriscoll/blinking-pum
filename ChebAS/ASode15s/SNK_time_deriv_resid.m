@@ -70,23 +70,18 @@ end
 [ sol_loc,lens ] = unpackPUvecs(cell2mat(sol),PUApproxArray);
 
 rhs_loc = unpackPUvecs(rhs,PUApproxArray);
-
 start_index = zeros(num_sols,1);
 
 diff = cell(num_leaves,num_sols);
 border = cell(num_leaves,num_sols);
 
 for k=1:num_leaves
-    
-
     for i=1:num_sols
         %This will be (interface length)*num_sols
         diff{k}{i} = PUApproxArray{i}.leafArray{k}.Binterp*sol_unpacked{i};
         border{k}{i} = PUApproxArray{i}.leafArray{k}.inner_boundary;
     end
-    
     start_index = start_index + lens{k};
-    
 end
 
 

@@ -626,7 +626,7 @@ classdef PUPatch<Patch
         %  Creates a sparse interpolating matrix for a list of points X.
         %
         %     Input:
-        %      grid: cell array of grid values.
+        %         X: cell array of grid values.
         %
         %    Output:
         %  ii,jj,kk: vectors used to construct the sparse matrix.
@@ -636,11 +636,7 @@ classdef PUPatch<Patch
             
             ind = false(numpts,2);
             
-            ii = [];
-            jj = [];
-            zz = [];
-            
-            %mid_point = mean(obj.zone(obj.splitting_dim,:));
+            ii = [];jj = [];zz = [];
             
             mid_point = obj.children{1}.zone(obj.splitting_dim,2);
             

@@ -577,7 +577,7 @@ while ~done
     havrate = false;
   end
   
-  min_iter = 3;
+  min_iter = 1;
   inter_tol = 1e-10;
   res_tol = 1e-4;
   
@@ -600,6 +600,10 @@ while ~done
       vol_percent = ((vol-int_vol)/int_vol);
       vol_percent
       min_H = min(H_sol);
+      
+      if min_H<0
+         error('H is negative'); 
+      end
       min_H
 
       % Predict a solution at t+h.

@@ -55,11 +55,18 @@ We numerically solve for the height of the tear film $h(x,y,t)$ and pressure $p(
 \begin{align}
 \begin{aligned}
 h_t &= - \nabla \cdot \lp \frac{h^3}{3} \nabla p \rp, \\
-p &= - \ps \nabla^2 h - \pa h^{-3}.
+p &= - \ps \nabla^2 h - \pa h^{-3},
 \end{aligned} \quad (x,y) \in \mathcal{E}(t)
 \label{the_pde}
 \end{align}
-On the boundary we enforce a Dirichlet condition for $h$, as well as flux conditions on $\bm{q}$ (with prescribed supply and drainage of fluid) that ensure that the total volume of fluid over on $\mathcal{E}(t)$ is conserved over a blink cycle.
+where $\ps$ represents the ratio of surface tension to viscous forces while $\pa$ is the ratio of van der Waals to viscous forces \cite{braun2015dynamics}. On the boundary we enforce a Dirichlet condition for $h$ as well as flux conditions on $\bm{q}$,
+\begin{equation}
+\label{normal_conds}
+(n \cdot \bm{q})\vert_{\mathcal{E}(t)} = Q_{\text{in}}(x,y,t)+Q_{\text{out}}(x,y,t)
+\end{equation}
+for prescribed influx and enflux functions $Q_{\text{in}}$, $Q_{\text{out}}$ that incorporate the moving boundary  \cite{li2015computed,heryudono2007single,braun2015dynamics}.
+This condition ensures that the total volume of fluid over on $\mathcal{E}(t)$ is conserved over a blink cycle.
+
 %\begin{align}
 %\begin{aligned}
 %h &= h_{c}, \\
@@ -87,12 +94,10 @@ i.e.,
 \begin{align}
 \mathcal{E}(t) = \{\operatorname{Re}(f(x+iy)),\operatorname{Im}(f(x+iy))|(x,y) \in \mathcal{R}(t)  \}.
 \end{align}
-
 If we define $\hat{\nabla}$ to be the gradient in terms of $(\hat{x},\hat{y})$ then
 %\begin{align}
 %\hat{\nabla} = \frac{\lp \cos(g_y(\hat{y}))+\cosh(g_x(\hat{x})) \rp^2}{1+\cos(g_y(\hat{y}))\cosh(g_x(\hat{x}))} \lp \frac{(\hat{x}^2+\alpha^2)\gamma}{(\hat{x}^2-\alpha^2)^2} \frac{d}{d \hat{x}}, \frac{2}{1+\lambda(t)} \frac{d}{d \hat{y}} \rp.
 %\end{align}
-
 \begin{align}
 \hat{\nabla} = \frac{1}{|f'(g_x(\hat{x})+i g_y(\hat{x}))|} \lp \frac{(\hat{x}^2+\alpha^2)\gamma}{(\hat{x}^2-\alpha^2)^2} \frac{d}{d \hat{x}}, \frac{2}{1+\lambda(t)} \frac{d}{d \hat{y}} \rp.
 \end{align}
@@ -105,12 +110,19 @@ Defining $\hat{h}(\hat{x},\hat{y})=h(x,y)$, $\hat{p}(\hat{x},\hat{y})=p(x,y)$, w
 \end{aligned}
 \end{align}
 
-The no-flux condition is transformed when mapped to $\mathcal{R}(t)$. If we define $\bm{\tilde{n}},\bm{\tilde{q}}$ as the normal and flux vectors in the strip domain $\mathcal{R}(t)$, then
-\begin{align}
-\bm{n} \cdot \bm{q} = \frac{\bm{\tilde{n}} \cdot \bm{\tilde{q}}}{|f'(g_x(\hat{x})+i g_y(\hat{x}))|}.
-\end{align}
-The normal vectors greatly simplify on the strip; on the moving boundary we have $\tilde{n}=<0,1>$.
-
-
-
+The normal conditions of (\ref{normal_conds}) greatly simply on $\mathcal{C}$. The influx function $Q_{\text{in}}$ transforms to
+\begin{equation}
+Q_{\text{in}}(\hat{x},\hat{y}) = \begin{cases}
+Q_{lg}(\hat{x},\hat{y}) + \dot{\lambda}(t)|f'(g_x(\hat{x})+i g_y(\hat{x}))|(h_0-h_e/2) & \hat{y}=1 \\
+0 & \text{otherwise},
+\end{cases}
+\end{equation}
+where $h_e$ is the thickness of tear fluid under eyelid \cite{heryudono2007single}, and $Q_{lsg}$ is the influx from the lacrimal gland \cite{braun2015dynamics}. For the outflux function we have
+\begin{equation}
+Q_{\text{out}}(\hat{x},\hat{y}) = \begin{cases}
+Q_{p}(\hat{x},\hat{y}) & \hat{x}=-1 \\
+0 & \text{otherwise},
+\end{cases}
+\end{equation}
+where $Q_{p}(\hat{x},\hat{y})$ describes the efflux from the puncta \cite{braun2015dynamics}.
 

@@ -1,5 +1,9 @@
 function [ sol,J ] = sol_and_jac( f,jac,u )
 sol = f(u);
-J = jac(u);
+
+if nargout==2
+    J = jac(u);
+end
+
 end
 

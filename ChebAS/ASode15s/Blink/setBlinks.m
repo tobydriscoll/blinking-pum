@@ -1,4 +1,4 @@
-function [Blinks,M,y0,result,initial_H] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he,initvolume,result)
+function [Blinks,M,y0,result,initial_H] = setBlinks(H_tree,P_tree,pctClosed,BoundaryH,pA,pS,he,initvolume,volume_in_out,result)
 %This function sets up the blink objects for each leaf. Here 'blink' is set
 %to the NonlinOp property. adsfasdf
 
@@ -16,7 +16,7 @@ degs = [50 50];
     initial_H = ChebPatch(cheb_struct);
     initial_P = ChebPatch(cheb_struct);
     
-    if nargin<9
+    if nargin<10
         
         result = blink(pctClosed,degs,[-1 1;-1 1],BoundaryH);
         
@@ -48,7 +48,7 @@ end
 for i=1:length(H_tree.leafArray)
     
     %Set blink object and blink motion
-    Blinks{i} = blink(pctClosed,H_tree.leafArray{i}.degs,H_tree.leafArray{i}.domain,BoundaryH,4);
+    Blinks{i} = blink(pctClosed,H_tree.leafArray{i}.degs,H_tree.leafArray{i}.domain,BoundaryH,volume_in_out);
     Blinks{i}.percentClosed = pctClosed;
     
     Blinks{i}.pA = pA;
