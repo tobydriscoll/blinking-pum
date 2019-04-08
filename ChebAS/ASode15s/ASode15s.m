@@ -310,7 +310,7 @@ difU = [ -1, -2, -3, -4,  -5;           % difU is its own inverse!
 maxK = 1:maxk;
 [kJ,kI] = meshgrid(maxK,maxK);
 difU = difU(maxK,maxK);
-maxit = 8;
+maxit = 4;
 
 % Adjust the warnings.
 warnoffId = { 'MATLAB:singularMatrix', 'MATLAB:nearlySingularMatrix'}; 
@@ -542,6 +542,8 @@ end
   
 done = false;
 at_hmin = false;
+
+ %[J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
 while ~done
   
   hmin = 16*eps(t);
@@ -578,9 +580,9 @@ while ~done
   end
   
   min_iter = 1;
-  inter_tol = 1e-10;
+  inter_tol = inf;
   res_tol = 1e-4;
-  
+  [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
   % LOOP FOR ADVANCING ONE STEP.
   nofailed = true;                      % no failed attempts
   while true                            % Evaluate the formula.
@@ -590,21 +592,6 @@ while ~done
 
       % Compute the constant terms in the equation for ynew.
       psi = dif(:,K) * (G(K) * invGa(k));
-
-      t 
-      h
-      
-      H_sol = y(1:length(PUApprox{1}));
-      PUApprox{1}.sample(H_sol);
-      vol = BlinkVolume(ode,PUApprox{1},t);
-      vol_percent = ((vol-int_vol)/int_vol);
-      vol_percent
-      min_H = min(H_sol);
-      
-      if min_H<0
-         error('H is negative'); 
-      end
-      min_H
 
       % Predict a solution at t+h.
       tnew = t + h;
@@ -672,7 +659,7 @@ while ~done
         
         
         if iter==1
-            tol_g(iter) = 1e-3;
+            tol_g(iter) = 1e-2;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
             tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
@@ -692,14 +679,15 @@ while ~done
             
        %   JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
        %    del = -(JG\rhs);
-            [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+       %     [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
             
             [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),-rhs,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
         end
        
         resnorm = normres(iter);
         
-        resnorm;
+       % resnorm
+       % length(gmhist)
         
         interpnorm = InterFaceError(PUApprox,rhs_interp)/interface_scale;
         
@@ -767,28 +755,11 @@ while ~done
       if tooslow
         nfailed = nfailed + 1;          
         % Speed up the iteration by forming new linearization or reducing h.
-%         if ~Jcurrent || ~Mcurrent
-% %           if ~Jcurrent  
-% %             if Janalytic
-% %               %dfdy = feval(Jac,t,y,Jargs{:});
-% % %              dfdy = ComputeJac(PUApprox,num_sols,t,y);
-% %             else
-% %               f0 = feval(odeFcn,t,y,odeArgs{:});
-% %               [dfdy,Joptions.fac,nF] = odenumjac(odeFcn, {t,y,odeArgs{:}}, f0, Joptions);     
-% %               nfevals = nfevals + nF + 1; 
-% %             end             
-% %             npds = npds + 1;            
-% %             Jcurrent = true;
-% %           end
-%           if ~Mcurrent
-%             Mt = feval(Mfun,t,y,Margs{:});
-%             Mcurrent = true;
-%             if Mtype == 4
-%               [dMpsidy,dMoptions.fac] = odenumjac(@odemxv, {Mfun,t,y,psi,Margs{:}}, Mt*psi, ...
-%                                                   dMoptions);      
-%             end
-%           end                       
-        if absh <= hmin
+        if ~Jcurrent
+          %  [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+            npds = npds + 1;            
+            Jcurrent = true;
+        elseif absh <= hmin
           warning(message('MATLAB:ode15s:IntegrationTolNotMet', sprintf( '%e', t ), sprintf( '%e', hmin )));         
           solver_output = odefinalize(solver_name, sol,...
                                       outputFcn, outputArgs,...
@@ -823,6 +794,8 @@ while ~done
 %           RowScale = 1 ./ max(abs(Miter),[],2);
 %           Miter = sparse(one2neq,one2neq,RowScale) * Miter;
         end
+        [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+        
 %         if issparse(Miter)
 %           [L,U,P,Q,R] = lu(Miter);
 %         else  
@@ -919,6 +892,19 @@ while ~done
       havrate = false;
       
     else                                % Successful step
+        t
+        h
+        H_sol = y(1:length(PUApprox{1}));
+        PUApprox{1}.sample(H_sol);
+        vol = BlinkVolume(ode,PUApprox{1},t);
+        vol_percent = ((vol-int_vol)/int_vol);
+        vol_percent
+    min_H = min(H_sol);
+    min_H
+    
+%     if min_H<0
+%         error('H is negative');
+%     end
       break;
       
     end

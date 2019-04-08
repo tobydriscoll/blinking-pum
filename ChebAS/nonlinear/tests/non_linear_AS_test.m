@@ -3,7 +3,6 @@ cheb_struct.domain = domain;
 cheb_struct.degs = [33 33];
 cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
-cheb_struct.tol = 1e-4;
 
 %Test with 16 patches
  Tree = ChebPatch(cheb_struct);

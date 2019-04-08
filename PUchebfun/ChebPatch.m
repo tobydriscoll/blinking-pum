@@ -562,8 +562,24 @@ classdef ChebPatch<LeafPatch
             obj.cdegs = obj.orig_cdegs;
             obj.values = zeros(obj.degs);
             obj.split_flag = ones(obj.dim,1);
+            
+            if obj.dim==2
+                [~,out_border,in_border,~] = FindBoundaryIndex2DSides(obj);
+                obj.outer_boundary = out_border;
+                obj.inner_boundary = in_border;
+                
+                obj.Coarsen();
+                
+                [~,out_border,in_border,~] = FindBoundaryIndex2DSides(obj);
+                obj.coarse_outer_boundary = out_border;
+                obj.coarse_inner_boundary = in_border;
+                
+                obj.Refine();
+                
+            end
+            
         end
-       
+        
         function Child = splitleafGeom(obj)
             Child = obj;
         end

@@ -59,10 +59,10 @@ p &= - \ps \nabla^2 h - \pa h^{-3},
 \end{aligned} \quad (x,y) \in \mathcal{E}(t)
 \label{the_pde}
 \end{align}
-where $\ps$ represents the ratio of surface tension to viscous forces while $\pa$ is the ratio of van der Waals to viscous forces \cite{braun2015dynamics}. On the boundary we enforce a Dirichlet condition for $h$ as well as flux conditions on $\bm{q}$,
+where $\ps$ represents the ratio of surface tension to viscous forces while $\pa$ is the ratio of van der Waals to viscous forces \cite{braun2015dynamics}. On the boundary we enforce a Dirichlet condition $h=h_0$ as well as flux conditions on $\bm{q}$,
 \begin{equation}
 \label{normal_conds}
-(n \cdot \bm{q})\vert_{\mathcal{E}(t)} = Q_{\text{in}}(x,y,t)+Q_{\text{out}}(x,y,t)
+(n \cdot \bm{q})\vert_{\partial \mathcal{E}(t)} = Q_{\text{in}}(x,y,t)+Q_{\text{out}}(x,y,t)
 \end{equation}
 for prescribed influx and enflux functions $Q_{\text{in}}$, $Q_{\text{out}}$ that incorporate the moving boundary  \cite{li2015computed,heryudono2007single,braun2015dynamics}.
 This condition ensures that the total volume of fluid over on $\mathcal{E}(t)$ is conserved over a blink cycle.
@@ -117,7 +117,7 @@ Q_{lg}(\hat{x},\hat{y}) + \dot{\lambda}(t)|f'(g_x(\hat{x})+i g_y(\hat{x}))|(h_0-
 0 & \text{otherwise},
 \end{cases}
 \end{equation}
-where $h_e$ is the thickness of tear fluid under eyelid \cite{heryudono2007single}, and $Q_{lsg}$ is the influx from the lacrimal gland \cite{braun2015dynamics}. For the outflux function we have
+where $h_e$ is the thickness of tear fluid under eyelid \cite{heryudono2007single}, and $Q_{lg}$ is the influx from the lacrimal gland \cite{braun2015dynamics}. For the outflux function we have
 \begin{equation}
 Q_{\text{out}}(\hat{x},\hat{y}) = \begin{cases}
 Q_{p}(\hat{x},\hat{y}) & \hat{x}=-1 \\
@@ -125,4 +125,23 @@ Q_{p}(\hat{x},\hat{y}) & \hat{x}=-1 \\
 \end{cases}
 \end{equation}
 where $Q_{p}(\hat{x},\hat{y})$ describes the efflux from the puncta \cite{braun2015dynamics}.
+
+\section{numerical experiments}
+For our experiments, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values chosen from \cite{braun2015dynamics}. The thickness of the tear film fluid $h_e$ is set to 2. For simplicity we set  $Q_{lg}$ and $Q_p$ to zero. We solve the model with our preconditioned method, using a the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.6]{Chapter4/Eye_domains}
+	\caption{Plot of subdomains used for blinking eye model.}
+	\label{eye_partition}
+\end{figure}
+
+We first examine the case of a stationary domain. The boundary conditions of \ref{the_pde} ensure that the volume of the fluid $h(x,y,t)$ is constant over time (in the case of a stationary boundary). As seen in Figure~\ref{eye_volume}, our method maintains a volume that is relatively within $10^{-6}$ of the initial volume, which is indicative of the pointwise error of the numerical solution. 
+
+
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.8]{Chapter4/stationary_volume_change}
+	\caption{Change of volume of the fluid over time. The boundary conditions ensure constant volume over time.}
+	\label{eye_volume}
+\end{figure}
 

@@ -18,7 +18,7 @@ degs = [50 50];
     
     if nargin<10
         
-        result = blink(pctClosed,degs,[-1 1;-1 1],BoundaryH);
+        result = blink(pctClosed,degs,[-1 1;-1 1],BoundaryH,volume_in_out);
         
         result.pA = pA;
         result.pS = pS;
@@ -28,8 +28,9 @@ degs = [50 50];
         result.percentClosed = pctClosed;
         result.odetol = 1e-4;
         result.h_e = he;
-        result.initcond = 'laplace';
         result.initvolume = initvolume;
+        result.initcond = 'laplace';
+
         [H,P] = result.initial;
         
         initial_H.sample(H(:));
