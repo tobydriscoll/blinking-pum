@@ -1,12 +1,12 @@
 \chapter{Preconditioned nonlinear iterations for overlapping Chebyshev discretizations with independent grids}
-
+\label{snk_chap}
 \section{Introduction}
 \label{sec:introduction}
 
-Overlapping domain decomposition has been recognized as a valuable aid in solving partial differential equations since Schwarz first described his alternating method in 1870. (For straightforward introductions to the topic, see~\cite{Dolean2015,Smith2004}; for a more historical perspective, see~\cite{Gander2008}.) Overlapping decomposition provides a way to solve a problem on a global domain by exploiting its reduction to smaller subdomains. This creates geometric flexibility and allows special effort to be focused on small parts of the domain when appropriate. Domain decomposition also has a natural parallelism that is particularly attractive in the increasingly multicore context of scientific computing.
+%Overlapping domain decomposition has been recognized as a valuable aid in solving partial differential equations since Schwarz first described his alternating method in 1870. (For straightforward introductions to the topic, see~\cite{Dolean2015,Smith2004}; for a more historical perspective, see~\cite{Gander2008}.) Overlapping decomposition provides a way to solve a problem on a global domain by exploiting its reduction to smaller subdomains. This creates geometric flexibility and allows special effort to be focused on small parts of the domain when appropriate. Domain decomposition also has a natural parallelism that is particularly attractive in the increasingly multicore context of scientific computing.
 
 For a linear PDE, one typically seeks to apply a preconditioner for a Krylov iteration such as GMRES, in the form of solving problems on overlapping subdomains whose boundary data is in part determined by values of the solution in other subdomains. In the parallel context this is achieved by an additive Schwarz (AS) scheme. When one partitions the unknowns of a global discretization into overlapping subsets, the best form of AS are restricted AS (RAS) methods~\cite{Cai1999}, which do not allow multiple domains to update shared unknowns independently and thus over-correct. Typically, then, the subdomain problems are solved on overlapping sets, but the results are distributed in a nonoverlapping fashion. 
-
+%
 For nonlinear problems, the obvious extension of AS preconditioning is to apply it as described above on the linearized equations that are determined by a quasi-Newton iteration. We refer to this process as a \emph{Newton--Krylov--Schwarz} (NKS) procedure, reflecting the nesting order of the different elements of linearization, linear solver, and preconditioning.
 
 Cai and Keyes~\cite{Cai2002} proposed instead modifying the \emph{nonlinear} problem using the Schwarz ansatz. In addition to yielding a preconditioned linearization for the Krylov solver, the preconditioned nonlinear problem exhibited more robust convergence for the Newton iteration than did the original nonlinear problem. They called their method ASPIN, short for \textit{additive Schwarz preconditioned inexact Newton}. As a technical matter, they did not recommend applying the true Jacobian of the system, preferring an approximation that required less effort. Subsequently, Dolean et al.~\cite{Dolean2016} pointed out that Cai and Keyes did not use the RAS form of AS preconditioning, and they proposed an improved variant called RASPEN that does. We refer to this type of nonlinear preconditioning as \emph{Schwarz--Newton--Krylov} (SNK), because the Schwarz ansatz is applied before the linearization begins.
@@ -227,7 +227,7 @@ We have found that it is simpler and successful to apply the FAS correction in t
 
 
 \section{Integration with ode15s}
-The ode15s function in MATLAB that finds the solution to initial value problems
+The {\tt ode15s} function in MATLAB that finds the solution to initial value problems
 \begin{align}
 M(t,\bm{x}) u'=\phi(t,\bm{x},u), \qquad \bm{x} \in \Omega
 \label{stiff_ode}
@@ -257,8 +257,8 @@ M(t_{n+1},\bm{x}) u_{n+1} - \frac{h}{\gamma_k} \phi(t_{n+1},\bm{x},u_{n+1}) + M(
  \label{ode15s_step_2}
 \end{align}
 
-\subsection{discretization}
-We coadapted the ode15s function to solve (\ref{ode15s_step_2}) with the NKS and SNK methods by discretizing (\ref{ode15s_step_2}) at the local subdomains in a similar manner to (\ref{eq:fi}). First we define a vector function $\bm{\hat{f}}_i$ as the following concatenation:
+\subsection{Discretization}
+We adapted the {\tt ode15s} function to solve (\ref{ode15s_step_2}) with the NKS and SNK methods by discretizing (\ref{ode15s_step_2}) at the local subdomains in a similar manner to (\ref{eq:fi}). First we define a vector function $\bm{\hat{f}}_i$ as the following concatenation:
 \begin{equation}
   \label{eq:fi_ode15s}
   \bm{\hat{f}}_i(\bm{u}_i,t) = 
@@ -439,4 +439,4 @@ We have demonstrated that the SNK method can easily be part of a two-level Full 
 
 The most time-consuming part of the SNK algorithm is expected to be typically in the solution of nonlinear PDE problems within each subdomain using given boundary data. These compute-intensive tasks require no communication and are therefore efficient to parallelize. By contrast, each inner Krylov iteration (i.e., Jacobian application) of both SNK and linearly preconditioned NKS requires a communication of interface data between overlapping subdomains, which appears to generate a more communication-bound form of parallelism. An additional feature of the SNK approach, mentioned also in~\cite{Cai2002}, is that subdomains of low solution activity can be expected to be found relatively quickly. We observed this to be the case in the cavity flow problem of section~\ref{sec:cavity}, where local solutions in regions of low activity were sometimes 3-4 times faster as those in regions with steep solution gradients. This presents a natural way to limit the spatial scope of difficult nonlinear problems, though it also raises questions for load balancing in a parallel environment.
 
-Finally, we remark that an important extension in~\cite{AitonTA} is to use least-squares approximation rather than interpolation to incorporate nonrectangular (sub)domains. We have been able to write a least-squares (as opposed to collocation) generalization of SNK and test it in one dimension. We hope to make it the subject of future work.
+Finally, we remark that an important extension in~\cite{AitonTA} is to use least-squares approximation rather than interpolation to incorporate nonrectangular (sub)domains. We have been able to write a least-squares (as opposed to collocation) generalization of SNK and test it in one dimension, but much further work is required. 

@@ -1,10 +1,11 @@
 \chapter{Application to blinking Eye simulation}
+\label{chap_eye}
 
 \section{Introduction}
 
-The tear film is a thin layer of liquid film on the ocular surface spread through blinking. It serves several vital functions including protecting the ocular surface with moister, transporting waste, as well as providing a smooth ocular surface; within each blink cycle, a tear film that is functioning properly will maintain a balance between tear secretion and loss. \cite{holly1977tear}.
+The tear film is a thin layer of liquid film on the ocular surface spread through blinking. It serves several vital functions including protecting the ocular surface with moisture, transporting waste, and as providing a smooth ocular surface. Within each blink cycle, a tear film that is functioning properly will maintain a balance between tear secretion and loss. \cite{holly1977tear}.
 
-	Dry eye syndrome (DES) is a collection of symptoms that include blurred vision, burning, foreign body sensation, as well as tearing and inflammation of the ocular surface. According to a study from 2007, An estimated 4.91 million Americans suffer from DES \cite{bron2007methodologies}. A malfunctioning or deficient tear film is thought to be a cause of DES \cite{nelson2011international}, causing the ocular tear film comunity to take interest in the function of the tear film \cite{johnson2004changes} as well as the connection between DES and tear film volume, evaporation \cite{bron2007methodologies}.
+	Dry eye syndrome (DES) is a collection of symptoms that include blurred vision, burning, foreign body sensation, and tearing and inflammation of the ocular surface. According to a study from 2007, an estimated 4.91 million Americans suffer from DES \cite{bron2007methodologies}. A malfunctioning or deficient tear film is thought to be a cause of DES \cite{nelson2011international}, causing the ocular tear film comunity to take interest in the function of the tear film \cite{johnson2004changes} as well as the connection between DES and tear film volume, evaporation \cite{bron2007methodologies}.
 	
 \begin{figure}
   \centering
@@ -15,9 +16,9 @@ The tear film is a thin layer of liquid film on the ocular surface spread throug
 
 	The tear film is composed of three layers, as shown in Figure~\ref{eye_levels}. The anterior surface in contact with the air is an oily lipid layer which helps reduce evaporation \cite{norn1979semiquantitative,mishima1961oily}. The middle aqueous layer is composed mostly of water, and serves to lubricate the eye, move particles and prevent infections. On the surface of the cornea sits the Glycocalyx layer, a forest of proteins that moisturize the corneal surface by attracting water \cite{gipson2004distribution}. 
 	
-	A key component in simulating the tear film is developing numerical techniques that account for realistic features of the underlying model. In 2008, Maki used an \textrm{overset grid} method to study the effects of the tear film under reflex tearing \cite{maki2008overset}. In an overset grid method, a PDE is discretized and solved on a composite of grids to handle complex geometries and localized features of the function, where the overlapping grids are coupled through interpolation. Maki used fine boundary grids near the upper and lower eyelids in a 1D model to capture localized capillary thinning \cite{maki2008overset}.
+ In 2008, Maki used an \textrm{overset grid} method to study the effects of the tear film under reflex tearing \cite{maki2008overset}. In an overset grid method, a PDE is discretized and solved on a composite of grids to handle complex geometries and localized features of the function, where the overlapping grids are coupled through interpolation. Maki used fine boundary grids near the upper and lower eyelids in a 1D model to capture localized capillary thinning \cite{maki2008overset}.
 	
-	Maki extend this technique in 2D allowing for numerical simulations an a realistic open eye domain \cite{maki2010tear,maki2010tear2}. Using the Overature framework from Lawrence Livermore National Laboratory \cite{chesshire1990composite,henshaw1998ogen}, she generated a set of grids adapted to the geometry of the eye \cite{chesshire1990composite}; an example of this discretization can be seen in Figure~\ref{overature_eye}. It was found that the geometry, in conjunction with a tear film thickness boundary condition, produces stronger capillary action in the vicinities of the nasal and temporal canthi \cite{maki2010tear}. Maki later incorporated flux boundary conditions that depended both on space and time, including no-flux boundary conditions on a realistic eye-shaped domain as well as non zero flux conditions that incorporated the lacrimal gland influx and puncta drainage \cite{maki2010tear2}. Li built on top these models to study the dynamics of osmolarity within the tear film \cite{li2012model,li2015computed}.
+	Maki extend this technique in 2D allowing for numerical simulations over a realistic open eye domain \cite{maki2010tear,maki2010tear2}. Using the Overature framework from Lawrence Livermore National Laboratory \cite{chesshire1990composite,henshaw1998ogen}, she generated a set of grids adapted to the geometry of the eye \cite{chesshire1990composite}; an example of this discretization can be seen in Figure~\ref{overature_eye}. It was found that the geometry, in conjunction with a tear film thickness boundary condition, produces stronger capillary action in the vicinities of the nasal and temporal canthi \cite{maki2010tear}. Maki later incorporated flux boundary conditions that depended both on space and time, including no-flux boundary conditions on a realistic eye-shaped domain as well as non zero flux conditions that incorporated the lacrimal gland influx and puncta drainage \cite{maki2010tear2}. Li built on top these models to study the dynamics of osmolarity within the tear film \cite{li2012model,li2015computed}.
 	
 \begin{figure}
 	\centering
@@ -127,7 +128,7 @@ Q_{p}(\hat{x},\hat{y}) & \hat{x}=-1 \\
 where $Q_{p}(\hat{x},\hat{y})$ describes the efflux from the puncta \cite{braun2015dynamics}.
 
 \section{numerical experiments}
-For our experiments, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values chosen from \cite{braun2015dynamics}. The thickness of the tear film fluid $h_e$ is set to 2. For simplicity we set  $Q_{lg}$ and $Q_p$ to zero. We solve the model with our preconditioned method, using a the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
+For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values chosen from \cite{braun2015dynamics}. The thickness of the tear film fluid $h_e$ is set to 2. For simplicity we set  $Q_{lg}$ and $Q_p$ to zero. We solve the model with our preconditioned method, using the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.6]{Chapter4/Eye_domains}
@@ -135,7 +136,9 @@ For our experiments, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $
 	\label{eye_partition}
 \end{figure}
 
-We first examine the case of a stationary domain. The boundary conditions of \ref{the_pde} ensure that the volume of the fluid $h(x,y,t)$ is constant over time (in the case of a stationary boundary). As seen in Figure~\ref{eye_volume}, our method maintains a volume that is relatively within $10^{-6}$ of the initial volume, which is indicative of the pointwise error of the numerical solution. 
+We first examine the case of a stationary domain. The boundary conditions of \ref{the_pde} ensure that the volume of the fluid $h(x,y,t)$ is constant over time (in the case of a stationary boundary). As seen in Figure~\ref{eye_volume}, our method maintains a volume that is relatively within $10^{-6}$ of the initial volume, which is indicative of the pointwise error of the numerical solution.
+
+We now solve the same model but with a moving boundary prescribed by the realistic blink motion of \cite{deng2014heat} where the eye closes 20 percent. With the moving boundary, we expect the volume to be conserved over a blink cycle (that is, it is conserved periodically). After one blink cycle the volume is conserved within a relative difference of 0.01.
 
 
 \begin{figure}

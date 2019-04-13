@@ -2,79 +2,80 @@
 % This is Chapter 1 file (chap1.tex)
 %
 \chapter{An adaptive partition of unity method for one dimensional Chebyshev polynomial interpolation}
-Chebyshev polynomial interpolants provide powerful approximation properties, both in theory and as implemented in practice by the Chebfun software system~\cite{battles2004extension}. Chebfun uses spectral collocation to provide very accurate automatic solutions to differential equations~\cite{driscoll2008chebop}. The method is not fully adaptive, though, since the refinement is limited to the degree of the global interpolant. 
+\label{pu_1d}
+%Chebyshev polynomial interpolants provide powerful approximation properties, both in theory and as implemented in practice by the Chebfun software system~\cite{battles2004extension}. Chebfun uses spectral collocation to provide accurate automatic solutions to differential equations~\cite{driscoll2008chebop}. The method adapts by refining refinement the degree of the global interpolant. 
 
- Chebfun includes a \textit{splitting} method that creates piecewise polynomial approximations \cite{pachon2010piecewise}. When splitting is enabled, if a Chebyshev interpolant is unable to represent the function accurately at a specified maximum degree on an interval, the interval is bisected; this process is recursively repeated on the subintervals. Afterwards adjacent subintervals are merged if the new interval allows for a Chebyshev approximation with lower degree. In effect, the method does a binary search for a good splitting location. In \cite{driscoll2014optimal} it was shown that the splitting locations are roughly optimal based on the singularity structure of the function in the complex plane. 
+ Chebfun includes a \textit{splitting} algorithm that creates piecewise polynomial approximations \cite{pachon2010piecewise}. When splitting is enabled, if a Chebyshev interpolant is unable to represent the function accurately at a specified maximum degree on an interval, the interval is bisected; this process is recursively repeated on the subintervals. Afterwards adjacent subintervals are merged if the new interval allows for a Chebyshev approximation with lower degree. In effect, the method does a binary search for a good splitting locations. In \cite{driscoll2014optimal} it was shown that the splitting locations are roughly optimal based on the singularity structure of the function in the complex plane. 
 
-A drawback of Chebfun's splitting approach is that the resulting representation does not ensure anything more than $C^0$ continuity. Differentiation of the Chebyshev interpolation polynomial of degree $n$ has norm $O(n^2)$, so a jump in the derivative develops across a splitting point and becomes more pronounced for higher derivatives and larger $n$. In order to solve a boundary-value problem, Chebfun imposes explicit continuity conditions on the solution to augment the discrete problem. This solution works well in 1D but becomes cumbersome in higher dimensions, particularly if refinements are made nonconformingly.
+A drawback of Chebfun's splitting approach is that the resulting representation does not ensure anything more than $C^0$ continuity. Differentiation of the Chebyshev interpolating polynomial of degree $n$ has norm $O(n^2)$, so a jump in the derivative develops across a splitting point and becomes more pronounced for higher derivatives and larger $n$. In order to solve a boundary-value problem, Chebfun imposes explicit continuity conditions on the solution to augment the discrete problem. This solution works well in 1D but becomes cumbersome in higher dimensions, particularly if refinements are made nonconformingly.
 
-In this chapter we explore the use of Chebyshev interpolants on overlapping domains combined using a \emph{partition of unity}. The resulting approximation has the same accuracy as the individual piecewise interpolants. We use compactly supported weight functions that are infinitely differentiable, so the resulting combined interpolant is also infinitely smooth (though not analytic). We also show that the accuracy of the derivative can be bounded by $\Theta(\delta^{-2})$ for an overlap amount $\delta$, revealing an explicit tradeoff between efficiency (smaller overlap and more like Chebfun splitting) and global accuracy of the derivative. Because the global approximation is smooth, there are no matching conditions needed to solve a BVP, and there are standard preconditioners available that should aid with iterative methods for large discretizations. For example, since we split the interval into overlapping domains we could use the restricted additive Schwarz preconditioner \cite{doi:10.1137/S106482759732678X}.
+In this chapter we explore the use of Chebyshev interpolants on overlapping domains combined using a \emph{partition of unity}. The resulting approximation has the same accuracy as the individual piecewise interpolants. We use compactly supported weight functions that are infinitely differentiable, so the resulting combined interpolant is also infinitely smooth (though not analytic). We also show that the accuracy of the derivative can be bounded by $\Theta(\delta^{-2})$ for an overlap amount $\delta$, revealing an explicit tradeoff between efficiency (smaller overlap and more like Chebfun splitting) and global accuracy of the derivative. Because the global approximation is smooth, there are no matching conditions needed to solve a BVP, and there are standard preconditioners available that aid with iterative methods for large discretizations. For example, since we split the interval into overlapping domains we could use the restricted additive Schwarz preconditioner as we do in Chapter~4.
 
 We describe a recursive, adaptive algorithm for creating and applying a partition of unity, modeled on the recursive splitting in Chebfun but merging adjacent subdomains aggressively in order to keep the total node count low. Even though each node of the recursion only combines two adjacent subdomains, we show that the global approximant is also a partition of unity. We demonstrate that the adaptive refinement is able to resolve highly localized features of an explicitly given function and of a solution to a singularly perturbed BVP. 
  
-The use of a partition of unity in our approximation affords us some flexibility; we are able to create approximations which are both efficient and infinitely smooth without matching. Partition of unity schemes have been widely used for interpolation \cite{franke1980smooth,mclain1976two,shepard1968two} and solving PDE's \cite{griebel2000particle,safdari2015radial}. In section~\ref{PUM_FORM_SEC} we introduce the partition of unity method, and we discuss the convergence of the method for a simple split on the interval $[-1,1]$ in section~\ref{converge_sec}. We describe our adaptive algorithm in section~\ref{PUM_recurse}. In section~\ref{PUM_BVP_SEC} we explain how to apply our method to solve boundary value problems on an interval and perform some experiments with singularly perturbed problems.
+In section~\ref{converge_sec} we discuss the convergence of the method for a simple split of the interval $[-1,1]$. We describe our adaptive algorithm in section~\ref{PUM_recurse}. In section~\ref{PUM_BVP_SEC} we explain how to apply our method to solve boundary value problems on an interval and perform some experiments with singularly perturbed problems.
  
-\section{Chebyshev interpolation}
-\label{sec_cheb}
-We use Chebyshev interpolants for our partition of unity method because they enjoy spectral convergence. Suppose that $f(x)$ is analytic inside a  Bernstein ellipse $E_\rho$ (an ellipse with foci $\pm 1$ and semi-major axis $\rho>1$). We then have Theorem 6 from \cite{trefethen2000spectral}:
-\begin{thm} Suppose $f(z)$ is analytic on and inside the Bernstein ellipse $E_\rho$. Let $p_n$ be the polynomial that interpolates $f(z)$ at $n+1$ Chebyshev points of the second kind. Then there exists a constant $C>0$ such that for all $n>0$,
-$$ \left \| f(x)-p_n(x) \right \|_{\infty} \leq C  \rho^{-n}.$$
- \end{thm}
-If $f(x)$ is Lipschitz continuous on $[-1,1]$ then
-\begin{equation}
-f(x) = \sum_{k=0}^\infty a_k T_k(x), \quad a_k = \frac{2}{\pi} \int_{-1}^1 \frac{f(x) T_k(x)}{\sqrt{1-x^2}} dx,
-\end{equation}
-where $T_k$ denotes the degree $k$ Chebyshev polynomial (and for $a_0$, we multiply by $\frac{1}{\pi}$ instead of $\frac{2}{\pi}$). Furthermore if $p_n(x)$ is the $n$th degree Chebyshev interpolant then
-\begin{equation}
-f(x)-p_n(x) = \sum_{k=n+1}^{\infty} a_k \lp T_k(x)-T_m(x)\rp,
-\end{equation}
-where
-\begin{equation}
-m = \left [ (k+n-1)(\text{mod }2n) - (n-1)\right ],
-\end{equation}
-implying we can determine the accuracy of the interpolant $p_n(x)$ by inspecting the Chebyshev coefficients \cite{Trefethen2013}. Chebfun's standardChop method determines the minimum required degree by searching for a plateau of low magnitude coefficients \cite{Aurentz:2017:CCS:3034774.2998442}.  For example, Figure~\ref{Coeff_example} shows the first 128 coefficients of $f(x)=\exp \lp \sin \lp \pi x \rp \rp$. We see that all coefficients after the first 46 have magnitude less than $10^{-15}$. In this case, Chebfun determines the ideal degree to be 50.
+%\section{Chebyshev interpolation}
+%\label{sec_cheb}
+%We use Chebyshev interpolants for our partition of unity method because they enjoy spectral convergence. Suppose that $f(x)$ is analytic inside a  Bernstein ellipse $E_\rho$ (an ellipse with foci $\pm 1$ and semi-major axis $\rho>1$). We then have, for example, Theorem 6 from \cite{trefethen2000spectral}:
+%\begin{thm} Suppose $f(z)$ is analytic on and inside the Bernstein ellipse $E_\rho$. Let $p_n$ be the polynomial that interpolates $f(z)$ at $n+1$ Chebyshev points of the second kind. Then there exists a constant $C>0$ such that for all $n>0$,
+%$$ \left \| f(x)-p_n(x) \right \|_{\infty} \leq C  \rho^{-n}.$$
+% \end{thm}
+%If $f(x)$ is Lipschitz continuous on $[-1,1]$ then
+%\begin{equation}
+%f(x) = \sum_{k=0}^\infty a_k T_k(x), \quad a_k = \frac{2}{\pi} \int_{-1}^1 \frac{f(x) T_k(x)}{\sqrt{1-x^2}} dx,
+%\end{equation}
+%where $T_k$ denotes the degree $k$ Chebyshev polynomial (and for $a_0$, we multiply by $\frac{1}{\pi}$ instead of $\frac{2}{\pi}$). Furthermore if $p_n(x)$ is the $n$th degree Chebyshev interpolant then
+%\begin{equation}
+%f(x)-p_n(x) = \sum_{k=n+1}^{\infty} a_k \lp T_k(x)-T_m(x)\rp,
+%\end{equation}
+%where
+%\begin{equation}
+%m = \left [ (k+n-1)(\text{mod }2n) - (n-1)\right ],
+%\end{equation}
+%implying we can determine the accuracy of the interpolant $p_n(x)$ by inspecting the Chebyshev coefficients \cite{Trefethen2013}. Chebfun's {\tt standardChop} method determines the minimum required degree by searching for a plateau of low magnitude coefficients \cite{Aurentz:2017:CCS:3034774.2998442}.  For example, Figure~\ref{Coeff_example} shows the first 128 coefficients of $f(x)=\exp \lp \sin \lp \pi x \rp \rp$. We see that all coefficients after the first 46 have magnitude less than $10^{-15}$. In this case, Chebfun determines the ideal degree to be 50.
+%
+%\begin{figure}[!htb]
+%\centering
+%\includegraphics[scale = 0.5]{Chapter1/coeff_plot.eps}
+%\caption{Chebyshev coefficients for $f(x)=\exp \lp \sin \lp \pi x \rp \rp$.}
+%\label{Coeff_example}
+%\end{figure}
 
-\begin{figure}[!htb]
-\centering
-\includegraphics[scale = 0.5]{Chapter1/coeff_plot.eps}
-\caption{Chebyshev coefficients for $f(x)=\exp \lp \sin \lp \pi x \rp \rp$.}
-\label{Coeff_example}
-\end{figure}
-
-\section{Partition of unity formalism}
-\label{PUM_FORM_SEC}
- Suppose we have an overlapping covering $\{ \Omega_k \}_{k=1}^N$ on a bounded region $\Omega$. A partition of unity is a collection of real valued functions $\{w_k(x)\}_{k=1}^N$ such that:
-\begin{itemize}
-\item $w_k(x)$ has support within $\Omega_k$,
-\item each $w_k(x)$ is nonnegative,
-\item $\forall x \in \Omega, \quad \sum_{k=1}^N w_k(x)=1$.
-\end{itemize}
-The functions $\{w_k(x)\}_{k=1}^N$ are called the \textit{weights} of the partition. Suppose now that $\Omega=[-1,1]$ and each $\Omega_k$ is an interval. We can use the partition of unity $\{w_k(x)\}_{k=1}^N$ to construct an approximating function. Suppose that for $m \geq 0$ we have a function $f \in C^{m}([-1,1])$, each weight $w_k(x)\in C^{m}([-1,1])$ and for each patch $\Omega_k$ we have an approximation $s_k(x)$ of $f(x)$. Then the function
-\begin{equation}
-\label{POUAPPROX}
-s(x) = \sum_{k=1}^N w_k(x)s_k(x)
-\end{equation}
-can be used to approximate $f(x)$ and its derivatives \cite{wendland2004scattered}.
-
-\begin{thm}
-\label{PUMCON}
-Suppose $f \in C^{m}([-1,1])$ and for each patch $\Omega_k$ we have a function $s_k(x)$ such that
-$$ \|f^{(\alpha)}(x)-s_k^{(\alpha)}(x)\|_{L_{\infty}(\Omega_k)} \leq \varepsilon_k(\alpha) $$
-for $\alpha \leq m$. Thus for $j\leq m$, if $s(x)$ is the approximation (\ref{POUAPPROX}) then
-\begin{equation}
-\left \|f^{(j)}(x)- s^{(j)}(x) \right \|_{L_{\infty}(\Omega_k)} \leq \sum_{k=1}^N\sum_{i=0}^j \binom{j}{i} \left \| w_k^{(j-i)}(x) \right \|_{L_{\infty}(\Omega_k)} \epsilon_k(i).
-\end{equation}
-\end{thm}
-\begin{proof}
-Since $\sum_{k=1} w_k(x)=1$, $\sum_{k=1} w_k(x)f(x)=f(x)$. Thus
-\begin{equation}
-\begin{aligned}
-\frac{d^{j}}{d x^j}f(x)-\frac{d^{j}}{d x^j} \sum_{k=1}^N w_k(x)s_k(x) &= \frac{d^{j}}{d x^j} \sum_{k=1}^N w_k(x)(f(x)-s_k(x)) \\
-&= \sum_{k=1}^N\sum_{i=0}^j \binom{j}{i} w_k^{(j-i)}(x) \lp f^{(i)}(x)-s_k^{(i)}(x) \rp.
-\end{aligned}
-\end{equation}
-The result follows from here by the triangle inequality.
-\end{proof}
+%\section{Partition of unity formalism}
+%\label{PUM_FORM_SEC}
+% Suppose we have an overlapping covering $\{ \Omega_k \}_{k=1}^N$ on a bounded region $\Omega$. A partition of unity is a collection of real valued functions $\{w_k(x)\}_{k=1}^N$ such that:
+%\begin{itemize}
+%\item $w_k(x)$ has support within $\Omega_k$,
+%\item each $w_k(x)$ is nonnegative,
+%\item $\forall x \in \Omega, \quad \sum_{k=1}^N w_k(x)=1$.
+%\end{itemize}
+%The functions $\{w_k(x)\}_{k=1}^N$ are called the \textit{weights} of the partition. Suppose now that $\Omega=[-1,1]$ and each $\Omega_k$ is an interval. We can use the partition of unity $\{w_k(x)\}_{k=1}^N$ to construct an approximating function. Suppose that for $m \geq 0$ we have a function $f \in C^{m}([-1,1])$, each weight $w_k(x)\in C^{m}([-1,1])$ and for each patch $\Omega_k$ we have an approximation $s_k(x)$ of $f(x)$. Then the function
+%\begin{equation}
+%\label{POUAPPROX}
+%s(x) = \sum_{k=1}^N w_k(x)s_k(x)
+%\end{equation}
+%can be used to approximate $f(x)$ and its derivatives \cite{wendland2004scattered}.
+%
+%\begin{thm}
+%\label{PUMCON}
+%Suppose $f \in C^{m}([-1,1])$ and for each patch $\Omega_k$ we have a function $s_k(x)$ such that
+%$$ \|f^{(\alpha)}(x)-s_k^{(\alpha)}(x)\|_{L_{\infty}(\Omega_k)} \leq \varepsilon_k(\alpha) $$
+%for $\alpha \leq m$. Thus for $j\leq m$, if $s(x)$ is the approximation (\ref{POUAPPROX}) then
+%\begin{equation}
+%\left \|f^{(j)}(x)- s^{(j)}(x) \right \|_{L_{\infty}(\Omega_k)} \leq \sum_{k=1}^N\sum_{i=0}^j \binom{j}{i} \left \| w_k^{(j-i)}(x) \right \|_{L_{\infty}(\Omega_k)} \epsilon_k(i).
+%\end{equation}
+%\end{thm}
+%\begin{proof}
+%Since $\sum_{k=1} w_k(x)=1$, $\sum_{k=1} w_k(x)f(x)=f(x)$. Thus
+%\begin{equation}
+%\begin{aligned}
+%\frac{d^{j}}{d x^j}f(x)-\frac{d^{j}}{d x^j} \sum_{k=1}^N w_k(x)s_k(x) &= \frac{d^{j}}{d x^j} \sum_{k=1}^N w_k(x)(f(x)-s_k(x)) \\
+%&= \sum_{k=1}^N\sum_{i=0}^j \binom{j}{i} w_k^{(j-i)}(x) \lp f^{(i)}(x)-s_k^{(i)}(x) \rp.
+%\end{aligned}
+%\end{equation}
+%The result follows from here by the triangle inequality.
+%\end{proof}
 
 
 \section{Convergence analysis}
@@ -115,7 +116,7 @@ We conclude that
 \left \| f(x)-s(x) \right \|_{L_{\infty}[-1,1]} \leq \max \lp \left \| f(x)-s_{\ell}(x) \right \|_{L_{\infty}[-1,t]} , \left \| f(x)-s_{r}(x) \right \|_{L_{\infty}[-t,1]} \rp.
 \label{POU_UP}
 \end{align}
-This implies that the Partition of unity Method (PUM) preserves the accuracy of its local approximants. We also have that $s(x)$ is infinitely smooth. For the first derivative we have
+This implies that the partition of unity method (PUM) preserves the accuracy of its local approximants. We also have that $s(x)$ is infinitely smooth. For the first derivative we have
 \begin{equation}
 \begin{aligned}
 \left | f'(x)-s'(x) \right | &\leq \left | w_{\ell}(x) \lp f'(x)-s_{\ell}'(x) \rp \right |+\left | w_{r}(x) \lp f'(x)-s_{r}'(x) \rp \right | \\
@@ -228,7 +229,7 @@ as determined by Chebfun
 \end{algorithmic}
 \end{algorithm}
 
-We first initialize the tree $T$ with a single node $\nu$ where \textsf{domain}($\nu$)=$[a,b]$. Next we repeatedly call the refine method until each leaf of $T$ has a Chebyshev interpolant that can resolve $f(x)$ with degree less than $\nmax$, as seen in Algorithm~\ref{alg2}. For a leaf $\nu$, we determine if a Chebyshev interpolant can resolve $f(x)$ using Chebfun's standardChop method with \textsf{values}($\nu$) (as described in Section~\ref{sec_cheb}). Using $T$ we can evaluate $s_{[a,b]}(x)$ recursively as demonstrated in Algorithm~\ref{alg3}. 
+We first initialize the tree $T$ with a single node $\nu$ where \textsf{domain}($\nu$)=$[a,b]$. Next we repeatedly call the refine method until each leaf of $T$ has a Chebyshev interpolant that can resolve $f(x)$ with degree less than $\nmax$, as seen in Algorithm~\ref{alg2}. For a leaf $\nu$, we determine if a Chebyshev interpolant can resolve $f(x)$ using Chebfun's standardChop method with \textsf{values}($\nu$) (as described in Section~\ref{intro}). Using $T$ we can evaluate $s_{[a,b]}(x)$ recursively as demonstrated in Algorithm~\ref{alg3}. 
 
 %\begin{algorithm}[!h]
 %\caption{$T$=refine($\nmax$,$t$,$f(x)$)}
