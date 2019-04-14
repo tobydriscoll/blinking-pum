@@ -1,0 +1,16 @@
+For a function that is analytic on and around an interval, Chebyshev polynomial
+interpolation provides spectral convergence. However, if the function has a singularity close to the
+interval, the rate of convergence is near one. In these cases splitting the interval and using piecewise
+interpolation can accelerate convergence. Chebfun includes a splitting mode that finds an optimal
+splitting through recursive bisection, but the result has no global smoothness unless conditions are
+imposed explicitly at the breakpoints. An alternative is to split the domain into overlapping intervals
+and use an infinitely smooth partition of unity to blend the local Chebyshev interpolants. A simple
+divide-and-conquer algorithm similar to Chebfun’s splitting mode can be used to find an overlapping
+splitting adapted to features of the function. The algorithm implicitly constructs the partition of
+unity over the subdomains. This technique is applied to explicitly given functions as well as to the
+solutions of singularly perturbed boundary value problems.
+
+Extension of the Chebfun technique to two-dimensional and three-dimensional functions on hyperrectangles has mainly focused on low-rank approximation. While this method is very effective for some functions, it is highly anisotropic and unacceptably slow for many functions of potential interest. A method based on automatic recursive domain splitting, with a partition of unity to define the global approximation, is easy to construct and manipulate. Experiments show it to be as fast as existing software for many low-rank functions, and much faster on other examples, even in serial computation. It is also much less sensitive to alignment with coordinate axes. Some steps are also taken toward approximation of functions on nonrectangular domains, by using least-squares polynomial approximations in a manner similar to Fourier extension methods, with promising results. 
+
+The additive Schwarz method is usually presented as a preconditioner for a PDE linearization based on overlapping subsets of nodes from a global discretization. It has previously been shown how to apply Schwarz preconditioning to a nonlinear problem. By first replacing the original global PDE with the Schwarz overlapping problem, the global discretization becomes a simple union of subdomain discretizations, and unknowns do not need to be shared. In this way restrictive-type updates can be avoided, and subdomains need to communicate only via interface interpolations. The resulting preconditioner can be applied linearly or nonlinearly. In the latter case nonlinear subdomain problems are solved independently in parallel, and the frequency and amount of interprocess communication can be greatly reduced compared to linearized preconditioning. In particular, this technique has proved to be useful for the numerical solutions of fourth order tear film models, which are both stiff and highly nonlinear.
+

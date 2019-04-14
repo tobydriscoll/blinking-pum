@@ -687,7 +687,7 @@ while ~done
         resnorm = normres(iter);
         
        % resnorm
-       % length(gmhist)
+        length(gmhist);
         
         interpnorm = InterFaceError(PUApprox,rhs_interp)/interface_scale;
         
@@ -794,7 +794,9 @@ while ~done
 %           RowScale = 1 ./ max(abs(Miter),[],2);
 %           Miter = sparse(one2neq,one2neq,RowScale) * Miter;
         end
-        [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+        if ~if_snk
+            [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+        end
         
 %         if issparse(Miter)
 %           [L,U,P,Q,R] = lu(Miter);
@@ -808,7 +810,7 @@ while ~done
     
     % difkp1 is now the backward difference of ynew of order k+1.
     
-    difkp1 = Masstimes(PUApprox,Mtnew,difkp1);
+    %difkp1 = Masstimes(PUApprox,Mtnew,difkp1);
     
     if normcontrol
       err = (norm(difkp1) * invwt) * erconst(k)/length(y);
