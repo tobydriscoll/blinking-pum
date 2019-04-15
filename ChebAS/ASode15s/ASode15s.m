@@ -325,8 +325,6 @@ end
 
 [y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol,interface_scale);
 
-%yp0 = y0;
-
 % NO! we assum yp0_ok = true
 %
 % Get the initial slope yp. For DAEs the default is to compute
@@ -582,6 +580,7 @@ while ~done
   min_iter = 1;
   inter_tol = inf;
   res_tol = 1e-4;
+  nsk_norm = [];
   %[J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
   % LOOP FOR ADVANCING ONE STEP.
   nofailed = true;                      % no failed attempts
@@ -659,7 +658,7 @@ while ~done
         
         
         if iter==1
-            tol_g(iter) = 1e-2;
+            tol_g(iter) = 1e-3;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
             tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
@@ -686,7 +685,6 @@ while ~done
         end
        
         resnorm = normres(iter);
-        
        % resnorm
         length(gmhist);
         

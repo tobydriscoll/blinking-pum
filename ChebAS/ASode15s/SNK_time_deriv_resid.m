@@ -125,7 +125,7 @@ function [c,l,u,p,J] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,h
         
         num_sols = length(lens_k);
         
-        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k)+M*(-z-rhs_k);
+        F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k)-M*(z+rhs_k);
         
         F = mat2cell(F,lens_k);
         
@@ -170,17 +170,17 @@ function [c,l,u,p,J] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,h
     end
 
 
-% options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',15,'Display','off');
+% options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',15,'Display','off','functionTolerance',1e-10);
 % [c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
-% % %c = c(:,end);
+% %c = c(:,end);
 % 
 % J = jac_fun(c);
 % %AJ = jacobi(@residual,c);
 % 
 % [l,u,p] = lu(J,'vector');
 % 
-params = [50,-1,.5,0];
-tol = [1e-4 1e-4];
+params = [15,-1,.5,0];
+tol = [1e-10 1e-10];
 [c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
 % a=1;
 %c = s(:,end);
