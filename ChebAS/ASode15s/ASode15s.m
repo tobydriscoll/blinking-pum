@@ -658,7 +658,7 @@ while ~done
         
         
         if iter==1
-            tol_g(iter) = 1e-3;
+            tol_g(iter) = 1e-6;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
             tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
@@ -709,7 +709,7 @@ while ~done
         ynew = pred + difkp1;
         
          %&& interpnorm<inter_tol && iter>min_iter
-        if resnorm<eps || newnrm <= minnrm && interpnorm<inter_tol
+        if resnorm<eps || newnrm <= minnrm && interpnorm<inter_tol && iter>min_iter
             
             gotynew = true;
             break;
