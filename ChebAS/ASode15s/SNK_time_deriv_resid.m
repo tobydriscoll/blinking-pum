@@ -27,7 +27,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,l,u,p,J] = SNK_time_deriv_resid(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M,alpha)
+function [z,l,u,p] = SNK_time_deriv_resid(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M,alpha)
 
 rhs_zero = rhs==0;
 
@@ -90,9 +90,9 @@ end
 for k=1:num_leaves
     
     if notMat
-        [z_loc{k},l{k},u{k},p{k},J{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
+        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
     else
-        [z_loc{k},l{k},u{k},p{k},J{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
+        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
     end
         
     
@@ -170,18 +170,18 @@ function [c,l,u,p,J] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,h
     end
 
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',15,'Display','off');
-[c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
-% %c = c(:,end);
-
-J = jac_fun(c);
-%AJ = jacobi(@residual,c);
-
-[l,u,p] = lu(J,'vector');
+% options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',15,'Display','off');
+% [c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
+% % %c = c(:,end);
 % 
-% params = [20,-1,.5,0];
-% tol = [1e-4 1e-4];
-% [c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
+% J = jac_fun(c);
+% %AJ = jacobi(@residual,c);
+% 
+% [l,u,p] = lu(J,'vector');
+% 
+params = [50,-1,.5,0];
+tol = [1e-4 1e-4];
+[c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
 % a=1;
 %c = s(:,end);
 end

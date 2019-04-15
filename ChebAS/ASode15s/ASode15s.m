@@ -582,7 +582,7 @@ while ~done
   min_iter = 1;
   inter_tol = inf;
   res_tol = 1e-4;
-  [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+  %[J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
   % LOOP FOR ADVANCING ONE STEP.
   nofailed = true;                      % no failed attempts
   while true                            % Evaluate the formula.
@@ -632,7 +632,7 @@ while ~done
         %make sure signes match. 
         %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
         if if_snk
-            [rhs,L,U,p,J] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+            [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);
             
             rhs_interp = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
         else
@@ -669,9 +669,9 @@ while ~done
         
         if if_snk
             
-            b = BlockLinearResidual(PUApprox,J,rhs);
-            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
-        %    [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
+        %    b = BlockLinearResidual(PUApprox,J,rhs);
+        %    [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
         %   [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
         %   del = JG\J_rhs;
            
@@ -679,9 +679,10 @@ while ~done
             
        %   JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
        %    del = -(JG\rhs);
-       %     [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
-            
-            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),-rhs,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+            [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+           
+            b = ASPreconditionerTime(PUApprox,L,U,p,-rhs);
+            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-b,[],tol_g(iter),500);
         end
        
         resnorm = normres(iter);
@@ -795,7 +796,7 @@ while ~done
 %           Miter = sparse(one2neq,one2neq,RowScale) * Miter;
         end
         if ~if_snk
-            [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+            %[J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
         end
         
 %         if issparse(Miter)

@@ -64,7 +64,7 @@ tspan = [0 Blinks{1}.period];
 %tspan = [0 1];
 
 opt = odeset('mass',M,'reltol',odetol,'abstol',odetol);
-[t,U] = ASode15s(false,Blinks,tspan,y0,{H,P},1,opt);
+[t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},1,opt);
 % %  %% 
  
 
