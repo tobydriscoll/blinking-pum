@@ -116,7 +116,7 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c,l,u,p,J] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hinvGak,M,lens_k,alpha)
+function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hinvGak,M,lens_k,alpha)
 
 %The residul is F(sol_k+z_k)
 %            sol_k(border_k)+z_k(border_k)-B_k*u
@@ -170,17 +170,21 @@ function [c,l,u,p,J] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,h
     end
 
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',15,'Display','off','functionTolerance',1e-10);
+
+options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',15,'Display','off');
+
 [c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
 c = c(:,end);
 
 J = jac_fun(c);
+
 %AJ = jacobi(@residual,c);
 
 [l,u,p] = lu(J,'vector');
 % 
 % params = [30,-1,.5,0];
 % tol = [1e-6 1e-6];
+
 % [c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
 % a=1;
 %c = s(:,end);
