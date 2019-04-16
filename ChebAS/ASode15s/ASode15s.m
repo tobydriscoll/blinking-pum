@@ -310,7 +310,7 @@ difU = [ -1, -2, -3, -4,  -5;           % difU is its own inverse!
 maxK = 1:maxk;
 [kJ,kI] = meshgrid(maxK,maxK);
 difU = difU(maxK,maxK);
-maxit = 4;
+maxit = 8;
 
 % Adjust the warnings.
 warnoffId = { 'MATLAB:singularMatrix', 'MATLAB:nearlySingularMatrix'}; 
@@ -324,6 +324,8 @@ end
 %yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode,interface_scale));
 
 [y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol,interface_scale);
+
+%yp0 = y0;
 
 % NO! we assum yp0_ok = true
 %
@@ -540,8 +542,6 @@ end
   
 done = false;
 at_hmin = false;
-
- %[J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
 while ~done
   
   hmin = 16*eps(t);
@@ -578,10 +578,9 @@ while ~done
   end
   
   min_iter = 1;
-  inter_tol = inf;
+  inter_tol = 1e-10;
   res_tol = 1e-4;
-  nsk_norm = [];
-  [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+  
   % LOOP FOR ADVANCING ONE STEP.
   nofailed = true;                      % no failed attempts
   while true                            % Evaluate the formula.
@@ -591,6 +590,21 @@ while ~done
 
       % Compute the constant terms in the equation for ynew.
       psi = dif(:,K) * (G(K) * invGa(k));
+
+      t 
+      h
+      
+      H_sol = y(1:length(PUApprox{1}));
+      PUApprox{1}.sample(H_sol);
+      vol = BlinkVolume(ode,PUApprox{1},t);
+      vol_percent = ((vol-int_vol)/int_vol);
+      vol_percent
+      min_H = min(H_sol);
+      
+      if min_H<0
+         error('H is negative'); 
+      end
+      min_H
 
       % Predict a solution at t+h.
       tnew = t + h;
@@ -631,7 +645,7 @@ while ~done
         %make sure signes match. 
         %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
         if if_snk
-            [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+            [rhs,L,U,p,J] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);
             
             rhs_interp = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
         else
@@ -658,9 +672,7 @@ while ~done
         
         
         if iter==1
-
-            tol_g(iter) = 1e-4;
-
+            tol_g(iter) = 1e-3;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
             tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
@@ -670,9 +682,9 @@ while ~done
         
         if if_snk
             
-        %    b = BlockLinearResidual(PUApprox,J,rhs);
-        %    [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
-            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
+            b = BlockLinearResidual(PUApprox,J,rhs);
+            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+        %    [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
         %   [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
         %   del = JG\J_rhs;
            
@@ -680,15 +692,14 @@ while ~done
             
        %   JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
        %    del = -(JG\rhs);
-       %     [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
-           
-            b = ASPreconditionerTime(PUApprox,L,U,p,-rhs);
-            [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-b,[],tol_g(iter),500);
+            [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+            
+            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),-rhs,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
         end
        
         resnorm = normres(iter);
-       % resnorm
-        length(gmhist);
+        
+        resnorm;
         
         interpnorm = InterFaceError(PUApprox,rhs_interp)/interface_scale;
         
@@ -711,7 +722,7 @@ while ~done
         ynew = pred + difkp1;
         
          %&& interpnorm<inter_tol && iter>min_iter
-        if resnorm<eps || newnrm <= minnrm && interpnorm<inter_tol && iter>min_iter
+        if resnorm<eps || newnrm <= minnrm && interpnorm<inter_tol
             
             gotynew = true;
             break;
@@ -756,11 +767,28 @@ while ~done
       if tooslow
         nfailed = nfailed + 1;          
         % Speed up the iteration by forming new linearization or reducing h.
-        if ~Jcurrent
-          %  [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
-            npds = npds + 1;            
-            Jcurrent = true;
-        elseif absh <= hmin
+%         if ~Jcurrent || ~Mcurrent
+% %           if ~Jcurrent  
+% %             if Janalytic
+% %               %dfdy = feval(Jac,t,y,Jargs{:});
+% % %              dfdy = ComputeJac(PUApprox,num_sols,t,y);
+% %             else
+% %               f0 = feval(odeFcn,t,y,odeArgs{:});
+% %               [dfdy,Joptions.fac,nF] = odenumjac(odeFcn, {t,y,odeArgs{:}}, f0, Joptions);     
+% %               nfevals = nfevals + nF + 1; 
+% %             end             
+% %             npds = npds + 1;            
+% %             Jcurrent = true;
+% %           end
+%           if ~Mcurrent
+%             Mt = feval(Mfun,t,y,Margs{:});
+%             Mcurrent = true;
+%             if Mtype == 4
+%               [dMpsidy,dMoptions.fac] = odenumjac(@odemxv, {Mfun,t,y,psi,Margs{:}}, Mt*psi, ...
+%                                                   dMoptions);      
+%             end
+%           end                       
+        if absh <= hmin
           warning(message('MATLAB:ode15s:IntegrationTolNotMet', sprintf( '%e', t ), sprintf( '%e', hmin )));         
           solver_output = odefinalize(solver_name, sol,...
                                       outputFcn, outputArgs,...
@@ -795,10 +823,6 @@ while ~done
 %           RowScale = 1 ./ max(abs(Miter),[],2);
 %           Miter = sparse(one2neq,one2neq,RowScale) * Miter;
         end
-        if ~if_snk
-            [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
-        end
-        
 %         if issparse(Miter)
 %           [L,U,P,Q,R] = lu(Miter);
 %         else  
@@ -811,7 +835,7 @@ while ~done
     
     % difkp1 is now the backward difference of ynew of order k+1.
     
-    %difkp1 = Masstimes(PUApprox,Mtnew,difkp1);
+    difkp1 = Masstimes(PUApprox,Mtnew,difkp1);
     
     if normcontrol
       err = (norm(difkp1) * invwt) * erconst(k)/length(y);
@@ -895,19 +919,6 @@ while ~done
       havrate = false;
       
     else                                % Successful step
-        t
-        h
-        H_sol = y(1:length(PUApprox{1}));
-        PUApprox{1}.sample(H_sol);
-        vol = BlinkVolume(ode,PUApprox{1},t);
-        vol_percent = ((vol-int_vol)/int_vol);
-        vol_percent
-    min_H = min(H_sol);
-    min_H
-    
-%     if min_H<0
-%         error('H is negative');
-%     end
       break;
       
     end
