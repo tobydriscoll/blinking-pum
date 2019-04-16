@@ -581,7 +581,7 @@ while ~done
   inter_tol = inf;
   res_tol = 1e-4;
   nsk_norm = [];
-  %[J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+  [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
   % LOOP FOR ADVANCING ONE STEP.
   nofailed = true;                      % no failed attempts
   while true                            % Evaluate the formula.
@@ -678,7 +678,7 @@ while ~done
             
        %   JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
        %    del = -(JG\rhs);
-            [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+       %     [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
            
             b = ASPreconditionerTime(PUApprox,L,U,p,-rhs);
             [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-b,[],tol_g(iter),500);
@@ -794,7 +794,7 @@ while ~done
 %           Miter = sparse(one2neq,one2neq,RowScale) * Miter;
         end
         if ~if_snk
-            %[J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+            [J,L,U,p] = ComputeJacsTime(t,y,PUApprox,ode,hinvGak,Mtnew,interface_scale);
         end
         
 %         if issparse(Miter)

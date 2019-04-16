@@ -5,19 +5,19 @@ cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.tol = 1e-4;
 
-odetol = 5e-4;
+odetol = 1e-4;
 tspan = [0 0.3];
 
 pctClosed = 0.7;
 
-pA = 2.14e-4;
-pS = 6.92e-4;
+pA = 6.11e-6;
+pS = 3.09e-6;
 
 he = 2;
 
 BoundaryH = 13;
 initial_volume = 24;
-flux_in_out = 4;
+flux_in_out = 1;
 
 %Test with 4 patches
 Tree = ChebPatch(cheb_struct);
@@ -58,8 +58,8 @@ tspan = [0 Blinks{1}.period];
 %tspan = [0 1];
 
 opt = odeset('mass',M,'reltol',odetol,'abstol',odetol);
-[t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},1,opt);
-save('~/Dropbox/results_07_big_4.mat','Blinks','H','P','t','U');
+[t,U] = ASode15s(false,Blinks,tspan,y0,{H,P},1,opt);
+save('~/Dropbox/results_small_07.mat','Blinks','H','P','t','U');
 % %  %% 
  
 
