@@ -1,17 +1,16 @@
 domain = [-1 1;-1 1];
 cheb_struct.domain = domain;
-cheb_struct.degs = [25 25];
 cheb_struct.cdegs = [9 9];
 cheb_struct.split_flag = [true true];
 cheb_struct.tol = 1e-4;
 
-odetol = 1e-5;
+odetol = 1e-4;
 tspan = [0 0.3];
 
 pctClosed = 0.7;
 
-%pA = 2.14e-4;
-%pS = 6.92e-4;
+pA = 2.14e-4;
+pS = 6.92e-4;
 
 %pA = 1-3;
 pS = 3.09e-6;
@@ -29,6 +28,7 @@ flux_in_out = 4;
 Tree = ChebPatch(cheb_struct);
 
 overlap = 0.2;
+
 % % 
 %Tree = Tree.split(1);
 %Tree.split(2);
@@ -65,9 +65,7 @@ tspan = [0 Blinks{1}.period];
 
 opt = odeset('mass',M,'reltol',odetol,'abstol',odetol);
 
-tic;
-[t,U] = ASode15s(false,Blinks,tspan,y0,{H,P},1,opt);
-toc
-% %  %% 
+[t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},1,opt);
+
  
 
