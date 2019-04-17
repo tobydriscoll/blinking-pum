@@ -645,7 +645,7 @@ while ~done
         %make sure signes match. 
         %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
         if if_snk
-            [rhs,L,U,p,J] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);
+            [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);
             
             rhs_interp = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
         else
@@ -672,7 +672,7 @@ while ~done
         
         
         if iter==1
-            tol_g(iter) = 1e-3;
+            tol_g(iter) = 1e-2;
         else
             %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
             tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
@@ -682,9 +682,9 @@ while ~done
         
         if if_snk
             
-            b = BlockLinearResidual(PUApprox,J,rhs);
-            [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
-        %    [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
+         %   b = BlockLinearResidual(PUApprox,J,rhs);
+         %   [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+           [del,~,~,~,gmhist] = gmres(@(x)JacobianFowardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
         %   [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
         %   del = JG\J_rhs;
            
