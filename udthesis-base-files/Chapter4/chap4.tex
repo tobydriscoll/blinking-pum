@@ -128,7 +128,7 @@ Q_{p}(\hat{x},\hat{y}) & \hat{x}=-1 \\
 where $Q_{p}(\hat{x},\hat{y})$ describes the efflux from the puncta \cite{braun2015dynamics}.
 
 \section{numerical experiments}
-For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values chosen from \cite{braun2015dynamics}. The thickness of the tear film fluid $h_e$ is set to 2. For simplicity we set  $Q_{lg}$ and $Q_p$ to zero. We solve the model with our preconditioned method, using the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
+For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values chosen from \cite{braun2015dynamics}. The thickness of the tear film fluid $h_e$ is set to 2. For simplicity we set  $Q_{lg}$ and $Q_p$ so the total influx and outflux is 2. We solve the model using the SNK method to solve for the backward time step within ode15s (as described within section~\ref{ode15s_snk}), using the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.6]{Chapter4/Eye_domains}
@@ -136,7 +136,7 @@ For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ 
 	\label{eye_partition}
 \end{figure}
 
-We first examine the case of a stationary domain. The boundary conditions of \ref{the_pde} ensure that the volume of the fluid $h(x,y,t)$ is constant over time (in the case of a stationary boundary). As seen in Figure~\ref{eye_volume}, our method maintains a volume that is relatively within $10^{-6}$ of the initial volume, which is indicative of the pointwise error of the numerical solution.
+We first examine the case of a stationary domain. The boundary conditions of \ref{the_pde} ensure that the volume of the fluid $h(x,y,t)$ is constant over time (in the case of a stationary boundary). As seen in Figure~\ref{eye_volume}, our method maintains a volume that is relatively within $10^{-3}$ of the initial volume, which is indicative of the pointwise error of the numerical solution.
 
 We now solve the same model but with a moving boundary prescribed by the realistic blink motion of \cite{deng2014heat} where the eye closes 20 percent. With the moving boundary, we expect the volume to be conserved over a blink cycle (that is, it is conserved periodically). After one blink cycle the volume is conserved within a relative difference of 0.01.
 
