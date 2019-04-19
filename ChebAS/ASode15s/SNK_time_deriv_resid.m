@@ -171,21 +171,17 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
 
 
 
-options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',15,'Display','off');
+% options = optimoptions(@fsolve,'SpecifyObjectiveGradient',true,'MaxIterations',15,'Display','off');
+% [c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
+% c = c(:,end);
+% J = jac_fun(c);
 
-[c,~,~,~,~] = fsolve(@(u)sol_and_jac(@residual,@jac_fun,u),zeros(numel(sol_k),1),options);
-c = c(:,end);
+%[l,u,p] = lu(J,'vector');
 
-J = jac_fun(c);
+params = [30,-1,.5,0];
+tol = [1e-6 1e-6];
 
-%AJ = jacobi(@residual,c);
-
-[l,u,p] = lu(J,'vector');
-% 
-% params = [30,-1,.5,0];
-% tol = [1e-6 1e-6];
-
-% [c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
+[c,l,u,p] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
 % a=1;
 %c = s(:,end);
 end
