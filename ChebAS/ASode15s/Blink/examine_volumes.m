@@ -1,4 +1,3 @@
-load('blink_00.mat');
 
 vols = zeros(size(U,1),1);
 min_H = zeros(size(U,1),1);

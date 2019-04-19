@@ -601,9 +601,9 @@ while ~done
       vol_percent
       min_H = min(H_sol);
       
-      if min_H<0
-         error('H is negative'); 
-      end
+%       if min_H<0
+%          error('H is negative'); 
+%       end
       min_H
 
       % Predict a solution at t+h.
