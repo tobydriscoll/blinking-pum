@@ -113,22 +113,44 @@ Defining $\hat{h}(\hat{x},\hat{y})=h(x,y)$, $\hat{p}(\hat{x},\hat{y})=p(x,y)$, w
 
 The normal conditions of (\ref{normal_conds}) greatly simply on $\mathcal{C}$. The influx function $Q_{\text{in}}$ transforms to
 \begin{equation}
-Q_{\text{in}}(\hat{x},\hat{y}) = \begin{cases}
-Q_{lg}(\hat{x},\hat{y}) + \dot{\lambda}(t)|f'(g_x(\hat{x})+i g_y(\hat{x}))|(h_0-h_e/2) & \hat{y}=1 \\
+Q_{\text{in}}(\hat{x},\hat{y},t) = \begin{cases}
+Q_{lg}(\hat{x},t) + \dot{\lambda}(t)|f'(g_x(\hat{x})+i g_y(\hat{x}))|(h_0-h_e/2) & \hat{y}=1 \\
 0 & \text{otherwise},
 \end{cases}
+\label{influx_fun}
 \end{equation}
-where $h_e$ is the thickness of tear fluid under eyelid \cite{heryudono2007single}, and $Q_{lg}$ is the influx from the lacrimal gland \cite{braun2015dynamics}. For the outflux function we have
+where $h_e$ is the thickness of tear fluid under eyelid \cite{heryudono2007single}, and $Q_{lg}$ is the prescribed influx from the lacrimal gland \cite{braun2015dynamics}. For the outflux function we have
 \begin{equation}
 Q_{\text{out}}(\hat{x},\hat{y}) = \begin{cases}
-Q_{p}(\hat{x},\hat{y}) & \hat{x}=-1 \\
+Q_{p}(\hat{y}) & \hat{x}=-1 \\
 0 & \text{otherwise},
 \end{cases}
+\label{out_flux_fun}
 \end{equation}
-where $Q_{p}(\hat{x},\hat{y})$ describes the efflux from the puncta \cite{braun2015dynamics}.
+where $Q_{p}(\hat{y})$ describes the efflux from the puncta \cite{braun2015dynamics}.
 
+We define $Q_{lg}$, $Q_{p}$ to be bump functions in space and time. With
+\begin{equation}
+\step(x,a,b) = 1/2 (1 + \tanh[(4 (a + b - 2 x))/(a - b)])
+\end{equation}
+we define a indicator like bump function
+\begin{equation}
+w(x,a,b,h) = \step(x,a,a+h)-\step(x,b-h,b)
+\end{equation}
+that has support on $[a,b]$ but continuously drops from 1 to 0 in intervals of length $h$. With this bump function and a blink cycle with period $p$, we define
+\begin{eqnarray}
+\hat{Q_{lg}}(\hat{x},t) &= w(t,0.02,0.1,0.5 p) \exp(((\hat{x}-0.5)/0.25)^2), \label{bumb_funs}  \\
+\hat{Q_{p}}(\hat{y},t) &= w(t,0.05,0.1,0.5 p) w(\hat{y},-0.9,0.25,0.9). 
+\end{eqnarray}
+With target supply and drain volumes $V_s, V_d$ over a blink cycle, we normalize the flux functions (\ref{un_flux}) to define $Q_p,Q_{\lg}$:
+\begin{eqnarray}
+Q_{lg}(\hat{x},t) &= \frac{V_s}{\int_{0}^{p} \int_{-1}^1 \hat{Q_{lg}} d\hat{x} dt} \hat{Q_{lg}}(\hat{x},t), \\
+Q_{p}(\hat{y},t) &= \frac{V_d}{\int_{0}^{p} \int_{-1}^1 \hat{Q_{p}} d\hat{y} dt} \hat{Q_{p}}(\hat{y},t).
+\label{un_flux}
+\end{eqnarray}
 \section{numerical experiments}
-For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values chosen from \cite{braun2015dynamics}. The thickness of the tear film fluid $h_e$ is set to 2. For simplicity we set  $Q_{lg}$ and $Q_p$ so the total influx and outflux is 2. We solve the model using the SNK method to solve for the backward time step within ode15s (as described within section~\ref{ode15s_snk}), using the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
+\label{eye_experiments}
+For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values chosen from \cite{braun2015dynamics}. The thickness of the tear film fluid $h_e$ is set to 2 and $V_d=1, V_s=1$.  We solve the model using SNK to solve for the backward time step within ode15s (as described within section~\ref{ode15s_snk}), using the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.6]{Chapter4/Eye_domains}
@@ -138,13 +160,50 @@ For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ 
 
 We first examine the case of a stationary domain. The boundary conditions of \ref{the_pde} ensure that the volume of the fluid $h(x,y,t)$ is constant over time (in the case of a stationary boundary). As seen in Figure~\ref{eye_volume}, our method maintains a volume that is relatively within $10^{-3}$ of the initial volume, which is indicative of the pointwise error of the numerical solution.
 
-We now solve the same model but with a moving boundary prescribed by the realistic blink motion of \cite{deng2014heat} where the eye closes 20 percent. With the moving boundary, we expect the volume to be conserved over a blink cycle (that is, it is conserved periodically). After one blink cycle the volume is conserved within a relative difference of 0.01.
-
-
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.8]{Chapter4/stationary_volume_change}
 	\caption{Change of volume of the fluid over time. The boundary conditions ensure constant volume over time.}
 	\label{eye_volume}
 \end{figure}
+
+We now solve the model with the same parameters but with a moving boundary prescribed by the realistic blink motion of \cite{deng2014heat} such that the eye closes 20 percent. With the moving boundary, we expect the volume to be conserved over a blink cycle (that is, it is conserved periodically). After one blink cycle the volume is conserved within a relative difference of $5 \times 10^{-3}$. While the solution was positive throughout the blink cycle, it does become close to zero on the upper left part of the lid half way through the blink cycle as seen in Figure~\ref{tears_02}.
+
+\begin{figure}
+	\centering
+	\subfloat[Plot of tear film fluid at start of blink cycle.]{
+		\includegraphics[scale = 0.2]{Chapter4/blink_20_1_0.png}
+		\label{tears_02_01}
+	}
+	\subfloat[Plot of tear film fluid where it goes negative.]{
+		\includegraphics[scale = 0.2]{Chapter4/blink_20_1_0_2.png}
+		\label{tears_02_02}
+	} 
+	\caption{Plot of the tear film hight, where the total influx and outflux is set to 1.}
+	\label{tears_02}
+\end{figure}
+
+This issue becomes more prominent as $V_s,V_d$ increase. As a last experiment we examine the model under more realistic conditions, where the eye closes to 70 percent and the total $V_s=4,V_d=4$. Numerically we fond that this model fails at around 0.7 seconds, as seen in Figure~\ref{broken_tears} since the tear film high becomes negative near the upper left corner. We suspect that this is because the outflux condition (\ref{out_flux_fun}) is overpowering the influx condition (\ref{influx_fun}). This could likely be mitigated by relaxing the bump function (\ref{bumb_funs}) for the puncta fluid efflux, i.e. reducing the height and increasing the width. Further examination and experimentation is needed to find the parameters that give realistic results.
+
+\begin{figure}
+	\centering
+	\subfloat[Plot of tear film fluid at start of blink cycle.]{
+		\includegraphics[scale = 0.4]{Chapter4/blinking_eye_broken_start.png}
+		\label{broken_tears_0}
+	}
+	\subfloat[Plot of tear film fluid where it goes negative.]{
+		\includegraphics[scale = 0.4]{Chapter4/blinking_eye_broken.png}
+		\label{broken_tears_1}
+	} 
+	\caption{Plot of the tear film hight, where the total influx and outflux is set to 4.}
+	\label{broken_tears}
+\end{figure}
+
+
+
+
+
+
+
+
 
