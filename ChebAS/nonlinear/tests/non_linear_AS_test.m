@@ -8,8 +8,8 @@ cheb_struct.split_flag = [true true];
  Tree = ChebPatch(cheb_struct);
  Tree = Tree.split(1);
  Tree.split(2);
-% Tree.split(1);
-% Tree.split(2);
+ Tree.split(1);
+ Tree.split(2);
 %  Tree.split(1);
 %  Tree.split(2);
 %  
@@ -26,36 +26,36 @@ F.sample(@(x,y) zeros(size(x)));
 
 setInterpMatrices(F,true);
 
-% Re = 100;
-% steep = 0.1;  
-%     f = @(u,leaf) RegCavityFlow(Re,u,leaf);
-%     Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
+Re = 1000;
+steep = 0.1;  
+    f = @(u,leaf) RegCavityFlow(Re,u,leaf);
+    Jac = @(u,leaf) CavityFlowJacobian(Re,u,leaf);
   
-% F.Setvalues(@(x,y)SideBumpFunc(y,[0 1],steep)); %set values
-% F.sample(@(x,y)SideBumpFunc(y,[0 1],steep)); %set coeffs
-% u = F.Getvalues();
-% Fy = diff(F,2,1);
-% w = -(Fy.Getvalues());
-% v = zeros(length(F),1);
-% init = [u;v;w];
+F.Setvalues(@(x,y)SideBumpFunc(y,[0 1],steep)); %set values
+F.sample(@(x,y)SideBumpFunc(y,[0 1],steep)); %set coeffs
+u = F.Getvalues();
+Fy = diff(F,2,1);
+w = -(Fy.Getvalues());
+v = zeros(length(F),1);
+init = [u;v;w];
 
 %init = zeros(length(F)*3,1);
 
-bound_f = @(x,y) atan((cos(pi*3/16)*x+sin(pi*3/16)*y)*1);
-nu = 1/1500;
-f = @(u,leaf) Burgers(u,leaf,nu,bound_f);
-Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
-F.sample(bound_f);
-init = F.Getvalues();
+% bound_f = @(x,y) atan((cos(pi*3/16)*x+sin(pi*3/16)*y)*1);
+% nu = 1/1500;
+% f = @(u,leaf) Burgers(u,leaf,nu,bound_f);
+% Jac = @(u,leaf) BurgersJacobian(u,leaf,nu);
+% F.sample(bound_f);
+% init = F.Getvalues();
 
 
- tic;
- [ sol,normres1,normstep1,numgm1,tolg1 ] = NSKsolver(f,Jac,init,F,[1e-10 1e-10]);
- toc
+%  tic;
+%  [ sol,normres1,normstep1,numgm1,tolg1 ] = NSKsolver(f,Jac,init,F,[1e-10 1e-10]);
+%  toc
 % 
-% tic;
-%  [ sol,normres2,normstep2,numgm2,normresf2,tolg2 ] = SNKsolver(f,Jac,init,F,[1e-10 1e-10]);
-% toc
+tic;
+ [ sol,normres2,normstep2,numgm2,normresf2,tolg2 ] = SNKsolver(f,Jac,init,F,[1e-10 1e-10]);
+toc
 
 % tic;
 % [ sol,normres3,normstep3,numgm3,tolg3 ] = SNK2levelsolver(f,Jac,init,F,[1e-10 1e-10],1e-10,2);

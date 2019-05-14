@@ -18,29 +18,29 @@ The tear film is a thin layer of liquid film on the ocular surface spread throug
 	
  In 2008, Maki used an \textrm{overset grid} method to study the effects of the tear film under reflex tearing \cite{maki2008overset}. In an overset grid method, a PDE is discretized and solved on a composite of grids to handle complex geometries and localized features of the function, where the overlapping grids are coupled through interpolation. Maki used fine boundary grids near the upper and lower eyelids in a 1D model to capture localized capillary thinning \cite{maki2008overset}.
 	
-	Maki extend this technique in 2D allowing for numerical simulations over a realistic open eye domain \cite{maki2010tear,maki2010tear2}. Using the Overature framework from Lawrence Livermore National Laboratory \cite{chesshire1990composite,henshaw1998ogen}, she generated a set of grids adapted to the geometry of the eye \cite{chesshire1990composite}; an example of this discretization can be seen in Figure~\ref{overature_eye}. It was found that the geometry, in conjunction with a tear film thickness boundary condition, produces stronger capillary action in the vicinities of the nasal and temporal canthi \cite{maki2010tear}. Maki later incorporated flux boundary conditions that depended both on space and time, including no-flux boundary conditions on a realistic eye-shaped domain as well as non zero flux conditions that incorporated the lacrimal gland influx and puncta drainage \cite{maki2010tear2}. Li built on top these models to study the dynamics of osmolarity within the tear film \cite{li2012model,li2015computed}.
+	Maki extend this technique in 2D allowing for numerical simulations over a realistic open eye domain \cite{maki2010tear,maki2010tear2}. Using the Overature framework from Lawrence Livermore National Laboratory \cite{chesshire1990composite,henshaw1998ogen}, she generated a set of grids adapted to the geometry of the eye \cite{chesshire1990composite}; an example of this discretization can be seen in Figure~\ref{overature_eye}. It was found that the geometry, in conjunction with a tear film thickness boundary condition, produces stronger capillary action in the vicinities of the nasal and temporal canthi \cite{maki2010tear}. Maki later incorporated flux boundary conditions that depended both on space, including no-flux boundary conditions on a realistic eye-shaped domain as well as non zero flux conditions that incorporated the lacrimal gland influx and puncta drainage \cite{maki2010tear2}. Li built on top these models to include time dependent flux boundary conditions \cite{li2014tear}, as well as developed new models to study the dynamics of osmolarity within the tear film \cite{li2012model,li2015computed}.
 	
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.6]{Chapter4/overature_eye}
-	\caption{Example of overlapping finite difference grids using Overature. }
+	\caption{Example of overlapping finite difference grids using Overature \cite{maki2010tear}. }
 	\label{overature_eye}
 \end{figure}
 
 
-In 2007 Heryudono and Braun developed a one-dimensional blinking model of the eye, which included flux conditions of an average supply from the lacrimal gland and drainage due to the puncta \cite{heryudono2007single}. Deng and Driscoll extended this one dimensional model to incorporate a cooling effect, where Chebyshev polynomial approximations were used in the discretization. Through this new model, it was observed that blinking has an effect on the cooling of the tear film \cite{deng2013model,deng2014heat}. Driscoll and Braun then extended these techniques to simulate parabolic flow on an eye-shaped domain \cite{driscoll2018simulation}. As a start, they found numerical solutions for the model
+In 2007 Heryudono and Braun developed a one-dimensional blinking model of the eye, which included flux conditions of an average supply from the lacrimal gland and drainage due to the puncta \cite{heryudono2007single}. Deng and Driscoll extended this one dimensional model to incorporate a cooling effect, where Chebyshev polynomial approximations were used in the discretization. Through this new model, it was observed that blinking has an effect on the cooling of the tear film \cite{deng2013model,deng2014heat}. Driscoll and Braun then extended these techniques to simulate parabolic flow on an eye-shaped domain \cite{driscoll2018simulation}. They studied a second-order parabolic PDE as a simplified model problem for the tear film by finding numerical solutions for the model
 \begin{equation}
 \label{driscollPDE}
 h_t + \nabla \cdot \vect{q} (h,h_x,h_y)=0, \quad (x,y) \in \mathcal{E}(t),
 \end{equation}
-where $h$ is the prescribed film thickness and $\vect{q}$ is a known flux function. The domain $\mathcal{E}(t)$ changes with time, as visualized in Figure~\ref{driscoll_eye} and defined in the following section. In particular they examined a second-order thin film analog where
+where $h$ is the film thickness and $\vect{q}$ is a known flux function. The domain $\mathcal{E}(t)$ changes with time, as visualized in Figure~\ref{driscoll_eye} and defined in the following section. In particular they examined a second-order thin film analog where
 \begin{equation}
 \label{thin_film_analog}
 \vect{q} = -(A-B h^{-3})\nabla h
 \end{equation}
-for constants $A$ and $B$ \cite{driscoll2018simulation}. Numerically the PDE is discritized with a Chebyshev polynomial tensor product approximation. In the case of the second order thin film analog with flux (\ref{thin_film_analog}), this led to a solution that was accurate to at least five digits.
+for constants $A$ and $B$ \cite{driscoll2018simulation}. Numerically the PDE is discretized with a Chebyshev polynomial tensor product approximation. In the case of the second order thin film analog with flux (\ref{thin_film_analog}), this led to a solution that was accurate to at least five digits.
 
-In this chapter, we seek to extend this method to solve a fourth order tear film model in a DAE in which the pressure is solved algebraically. In order to meet the computational demands we will use the preconditioned techniques of Chapter 3 to solve this problem. In the following sections, we describe the fourth order tear film model, as well as briefly review how the blinking eye domain $\mathcal{E}(t)$ is transformed from the $[-1,1]^2$. We conclude with a numerical study of our method on the PDE.
+In this chapter, we seek to extend this method to solve a fourth order tear film model in a DAE in which the pressure  is found from an algebraic equation. In order to meet the computational demands we will use the preconditioned techniques of Chapter 3 to solve this problem. In the following sections, we describe the fourth order tear film model, as well as briefly review how the blinking eye domain $\mathcal{E}(t)$ is transformed from the $[-1,1]^2$. We conclude with a numerical study of our method on the PDE.
 
 
 \begin{figure}
@@ -52,7 +52,7 @@ In this chapter, we seek to extend this method to solve a fourth order tear film
 	
 \section{Model description}
 
-We numerically solve for the height of the tear film $h(x,y,t)$ and pressure $p(x,y,t)$ with the model (\ref{driscollPDE}). Using flux $\bm{q} =  \frac{h^3}{3} \nabla p$ where the pressure is solved algebraically, this produces the model
+We numerically solve for the height of the tear film $h(x,y,t)$ and pressure $p(x,y,t)$ with the model (\ref{driscollPDE}). Using flux $\bm{q} =  \frac{h^3}{3} \nabla p$ where the pressure is found from an algebraic equation, this produces the model
 \begin{align}
 \begin{aligned}
 h_t &= - \nabla \cdot \lp \frac{h^3}{3} \nabla p \rp, \\
@@ -127,20 +127,20 @@ Q_{p}(\hat{y},t) & \hat{x}=-1 \\
 \end{cases}
 \label{out_flux_fun}
 \end{equation}
-where $Q_{p}(\hat{y})$ describes the efflux from the puncta \cite{braun2015dynamics}.
+where $Q_{p}(\hat{y})$ describes the efflux out to the puncta \cite{braun2015dynamics}.
 
 We define $Q_{lg}$, $Q_{p}$ to be bump functions in space and time. With
 \begin{equation}
-\step(x,a,b) = 1/2 (1 + \tanh[(4 (a + b - 2 x))/(a - b)])
+\step(x,a,b) = 1/2 (1 + \tanh[(4 (a + b - 2 x))/(a - b)]),
 \end{equation}
 we define a indicator like bump function
 \begin{equation}
-w(x,a,b,h) = \step(x,a,a+h)-\step(x,b-h,b)
+w(x,a,b,l) = \step(x,a,a+l)-\step(x,b-l,b)
 \end{equation}
-that has support on $[a,b]$ but continuously drops from 1 to 0 in intervals of length $h$. With this bump function and a blink cycle with period $p$, we define
+that has support on $[a,b]$ but continuously drops from 1 to 0 in intervals of length $l$. With this bump function and a blink cycle with period $L$, we define
 \begin{eqnarray}
-\hat{Q_{lg}}(\hat{x},t) &= w(t,0.02,0.1,0.5 p) \exp(((\hat{x}-0.5)/0.25)^2), \label{bumb_funs}  \\
-\hat{Q_{p}}(\hat{y},t) &= w(t,0.05,0.1,0.5 p) w(\hat{y},-0.9,0.25,0.9). 
+\hat{Q_{lg}}(\hat{x},t) &= w(t,0.02,0.1,0.5 L) \exp(((\hat{x}-0.5)/0.25)^2), \label{bumb_funs}  \\
+\hat{Q_{p}}(\hat{y},t) &= w(t,0.05,0.1,0.5 L) w(\hat{y},-0.9,0.25,0.9). 
 \end{eqnarray}
 With target supply and drain volumes $V_s, V_d$ over a blink cycle, we normalize the flux functions (\ref{un_flux}) to define $Q_p,Q_{\lg}$:
 \begin{eqnarray}
@@ -150,7 +150,7 @@ Q_{p}(\hat{y},t) &= \frac{V_d}{\int_{0}^{p} \int_{-1}^1 \hat{Q_{p}} d\hat{y} dt}
 \end{eqnarray}
 \section{Numerical experiments}
 \label{eye_experiments}
-For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values taken from \cite{braun2015dynamics}. The thickness of the tear film fluid $h_e$ is set to 2 and $V_d=1, V_s=1$.  We solve the model using SNK to solve for the backward time step within ode15s (as described within section~\ref{ode15s_snk}), using the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
+For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values taken from \cite{braun2015dynamics}. The thickness of the tear film fluid $h_e$ is set to 2 and $V_d=1, V_s=1$. In all experiments, $\alpha=1.4$, $\gamma=7$. We solve the model using SNK to solve for the backward time step within ode15s (as described within section~\ref{ode15s_snk}), using the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.6]{Chapter4/Eye_domains}
@@ -167,37 +167,83 @@ We first examine the case of a stationary domain. The boundary conditions of \re
 	\label{eye_volume}
 \end{figure}
 
-We now solve the model with the same parameters but with a moving boundary prescribed by the realistic blink motion of \cite{deng2014heat} such that the eye closes 20 percent. With the moving boundary, we expect the volume to be conserved over a blink cycle (that is, it is conserved periodically). After one blink cycle the volume is conserved within a relative difference of $5 \times 10^{-3}$. While the solution was positive throughout the blink cycle, it does become close to zero on the upper left part of the lid half way through the blink cycle as seen in Figure~\ref{tears_02}.
+We now solve the model with the same parameters but with a moving boundary prescribed by the realistic blink motion of \cite{deng2014heat} such that the eye closes 20 percent. With the moving boundary, we expect the volume to be conserved over a blink cycle (that is, it is conserved periodically). After one blink cycle the volume is conserved within a relative difference of $5 \times 10^{-3}$. While the solution was positive throughout the blink cycle, it does become close to zero on the upper left part of the lid $t=1$, as seen in Figure~\ref{tears_02}.
+
+%\begin{figure}
+%	\centering
+%	\subfloat[Plot of tear film fluid at start of blink cycle.]{
+%		\includegraphics[scale = 0.2]{Chapter4/blink_20_1_0.png}
+%		\label{tears_02_01}
+%	}
+%	\subfloat[Plot of tear film fluid halfway through the blink cycle.]{
+%		\includegraphics[scale = 0.2]{Chapter4/blink_20_1_0_2.png}
+%		\label{tears_02_02}
+%	} 
+%	\caption{Plot of the tear film hight, where the total influx and outflux is set to 1, and the eye closes 20 percent}
+%	\label{tears_02}
+%\end{figure}
 
 \begin{figure}
 	\centering
-	\subfloat[Plot of tear film fluid at start of blink cycle.]{
-		\includegraphics[scale = 0.2]{Chapter4/blink_20_1_0.png}
-		\label{tears_02_01}
+	\subfloat[Plot at t=0]{
+		\includegraphics[scale = 0.4]{Chapter4/20_t_00}
+		\label{tears_02_0}
 	}
-	\subfloat[Plot of tear film fluid halfway through the blink cycle.]{
-		\includegraphics[scale = 0.2]{Chapter4/blink_20_1_0_2.png}
-		\label{tears_02_02}
+	\subfloat[Plot at t=1.002]{
+		\includegraphics[scale = 0.4]{Chapter4/20_t_1}
+		\label{tears_02_1}
 	} 
-	\caption{Plot of the tear film hight, where the total influx and outflux is set to 1, and the eye closes 20 percent}
+	
+	\subfloat[Plot at t=4.005]{
+		\includegraphics[scale = 0.4]{Chapter4/20_t_4}
+		\label{tears_02_2}
+	}
+	\subfloat[Plot at 5.258]{
+		\includegraphics[scale = 0.4]{Chapter4/20_t_end}
+		\label{tears_02_3}
+	} 
+	\caption{Plot of the tear film hight, where the total influx and outflux is set to 1 and the eye closes 20 percent.}
 	\label{tears_02}
 \end{figure}
 
-This issue becomes more prominent as $V_s,V_d$ increase. As a last experiment we examine the model under more realistic conditions, where the eye closes to 70 percent and $V_s=4,V_d=4$. Numerically we found that this model fails at around 0.7 seconds, as seen in Figure~\ref{broken_tears} since the tear film high becomes negative near the upper left corner. We suspect that this is because the outflux condition (\ref{out_flux_fun}) is overpowering the influx condition (\ref{influx_fun}). This could likely be mitigated by relaxing the bump function (\ref{bumb_funs}) for the puncta fluid efflux, i.e. reducing the height and increasing the width. Further examination and experimentation is needed to find the parameters that give realistic results.
+This issue becomes more prominent as $V_s,V_d$ increase. As a last experiment we examine the model under more realistic conditions, where the eye closes to 70 percent and $V_s=4,V_d=4$. Numerically we found that this model fails at around 0.7 seconds, as seen in Figure~\ref{broken_tears} since the tear film height becomes negative near the upper left corner. We suspect that this is because the outflux condition (\ref{out_flux_fun}) is overpowering the influx condition (\ref{influx_fun}). This could likely be mitigated by relaxing the bump function (\ref{bumb_funs}) for the puncta fluid efflux, i.e. reducing the height and increasing the width. Further examination and experimentation is needed to find the parameters that give realistic results.
 
 \begin{figure}
 	\centering
-	\subfloat[Plot of tear film fluid at start of blink cycle.]{
-		\includegraphics[scale = 0.4]{Chapter4/blinking_eye_broken_start.png}
+	\subfloat[Plot at t=0.]{
+		\includegraphics[scale = 0.4]{Chapter4/eye_blink_2_00}
 		\label{broken_tears_0}
 	}
-	\subfloat[Plot of tear film fluid where it becomes negative.]{
-		\includegraphics[scale = 0.4]{Chapter4/blinking_eye_broken.png}
+	\subfloat[Plot at t=0.2527.]{
+		\includegraphics[scale = 0.4]{Chapter4/eye_blink_2_025}
 		\label{broken_tears_1}
 	} 
+
+	\subfloat[Plot at t=0.5102]{
+	\includegraphics[scale = 0.4]{Chapter4/eye_blink_2_05}
+	\label{broken_tears_0}
+}
+\subfloat[Plot at 0.733]{
+	\includegraphics[scale = 0.4]{Chapter4/eye_blink_2_07}
+	\label{broken_tears_1}
+} 
 	\caption{Plot of the tear film hight, where the total influx and outflux is set to 4 and the eye closes 70 percent.}
 	\label{broken_tears}
 \end{figure}
+
+%\begin{figure}
+%	\centering
+%	\subfloat[Plot of tear film fluid at start of blink cycle.]{
+%		\includegraphics[scale = 0.4]{Chapter4/blinking_eye_broken_start.png}
+%		\label{broken_tears_0}
+%	}
+%	\subfloat[Plot of tear film fluid where it becomes negative.]{
+%		\includegraphics[scale = 0.4]{Chapter4/blinking_eye_broken.png}
+%		\label{broken_tears_1}
+%	} 
+%	\caption{Plot of the tear film hight, where the total influx and outflux is set to 4 and the eye closes 70 percent.}
+%	\label{broken_tears}
+%\end{figure}
 
 
 

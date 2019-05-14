@@ -329,9 +329,9 @@ where $\Ren$ is the Reynolds number. On the boundary $\partial \Omega$ we apply
 \end{equation}
 similar to the boundary conditions in~\cite{shen1990numerical}.
 
-We divided $\Omega$ into 16 overlapping patches of equal size (i.e. a 4 by 4 patch structure). Each subdomain was discretized by a second-kind Chebyshev grid of length 33 in each dimension. For the initial guess to the outer solver iterations we extended the boundary conditions (\ref{cavityflow_initalguess}) to all values of $x$ in the square $\Omega$. 
+We divided $\Omega$ into 16 overlapping patches of equal size (i.e. a 4 by 4 patch structure, as seen in \ref{Cavity_patch_structure}). Each subdomain was discretized by a second-kind Chebyshev grid of length 33 in each dimension. For the initial guess to the outer solver iterations we extended the boundary conditions (\ref{cavityflow_initalguess}) to all values of $x$ in the square $\Omega$. 
 
-The convergence of the three solvers is shown for $\Ren=100$, and SNK and NKS for $\Ren = 1000$ in Figure~\ref{reg_cavity_flow_residuals}. All three methods converge for $\Ren = 100$. The number of GMRES iterations per nonlinear iteration are similar for the NKS and SNK methods; this is to be expected since the linear system used to solve the Newton step is similar in both methods. We do however see a dramatic reduction in the number of GMRES iterations with the two-level SNK method. 
+The convergence of the three solvers is shown for $\Ren=100$, and SNK and NKS for $\Ren = 1000$ in Figure~\ref{reg_cavity_flow_residuals}, as well as the plot of the solutions in Figure~\ref{reg_cavity_flow_residuals_plots}. All three methods converge for $\Ren = 100$. The number of GMRES iterations per nonlinear iteration are similar for the NKS and SNK methods; this is to be expected since the linear system used to solve the Newton step is similar in both methods. We do however see a dramatic reduction in the number of GMRES iterations with the two-level SNK method. 
 
 It is worth noting well that the computational time for each outer iteration varies greatly between solvers. The NKS residual requires only evaluating the discretized PDE and is thus is a good deal faster per iteration than the SNK solvers, which require solving the local nonlinear problems. In addition SNK2 must solve a global coarse problem in each outer iteration, but this added relatively little computing time. 
 
@@ -350,6 +350,21 @@ For the higher Reynolds number $\Ren = 1000$ we find that while SNK still conver
   } 
   \caption{Nonlinear residuals, normalized by the residual of the initial guess, of the NKS, SNK, and SNK2 solvers on the regularized cavity flow problem (\ref{reg_cavity_flow})--(\ref{cavityflow_initalguess}). The area of each marker is proportional to the number of inner GMRES iterations taken to meet the inexact Newton criterion.}
   \label{reg_cavity_flow_residuals}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\subfloat[Velocity plot with $Re = 100$]{
+		\includegraphics[scale = 0.4]{Chapter3/CavityFlow_Quiver_100}
+		\label{quiv_cavityflow_100}
+	}
+	\subfloat[Velocity plot with $Re = 1000$]{
+		\includegraphics[scale = 0.4]{Chapter3/CavityFlow_Quiver_1000}
+		\label{quiv_cavityflow_1000}
+	} 
+	\caption{Velocity plot of solution to (\ref{reg_cavity_flow})--(\ref{cavityflow_initalguess}), with $Re=100,1000$.}
+	
+	\label{reg_cavity_flow_residuals_plots}
 \end{figure}
 
 \subsection{Burgers equation}
@@ -372,6 +387,13 @@ This PDE was solved using a subdomain structure adapted to the function
 using the methods in \cite{AitonTA}, in order to help capture the boundary layers, as shown in Figure~\ref{Burger_patch_structure}. For the initial guess of the outer iterations, the boundary condition~(\ref{burgers_boundary}) was extended throughout $\Omega$.
 
 Convergence histories for~(\ref{simple_burgers})--(\ref{burgers_boundary}) for $1/\nu = 400,800,1000,1500$ are given in Figure~\ref{burgers_simp_test}. We observe again that the SNK and SNK2 solvers seem quite insensitive to the diffusion strength, while the number of outer iterations in NKS increases mildly as diffusion wanes. Furthermore, SNK2 converges in about half as many outer iterations as SNK. 
+
+\begin{figure}
+	\centering
+	\includegraphics[scale = 0.6 ]{Chapter3/cavity_flow_domains}
+	\caption{Subdomains for the cavity flow experiments.}
+	\label{Cavity_patch_structure}
+\end{figure}
 
 \begin{figure}
   \centering
