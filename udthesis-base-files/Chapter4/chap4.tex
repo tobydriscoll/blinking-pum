@@ -127,44 +127,13 @@ Q_{p}(\hat{y},t) & \hat{x}=-1 \\
 \end{cases}
 \label{out_flux_fun}
 \end{equation}
-where $Q_{p}(\hat{y})$ describes the efflux out to the puncta \cite{braun2015dynamics}.
-
-We define $Q_{lg}$, $Q_{p}$ to be bump functions in space and time. With
-\begin{equation}
-\step(x,a,b) = 1/2 (1 + \tanh[(4 (a + b - 2 x))/(a - b)]),
-\end{equation}
-we define a indicator like bump function
-\begin{equation}
-w(x,a,b,l) = \step(x,a,a+l)-\step(x,b-l,b)
-\end{equation}
-that has support on $[a,b]$ but continuously drops from 1 to 0 in intervals of length $l$. With this bump function and a blink cycle with period $L$, we define
-\begin{eqnarray}
-\hat{Q_{lg}}(\hat{x},t) &= w(t,0.02,0.1,0.5 L) \exp(((\hat{x}-0.5)/0.25)^2), \label{bumb_funs}  \\
-\hat{Q_{p}}(\hat{y},t) &= w(t,0.05,0.1,0.5 L) w(\hat{y},-0.9,0.25,0.9). 
-\end{eqnarray}
-With target supply and drain volumes $V_s, V_d$ over a blink cycle, we normalize the flux functions (\ref{un_flux}) to define $Q_p,Q_{\lg}$:
-\begin{eqnarray}
-Q_{lg}(\hat{x},t) &= \frac{V_s}{\int_{0}^{p} \int_{-1}^1 \hat{Q_{lg}} d\hat{x} dt} \hat{Q_{lg}}(\hat{x},t), \\
-Q_{p}(\hat{y},t) &= \frac{V_d}{\int_{0}^{p} \int_{-1}^1 \hat{Q_{p}} d\hat{y} dt} \hat{Q_{p}}(\hat{y},t).
-\label{un_flux}
-\end{eqnarray}
-
-We define the initial condition $h_I(\hat{x},\hat{y})$ implicitly by first solving
-\begin{align}
-\begin{aligned}
-\nabla^2 \hat{h_I} &= 10 (\hat{x}^4 +\hat{y}^4) \quad (\hat{x},\hat{y}) \in \mathcal{C} \\
- \hat{h_I} &= 1 \mbox{ on } \partial \mathcal{C},
-\end{aligned} 
-\end{align}
-and finding coefficents $c_0,c_1$ so that the initial condition
-\begin{equation}
-h_I(\hat{x},\hat{y}) = c_1 \hat{h_I}(\hat{x},\hat{y})+c_0
-\end{equation}
-matches $h_0$ on the boundary and numerically has a prescribed volume $V_{\mbox{init}}$. This initial condition produces a solution with boundary layers, as seen in Figures~\ref{tears_02_1},\ref{broken_tears_0}.
+where $Q_{p}(\hat{y})$ describes the efflux out to the puncta \cite{braun2015dynamics}. The flux functions $Q_{lg}$ and $Q_p$ are defined in more detail within Appendix~\ref{sec:flux}.
 
 \section{Numerical experiments}
 \label{eye_experiments}
-For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values taken from \cite{braun2015dynamics}. The blink cycle $L$ is approximately 5.28. The thickness of the tear film fluid above the eyelid $h_e$ is set to 2 and $V_d=1, V_s=1$. In all experiments, $\alpha=1.4$, $\gamma=7$, and $V_{\mbox{init}}=12$. We solve the model using SNK to solve for the backward time step within ode15s (as described within section~\ref{ode15s_snk}), using the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
+For our first experiment, we choose $\pa$ and $\ps$ to be $6.11 \times 10^{-6}$ and $3.09 \times 10^{-6}$, values taken from \cite{braun2015dynamics}. The blink cycle $L$ is approximately 5.28. The thickness of the tear film under the lid $h_e$ is set to 2 and $V_d=1, V_s=1$. In all experiments, $\alpha=1.4$, $\gamma=7$. We use the initial condition described in Appendix~\ref{sec:flux}, forcing the volume at $t=0$ to be 24.
+
+We solve the model using SNK to solve for the backward time step within ode15s (as described within section~\ref{ode15s_snk}), using the partitioning in Figure~\ref{eye_partition} to better adapt to the features of the tear film height. For each subdomain we use a $35 \times 35$ Chebyshev interpolant approximation.
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.6]{Chapter4/Eye_domains}

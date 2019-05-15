@@ -1,0 +1,41 @@
+%
+% This is the Appendix A file (appA.tex)
+%
+\appendix{Flux functions and initial condition}
+\label{sec:flux}
+
+We define $Q_{lg}$, $Q_{p}$ to be bump functions in space and time. With
+\begin{equation}
+\step(x,a,b) = 1/2 (1 + \tanh[(4 (a + b - 2 x))/(a - b)]),
+\end{equation}
+we define a indicator like bump function
+\begin{equation}
+w(x,a,b,l) = \step(x,a,a+l)-\step(x,b-l,b)
+\end{equation}
+that has support on $[a,b]$ but continuously drops from 1 to 0 in intervals of length $l$. Here $w$ effectively is a smooth approximation of an indicator function. 
+
+ With this bump function and a blink cycle with period $L$, we define
+\begin{eqnarray}
+\hat{Q_{lg}}(\hat{x},t) &= w(t,0.02,0.1,0.5 L) \exp(((\hat{x}-0.5)/0.25)^2), \label{bumb_funs}  \\
+\hat{Q_{p}}(\hat{y},t) &= w(t,0.05,0.1,0.5 L) w(\hat{y},-0.9,0.25,0.9). 
+\end{eqnarray}
+With target supply and drain volumes $V_s, V_d$ over a blink cycle, we normalize the flux functions (\ref{un_flux}) to define $Q_p,Q_{\lg}$:
+\begin{eqnarray}
+Q_{lg}(\hat{x},t) &= \frac{V_s}{\int_{0}^{p} \int_{-1}^1 \hat{Q_{lg}} d\hat{x} dt} \hat{Q_{lg}}(\hat{x},t), \\
+Q_{p}(\hat{y},t) &= \frac{V_d}{\int_{0}^{p} \int_{-1}^1 \hat{Q_{p}} d\hat{y} dt} \hat{Q_{p}}(\hat{y},t).
+\label{un_flux}
+\end{eqnarray}
+The flux function $Q_{lg}$ is defined so that there is a influx of fluid concentrated evenly throughout most of the upper lid (on $\mathcal{C}$ this would be for all $(1,\hat{x})$, $\hat{x} in [-0.9,0.9]$) for $t \in [0.02 0.1]$. For $Q_{p}$, the outflux is concentrated at the left corner of the eye with the use of a bump function for $t \in [0.05,0.1]$, to simulate the outflux out of the puncta.
+
+We define the initial condition $h_I(\hat{x},\hat{y})$ implicitly by first solving
+\begin{align}
+\begin{aligned}
+\nabla^2 \hat{h_I} &= 10 (\hat{x}^4 +\hat{y}^4) \quad (\hat{x},\hat{y}) \in \mathcal{C} \\
+\hat{h_I} &= 1 \mbox{ on } \partial \mathcal{C},
+\end{aligned} 
+\end{align}
+and finding coefficents $c_0,c_1$ so that the initial condition
+\begin{equation}
+h_I(\hat{x},\hat{y}) = c_1 \hat{h_I}(\hat{x},\hat{y})+c_0
+\end{equation}
+matches $h_0$ on the boundary and numerically has a prescribed volume $V_{\mbox{init}}$. This initial condition produces a solution with boundary layers, as seen in Figures~\ref{tears_02_1},\ref{broken_tears_0}.
