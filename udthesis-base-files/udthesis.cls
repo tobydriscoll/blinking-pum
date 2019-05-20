@@ -687,8 +687,8 @@ mu.\mkern
 			  \hangindent\wd 1
 	          #2\par} 
 \newcommand{\provost}{\renewcommand{\baselinestretch}{1}\large\normalsize
-	\approval{Ann L. Ardis, Ph.D.}
-    Senior Vice Provost for Graduate and Professional Education\par}
+	\approval{Douglas J. Doren, Ph.D.}
+    Interim Vice Provost for Graduate and Professional Education\par}
 \newcommand{\maketitlebox}{\vbox{\begin{center}\baselineskip\titlebaselineskip
 				  {\bfseries\uppercase\expandafter{\@title}}\end{center}}}
 \newcommand{\makeauthorbox}{\vbox{\begin{center}\baselineskip\titlebaselineskip
