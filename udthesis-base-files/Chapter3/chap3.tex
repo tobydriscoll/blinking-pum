@@ -44,7 +44,7 @@ We take a different approach, replacing the original problem~(\ref{eq:global-pro
     \label{eq:local-bc}
     \beta(\bm{x},u_i) &= 0, & \qquad & \bm{x}\in \Gamma_{i0}= \partial\Omega \cap \partial\Omega_i, \qquad i=1,\ldots,N,\\
     \label{eq:local-match}
-    u_i & = u_j, & \qquad & \bm{x}\in\Gamma_{ij}= \partial\Omega_i \cap \Z_j, \qquad i,j=1,\ldots,N,
+    u_i & = u_j, & \qquad & \bm{x}\in\Gamma_{ij}= \partial\Omega_i \cap Z_j, \qquad i,j=1,\ldots,N,
   \end{alignat}  
 \end{subequations}
 where now $u_1,\ldots,u_N$ are unknown functions on overlapping subdomains $\Omega_i$ that cover $\Omega$, and the $Z_i$ are nonoverlapping zones lying within the respective subdomains. Clearly any strong solution of~(\ref{eq:global-problem}) is also a solution of~(\ref{eq:overlapping-problem}), and while the converse is not necessarily so in principle,   we regard the possibility of finding a solution of~(\ref{eq:overlapping-problem}) that is not also a solution of~(\ref{eq:global-problem}) as remote in practice.
@@ -315,19 +315,19 @@ The first example is a regularized form of the lid-driven cavity flow problem~\c
   \end{aligned}
   \label{reg_cavity_flow}
 \end{equation}
-where $\Ren$ is the Reynolds number. On the boundary $\partial \Omega$ we apply
+where $\Ren$ is the Reynolds number. In the context of this chapter, the Reynolds number can be thought of as a parameter controlling the non-linearity of (\ref{reg_cavity_flow}). The lid-driven cavity flow problem is a standard test problem for Navier Stokes code \cite{botella1998benchmark}. The standard problem specifies discontinuous boundary conditions ($u(x,y)=1$ at $y=1$, $u=0$ elsewhere), causing singularities in the top two corners. Since we are using Chebyshev approximations we must use regularized boundary conditions that are continuous. On the boundary $\partial \Omega$ we apply
 \begin{equation}
   \begin{aligned}
     u &= \begin{cases}
-      \exp \left(\frac{\left(\frac{y-1}{0.1}\right)^2}{1-\left(\frac{y-1}{0.1}\right)^2}\right), & y>0.9, \\
-      0, & y \leq 0.9,
+      \exp \left(\frac{\left(\frac{y-1}{0.1}\right)^2}{1-\left(\frac{y-1}{0.1}\right)^2}\right), & y>b, \\
+      0, & y \leq b,
     \end{cases} \\
     v &= 0, \\
     \omega &= - \frac{\partial u}{\partial y} + \frac{\partial v}{\partial x},
   \end{aligned}
   \label{cavityflow_initalguess}
 \end{equation}
-similar to the boundary conditions in~\cite{shen1990numerical}.
+similar to the boundary conditions in~\cite{shen1990numerical}. We continuously drop $u$ to 0 with a bump function, with $b=0.9$. When $b$ is moved closer to 1, a higher resolution is needed near $y=1$ to compensate for the steeper gradients the bump function produces.
 
 We divided $\Omega$ into 16 overlapping patches of equal size (i.e. a 4 by 4 patch structure, as seen in \ref{Cavity_patch_structure}). Each subdomain was discretized by a second-kind Chebyshev grid of length 33 in each dimension. For the initial guess to the outer solver iterations we extended the boundary conditions (\ref{cavityflow_initalguess}) to all values of $x$ in the square $\Omega$. 
 
@@ -372,7 +372,7 @@ For the higher Reynolds number $\Ren = 1000$ we find that while SNK still conver
 
 The second test problem is Burgers' equation,
 \begin{equation}
-  \nu \Delta u - u \cdot \nabla = 0,
+  \nu \Delta u - \nabla \cdot u = 0,
   \label{simple_burgers}	
 \end{equation}
 on $\Omega = [-1,1]^2$, with Dirichlet boundary condition
