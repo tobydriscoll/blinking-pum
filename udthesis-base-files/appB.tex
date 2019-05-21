@@ -26,7 +26,7 @@ Q_{lg}(\hat{x},t) &= \frac{V_s}{\int_{0}^{p} \int_{-1}^1 \hat{Q_{lg}} d\hat{x} d
 Q_{p}(\hat{y},t) &= \frac{V_d}{\int_{0}^{p} \int_{-1}^1 \hat{Q_{p}} d\hat{y} dt} \hat{Q_{p}}(\hat{y},t).
 \label{un_flux}
 \end{eqnarray}
-The influx function $Q_{lg}$ is defined so there is an influx of fluid from the top of the lid, concentrated in the center; this is simulated with the use of an exponential bump function, as seen in (\ref{un_flux1}). The influx occurs for $t \in [0.02,0.5 L]$. The ouflux function $Q_p$ defines a drainage through the puncta; $Q_p$ is defined on the left corner of the eye-shaped domain. The outflux occurs evenly throughout the corner, as seen with the use of the indicator like function (\ref{indicator_fun})  in (\ref{un_flux}). The outflux occurs within $t \in [0.05,0.5 L]$, starting after an initial influx of fluid. A plot of the flux functions at different times throughout the blink cycle can be seen in Figure~\ref{flux_plots}.
+The influx function $Q_{lg}$ is defined so there is an influx of fluid from the top of the lid, concentrated in the towards the right; this is simulated with the use of an exponential bump function, as seen in (\ref{un_flux1}). The influx occurs for $t \in [0.02,0.5 L]$. The ouflux function $Q_p$ defines a drainage through the puncta; $Q_p$ is defined on the left corner of the eye-shaped domain. The outflux occurs evenly throughout the corner, as seen with the use of the indicator like function (\ref{indicator_fun})  in (\ref{un_flux}). The outflux occurs within $t \in [0.05,0.5 L]$, starting after an initial influx of fluid. A plot of the flux functions at different times throughout the blink cycle can be seen in Figure~\ref{flux_plots}.
 
 \begin{figure}
 	\centering
