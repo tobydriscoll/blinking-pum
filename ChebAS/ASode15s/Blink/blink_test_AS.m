@@ -27,9 +27,34 @@ Tree = ChebPatch(cheb_struct);
 
 overlap = 0.2;
 
+   %This replaces Tree with one leaf overlap away from a boundary
+   %| |      |
+   %| |      |
+   %| |      |
+   %| |      |
    Tree = Tree.split(2,false,overlap);
+   
+   %This does the same but with the larger leaf
+   %| |     | |
+   %| |     | |
+   %| |     | |
+   %| |     | |
    Tree.children{2} = Tree.children{2}.split(2,false,overlap);
+   
+   
+   %This does the same but with the larger leaf
+   %| |     | |
+   %| |     | |
+   %| |_ _ _| |
+   %| |     | |
    Tree.children{2}.children{1} = Tree.children{2}.children{1}.split(1,false,overlap);
+   
+   
+   %This does the same but with the larger left over leaf
+   %| |_ _ _| |
+   %| |     | |
+   %| |_ _ _| |
+   %| |     | |
    Tree.children{2}.children{1}.children{2} = Tree.children{2}.children{1}.children{2}.split(1,false,overlap);
 
   Tree.clean();

@@ -380,7 +380,10 @@ classdef ChebPatch<LeafPatch
         % a dimension.
         %
         %     Input:
-        %   overlap: overlap intended to be used for the splitting
+        %   split_dim: dimension to be split in
+        %    set_vals: set values of children from polynomail of parent
+        % border_dist: distance from border to split from, going west,
+        % east, south north.
         %
         %    Output:
         %     Child: the PUPatch with the two new children.
