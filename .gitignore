@@ -28,3 +28,13 @@ papers/pde/pum-pde\.pdf
 udthesis-base-files/dissertation-main\.pdf
 
 *.toc
+
+\.dropbox
+
+*.fdb_latexmk
+
+*.bbl
+
+*.blg
+
+*.dvi
