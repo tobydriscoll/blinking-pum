@@ -65,9 +65,9 @@ setInterpMatrices(H,false);
 setInterpMatrices(P,false);
 
 load initstate.mat
-[Blinks,M,y0] = setBlinks(H,P,param,initstate);
+[Blinks,M,y0,dy0] = initialize(H,P,param,initstate);
 
-opt = odeset('mass',M,'reltol',odetol,'abstol',odetol);
+opt = odeset('mass',M,'reltol',param.odetol,'abstol',param.odetol,'initialslope',dy0);
 
 [t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},1,opt);
 
