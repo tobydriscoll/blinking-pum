@@ -38,3 +38,5 @@ udthesis-base-files/dissertation-main\.pdf
 *.blg
 
 *.dvi
+
+*.m~
