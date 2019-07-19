@@ -11,18 +11,10 @@
 %
 % ALSO NOTE This method takes into account of boundary info is accounted
 % for by the effect if the individual trees are packed or not.
-function [ output ] = LinearResidual(PUApproxArray,J,x,alpha,sub_ind,loc_sub_ind)
+function [ output ] = JacobianForwardLUTime(PUApproxArray,L,U,p,x,alpha)
 
 if ~iscell(PUApproxArray)
     PUApproxArray = {PUApproxArray};
-end
-
-take_sub_ind = nargin>4;
-
-if take_sub_ind
-    x_temp = zeros(length(sub_ind),1);
-    x_temp(sub_ind) = x;
-    x = x_temp;
 end
 
 num_sols = length(PUApproxArray);
@@ -81,18 +73,11 @@ output = x;
 %Parallel part
 for k=1:num_leaves
     
-    if take_sub_ind
-        output{k}(loc_sub_ind{k}) =  J{k}(loc_sub_ind{k},loc_sub_ind{k})*x{k}(loc_sub_ind{k})-z{k}(loc_sub_ind{k});
-    else
-        output{k} =  J{k}*x{k}-z{k};
-       % output{k} = -z{k};
-    end
+    output{k} = U{k}\(L{k}\z{k}(p{k})) - x{k};
+    
+   % output{k} =  L{k}*(U{k}*z{k}(p{k}))*x{k}-z{k};
     
 end
 
 %Take {[u1;u2],[v1;v2]} to [u1;u2;v1;v2]
 output = packPUvecs(output,PUApproxArray);
-
-if take_sub_ind
-    output = output(sub_ind);
-end

@@ -301,7 +301,7 @@ classdef blink
             
             t = r.times(numt);
             
-            dim = [ size(r.disc.square.grid.x) length(t) ];
+            dim = [ size(r.disc.square.grid.X) length(t) ];
             H = zeros(dim,'single');
             P = zeros(dim,'single');
             X = zeros(dim,'single');

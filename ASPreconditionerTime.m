@@ -1,4 +1,3 @@
-% JacobianFowardLU
 % Matrix free evaluation for the Jacobian of the SNK method.
 %
 % INPUT:
