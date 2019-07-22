@@ -2,17 +2,17 @@ addpath ..
 addpath ../PUChebfun
 
 param.domain = [-1 1;-1 1];
-param.degs = [30 30];
+param.degs = [25 25];
 param.cdegs = [9 9];
 param.split_flag = [true true];
 param.tol = 1e-4;
 param.odetol = 1e-4;
 
 tspan = [0 0.02];
-param.percentClosed = 0;
-param.pA = 6.11e-5;
-param.pS = 3.09e-5;
-param.h_e = 4;
+param.percentClosed = 0.7;
+model.pA = 2.14e-6;
+model.pS = 6.92e-5;
+param.h_e = 2;
 param.BoundaryH = 13;
 param.initvolume = 34;
 param.fluxvolume = 0;
@@ -64,10 +64,11 @@ P = H.copy();
 setInterpMatrices(H,false);
 setInterpMatrices(P,false);
 
-load initcond_pcl0.mat
-[Blinks,M,y0,dy0] = initialize(H,P,param,finalstate);
+load initcond_pcl7.mat
+[Blinks,M,y0,dy0] = initialize(H,P,param);
 
-opt = odeset('mass',M,'reltol',param.odetol,'abstol',param.odetol,'initialslope',dy0);
+opt = odeset('mass',M,'reltol',param.odetol,'abstol',param.odetol,...
+    'initialstep',1e-10,'initialslope',dy0);
 
 [t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},1,opt);
 
