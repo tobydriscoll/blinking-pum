@@ -477,7 +477,7 @@ classdef blink
         function J = jac(r,t,u)
             [H,P] = r.unpack(u);
             [XS,YS,factor] = r.disc.strip.grid(t);
-            Factor = r.disc.Diag(factor);
+%            Factor = r.disc.Diag(factor);
             
             [~,~,JH,Jgrads] = r.grad(t,H,factor);
             [gradP,~,JP] = r.grad(t,P,factor);
@@ -487,10 +487,16 @@ classdef blink
             
             %Q = -Psi.*gradP;
             DiagPsi = r.disc.Diag(Psi);
-            J1 = [-r.disc.Diag(dPsi_dh.*gradP), -DiagPsi*JP ];
+            %%%J1 = [-r.disc.Diag(dPsi_dh.*gradP), -DiagPsi*JP ];
+            J11 = dPsi_dh.*gradP; 
+            J12 = -Psi(:).*JP;
             
             %DivQ = div(t,Q,factor);
-            J1 = real( Factor*conj(Jgrads)*J1 );
+            %%%J1 = real( Factor*conj(Jgrads)*J1 );
+            cJs = conj(Jgrads); 
+            %%%J1 = real( factor(:).*(cJs*J1) );
+            B = factor(:).*cJs;
+            J1 = real([B.*J11(:).',B*J12]);
             %Motion = bsxfun(@times, dyc_dt(t)'./dyc_dys(t), imag(gradHs) );
             v = r.disc.strip.dydt(t)/r.disc.strip.map.deriv.yinv(t);
             JMo = kron( spdiags(v,0,r.n(2),r.n(2))*r.disc.strip.dm.y(t), r.disc.eye.x );
@@ -498,8 +504,9 @@ classdef blink
             J1 = -J1 - [JMo,0*JMo];
             
             %DivH = div(t,gradH,factor);
-            J2 = [real( Factor*conj(Jgrads)*JH ),0*JH];
-            %P_t = P + pS*DivH + pA*H.^-3;
+%            J2 = [real( Factor*conj(Jgrads)*JH ),0*JH];
+            J2 = [real( B*JH ),zeros(size(JH))];
+             %P_t = P + pS*DivH + pA*H.^-3;
             J2 = [ -3*r.pA*r.disc.Diag(H.^(-4)), r.disc.eye.all ] + r.pS*J2;
             
             % Flux conditions

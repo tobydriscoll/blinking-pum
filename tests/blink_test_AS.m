@@ -2,16 +2,16 @@ addpath ..
 addpath ../PUChebfun
 
 param.domain = [-1 1;-1 1];
-param.degs = [25 25];
+param.degs = [24 24];
 param.cdegs = [9 9];
 param.split_flag = [true true];
 param.tol = 1e-4;
 param.odetol = 1e-4;
 
-tspan = [0 0.02];
+tspan = [0 5.258];
 param.percentClosed = 0.7;
-model.pA = 2.14e-6;
-model.pS = 6.92e-5;
+param.pA = 2.14e-6;
+param.pS = 6.92e-5;
 param.h_e = 2;
 param.BoundaryH = 13;
 param.initvolume = 34;
@@ -68,7 +68,7 @@ load initcond_pcl7.mat
 [Blinks,M,y0,dy0] = initialize(H,P,param);
 
 opt = odeset('mass',M,'reltol',param.odetol,'abstol',param.odetol,...
-    'initialstep',1e-10,'initialslope',dy0);
+    'initialstep',1e-12,'initialslope',dy0);
 
 [t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},1,opt);
 
