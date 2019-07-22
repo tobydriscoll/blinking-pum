@@ -57,7 +57,16 @@ classdef PUchebfun < PUfun
                         obj.domain = obj.ChebRoot.domain;
                     else
                         f = varargin{1};
-                        obj.domain = repmat([-1 1],nargin(f),1);
+                        if isa(f,'chebfun') 
+                            ndim = 1;
+                        elseif isa(f,'chebfun2')
+                            ndim = 2;
+                        elseif isa(f,'chebfun3')
+                            ndim = 3;
+                        else
+                            ndim = nargin(f);
+                        end
+                        obj.domain = repmat([-1 1],ndim,1);
                         cheb_struct.domain = obj.domain;
                         obj.ChebRoot = ChebPatch(cheb_struct);
                     end

@@ -9,10 +9,10 @@ param.tol = 1e-4;
 param.odetol = 1e-4;
 
 tspan = [0 0.02];
-param.percentClosed = 0.2;
+param.percentClosed = 0;
 param.pA = 6.11e-5;
 param.pS = 3.09e-5;
-param.he = 4;
+param.h_e = 4;
 param.BoundaryH = 13;
 param.initvolume = 34;
 param.fluxvolume = 0;
@@ -64,8 +64,8 @@ P = H.copy();
 setInterpMatrices(H,false);
 setInterpMatrices(P,false);
 
-load initstate.mat
-[Blinks,M,y0,dy0] = initialize(H,P,param,initstate);
+load initcond_pcl0.mat
+[Blinks,M,y0,dy0] = initialize(H,P,param,finalstate);
 
 opt = odeset('mass',M,'reltol',param.odetol,'abstol',param.odetol,'initialslope',dy0);
 
