@@ -25,30 +25,18 @@ if take_sub_ind
     x = x_temp;
 end
 
-
 num_leaves = length(PUApproxArray{1}.leafArray);
-
-
 x = unpackPUvecs(x,PUApproxArray);
 
 %Parallel part
 for k=1:num_leaves
-
-        
-        if take_sub_ind
-    
-            x_t = x{k}(loc_sub_ind{k});
-            
-            output{k} = zeros(size(x{k}));
-            
-            output{k}(loc_sub_ind{k}) = U{k}\(L{k}\x_t(p{k}));
-            
-        else
-            
-            output{k} = U{k}\(L{k}\x{k}(p{k}));
-            
-        end
-
+    if take_sub_ind
+        x_t = x{k}(loc_sub_ind{k});
+        output{k} = zeros(size(x{k}));
+        output{k}(loc_sub_ind{k}) = U{k}\(L{k}\x_t(p{k}));
+    else
+        output{k} = U{k}\(L{k}\x{k}(p{k}));
+    end
 end
 
 %Take {[u1;u2],[v1;v2]} to [u1;u2;v1;v2]

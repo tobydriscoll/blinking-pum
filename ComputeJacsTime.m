@@ -21,17 +21,13 @@ if ~iscell(PUApproxArray)
 end
 
 take_sub_ind = nargin>7;
-
 %PUApprox.sample(sol);
-
 num_sols = length(PUApproxArray);
-
 num_leaves = length(PUApproxArray{1}.leafArray);
-
 sol_lengths = zeros(num_sols,1);
 
 if ~take_sub_ind
-   loc_sub_ind = cell(1, num_leaves);
+    loc_sub_ind = cell(1, num_leaves);
 end
 
 for i=1:num_sols
@@ -40,35 +36,28 @@ end
 
 %if any are packed, set boundary terms.
 %setBoundary(NonLinOps,PUApproxArray);
-        
+
 
 %Take [u1;u2;v1;v2] to {[u1;u2],[v1;v2]}
 [ sol_loc,lens ] = unpackPUvecs(sol,PUApproxArray);
-
 start_index = zeros(num_sols,1);
-
 border = cell(num_leaves,num_sols);
 
 for k=1:num_leaves
-
     for i=1:num_sols
         border{k}{i} = PUApproxArray{i}.leafArray{k}.inner_boundary;
     end
-    
     start_index = start_index + lens{k};
-    
 end
 
 %parallel step
 
 for k=1:num_leaves
-
-        if iscell(M)
-            [J{k},l{k},u{k},p{k}] = local_Jac(t,sol_loc{k},NonLinOps{k},border{k},lens{k},hinvGak,M{k},alpha,loc_sub_ind{k});
-        else
-            [J{k},l{k},u{k},p{k}] = local_Jac(t,sol_loc{k},NonLinOps{k},border{k},lens{k},hinvGak,M,alpha,loc_sub_ind{k});
-        end
-    
+    if iscell(M)
+        [J{k},l{k},u{k},p{k}] = local_Jac(t,sol_loc{k},NonLinOps{k},border{k},lens{k},hinvGak,M{k},alpha,loc_sub_ind{k});
+    else
+        [J{k},l{k},u{k},p{k}] = local_Jac(t,sol_loc{k},NonLinOps{k},border{k},lens{k},hinvGak,M,alpha,loc_sub_ind{k});
+    end
 end
 
 end
@@ -85,47 +74,37 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-    function [J,L,U,p] = local_Jac(t,sol_k,NonLinOps_k,border_k,lens_k,hinvGak,M_k,alpha,loc_sub_ind)
-        
-        num_sols = length(lens_k);
-        
-        
-        J = hinvGak*NonLinOps_k.jac(t,sol_k)-M_k;
-        
-        index = 0;
+function [J,L,U,p] = local_Jac(t,sol_k,NonLinOps_k,border_k,lens_k,hinvGak,M_k,alpha,loc_sub_ind)
 
-        %This is supposed to account for the interfacing
-        for i=1:num_sols
-            
-            E = eye(lens_k(i));
-            
-            total_length = sum(lens_k);
-            
-            ind = false(total_length,1);
-            
-            local_ind = index+(1:lens_k(i));
-            
-            ind(local_ind) = border_k{i};
-            
-            J(ind,:) = zeros(sum(ind),total_length);
-            J(ind,local_ind) = alpha*E(border_k{i},:);
-            
-            index = index+lens_k(i);
-        end
-        
-        J2 = J;
-        
-        if ~isempty(loc_sub_ind)
-            J2 = J2(loc_sub_ind,loc_sub_ind);
-        end
-        
-        [L,U,p] = lu(J2,'vector');
-    end
-    
+num_sols = length(lens_k);
+J = hinvGak*NonLinOps_k.jac(t,sol_k)-M_k;
+index = 0;
+
+%This is supposed to account for the interfacing
+for i=1:num_sols
+    E = eye(lens_k(i));
+    total_length = sum(lens_k);
+    ind = false(total_length,1);
+    local_ind = index+(1:lens_k(i));
+    ind(local_ind) = border_k{i};
+    J(ind,:) = zeros(sum(ind),total_length);
+    J(ind,local_ind) = alpha*E(border_k{i},:);
+    index = index+lens_k(i);
+end
+
+J2 = J;
+
+if ~isempty(loc_sub_ind)
+    J2 = J2(loc_sub_ind,loc_sub_ind);
+end
+
+[L,U,p] = lu(J2,'vector');
+end
+
 function setBoundary(NonLinOps,PUApproxArray)
-    for i=1:length(PUApproxArray{1}.leafArray)
-        NonLinOps{i}.SetBoundaryVals();
-    end
+for i=1:length(PUApproxArray{1}.leafArray)
+    NonLinOps{i}.SetBoundaryVals();
+end
 end
 
 

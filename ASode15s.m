@@ -586,10 +586,12 @@ while ~done
                     [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
                     [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),-rhs,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
                 end
-                
+
+                interpnorm = InterfaceError(PUApprox,rhs_interp)/interface_scale;
+
                 if DEBUG
-                    interpnorm = InterfaceError(PUApprox,rhs_interp)/interface_scale;
                     fprintf('   resnorm = %.3e, interpnorm = %.3e\n',resnorm,interpnorm)
+                    %keyboard
                 end
                 
                 warning(warnstat);
