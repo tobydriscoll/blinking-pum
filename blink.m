@@ -487,27 +487,33 @@ classdef blink
             
             %Q = -Psi.*gradP;
             DiagPsi = r.disc.Diag(Psi);
-            %%%J1 = [-r.disc.Diag(dPsi_dh.*gradP), -DiagPsi*JP ];
-            J11 = dPsi_dh.*gradP; 
-            J12 = -Psi(:).*JP;
+            
+            i1r = 1:numel(H);
+            i1c = 1:numel(H);
+            i2r = i1r(end) + (1:numel(H));
+            i2c = i1c(end) + (1:numel(H));
+            J = zeros(i2r(end),i2c(end));
             
             %DivQ = div(t,Q,factor);
-            %%%J1 = real( Factor*conj(Jgrads)*J1 );
             cJs = conj(Jgrads); 
-            %%%J1 = real( factor(:).*(cJs*J1) );
-            B = factor(:).*cJs;
-            J1 = real([B.*J11(:).',B*J12]);
+            B = full(factor(:).*cJs);
+            Br = real(B);  Bi = imag(B);
+            A = dPsi_dh(:).*gradP(:);
+            J(i1r,i1c) = -Br.*real(A)' + Bi.*imag(A)';
+            A = Psi(:).*full(JP);
+            J(i1r,i2c) = Br*real(A) - Bi*imag(A);
+
             %Motion = bsxfun(@times, dyc_dt(t)'./dyc_dys(t), imag(gradHs) );
             v = r.disc.strip.dydt(t)/r.disc.strip.map.deriv.yinv(t);
             JMo = kron( spdiags(v,0,r.n(2),r.n(2))*r.disc.strip.dm.y(t), r.disc.eye.x );
             %H_t = -DivQ - Motion;
-            J1 = -J1 - [JMo,0*JMo];
+            J(i1r,i1c) = J(i1r,i1c) + JMo;
             
             %DivH = div(t,gradH,factor);
-%            J2 = [real( Factor*conj(Jgrads)*JH ),0*JH];
-            J2 = [real( B*JH ),zeros(size(JH))];
-             %P_t = P + pS*DivH + pA*H.^-3;
-            J2 = [ -3*r.pA*r.disc.Diag(H.^(-4)), r.disc.eye.all ] + r.pS*J2;
+            %P_t = P + pS*DivH + pA*H.^-3;
+            A = full(JH);
+            J(i2r,i1c) = r.pS*(Br*real(A)-Bi*imag(A)) - 3*r.pA*r.disc.Diag(H.^(-4));
+            J(i2r,i2c) = r.disc.eye.all;
             
             % Flux conditions
             %P_t([1 n(1)],:) = real(gradPs([1 n(1)],:));  % east and west
@@ -518,28 +524,28 @@ classdef blink
             Jn = DiagPsi*Jxs;
             xleft = XS(1,:);  yleft = YS(1,:);
             absfp = r.disc.eye.map.absderiv(xleft,yleft);
-            J2(bdy.E,:) = [0*Jxs(bdy.E,:) -diag(1./absfp)*Jn(bdy.E,:)];
+            J(i2r(bdy.E),:) = [0*Jxs(bdy.E,:) -diag(1./absfp)*Jn(bdy.E,:)];
             
             xb = XS(end,:);  yb = YS(end,:);
             absfp = r.disc.eye.map.absderiv(xb,yb);
-            J2(bdy.W,:) = [0*Jxs(bdy.W,:) diag(1./absfp)*Jn(bdy.W,:)];
+            J(i2r(bdy.W),:) = [0*Jxs(bdy.W,:) diag(1./absfp)*Jn(bdy.W,:)];
             
             Jn = DiagPsi*Jys;
             xb = XS(:,1);  yb = YS(:,1);
             absfp = r.disc.eye.map.absderiv(xb,yb);
-            J2(bdy.S,:) = [0*Jys(bdy.S,:) -diag(1./absfp)*Jn(bdy.S,:)];
+            J(i2r(bdy.S),:) = [0*Jys(bdy.S,:) -diag(1./absfp)*Jn(bdy.S,:)];
             
             % Moving side
             xtop = XS(:,end);  ytop = YS(:,end);
             absfp = r.disc.eye.map.absderiv(xtop,ytop);
             %Qdotn = Psi(:,n(2)).*imag(gradPs(:,n(2)))./absfp;
             %P_t(:,n(2)) = Qdotn + drho_dt(t).*absfp.*(H(:,n(2))-He);
-            J2(bdy.N,:) = [diag(absfp)*r.drho_dt(t)*r.disc.eye.all(bdy.N,:),...
+            J(i2r(bdy.N),:) = [diag(absfp)*r.drho_dt(t)*r.disc.eye.all(bdy.N,:),...
                 diag(1./absfp)*Jn(bdy.N,:) ];
             %Qdotn = Pphi(:,n(2)).*Phi_ys(:,n(2))./amp;
             %Phi_t(:,n(2)) = Qdotn + drho_dt(t).*amp.*Phi(:,n(2));
             
-            J=full([J1;J2]);
+            %J=full([J1;J2]);
             
             % Boundary h values do not appear
             idx = find(r.disc.boundary.loc_outer);
