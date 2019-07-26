@@ -36,31 +36,19 @@ classdef blinkone
     
     methods
         
-        function r = blinkone(leaf,param)
+        function r = blinkone(model,leaf)
             % Require Chebfun
             assert(exist('chebpts','file')>0,'Add Chebfun to path');
             
-            p = inputParser;
-			p.KeepUnmatched = true;
-            p.addParameter('percentclosed',0);
-			p.addParameter('pA',1);
-			p.addParameter('pS',1);
-            p.addParameter('boundaryH',13);
-            p.addParameter('h_e',0);
-            p.addParameter('drainvolume',0);
-            
-            parse(p,param);
-			p = p.Results;
-            			
-            r.percentClosed = p.percentclosed;
+			r.percentClosed = model.percentclosed;
             r.n = leaf.degs;
-			r.pA = p.pA;
-			r.pS = p.pS;
-			r.h_e = p.h_e;
+			r.pA = model.A;
+			r.pS = model.S;
+			r.h_e = model.h_slideover;
 			r.domain = leaf.domain;
-            r.boundaryH = p.boundaryH;
-            r.drainvolume = p.drainvolume;
-            r.supplyvolume = p.drainvolume;
+            r.boundaryH = model.h_boundary;
+            r.drainvolume = model.drainvolume;
+            r.supplyvolume = model.supplyvolume;
             
             r = setup_discretization(r,leaf);
             [r.Qtop,r.Qleft] = fluxfuns(r);

@@ -7,6 +7,7 @@ prob.A = 2e-3;
 prob.S = 1e-4;
 prob.h_slideover = 2;
 prob.h_boundary = 13;
+prob.drainvolume = 10;
 
 space = [];
 space.degree = [15 15];
@@ -19,7 +20,7 @@ time.tspan = [0 5.258];
 time.method = "NKS";
 
 load initcond_pcl0.mat
-time.initstate = finalstate;
+time.initstate = [];
 
 model = blinkmulti(prob,space,time);
 

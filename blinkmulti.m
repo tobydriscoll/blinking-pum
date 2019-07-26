@@ -5,6 +5,8 @@ classdef blinkmulti
 		H       % PUC tree
 		P       % PUC tree
 		
+		model   % parameters of the model
+		
 		tspan = [0 5.258]
 		
 		method   % "NKS" or "SNK"
@@ -33,10 +35,11 @@ classdef blinkmulti
 	
 	methods
 		
-		function r = blinkmulti(model,space,time)
+		function b = blinkmulti(model,space,time)
 			% Require Chebfun
 			assert(exist('chebpts','file')>0,'Add Chebfun to path');
 			
+			%*** model parameters
 			pp = inputParser;
 			pp.KeepUnmatched = true;
 			pp.addParameter('A',NaN);
@@ -45,9 +48,11 @@ classdef blinkmulti
  			pp.addParameter('h_boundary',13);
  			pp.addParameter('percentclosed',0);
  			pp.addParameter('drainvolume',0);
+			pp.addParameter('supplyvolume',0);
 			parse(pp,model);
-			pp = pp.Results;
+			b.model = pp.Results;
 			
+			%*** spatial parameters and setup
 			ps = inputParser;
 			ps.KeepUnmatched = true;
 			ps.addParameter('degree',[10 10]);
@@ -57,6 +62,21 @@ classdef blinkmulti
 			parse(ps,space);
 			ps = ps.Results;
 			
+			% Create tree by repeated splits
+			T = make_tree(b,ps.degree,ps.coarsedegree,ps.tol,ps.splitdim);
+
+			% solution data structures
+			b.H = PUchebfun(T);
+			setInterpMatrices(b.H,false);
+			b.P = copy(b.H);
+			
+			% set up subdomain objects
+			Hleaf = b.H.leafArray;
+			for i = 1:length(Hleaf)
+				b.region{i} = blinkone(b.model,Hleaf{i});
+			end			
+
+			%*** temporal parameters
 			pt = inputParser;
 			pt.KeepUnmatched = true;
 			pt.addParameter('tol',1e-4);
@@ -66,55 +86,20 @@ classdef blinkmulti
 			parse(pt,time);
 			pt = pt.Results;
 			
-			r.method = pt.method;
-			r.odetol = pt.tol;
-			r.initstate = pt.initstate;
-			r.tspan = pt.tspan;
-			
-			% Create tree by repeated splits
-			param = struct('degs',ps.degree,...
-				'cdegs',ps.coarsedegree,...
-				'split_flag',[true, true],...
-				'tol',ps.tol,...
-				'domain',[-1 1;-1 1]  );
-			T = ChebPatch(param);
-			expr = "T";
-			for k = 1:length(ps.splitdim)
-				s = ps.splitdim(k);
-				for j = 1:length(expr)
-					eval(expr(j) + " = split(" + expr(j) + "," + s + ");")
-				end
-				expr = [ expr+".children{1}", expr+".children{2}" ];
-				expr = expr(:);
-			end
-			clean(T);
-			
-			% solution data structures
-			r.H = PUchebfun(T);
-			setInterpMatrices(r.H,false);
-			r.P = copy(r.H);
-			
-			% set up subdomain objects
-			Hleaf = r.H.leafArray;
-			param = struct('percentclosed',pp.percentclosed,...
-				'n',ps.degree,...
-				'pA',pp.A,...
-				'pS',pp.S,...
-				'h_e',pp.h_slideover...
-				);
-			
-			for i = 1:length(Hleaf)
-				r.region{i} = blinkone(Hleaf{i},param);
-			end
+			b.method = pt.method;
+			b.odetol = pt.tol;
+			b.initstate = pt.initstate;
+			b.tspan = pt.tspan;
 				
-			if isempty(r.initstate)
-				r.initstate.H = chebfun2(pp.h_boundary);
-				r.initstate.P = chebfun2(0);
-				r.initstate.dH = chebfun2(0);
-				r.initstate.dP = chebfun2(0);
+			% use constant initial state if none given
+			if isempty(b.initstate)
+				b.initstate.H = chebfun2(b.model.h_boundary);
+				b.initstate.P = chebfun2(0);
+				b.initstate.dH = chebfun2(0);
+				b.initstate.dP = chebfun2(0);
 			end
 			
-			r.the_period = r.region{1}.period;
+			b.the_period = b.region{1}.period;
 		end
 		
 		function r = set.percentClosed(r,pc)
@@ -162,13 +147,6 @@ classdef blinkmulti
 			b.P.sample(state.P);
 			b.H.pack();
 			u0 = [ b.H.Getvalues(); b.P.Getvalues() ];
-			
-% 			% needed after "packing" (?)
-% 			Hleaf = b.H.leafArray;
-% 			for i = 1:length(b)
-% 				b.region{i}.disc.num.h = length(Hleaf{i});
-% 			end
-
 		end
 		
 		function b = solve(b,tspan)
@@ -533,6 +511,25 @@ classdef blinkmulti
 	end
 	
 	methods (Access=private)
+		
+		function T = make_tree(b,degree,cdegree,tol,splitdim)
+			param = struct('degs',degree,...
+				'cdegs',cdegree,...
+				'split_flag',[true, true],...
+				'tol',tol,...
+				'domain',[-1 1;-1 1]  );
+			T = ChebPatch(param);
+			expr = "T";
+			for k = 1:length(splitdim)
+				s = splitdim(k);
+				for j = 1:length(expr)
+					eval(expr(j) + " = split(" + expr(j) + "," + s + ");")
+				end
+				expr = [ expr+".children{1}", expr+".children{2}" ];
+				expr = expr(:);
+			end
+			clean(T);
+		end
 		
 		function v = volume_vals(r,t,U,wx,wy)
 			if nargin < 5
