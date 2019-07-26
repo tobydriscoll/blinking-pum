@@ -1,6 +1,6 @@
 function varargout = ASode15s(if_snk,ode,tspan,y0,PUApprox,interface_scale,options,varargin)
 
-DEBUG = true;
+DEBUG = 1;
 MAXITER = 8;
 
 solver_name = 'ode15s';
@@ -486,7 +486,7 @@ while ~done
             % Compute the constant terms in the equation for ynew.
             psi = dif(:,K) * (G(K) * invGa(k));
             
-            if DEBUG
+            if DEBUG >= 1
                 H_sol = y(1:length(PUApprox{1}));
                 %PUApprox{1}.sample(H_sol);
                 %vol = BlinkVolume(ode,PUApprox{1},t);
@@ -524,15 +524,8 @@ while ~done
             end
             
             tooslow = false;
-            
-            tol_g = [];
-            
+            tol_g = 1e-2;
             normres = [];
-            
-            first_res_norm = 0;
-            
-            
-            
             for iter = 1:MAXITER
                 
                 %make sure signs match.
@@ -543,10 +536,6 @@ while ~done
                 else
                     rhs = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
                     rhs_interp = rhs;
-                end
-                
-                if iter==1
-                    first_res_norm =norm(rhs);
                 end
                 
                 normres(iter) = norm(rhs);
@@ -561,16 +550,11 @@ while ~done
                 [lastmsg,lastid] = lastwarn('');
                 warning(warnoff);
                 
-                
-                if iter==1
-                    tol_g(iter) = 1e-2;
-                else
-                    %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
+                if iter > 1
+                     %tol_g(k) = min(max(abs(normres(k)-linres(k-1))/normres(k-1),tol_g(k-1)^((1+sqrt(5))/2)),1e-2);
                     tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
                 end
-                
-                tol_g(iter);
-                
+                               
                 if if_snk
                     
                     %   b = BlockLinearResidual(PUApprox,J,rhs);
@@ -589,7 +573,7 @@ while ~done
                 
                 interpnorm = InterfaceError(PUApprox,rhs_interp)/interface_scale;
                 
-                if DEBUG
+                if DEBUG >= 2
                     fprintf('   resnorm = %.3e, interpnorm = %.3e\n',resnorm,interpnorm)
                     %keyboard
                 end

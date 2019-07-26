@@ -9,7 +9,7 @@ param.tol = 1e-4;
 param.odetol = 1e-4;
 
 tspan = [0 5.258];
-param.percentClosed = 0.7;
+param.percentClosed = 0;
 param.pA = 2.14e-6;
 param.pS = 6.92e-5;
 param.h_e = 2;
@@ -45,13 +45,16 @@ P = H.copy();
 setInterpMatrices(H,false);
 setInterpMatrices(P,false);
 
-load initcond_pcl7.mat
+%load initcond_pcl0.mat
 [Blinks,M,y0,dy0] = initialize(H,P,param);
 
 opt = odeset('mass',M,'reltol',param.odetol,'abstol',param.odetol,...
-    'initialstep',1e-12,'initialslope',dy0);
+    'initialstep',1e-5,'initialslope',dy0);
 
-[t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},1,opt);
+sol = ASode15s(true,Blinks,tspan,y0,{H,P},1,opt);
 
+%%
+[h,p,dh,dp] = evaluate(sol,sol.x(end),H,P);
+finalstate = struct('H',h,'P',p,'dH',dh,'dP',dp);
 
 

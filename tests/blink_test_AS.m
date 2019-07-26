@@ -70,7 +70,7 @@ load initcond_pcl7.mat
 opt = odeset('mass',M,'reltol',param.odetol,'abstol',param.odetol,...
     'initialstep',1e-12,'initialslope',dy0);
 
-[t,U] = ASode15s(true,Blinks,tspan,y0,{H,P},1,opt);
+[t,U] = ASode15s(false,Blinks,tspan,y0,{H,P},1,opt);
 
 
 
