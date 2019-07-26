@@ -218,7 +218,10 @@ end
 
 %yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode,interface_scale));
 
-[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol,interface_scale);
+if isempty(yp0)
+	% should never be used
+	[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol,interface_scale);
+end
 
 %yp0 = y0;
 
