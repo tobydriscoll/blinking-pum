@@ -27,7 +27,7 @@ ndecomps = 0;
 nsolves  = 0;
 
 % Output
-FcnHandlesUsed  = isa(ode,'function_handle');
+FcnHandlesUsed  = true;   % isa(ode,'function_handle');
 output_sol = (FcnHandlesUsed && (nargout==1));      % sol = odeXX(...)
 output_ty  = (~output_sol && (nargout > 0));  % [t,y,...] = odeXX(...)
 % There might be no output requested...
@@ -43,7 +43,7 @@ end
 % Handle solver arguments
 [neq, tspan, ntspan, next, t0, tfinal, tdir, y0, f0, odeArgs, odeFcn, ...
     options, threshold, rtol, normcontrol, normy, hmax, htry, htspan] = ...
-    ASodearguments(FcnHandlesUsed, solver_name, ode, tspan, y0, options, varargin);
+    odearguments(FcnHandlesUsed, solver_name, ode, tspan, y0, options, varargin);
 nfevals = nfevals + 1;
 normcontrol = true;
 normy = norm(y0)/length(y0);
@@ -80,7 +80,7 @@ printstats = strcmp(odeget(options,'Stats','off','fast'),'on');
 
 % Handle the event function NO!
 [haveEventFcn,eventFcn,eventArgs,valt,teout,yeout,ieout] = ...
-    odeeventsAS(FcnHandlesUsed,odeFcn,t0,y0,options,varargin);
+    odeevents(FcnHandlesUsed,odeFcn,t0,y0,options,varargin);
 %haveEventFcn = false;
 %teout = [];
 %yeout = [];
@@ -115,7 +115,7 @@ idxNonNegative = odeget(options,'NonNegative',[],'fast');
 % HEY! I dont think this is needed
 % Handle the Jacobian
 [Jconstant,Jac,Jargs,Joptions] = ...
-    ASodejacobian(FcnHandlesUsed,odeFcn,t0,y0,options,varargin);
+    odejacobian(FcnHandlesUsed,odeFcn,t0,y0,options,varargin);
 Janalytic = isempty(Joptions);
 
 t = t0;
@@ -538,7 +538,7 @@ while ~done
                 %make sure signs match.
                 %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
                 if if_snk
-                    [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);                   
+                    [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);
                     rhs_interp = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
                 else
                     rhs = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
@@ -550,7 +550,7 @@ while ~done
                 end
                 
                 normres(iter) = norm(rhs);
-                resnorm = normres(iter);                
+                resnorm = normres(iter);
                 
                 %         if DAE                          % Account for row scaling.
                 %
@@ -586,9 +586,9 @@ while ~done
                     [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
                     [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),-rhs,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
                 end
-
+                
                 interpnorm = InterfaceError(PUApprox,rhs_interp)/interface_scale;
-
+                
                 if DEBUG
                     fprintf('   resnorm = %.3e, interpnorm = %.3e\n',resnorm,interpnorm)
                     %keyboard
@@ -1011,7 +1011,7 @@ while ~done
     
 end % while ~done
 
-solver_output = odefinalizeAS(solver_name, sol,...
+solver_output = odefinalize(solver_name, sol,...
     outputFcn, outputArgs,...
     printstats, [nsteps, nfailed, nfevals,...
     npds, ndecomps, nsolves],...
@@ -1024,3 +1024,362 @@ end
 
 end
 
+function solver_output = odefinalize(solver, sol,...
+    outfun, outargs,...
+    printstats, statvect,...
+    nout, tout, yout,...
+    haveeventfun, teout, yeout, ieout,...
+    interp_data)
+%ODEFINALIZE Helper function called by ODE solvers at the end of integration.
+
+%   Jacek Kierzenka
+%   Copyright 1984-2005 The MathWorks, Inc.
+
+if ~isempty(outfun)
+    feval(outfun,[],[],'done',outargs{:});
+end
+
+% Return more stats for implicit solvers: ODE15i, ODE15s, ODE23s, ODE23t, ODE23tb
+fullstats = (length(statvect) > 3);  % faster than 'switch' or 'ismember'
+
+stats = struct('nsteps',statvect(1),'nfailed',statvect(2),'nfevals',statvect(3));
+if fullstats
+    stats.npds     = statvect(4);
+    stats.ndecomps = statvect(5);
+    stats.nsolves  = statvect(6);
+else
+    statvect(4:6) = 0;   % Backwards compatibility
+end
+
+if printstats
+    fprintf(getString(message('MATLAB:odefinalize:LogSuccessfulSteps', sprintf('%g',stats.nsteps))));
+    fprintf(getString(message('MATLAB:odefinalize:LogFailedAttempts', sprintf('%g',stats.nfailed))));
+    fprintf(getString(message('MATLAB:odefinalize:LogFunctionEvaluations', sprintf('%g',stats.nfevals))));
+    if fullstats
+        fprintf(getString(message('MATLAB:odefinalize:LogPartialDerivatives', sprintf('%g',stats.npds))));
+        fprintf(getString(message('MATLAB:odefinalize:LogLUDecompositions', sprintf('%g',stats.ndecomps))));
+        fprintf(getString(message('MATLAB:odefinalize:LogSolutionsOfLinearSystems', sprintf('%g',stats.nsolves))));
+    end
+end
+
+solver_output = {};
+
+if (nout > 0) % produce output
+    if isempty(sol) % output [t,y,...]
+        solver_output{1} = tout(1:nout).';
+        solver_output{2} = yout(:,1:nout).';
+        if haveeventfun
+            solver_output{3} = teout.';
+            solver_output{4} = yeout.';
+            solver_output{5} = ieout.';
+        end
+        solver_output{end+1} = statvect(:);  % Column vector
+    else % output sol
+        % Add remaining fields
+        sol.x = tout(1:nout);
+        sol.y = yout(:,1:nout);
+        if haveeventfun
+            sol.xe = teout;
+            sol.ye = yeout;
+            sol.ie = ieout;
+        end
+        sol.stats = stats;
+        [kvec,dif3d,idxNonNegative] = deal(interp_data{:});
+        sol.idata.kvec = kvec(1:nout);
+        maxkvec = max(sol.idata.kvec);
+        sol.idata.dif3d = dif3d(:,1:maxkvec+2,1:nout);
+        sol.idata.idxNonNegative = idxNonNegative;
+        solver_output{1} = sol;
+    end
+end
+
+end
+
+function [Jconstant,Jfcn,Jargs,Joptions] = ...
+    odejacobian(fcnHandlesUsed,ode,t0,y0,options,extras)
+%ODEJACOBIAN  Helper function for the Jacobian function in ODE solvers
+%    ODEJACOBIAN determines whether the Jacobian is constant and if so,
+%    returns its value as Jfcn. If an analytical Jacobian is available from
+%    a function, ODEJACOBIAN initializes Jfcn and creates a cell array of
+%    additional input arguments. For numerical Jacobian, ODEJACOBIAN tries to
+%    extract JPattern and sets JOPTIONS for use with ODENUMJAC.
+%
+%   See also ODE15S, ODE23S, ODE23T, ODE23TB, ODENUMJAC.
+
+%   Jacek Kierzenka
+%   Copyright 1984-2009 The MathWorks, Inc.
+
+Jconstant = strcmp(odeget(options,'JConstant','off','fast'),'on');
+Jfcn = [];
+Jargs = {};
+Joptions = [];
+
+Janalytic = false;
+
+if fcnHandlesUsed
+    Jfcn = odeget(options,'Jacobian',[],'fast');
+    if ~isempty(Jfcn)
+        if isnumeric(Jfcn)
+            Jconstant = true;
+        else
+            Janalytic = true;
+            Jargs = extras;
+        end
+    end
+else  % ode-file used
+    joption = odeget(options,'Jacobian','off','fast');
+    switch lower(joption)
+        case 'on'    % ode(t,y,'jacobian',p1,p2...)
+            Janalytic = true;
+            Jfcn = ode;
+            Jargs = [{'jacobian'} extras];
+        case 'off'   % use odenumjac
+        otherwise
+            error(message('MATLAB:odejacobian:InvalidJOption', joption));
+    end
+end
+
+if ~Janalytic   % odenumjac will be used
+    Joptions.diffvar  = 2;       % df(t,y)/dy
+    Joptions.vectvars = [];
+    vectorized = strcmp(odeget(options,'Vectorized','off','fast'),'on');
+    if vectorized
+        Joptions.vectvars = 2;     % f(t,[y1,y2]) = [f(t,y1), f(t,y2)]
+    end
+    
+    atol = odeget(options,'AbsTol',1e-6,'fast');
+    Joptions.thresh = zeros(size(y0))+ atol(:);
+    Joptions.fac  = [];
+    
+    if fcnHandlesUsed
+        jpattern = odeget(options,'JPattern',[],'fast');
+    else  % ode-file used
+        jp_option = odeget(options,'JPattern','off','fast');
+        switch lower(jp_option)
+            case 'on'
+                jpattern = feval(ode,[],[],'jpattern',extras{:});
+            case 'off'  % no pattern provided
+                jpattern = [];
+            otherwise
+                error(message('MATLAB:odejacobian:InvalidJpOption', jp_option));
+        end
+    end
+    if ~isempty(jpattern)
+        Joptions.pattern = jpattern;
+        Joptions.g = colgroup(jpattern);
+    end
+end
+
+end
+
+function [neq, tspan, ntspan, next, t0, tfinal, tdir, y0, f0, args, odeFcn, ...
+    options, threshold, rtol, normcontrol, normy, hmax, htry, htspan, ...
+    dataType ] =   ...
+    odearguments(FcnHandlesUsed, solver, ode, tspan, y0, options, extras)
+%ODEARGUMENTS  Helper function that processes arguments for all ODE solvers.
+%
+%   See also ODE113, ODE15I, ODE15S, ODE23, ODE23S, ODE23T, ODE23TB, ODE45.
+
+%   Mike Karr, Jacek Kierzenka
+%   Copyright 1984-2015 The MathWorks, Inc.
+
+if strcmp(solver,'ode15i')
+    FcnHandlesUsed = true;   % no MATLAB v. 5 legacy for ODE15I
+end
+
+if FcnHandlesUsed  % function handles used
+    if isempty(tspan) || isempty(y0)
+        error(message('MATLAB:odearguments:TspanOrY0NotSupplied', solver));
+    end
+    if length(tspan) < 2
+        error(message('MATLAB:odearguments:SizeTspan', solver));
+    end
+    htspan = abs(tspan(2) - tspan(1));
+    tspan = tspan(:);
+    ntspan = length(tspan);
+    t0 = tspan(1);
+    next = 2;       % next entry in tspan
+    tfinal = tspan(end);
+    args = extras;                 % use f(t,y,p1,p2...)
+    
+else  % ode-file used   (ignored when solver == ODE15I)
+    % Get default tspan and y0 from the function if none are specified.
+    if isempty(tspan) || isempty(y0)
+        if exist(ode)==2 && ( nargout(ode)<3 && nargout(ode)~=-1 )
+            error(message('MATLAB:odearguments:NoDefaultParams', funstring( ode ), solver, funstring( ode )));
+        end
+        [def_tspan,def_y0,def_options] = feval(ode,[],[],'init',extras{:});
+        if isempty(tspan)
+            tspan = def_tspan;
+        end
+        if isempty(y0)
+            y0 = def_y0;
+        end
+        options = odeset(def_options,options);
+    end
+    tspan = tspan(:);
+    ntspan = length(tspan);
+    if ntspan == 1    % Integrate from 0 to tspan
+        t0 = 0;
+        next = 1;       % Next entry in tspan.
+    else
+        t0 = tspan(1);
+        next = 2;       % next entry in tspan
+    end
+    htspan = abs(tspan(next) - t0);
+    tfinal = tspan(end);
+    
+    % The input arguments of f determine the args to use to evaluate f.
+    %   if (exist(ode)==2)
+    %     if (nargin(ode) == 2)
+    %       args = {};                   % f(t,y)
+    %     else
+    %       args = [{''} extras];        % f(t,y,'',p1,p2...)
+    %     end
+    %   else  % MEX-files, etc.
+    %     try
+    %       args = [{''} extras];        % try f(t,y,'',p1,p2...)
+    %       feval(ode,tspan(1),y0(:),args{:});
+    %     catch
+    %       args = {};                   % use f(t,y) only
+    %     end
+    %   end
+    args = {};
+end
+
+y0 = y0(:);
+neq = length(y0);
+
+% Test that tspan is internally consistent.
+if any(isnan(tspan))
+    error(message('MATLAB:odearguments:TspanNaNValues'));
+end
+if t0 == tfinal
+    error(message('MATLAB:odearguments:TspanEndpointsNotDistinct'));
+end
+tdir = sign(tfinal - t0);
+if any( tdir*diff(tspan) <= 0 )
+    error(message('MATLAB:odearguments:TspanNotMonotonic'));
+end
+
+%f0 = feval(ode,t0,y0,args{:});   % ODE15I sets args{1} to yp0.
+f0 = y0;
+
+[m,n] = size(f0);
+if n > 1
+    error(message('MATLAB:odearguments:FoMustReturnCol', funstring( ode )));
+elseif m ~= neq
+    error(message('MATLAB:odearguments:SizeIC', funstring( ode ), m, neq, funstring( ode )));
+end
+
+% Determine the dominant data type
+classT0 = class(t0);
+classY0 = class(y0);
+classF0 = class(f0);
+if strcmp(solver,'ode15i')
+    classYP0 = class(args{1});  % ODE15I sets args{1} to yp0.
+    dataType = superiorfloat(t0,y0,args{1},f0);
+    
+    if ~( strcmp(classT0,dataType) && strcmp(classY0,dataType) && ...
+            strcmp(classF0,dataType) && strcmp(classYP0,dataType))
+        input1 = '''t0'', ''y0'', ''yp0''';
+        input2 = '''f(t0,y0,yp0)''';
+        warning(message('MATLAB:odearguments:InconsistentDataType',input1,input2,solver));
+    end
+else
+    dataType = superiorfloat(t0,y0,f0);
+    
+    if ~( strcmp(classT0,dataType) && strcmp(classY0,dataType) && ...
+            strcmp(classF0,dataType))
+        input1 = '''t0'', ''y0''';
+        input2 = '''f(t0,y0)''';
+        warning(message('MATLAB:odearguments:InconsistentDataType',input1,input2,solver));
+    end
+end
+
+% Get the error control options, and set defaults.
+rtol = odeget(options,'RelTol',1e-3,'fast');
+if (length(rtol) ~= 1) || (rtol <= 0)
+    error(message('MATLAB:odearguments:RelTolNotPosScalar'));
+end
+if rtol < 100 * eps(dataType)
+    rtol = 100 * eps(dataType);
+    warning(message('MATLAB:odearguments:RelTolIncrease', sprintf( '%g', rtol )))
+end
+atol = odeget(options,'AbsTol',1e-6,'fast');
+if any(atol <= 0)
+    error(message('MATLAB:odearguments:AbsTolNotPos'));
+end
+normcontrol = strcmp(odeget(options,'NormControl','off','fast'),'on');
+if normcontrol
+    if length(atol) ~= 1
+        error(message('MATLAB:odearguments:NonScalarAbsTol'));
+    end
+    normy = norm(y0);
+else
+    if (length(atol) ~= 1) && (length(atol) ~= neq)
+        error(message('MATLAB:odearguments:SizeAbsTol', funstring( ode ), neq));
+    end
+    atol = atol(:);
+    normy = [];
+end
+threshold = atol / rtol;
+
+% By default, hmax is 1/10 of the interval.
+hmax = min(abs(tfinal-t0), abs(odeget(options,'MaxStep',0.1*(tfinal-t0),'fast')));
+if hmax <= 0
+    error(message('MATLAB:odearguments:MaxStepLEzero'));
+end
+htry = abs(odeget(options,'InitialStep',[],'fast'));
+if ~isempty(htry) && (htry <= 0)
+    error(message('MATLAB:odearguments:InitialStepLEzero'));
+end
+
+odeFcn = ode;
+
+end
+
+function [haveeventfun,eventFcn,eventArgs,eventValue,teout,yeout,ieout] =...
+    odeevents(FcnHandlesUsed,ode,t0,y0,options,extras)
+%ODEEVENTS  Helper function for the events function in ODE solvers
+%    ODEEVENTS initializes eventFcn to the events function, and creates a
+%    cell-array of its extra input arguments. ODEEVENTS evaluates the events
+%    function at(t0,y0).
+%
+%   See also ODE113, ODE15S, ODE23, ODE23S, ODE23T, ODE23TB, ODE45.
+
+%   Jacek Kierzenka
+%   Copyright 1984-2010 The MathWorks, Inc.
+
+haveeventfun = 0;   % no Events function
+eventArgs = [];
+eventValue = [];
+teout = [];
+yeout = [];
+ieout = [];
+
+eventFcn = odeget(options,'Events',[],'fast');
+if isempty(eventFcn)
+    return
+end
+
+if FcnHandlesUsed     % function handles used
+    haveeventfun = 1;   % there is an Events function
+    eventArgs = extras;
+    eventValue = feval(eventFcn,t0,y0,eventArgs{:});
+    
+else   % ode-file used
+    switch lower(eventFcn)
+        case 'on'
+            haveeventfun = 1;   % there is an Events function
+            eventFcn = ode;            % call ode(t,y,'events',p1,p2...)
+            eventArgs = [{'events'}, extras];
+            eventValue = feval(eventFcn,t0,y0,eventArgs{:});
+        case 'off'
+        otherwise
+            error(message('MATLAB:odeevents:MustSetOnOrOff'))
+    end
+    
+end
+
+end
