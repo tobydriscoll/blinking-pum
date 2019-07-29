@@ -218,7 +218,10 @@ end
 
 %yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode,interface_scale));
 
-[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol,interface_scale);
+if isempty(yp0)
+	% should never be used
+	[y,yp0] = GetInitialSlope(Mt,y0,zeros(size(y0)),t0,PUApprox,ode,rtol,interface_scale);
+end
 
 %yp0 = y0;
 
@@ -432,7 +435,7 @@ end
 % THE MAIN LOOP
 H_sol = y(1:length(PUApprox{1}));
 PUApprox{1}.sample(H_sol);
-int_vol = BlinkVolume(ode,PUApprox{1},t);
+%int_vol = BlinkVolume(ode,PUApprox{1},t);
 
 
 done = false;
