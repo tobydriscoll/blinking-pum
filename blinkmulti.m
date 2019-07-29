@@ -266,7 +266,7 @@ classdef blinkmulti
 		function [X,Y] = grid(b,t)
 			% grid of points in the eye domain
 			[X,Y] = meshgrid(chebpts(80));
-			[X,Y] = b.region{1}.disc.map(t,X,Y);
+			[X,Y] = b.map.both(t,X,Y);
 		end
 		
 		function [x,y] = shape(b,t)
@@ -295,16 +295,18 @@ classdef blinkmulti
 		end
 		
 		%% Fluid volume computation
-		function v = volume(r,t,H)
-			[~,wx] = chebpts(r.n(1));  [~,wy] = chebpts(r.n(2));
+		function v = volume(b,t,H)
 			v = zeros(size(t));
-			for k = 1:length(t)
-				
+			for k = 1:length(t)				
 				if nargin==2
-					H = r.evalH(t(k));
-				end
-				
-				v(k) = volume_vals(r,t(k),H,wx,wy);
+					H = b.evalH(t(k));
+				end				
+				% Jacobian for comp. to strip map
+				Jcs = chebfun2( @(x,y) (b.map.strip.dxdx(x)*(b.rho(t(k))+1)/2) );
+				% Jacobian for strip to eye map
+				xs = b.map.strip.x;  ys = b.map.strip.y;
+				Jse = chebfun2( @(x,y) b.map.eye.absdzdz(xs(x),ys(t(k),y)).^2 );
+				v = integral2( Jse.*Jcs.*H );
 			end
 		end
 		
@@ -510,23 +512,7 @@ classdef blinkmulti
 		function u = pack(r,H,P)
 			u = [r.disc.vec(H(~r.disc.boundary.loc_outer));r.disc.vec(P)];
 		end
-		
-		
-		function v = volume_fun_subgrid(r,t,U,xc,yc,wx,wy)
-			
-			
-			
-			A = (r.disc.strip.map.jaccs_xx(xc).*(r.rho(t)+1)/2) .* U;
-			[XS,YS] = r.disc.strip.grid(t,xc,yc);
-			% Jacobian for strip to eye map
-			A = A.*r.disc.eye.map.absderiv(XS,YS).^2;
-			v = (wx*A*wy');
-			
-			
-			v = (wx*A*wy');
-			
-		end
-		
+				
 	end
 	
 	methods (Access=private)
@@ -548,22 +534,8 @@ classdef blinkmulti
 				expr = expr(:);
 			end
 			clean(T);
-		end
-		
-		function v = volume_vals(r,t,U,wx,wy)
-			if nargin < 5
-				[~,wx] = chebpts(r.n(1));  [~,wy] = chebpts(r.n(2));
-			end
-			% Jacobian for comp. to strip map
-			A = (r.disc.strip.map.deriv.x*(r.rho(t)+1)/2) .* U;
-			[XS,YS] = r.disc.strip.grid(t);
-			% Jacobian for strip to eye map
-			A = A.*r.disc.eye.map.absderiv(XS,YS).^2;
-			v = (wx*A*wy');
-		end
-		
-		
-		
+		end		
+				
 		function st = ode_status(r,t,y,flag)
 			persistent wb
 			if isequal(flag,'init')
