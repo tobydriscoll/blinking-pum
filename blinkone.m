@@ -3,144 +3,69 @@ classdef blinkone
     properties
         domain
         n 
-        pA 
-        pS 
-        boundaryH 
-        h_e
-               
-        drainvolume = 0;
-        supplyvolume = 0;
-        Qtop
-        Qleft
-        
+		model
 		map
-        disc
-        
-    end
+		lid
+		flux
+		disc
+	end
 
     
     properties (Dependent)
-        p, h
+        pA, pS
+		boundaryH, h_e
         rho
         drho_dt
-        percentClosed
 		period
-        Hmax, Hmin, Pmax, Pmin
+ 		Qtop, Qleft
     end
     
-    properties (Access=private)
-        the_rho
-        the_drho_dt
-        the_period
-        the_pC = 0.5
-    end
     
     methods
         
-        function r = blinkone(model,leaf,map)
-            % Require Chebfun
-            assert(exist('chebpts','file')>0,'Add Chebfun to path');
-            
+        function r = blinkone(model,leaf,map,lid,flux)
+			r.model = model;
 			r.map = map;
-			r.percentClosed = model.percentclosed;
+			r.lid = lid;
+			r.flux = flux;
             r.n = leaf.degs;
-			r.pA = model.A;
-			r.pS = model.S;
-			r.h_e = model.h_slideover;
-			r.domain = leaf.domain;
-            r.boundaryH = model.h_boundary;
-            r.drainvolume = model.drainvolume;
-            r.supplyvolume = model.supplyvolume;
-            
+			r.domain = leaf.domain;           
             r = setup_discretization(r,leaf);
-            [r.Qtop,r.Qleft] = fluxfuns(r);
-            
         end
         
-        function r = set.percentClosed(r,pc)
-            [r.the_rho,r.the_drho_dt,r.the_period] = lidmotion_realistic(pc);
-            r.the_pC = pc;
-        end
-        function pc = get.percentClosed(r)
-            pc = r.the_pC;
-        end
         function rho = get.rho(r)
-            rho = r.the_rho;
+            rho = r.lid.rho;
         end
         function drho = get.drho_dt(r)
-            drho = r.the_drho_dt;
+            drho = r.lid.drho_dt;
 		end
 		function T = get.period(r)
-            T = r.the_period;
+            T = r.lid.period;
+		end
+		function A = get.pA(r)
+            A = r.model.A;
         end
+		function S = get.pS(r)
+            S = r.model.S;
+		end 
+		function x = get.h_e(r)
+            x = r.model.h_slideover;
+		end
+ 		function x = get.boundaryH(r)
+            x = r.model.h_boundary;
+		end
+		function x = get.Qtop(r)
+            x = r.flux.Qtop;
+		end
+		function x = get.Qleft(r)
+            x = r.flux.Qleft;
+		end
  
         function massmat = massMatrix(r)
             MH = ones(r.disc.num.h,1);   MP = zeros(r.disc.num.p,1);
             N = r.disc.num.h + r.disc.num.p;
             massmat = spdiags([MH;MP],0,N,N);
-        end
-                        
-        %% Evalauting the numerical solution.
-                
-        function [X,Y] = grid(r,t)
-            g = r.disc.square.grid;
-            [X,Y] = r.disc.map(t,g.X,g.Y);
-        end
-        
-        function [x,y] = shape(r,t)
-            [X,Y] = r.grid(t);
-            x = chebfun2(X);
-            y = chebfun2(Y);
-        end
-                        
-        %% Actual minimum value (from Cheb interpolation)
-        function hm = minH(r,t)
-            hm = zeros(length(t),1);
-            for j = 1:length(t)
-                hm(j) = min2( chebfun2(r.evalH(t(j))) );
-            end
-        end
-        
-        %% 2D plot functions
-        function [XE,YE,H,P] = plotdata(r,t)
-            F = chebfun2(r.evalH(t)');
-            [X,Y] = ndgrid(linspace(-1,1,80),linspace(-1,1,60));
-            H = F(X,Y);
-            [XE,YE] = r.disc.map(t,X,Y);
-            
-            if nargout > 3
-                F = chebfun2(r.evalP(t)');
-                P = F(X,Y);
-            end
-        end
-        
-        function plot2d(r,t,var)
-            if nargin < 3 || isequal(lower(var),'h')
-                [XE,YE,U] = r.plotdata(t);
-                cax = [0 r.Hmax];
-            else
-                [XE,YE,~,U] = r.plotdata(t);
-                cax = [r.Pmin r.Pmax];
-            end
-            pcolor(XE,YE,U), shading interp
-            axis equal, axis([-3 3 -0.8 0.8])
-            %colormap redblue
-            caxis(cax)
-            xlabel('x'), ylabel('y')
-            ti = sprintf('t = %.3f, S = %.2e, A = %.2e',t,r.pS,r.pA);
-            title(ti)
-            colorbar
-        end
-        
-        function plot(r,t,var)
-            if nargin < 3
-                var = 'h';
-            end
-            [x,y] = r.shape(t);
-            u = r.(lower(var));
-            plot(x,y,u(t))
-            %set(gca,'dataaspectratio',[1 1 6])
-        end
+		end                                             
                        
     end
     

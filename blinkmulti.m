@@ -24,6 +24,7 @@ classdef blinkmulti
 		drho_dt
 		period
 		percentClosed
+		drainvolume,supplyvolume
 		Hmax, Hmin, Pmax, Pmin
 	end
 	
@@ -49,8 +50,8 @@ classdef blinkmulti
  			pp.addParameter('h_boundary',13);
  			pp.addParameter('percentclosed',0);
  			pp.addParameter('drainvolume',0);
-			pp.addParameter('supplyvolume',0);
-			parse(pp,model);
+ 			pp.addParameter('supplyvolume',0);
+ 			parse(pp,model);
 			b.model = pp.Results;
 			
 			%*** spatial parameters and setup
@@ -63,9 +64,12 @@ classdef blinkmulti
 			parse(ps,space);
 			ps = ps.Results;
 			
+			% initialization of key quantities
 			b.percentClosed = b.model.percentclosed;  % trigger setting rho
 			b = coord_maps(b);
-					
+			lid = struct('rho',b.rho,'drho_dt',b.drho_dt,'period',b.period);		
+			[flux.Qtop,flux.Qleft] = fluxfuns(b);
+			
 			% Create tree by repeated splits
 			T = make_tree(b,ps.degree,ps.coarsedegree,ps.tol,ps.splitdim);
 
@@ -77,7 +81,7 @@ classdef blinkmulti
 			% set up subdomain objects
 			Hleaf = b.H.leafArray;
 			for i = 1:length(Hleaf)
-				b.region{i} = blinkone(b.model,Hleaf{i},b.map);
+				b.region{i} = blinkone(b.model,Hleaf{i},b.map,lid,flux);
 			end			
 
 			%*** temporal parameters
@@ -102,8 +106,6 @@ classdef blinkmulti
 				b.initstate.dH = chebfun2(0);
 				b.initstate.dP = chebfun2(0);
 			end
-			
-			b.the_period = b.region{1}.period;
 		end
 		
 		function r = set.percentClosed(r,pc)
@@ -122,7 +124,13 @@ classdef blinkmulti
 		function T = get.period(r)
 			T = r.the_period;
 		end
-		
+		function x = get.supplyvolume(b)
+            x = b.model.supplyvolume;
+		end
+		function x = get.drainvolume(b)
+            x = b.model.drainvolume;
+		end
+
 		function l = length(b)
 			l = length(b.region);
 		end
@@ -297,16 +305,16 @@ classdef blinkmulti
 		%% Fluid volume computation
 		function v = volume(b,t,H)
 			v = zeros(size(t));
+			% Jacobian for comp. to strip map (partial)
+			Jcs = chebfun2( @(x,y) b.map.strip.dxdx(x) );
 			for k = 1:length(t)				
 				if nargin==2
 					H = b.evalH(t(k));
 				end				
-				% Jacobian for comp. to strip map
-				Jcs = chebfun2( @(x,y) (b.map.strip.dxdx(x)*(b.rho(t(k))+1)/2) );
 				% Jacobian for strip to eye map
 				xs = b.map.strip.x;  ys = b.map.strip.y;
 				Jse = chebfun2( @(x,y) b.map.eye.absdzdz(xs(x),ys(t(k),y)).^2 );
-				v = integral2( Jse.*Jcs.*H );
+				v(k) = (b.rho(t(k))+1)/2*integral2( Jse.*Jcs.*H );
 			end
 		end
 		
@@ -361,24 +369,23 @@ classdef blinkmulti
 		
 		%% Save result
 		% Saving the entire ODE solution structure is often prohibitively large.
-		function savedata(r,fname,numt)
+		function savedata(b,fname,numt)
 			if nargin < 3, numt = 250; end
 			
-			t = r.times(numt);
+			t = b.times(numt);
 			
-			dim = [ size(r.disc.square.grid.X) length(t) ];
-			H = zeros(dim,'single');
-			P = zeros(dim,'single');
-			X = zeros(dim,'single');
-			Y = zeros(dim,'single');
+			H = cell(1,length(t));
+			P = cell(1,length(t));
+			X = cell(1,length(t));
+			Y = cell(1,length(t));
 			for j = 1:length(t)
-				H(:,:,j) = r.evalH(t(j));
-				[X(:,:,j),Y(:,:,j)] = r.grid(t(j));
-				P(:,:,j) = r.evalP(t(j));
+				[X{j},Y{j}] = b.shape(t(j));
+				H{j} = b.evalH(t(j));
+				P{j} = b.evalP(t(j));
 			end
 			
-			volume = r.volume(t);
-			r.solution = [];  result = struct(r);
+			volume = b.volume(t);
+			b.solution = [];  result = struct(b);
 			save(fname,'t','volume','X','Y','H','P','result');
 		end
 		
@@ -468,11 +475,12 @@ classdef blinkmulti
 				vold = v;
 				x = chebpts(n);
 				v = chebfun2( evalfGrid(V,{x,x})' );
-				if n > 300
+				done = rank(v)==rank(vold) || norm(v-vold) > b.odetol/4*norm(v);
+
+				if ~done && n > 300
 					warning("can't resolve solution with a chebfun")
 					break
 				end
-				done = rank(v)==rank(vold) || norm(v-vold) > b.odetol/4*norm(v);
 			end
 		end
 		
@@ -574,16 +582,16 @@ classdef blinkmulti
             b.map.both = @(t,xc,yc) b.map.eye.xy( b.map.strip.x(xc), b.map.strip.y(t,yc) );  % composite c->e
 		end
 		
-		function [Qtop,Qleft] = fluxfuns(r)
+		function [Qtop,Qleft] = fluxfuns(b)
 			
-			period = r.period;
+			tau = b.period;
 			
 			%% domain mapping functions
-			dxs_dxc = r.disc.strip.map.jaccs_xx;
-			xc2xs = r.disc.strip.map.x;
-			yc2ys = r.disc.strip.map.y;
-			dyc_dys = r.disc.strip.map.deriv.yinv;
-			abs_dze_dzs = r.disc.eye.map.absderiv;
+			dxs_dxc = b.map.strip.dxdx;
+			xc2xs = b.map.strip.x;
+			yc2ys = b.map.strip.y;
+			dyc_dys = b.map.strip.dydyinv;
+			abs_dze_dzs = b.map.eye.absdzdz;
 			
 			%% shape/windowing functions
 			humpfun = @(x,center,hw) exp( -log(2)*((x-center)/hw).^2 );
@@ -604,11 +612,7 @@ classdef blinkmulti
 				xcen = 0.5;  % center of hump along the top
 				xwid = 0.25; % width of the hump
 				
-				Q = windowfun(t,ts,tth,tfrac*period).*humpfun(xc,xcen,xwid);
-				
-				%                Jcs = dxs_dxc(xc);
-				%                Jse = abs_dze_dzs(xc2xs(xc),yc2ys(t,1));
-				%                Q = Q.*Jcs.*Jse;
+				Q = windowfun(t,ts,tth,tfrac*tau).*humpfun(xc,xcen,xwid);
 			end
 			
 			function Q = qleft(t,yc)
@@ -621,11 +625,7 @@ classdef blinkmulti
 				yth = 0.25;  % thickness
 				ye = 0.9;    % end position
 				
-				Q = windowfun(t,ts,tth,tfrac*period).*windowfun(yc,ys,yth,ye);
-				
-				%                Jcs = 1./dyc_dys(t);
-				%                Jse = abs_dze_dzs(xc2xs(-1),yc2ys(t,yc));
-				%                Q = Q.*Jcs.*Jse;
+				Q = windowfun(t,ts,tth,tfrac*tau).*windowfun(yc,ys,yth,ye);
 			end
 			
 			%% Integrate flux along one edge, at one time
@@ -635,7 +635,6 @@ classdef blinkmulti
 				xs = xc2xs(xc);
 				Jse = abs_dze_dzs(xs,yc2ys(t,1));
 				S = sum( qc(t,xc).*Jcs.*Jse.*wght' );
-				%                S = sum( qc(t,xc).*wght' );
 			end
 			
 			function S = flux_bot(t,qc)
@@ -652,25 +651,24 @@ classdef blinkmulti
 				ys = yc2ys(t,yc);
 				Jse = abs_dze_dzs(xc2xs(-1),ys);
 				S = sum( qc(t,yc).*Jcs.*Jse.*wght' );
-				%                S = sum( qc(t,yc).*wght' );
 			end
 			
 			%% Integrate flux along an edge, over one blink cycle.
 			function Q = totalflux(flux,q)
 				[node,wght] = chebpts(80);
-				t = (node+1)/2*period;
+				t = (node+1)/2*tau;
 				S = zeros(size(t));
 				for ii = 1:length(t)
 					S(ii) = flux(t(ii),q);
 				end
-				Q = period/2*sum( wght'.*S );
+				Q = tau/2*sum( wght'.*S );
 			end
 			
 			%% Find amplitudes to meet supply/drainage target
-			Ain = r.supplyvolume / totalflux(@flux_top,@qtop);
+			Ain = b.supplyvolume / totalflux(@flux_top,@qtop);
 			Qtop = @(t,xc) Ain*qtop(t,xc);
 			
-			Aout = r.drainvolume / totalflux(@flux_left,@qleft);
+			Aout = b.drainvolume / totalflux(@flux_left,@qleft);
 			Qleft = @(t,xc) -Aout*qleft(t,xc);
 			
 		end
