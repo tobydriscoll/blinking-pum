@@ -435,7 +435,7 @@ end
 % THE MAIN LOOP
 H_sol = y(1:length(PUApprox{1}));
 PUApprox{1}.sample(H_sol);
-int_vol = BlinkVolume(ode,PUApprox{1},t);
+%int_vol = BlinkVolume(ode,PUApprox{1},t);
 
 
 done = false;

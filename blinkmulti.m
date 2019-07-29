@@ -6,6 +6,7 @@ classdef blinkmulti
 		P       % PUC tree
 		
 		model   % parameters of the model
+		map     % maps between the domains
 		
 		tspan = [0 5.258]
 		
@@ -62,6 +63,9 @@ classdef blinkmulti
 			parse(ps,space);
 			ps = ps.Results;
 			
+			b.percentClosed = b.model.percentclosed;  % trigger setting rho
+			b = coord_maps(b);
+					
 			% Create tree by repeated splits
 			T = make_tree(b,ps.degree,ps.coarsedegree,ps.tol,ps.splitdim);
 
@@ -73,7 +77,7 @@ classdef blinkmulti
 			% set up subdomain objects
 			Hleaf = b.H.leafArray;
 			for i = 1:length(Hleaf)
-				b.region{i} = blinkone(b.model,Hleaf{i});
+				b.region{i} = blinkone(b.model,Hleaf{i},b.map);
 			end			
 
 			%*** temporal parameters
@@ -136,13 +140,16 @@ classdef blinkmulti
 			end
 			
 			state = b.initstate;
+			
+			% initial slope
 			dH = copy(b.H);
 			dP = copy(b.P);
 			dH.sample(state.dH);
 			dP.sample(state.dP);
-			dH.pack();
+			dH.pack();  % get the right unknowns this way
 			du0 = [ dH.Getvalues(); dP.Getvalues() ];
 			
+			% initial value
 			b.H.sample(state.H);
 			b.P.sample(state.P);
 			b.H.pack();
@@ -202,29 +209,25 @@ classdef blinkmulti
 		end
 		
 		function v = get.Hmin(b)
-			% Minimum value over the collocation values (not the
-			% interpolant).
+			% Minimum value over the collocation values and all time.
 			r = b.region{1};
 			v = min(r.boundaryH,min(min( b.solution.y(1:r.disc.num.h,:) )));
 		end
 		
 		function v = get.Hmax(b)
-			% Maximum value over the collocation values (not the
-			% interpolant).
+			% Maximum value over the collocation values and all time.
 			r = b.region{1};
 			v = max(r.boundaryH,max(max( b.solution.y(1:r.disc.num.h,:) )));
 		end
 		
 		function v = get.Pmin(b)
-			% Minimum value over the collocation values (not the
-			% interpolant).
+			% Minimum value over the collocation values and all time.
 			r = b.region{1};
 			v = min(min( b.solution.y(1+r.disc.num.h:end,:) ));
 		end
 		
 		function v = get.Pmax(b)
-			% Maximum value over the collocation values (not the
-			% interpolant).
+			% Maximum value over the collocation values and all time.
 			r = b.region{1};
 			v = max(max( b.solution.y(1+r.disc.num.h:end,:) ));
 		end
@@ -260,24 +263,19 @@ classdef blinkmulti
 			t(t>r.tspan(2)) = [];
 		end
 		
-		function [X,Y] = grid(r,t)
-			[X,Y] = meshgrid(chebpts(50));
-			[X,Y] = r.region{1}.disc.map(t,X,Y);
+		function [X,Y] = grid(b,t)
+			% grid of points in the eye domain
+			[X,Y] = meshgrid(chebpts(80));
+			[X,Y] = b.region{1}.disc.map(t,X,Y);
 		end
 		
-		function [x,y] = shape(r,t)
-			[X,Y] = r.grid(t);
+		function [x,y] = shape(b,t)
+			% chebfuns for the x and y coordinates in the eye
+			[X,Y] = b.grid(t);
 			x = chebfun2(X);
 			y = chebfun2(Y);
 		end
-		
-		function v = evalsol(b,u,V)
-			n = ceil( sqrt(length(b)*length(b.P)) );
-			x = chebpts(n);
-			sample(V,u);
-			v = chebfun2( evalfGrid(V,{x,x})' );
-		end
-		
+				
 		function H = evalH(b,t)
 			u = deval(b.solution,t);
 			H = evalsol(b,u(1:length(b.H)),b.H);
@@ -455,7 +453,28 @@ classdef blinkmulti
 	
 	methods (Hidden=true)
 		
-		%% Functions for computing the solution.
+		
+		%% Helper for the H and P evaluation functions
+		function v = evalsol(b,u,V)
+			sample(V,u);			
+			n = 40; 
+			x = chebpts(n);
+			v = chebfun2( evalfGrid(V,{x,x})' );
+			done = false;
+			while ~done
+				n = ceil(1.4*n);
+				vold = v;
+				x = chebpts(n);
+				v = chebfun2( evalfGrid(V,{x,x})' );
+				if n > 300
+					warning("can't resolve solution with a chebfun")
+					break
+				end
+				done = rank(v)==rank(vold) || norm(v-vold) > b.odetol/4*norm(v);
+			end
+		end
+		
+		%% Functions for obtaining the solution.
 		function [W,Ws,J,Js] = grad(r,t,V,factor)
 			% Gradient of a scalar function (physical domain and strip)
 			if nargin < 4
@@ -562,6 +581,25 @@ classdef blinkmulti
 				end
 			end
 			st = 0;
+		end
+		
+		function b = coord_maps(b)
+			% From square "c" to strip "s"
+			alpha = 1.4;  gamma = 7;
+            b.map.strip.x = @(xc) gamma*xc./(alpha^2-xc.^2);
+            b.map.strip.y = @(t,yc) (yc+1).*(1+b.rho(t))/2-1;  % map from [-1,1] to [-1,ymax(t)]
+			b.map.strip.dxdx = @(x)  gamma*(alpha^2+x.^2)./(alpha.^2-x.^2).^2;  % dx_s/dx_c
+            b.map.strip.dydyinv = @(t) 2./(1+b.rho(t));       % dy_c/dy_s
+            b.map.strip.dydt = @(t,yc) -b.drho_dt(t)*(yc+1)/(b.rho(t)+1);   % dy_s/dt
+			
+			% From strip "s" to eye "e"
+            mapc = 3.84;
+            b.map.eye.xy = @(xs,ys) deal(3.0*real(tanh((xs+1i*ys)/mapc)),3.0*imag(tanh((xs+1i*ys)/mapc)));
+            b.map.eye.dzdz = @(xs,ys) 3.0*sech((xs+1i*ys)/mapc).^2 / mapc;
+            b.map.eye.absdzdz = @(xs,ys) 3.0*(2/mapc)*(cosh(2*xs/mapc)+cos(2*ys/mapc)).^(-1);
+            
+			% Composite from "c" to "e"
+            b.map.both = @(t,xc,yc) b.map.eye.xy( b.map.strip.x(xc), b.map.strip.y(t,yc) );  % composite c->e
 		end
 		
 		function [Qtop,Qleft] = fluxfuns(r)

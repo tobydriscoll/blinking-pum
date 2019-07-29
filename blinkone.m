@@ -13,6 +13,7 @@ classdef blinkone
         Qtop
         Qleft
         
+		map
         disc
         
     end
@@ -36,10 +37,11 @@ classdef blinkone
     
     methods
         
-        function r = blinkone(model,leaf)
+        function r = blinkone(model,leaf,map)
             % Require Chebfun
             assert(exist('chebpts','file')>0,'Add Chebfun to path');
             
+			r.map = map;
 			r.percentClosed = model.percentclosed;
             r.n = leaf.degs;
 			r.pA = model.A;
@@ -77,62 +79,9 @@ classdef blinkone
             N = r.disc.num.h + r.disc.num.p;
             massmat = spdiags([MH;MP],0,N,N);
         end
-                
-        function v = get.Hmin(r)
-            % Minimum value over the collocation values (not the
-            % interpolant).
-            v = min(r.boundaryH,min(min( r.solution.y(1:r.disc.num.h,:) )));
-        end
-        
-        function v = get.Hmax(r)
-            % Maximum value over the collocation values (not the
-            % interpolant).
-            v = max(r.boundaryH,max(max( r.solution.y(1:r.disc.num.h,:) )));
-        end
-        
-        function v = get.Pmin(r)
-            % Minimum value over the collocation values (not the
-            % interpolant).
-            v = min(min( r.solution.y(1+r.disc.num.h:end,:) ));
-        end
-        
-        function v = get.Pmax(r)
-            % Maximum value over the collocation values (not the
-            % interpolant).
-            v = max(max( r.solution.y(1+r.disc.num.h:end,:) ));
-        end
-        
-        
+                        
         %% Evalauting the numerical solution.
-        
-        % Get a nice vector of times (equally spaced within the three
-        % phases). This is hard-coded to go with the lidmotion function.
-        function t = times(r,m)
-            if nargin < 2, m = 240; end
-            if length(m)==3
-                m1 = m(1); m2 = m(2); m3 = m(3);
-            else
-                m1 = ceil(0.35*m);
-                m3 = ceil(0.3*m);
-                m2 = m - m1 - m3;
-            end
-            
-            % times in one blink cycle
-            t1 = linspace(0,0.19,m1+1);
-            t2 = linspace(0.19,5.176,m2+1);
-            t3 = linspace(5.176,5.258,m3);
-            t = [ t1(1:m1) t2(1:m2) t3 ]';
-            
-            % extend to multiple cycles
-            m = length(t);
-            while t(end) < r.tspan(2)-1e-8
-                t = [t; t(end-m+2:end)+r.period];
-            end
-            
-            % clip to the solution interval
-            t(t>r.tspan(2)) = [];
-        end
-        
+                
         function [X,Y] = grid(r,t)
             g = r.disc.square.grid;
             [X,Y] = r.disc.map(t,g.X,g.Y);
@@ -143,21 +92,7 @@ classdef blinkone
             x = chebfun2(X);
             y = chebfun2(Y);
         end
-                
-        %% Fluid volume computation
-        function v = volume(r,t,H)
-            [~,wx] = chebpts(r.n(1));  [~,wy] = chebpts(r.n(2));
-            v = zeros(size(t));
-            for k = 1:length(t)
-                
-                if nargin==2
-                    H = r.evalH(t(k));
-                end
-                
-                v(k) = volume_vals(r,t(k),H,wx,wy);
-            end
-        end
-        
+                        
         %% Actual minimum value (from Cheb interpolation)
         function hm = minH(r,t)
             hm = zeros(length(t),1);
@@ -206,30 +141,7 @@ classdef blinkone
             plot(x,y,u(t))
             %set(gca,'dataaspectratio',[1 1 6])
         end
-        
-        %% Save result
-        % Saving the entire ODE solution structure is often prohibitively large.
-        function savedata(r,fname,numt)
-            if nargin < 3, numt = 250; end
-            
-            t = r.times(numt);
-            
-            dim = [ size(r.disc.square.grid.X) length(t) ];
-            H = zeros(dim,'single');
-            P = zeros(dim,'single');
-            X = zeros(dim,'single');
-            Y = zeros(dim,'single');
-            for j = 1:length(t)
-                H(:,:,j) = r.evalH(t(j));
-                [X(:,:,j),Y(:,:,j)] = r.grid(t(j));
-                P(:,:,j) = r.evalP(t(j));
-            end
-            
-            volume = r.volume(t);
-            r.solution = [];  result = struct(r);
-            save(fname,'t','volume','X','Y','H','P','result');
-        end
-                
+                       
     end
     
     methods (Hidden=true)
@@ -284,31 +196,31 @@ classdef blinkone
             DivQ = r.div(t,Q,factor);
             DivH = r.div(t,gradH,factor);
             
-            Motion = (r.disc.strip.dydt(t)'/r.disc.strip.map.deriv.yinv(t)) .* imag(gradHs);
+            Motion = (r.disc.strip.dydt(t)'/r.map.strip.dydyinv(t)) .* imag(gradHs);
             H_t = -DivQ - Motion;
             P_t = P + r.pS*DivH + r.pA*H.^-3;
             
             % Flux condition on left side (drainage)
             xleft = XS(1,:);  yleft = YS(1,:);
-            absfp = r.disc.eye.map.absderiv(xleft,yleft);
+            absfp = r.map.eye.absdzdz(xleft,yleft);
             Qdotn = -Psi(1,:).*real(gradPs(1,:))./absfp;
             Qout = r.Qleft(t,yc);
             P_t(1,:) = Qdotn - Qout(:)';  % east
             
             % No flux on two sides
             xb = XS(end,:);  yb = YS(end,:);
-            absfp = r.disc.eye.map.absderiv(xb,yb);
+            absfp = r.map.eye.absdzdz(xb,yb);
             Qdotn = Psi(end,:).*real(gradPs(end,:))./absfp;
             P_t(r.n(1),:) = Qdotn;   % west
 
             xb = XS(:,1);  yb = YS(:,1);
-            absfp = r.disc.eye.map.absderiv(xb,yb);
+            absfp = r.map.eye.absdzdz(xb,yb);
             Qdotn = -Psi(:,1).*imag(gradPs(:,1))./absfp;
             P_t(:,1) = Qdotn;                % south
             
             % Flux on moving side
             xtop = XS(:,end);  ytop = YS(:,end);
-            absfp = r.disc.eye.map.absderiv(xtop,ytop);
+            absfp = r.map.eye.absdzdz(xtop,ytop);
             Qdotn = Psi(:,r.n(2)).*imag(gradPs(:,r.n(2)))./absfp;
             Qin = r.Qtop(t,xc);
             P_t(:,r.n(2)) = Qdotn - Qin + r.drho_dt(t).*absfp.*(H(:,r.n(2))-r.h_e/2);
@@ -348,7 +260,7 @@ classdef blinkone
             J(i1r,i2c) = Br*real(A) - Bi*imag(A);
 
             %Motion = bsxfun(@times, dyc_dt(t)'./dyc_dys(t), imag(gradHs) );
-            v = r.disc.strip.dydt(t)/r.disc.strip.map.deriv.yinv(t);
+            v = r.disc.strip.dydt(t)/r.map.strip.dydyinv(t);
             JMo = kron( spdiags(v,0,r.n(2),r.n(2))*r.disc.strip.dm.y(t), r.disc.eye.x );
             %H_t = -DivQ - Motion;
             J(i1r,i1c) = J(i1r,i1c) + JMo;
@@ -367,21 +279,21 @@ classdef blinkone
             
             Jn = DiagPsi*Jxs;
             xleft = XS(1,:);  yleft = YS(1,:);
-            absfp = r.disc.eye.map.absderiv(xleft,yleft);
+            absfp = r.map.eye.absdzdz(xleft,yleft);
             J(i2r(bdy.E),:) = [0*Jxs(bdy.E,:) -diag(1./absfp)*Jn(bdy.E,:)];
             
             xb = XS(end,:);  yb = YS(end,:);
-            absfp = r.disc.eye.map.absderiv(xb,yb);
+            absfp = r.map.eye.absdzdz(xb,yb);
             J(i2r(bdy.W),:) = [0*Jxs(bdy.W,:) diag(1./absfp)*Jn(bdy.W,:)];
             
             Jn = DiagPsi*Jys;
             xb = XS(:,1);  yb = YS(:,1);
-            absfp = r.disc.eye.map.absderiv(xb,yb);
+            absfp = r.map.eye.absdzdz(xb,yb);
             J(i2r(bdy.S),:) = [0*Jys(bdy.S,:) -diag(1./absfp)*Jn(bdy.S,:)];
             
             % Moving side
             xtop = XS(:,end);  ytop = YS(:,end);
-            absfp = r.disc.eye.map.absderiv(xtop,ytop);
+            absfp = r.map.eye.absdzdz(xtop,ytop);
             %Qdotn = Psi(:,n(2)).*imag(gradPs(:,n(2)))./absfp;
             %P_t(:,n(2)) = Qdotn + drho_dt(t).*absfp.*(H(:,n(2))-He);
             J(i2r(bdy.N),:) = [diag(absfp)*r.drho_dt(t)*r.disc.eye.all(bdy.N,:),...
@@ -468,51 +380,31 @@ classdef blinkone
             [XC,YC] = ndgrid(xc,yc);
             Ix = speye(r.n(1));  Iy = speye(r.n(2));
             I = speye(prod(r.n));
-            
-            % Transformation from square (xc,yc) to strip (xs,ys)
-            alpha = 1.4;  gamma = 7;
-            xc2xs = @(xc) gamma*xc./(alpha^2-xc.^2);
-            yc2ys = @(t,yc) (yc+1).*(1+r.rho(t))/2-1;  % map from [-1,1] to [-1,ymax(t)]
-            
-            jaccs_xx = @(x)  gamma*(alpha^2+x.^2)./(alpha.^2-x.^2).^2;
-            discr.jaccs_xx = jaccs_xx;
-            dxs_dxc = jaccs_xx(xc);
+			
+			% Chain rule terms
+			map = r.map;            
+            dxs_dxc = map.strip.dxdx(xc);
             Dxs = diag(1./dxs_dxc)*Dxc;
-            jacsc_yy = @(t) 2./(1+r.rho(t));
-            dyc_dys = @(t) 2./(1+r.rho(t));
-            Dys = @(t) Dyc*dyc_dys(t);  % leaves out the d/dt term for below
-            dyc_dt = @(t) -r.drho_dt(t)*(yc+1)/(r.rho(t)+1);
+            Dys = @(t) Dyc*map.strip.dydyinv(t);  % leaves out the d/dt term for below
             
-            function [XS,YS,factor] = stripgrid(t,xc_o,yc_o)
-                
+            function [XS,YS,factor] = stripgrid(t,xc_o,yc_o)               
                 if nargin==1
-                    [XS,YS] = ndgrid(xc2xs(xc),yc2ys(t,yc));
-                else
-                    [XS,YS] = ndgrid(xc2xs(xc_o),yc2ys(t,yc_o));
-                end
-                
-                if nargout > 2
-                    factor = 1./dze_dzs(XS,YS);
-                end
-                
-            end
-            
-            
-            
-            % Transformation from strip (xs,ys) to eye (xe,ye)
-            mapc = 3.84;
-            s2e = @(xs,ys) deal(3.0*real(tanh((xs+1i*ys)/mapc)),3.0*imag(tanh((xs+1i*ys)/mapc)));
-            dze_dzs = @(xs,ys) 3.0*sech((xs+1i*ys)/mapc).^2 / mapc;
-            abs_dze_dzs = @(xs,ys) 3.0*(2/mapc)*(cosh(2*xs/mapc)+cos(2*ys/mapc)).^(-1);
-            
-            c2e = @(t,xc,yc) s2e( xc2xs(xc), yc2ys(t,yc) );  % composite c->e
-            
+					[XS,YS] = ndgrid(map.strip.x(xc),map.strip.y(t,yc));
+				else
+					[XS,YS] = ndgrid(map.strip.x(xc_o),map.strip.y(t,yc_o));
+				end
+				if nargout > 2
+					factor = 1./map.eye.dzdz(XS,YS);
+				end
+			end
+                      
             % Identify the boundaries in the grid
             east = false(r.n);   east(1,:) = true;
             west = false(r.n);   west(r.n(1),:) = true;
             south = false(r.n);  south(:,1) = true;
             north = false(r.n);  north(:,r.n(2)) = true;
             
+			% store it all
             discr.eye = struct('x',Ix,'y',Iy,'all',I);
             discr.vec = @(U) U(:);  discr.unvec = @(u) reshape(u,r.n);
             discr.Diag = @(U) spdiags(discr.vec(U),0,prod(r.n),prod(r.n));
@@ -520,20 +412,13 @@ classdef blinkone
             discr.square.points = struct('x',xc,'y',yc);
             discr.square.grid = struct('X',XC,'Y',YC);
             discr.square.dm = struct('x',Dxc,'y',Dyc);
-            discr.strip.map = struct('x',xc2xs,'y',yc2ys);
-            discr.strip.map.deriv = struct('x',dxs_dxc,'yinv',dyc_dys);
-            discr.strip.map.jaccs_xx = jaccs_xx;
-            discr.strip.map.jacsc_yy = jacsc_yy;
-            discr.strip.points = struct('x',xc2xs(xc),'y',@(t) yc2ys(t,yc));
+            discr.strip.points = struct('x',map.strip.x(xc),'y',@(t) map.strip.y(t,yc));
             discr.strip.grid = @stripgrid;
-            discr.strip.dydt = dyc_dt;
+            discr.strip.dydt = @(t) map.strip.dydt(t,yc);
             discr.strip.dm = struct('x',Dxs,'y',Dys);
-            discr.eye.map = struct('xy',s2e,'deriv',dze_dzs,'absderiv',abs_dze_dzs);
-            discr.map = c2e;
             discr.boundary = struct('N',north,'S',south,'E',east,'W',west);
             discr.boundary.all = east | west | north | south;
-            discr.boundary.loc_outer = leaf.outer_boundary;
-            
+            discr.boundary.loc_outer = leaf.outer_boundary;           
             r.disc = discr;
         end
         
@@ -554,11 +439,11 @@ classdef blinkone
             period = r.period;
             
             %% domain mapping functions
-            dxs_dxc = r.disc.strip.map.jaccs_xx;
-            xc2xs = r.disc.strip.map.x;
-            yc2ys = r.disc.strip.map.y;
-            dyc_dys = r.disc.strip.map.deriv.yinv;
-            abs_dze_dzs = r.disc.eye.map.absderiv;
+            dxs_dxc = r.map.strip.dxdx;
+            xc2xs = r.map.strip.x;
+            yc2ys = r.map.strip.y;
+            dyc_dys = r.map.strip.dydyinv;
+            abs_dze_dzs = r.map.eye.absdzdz;
                   
             %% shape/windowing functions
             humpfun = @(x,center,hw) exp( -log(2)*((x-center)/hw).^2 );
