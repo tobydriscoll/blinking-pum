@@ -54,7 +54,7 @@ classdef blinkmulti
  			parse(pp,model);
 			b.model = pp.Results;
 			
-			%*** spatial parameters and setup
+			%*** spatial parameters 
 			ps = inputParser;
 			ps.KeepUnmatched = true;
 			ps.addParameter('degree',[10 10]);
@@ -64,7 +64,20 @@ classdef blinkmulti
 			parse(ps,space);
 			ps = ps.Results;
 			
-			% initialization of key quantities
+			%*** temporal parameters
+			pt = inputParser;
+			pt.KeepUnmatched = true;
+			pt.addParameter('tol',1e-4);
+			pt.addParameter('tspan',[0 5.258]);  % hard-coded period
+			pt.addParameter('method',"NKS");
+			pt.addParameter('initstate',[]);
+			parse(pt,time);
+			pt = pt.Results;
+			b.method = pt.method;
+			b.odetol = pt.tol;
+			b.tspan = pt.tspan;
+
+			%% initialization
 			b.percentClosed = b.model.percentclosed;  % trigger setting rho
 			b = coord_maps(b);
 			lid = struct('rho',b.rho,'drho_dt',b.drho_dt,'period',b.period);		
@@ -78,34 +91,25 @@ classdef blinkmulti
 			setInterpMatrices(b.H,false);
 			b.P = copy(b.H);
 			
-			% set up subdomain objects
+			% rest of the initialization can be overloaded by subclassing
+			b = initialize(b,lid,flux,pt.initstate);
+		end
+
+		function b = initialize(b,lid,flux,state)
+			% set up subdomains
 			Hleaf = b.H.leafArray;
 			for i = 1:length(Hleaf)
 				b.region{i} = blinkone(b.model,Hleaf{i},b.map,lid,flux);
 			end			
-
-			%*** temporal parameters
-			pt = inputParser;
-			pt.KeepUnmatched = true;
-			pt.addParameter('tol',1e-4);
-			pt.addParameter('tspan',[0 5.258]);  % hard-coded period
-			pt.addParameter('method',"NKS");
-			pt.addParameter('initstate',[]);
-			parse(pt,time);
-			pt = pt.Results;
 			
-			b.method = pt.method;
-			b.odetol = pt.tol;
-			b.initstate = pt.initstate;
-			b.tspan = pt.tspan;
-				
 			% use constant initial state if none given
-			if isempty(b.initstate)
-				b.initstate.H = chebfun2(b.model.h_boundary);
-				b.initstate.P = chebfun2(0);
-				b.initstate.dH = chebfun2(0);
-				b.initstate.dP = chebfun2(0);
-			end
+			if isempty(state)
+				state.H = chebfun2(b.model.h_boundary);
+				state.P = chebfun2(0);
+				state.dH = chebfun2(0);
+				state.dP = chebfun2(0);
+			end			
+			b.initstate = state;
 		end
 		
 		function r = set.percentClosed(r,pc)
@@ -135,7 +139,7 @@ classdef blinkmulti
 			l = length(b.region);
 		end
 		
-		function [b,M,u0,du0] = initialize(b)
+		function [b,M,u0,du0] = initdata(b)
 			% mass matrices
 			m = length(b);
 			M = cell(m,1);
@@ -165,7 +169,7 @@ classdef blinkmulti
 		end
 		
 		function b = solve(b,tspan)
-			[b,M,u0,du0] = initialize(b);
+			[b,M,u0,du0] = initdata(b);
 			
 			%% options
 			opt = odeset('mass',M,...
