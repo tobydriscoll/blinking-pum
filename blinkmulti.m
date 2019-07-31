@@ -395,9 +395,9 @@ classdef blinkmulti
 		end
 		
 		%% Animation functions
-		function animate(r,fname,t)
+		function animate(b,fname,t)
 			figure
-			r.plot2d(0)
+			b.plot2d(0)
 			shg, hold on
 			
 			if nargin > 1
@@ -407,12 +407,12 @@ classdef blinkmulti
 			end
 			
 			if nargin < 3
-				t = r.times(250);
+				t = b.times(250);
 			end
 			
 			for j = 1:length(t)
 				cla
-				r.plot2d(t(j))
+				b.plot2d(t(j))
 				if nargin > 1, writeVideo(vw,getframe(gcf));  end
 				drawnow %pause(0.01)
 			end
@@ -430,7 +430,7 @@ classdef blinkmulti
 				vw = VideoWriter(fname,'MPEG-4');
 				open(vw);
 			end
-			[~,yemax] = r.disc.eye.map.xy(0,1);  % for axis scaling
+			[~,yemax] = r.map.eye.xy(0,1);  % for axis scaling
 			t = r.times(250);
 			hold on
 			txt1 = text(.45,phimax*.92,'','fontsize',14,'hor','r');
@@ -441,7 +441,7 @@ classdef blinkmulti
 				maxslope = -inf;  minval = inf;
 				for kk = 1:length(xx)
 					% find where the x=const line ends up in the eye
-					[xl,yl] = r.disc.map(t(j),[xx(kk) xx(kk)],[-1 1]);
+					[xl,yl] = r.map.both(t(j),[xx(kk) xx(kk)],[-1 1]);
 					% make a chebfun out of values at the y nodes
 					u = chebfun( fun(xx(kk))', yl );
 					han(kk) = plot(u,'linewidth',2,'color',co(kk,:));
