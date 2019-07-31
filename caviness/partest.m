@@ -6,7 +6,7 @@ nw_ = [1 2 4 6 8 12 16 20];
 
 p = []; 
 solver = string([]);
-time = [];
+elapsed = [];
 numouter = [];
 numinner = [];
 bytesout = [];
@@ -34,7 +34,7 @@ for nw = nw_
 
 	  p(end+1,1) = nw;
 	  solver(end+1,1) = method;
-	  time(end+1,1) = stats.elapsedtime;
+	  elapsed(end+1,1) = stats.elapsedtime;
 	  %restime(end+1,1) = stats.restime;
 	  %jactime(end+1,1) = stats.jactime;
 	  %numouter(end+1,1) = length(stats.normres)-1;
@@ -46,6 +46,6 @@ for nw = nw_
 end
 
 %results = table(p,solver,time,numouter,numinner,bytesin,bytesout)
-results = table(p,solver,time,bytesin,bytesout)
+results = table(p,solver,elapsed,bytesin,bytesout)
 save partest_1_parfor results prob space time paropt
 
