@@ -181,7 +181,7 @@ classdef blinkmulti
 			end
 
 			%% solve			
-			fprintf('\n\nt = 0.0000')
+			%fprintf('\n\nt = 0.0000')
 			tic
 			sol = ASode15s(b.method=="SNK",...
 				b.region,...
@@ -331,32 +331,32 @@ classdef blinkmulti
 		end
 		
 		%% 2D plot functions
-		function [XE,YE,H,P] = plotdata(r,t)
-			F = r.evalH(t);
+		function [XE,YE,H,P] = plotdata(b,t)
+			F = b.evalH(t);
 			[X,Y] = ndgrid(linspace(-1,1,90),linspace(-1,1,80));
 			H = F(X,Y);
-			[XE,YE] = r.region{1}.disc.map(t,X,Y);
+			[XE,YE] = b.map.both(t,X,Y);
 			
 			if nargout > 3
-				F = r.evalP(t);
+				F = b.evalP(t);
 				P = F(X,Y);
 			end
 		end
 		
-		function plot2d(r,t,var)
+		function plot2d(b,t,var)
 			if nargin < 3 || isequal(lower(var),'h')
-				[XE,YE,U] = r.plotdata(t);
-				cax = [0 r.Hmax];
+				[XE,YE,U] = b.plotdata(t);
+				cax = [0 b.Hmax];
 			else
-				[XE,YE,~,U] = r.plotdata(t);
-				cax = [r.Pmin r.Pmax];
+				[XE,YE,~,U] = b.plotdata(t);
+				cax = [b.Pmin b.Pmax];
 			end
 			pcolor(XE,YE,U), shading interp
 			axis equal, axis([-3 3 -0.8 0.8])
 			%colormap redblue
 			caxis(cax)
 			xlabel('x'), ylabel('y')
-			ti = sprintf('t = %.3f, S = %.2e, A = %.2e',t,r.region{1}.pS,r.region{1}.pA);
+			ti = sprintf('t = %.3f, S = %.2e, A = %.2e',t,b.model.S,b.model.A);
 			title(ti)
 			colorbar
 		end
