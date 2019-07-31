@@ -1,22 +1,16 @@
-function varargout = ASode15s(if_snk,ode,tspan,y0,PUApprox,interface_scale,options,varargin)
+function varargout = ASode15s(solveoptions,ode,tspan,y0,PUApprox,interface_scale,options,varargin)
 
 DEBUG = 1;
 MAXITER = 8;
 
 solver_name = 'ode15s';
 
-if nargin < 5
+if nargin < 7
     options = [];
-    if nargin < 3
-        y0 = [];
-        if nargin < 2
-            tspan = [];
-            if nargin < 1
-                error(message('MATLAB:ode15s:NotEnoughInputs'));
-            end
-        end
-    end
 end
+
+use_SNK = solveoptions.method == "SNK";
+use_parallel = solveoptions.use_parallel;
 
 % Stats
 nsteps   = 0;
@@ -216,7 +210,7 @@ for i = 1:length(warnoffId)
 end
 
 
-%yp0 = Masstimes(PUApprox,Mt,ParLocalResidual(t0,y0,1,PUApprox,ode,interface_scale));
+%yp0 = Masstimes(PUApprox,Mt,NKSresidual(t0,y0,1,PUApprox,ode,interface_scale));
 
 if isempty(yp0)
 	% should never be used
@@ -533,11 +527,13 @@ while ~done
                 
                 %make sure signs match.
                 %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
-                if if_snk
-                    [rhs,L,U,p] = SNK_time_deriv_resid(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale);
-                    rhs_interp = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
+                if use_SNK
+                    [rhs,L,U,p] = SNKresidual(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale,use_parallel);
+                    rhs_interp = NKSresidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale,use_parallel)...
+						- Masstimes(PUApprox,Mtnew,psi+difkp1);
                 else
-                    rhs = ParLocalResidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)-Masstimes(PUApprox,Mtnew,psi+difkp1);
+                    rhs = NKSresidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)...
+						- Masstimes(PUApprox,Mtnew,psi+difkp1);
                     rhs_interp = rhs;
                 end
                 
@@ -558,11 +554,12 @@ while ~done
                     tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
                 end
                                
-                if if_snk
+                if use_SNK
                     
-                    %   b = BlockLinearResidual(PUApprox,J,rhs);
-                    %   [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
-                    [del,~,~,~,gmhist] = gmres(@(x)JacobianForwardLUTime(PUApprox,L,U,p,x,interface_scale),-rhs,[],tol_g(iter),500);
+                    %   b = BlockNKSjacobian(PUApprox,J,rhs);
+                    %   [del,~,~,~,gmhist] = gmres(@(x)NKSjacobian(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+					fun = @(x)SNKjacobian(PUApprox,L,U,p,x,interface_scale,use_parallel);
+                    [del,~,~,~,gmhist] = gmres(fun,-rhs,[],tol_g(iter),300);
                     %   [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
                     %   del = JG\J_rhs;
                     
@@ -571,7 +568,9 @@ while ~done
                     %   JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
                     %    del = -(JG\rhs);
                     [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
-                    [del,~,~,~,gmhist] = gmres(@(x)LinearResidual(PUApprox,J,x,interface_scale),-rhs,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
+					fun = @(x)NKSjacobian(PUApprox,J,x,interface_scale,use_parallel);
+					prec = @(u)ASPreconditionerTime(PUApprox,L,U,p,u);
+                    [del,~,~,~,gmhist] = gmres(fun,-rhs,[],tol_g(iter),100,prec);
                 end
                 
                 interpnorm = InterfaceError(PUApprox,rhs_interp)/interface_scale;
