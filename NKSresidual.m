@@ -11,16 +11,14 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z] = ParLocalResidual(t,sol,dt,PUApproxArray,NonLinOps,alpha,set_interface)
+function z = NKSresidual(t,sol,dt,PUApproxArray,NonLinOps,alpha,use_par)
 
 if nargin<7
-	set_interface = false;
+	use_par = false;
 end
 
 num_sols = length(PUApproxArray);
-
 num_leaves = length(PUApproxArray{1}.leafArray);
-
 sol_lengths = zeros(num_sols,1);
 
 for i=1:num_sols
@@ -28,19 +26,16 @@ for i=1:num_sols
 end
 
 sol = mat2cell(sol,sol_lengths);
-
 sol_unpacked = sol;
 
 for i=1:num_sols
-	
 	if PUApproxArray{i}.is_packed
 		%pull the boundry info for the packed functions. The boundary
 		%info is stored within the tree itself.
 		sol_unpacked{i} = PUApproxArray{i}.Getunpackedvalues(sol{i});
 	else
 		sol_unpacked{i} = sol{i};
-	end
-	
+	end	
 end
 
 [ sol_loc,lens ] = unpackPUvecs(cell2mat(sol),PUApproxArray);
@@ -60,15 +55,21 @@ for k=1:num_leaves
 end
 
 %parallel step
-for k=1:num_leaves
-	z{k} = local_resid(sol_loc{k},t,dt,diff{k},border{k},NonLinOps{k},lens{k},set_interface,alpha);
+if use_par
+	parfor k=1:num_leaves
+		z{k} = local_resid(sol_loc{k},t,dt,diff{k},border{k},NonLinOps{k},lens{k},alpha);
+	end
+else
+	for k=1:num_leaves
+		z{k} = local_resid(sol_loc{k},t,dt,diff{k},border{k},NonLinOps{k},lens{k},alpha);
+	end
 end
 
 z = packPUvecs(z,PUApproxArray);
 
 end
 
-function F = local_resid(sol_k,t,dt,diff_k,border_k,NonLinOps_k,lens_k,set_interface,alpha)
+function F = local_resid(sol_k,t,dt,diff_k,border_k,NonLinOps_k,lens_k,alpha)
 
 num_sols = length(lens_k);
 F = dt*NonLinOps_k.timederiv(t,sol_k);

@@ -8,14 +8,13 @@ classdef blinkmulti
 		model   % parameters of the model
 		map     % maps between the domains
 		
+		solveoptions 
+		initstate
 		tspan = [0 5.258]
 		
-		method   % "NKS" or "SNK"
-		odetol = 1e-4
 		solvetime
 		solution
 		finalstate
-		initstate
 	end
 	
 	properties (Dependent)
@@ -70,11 +69,13 @@ classdef blinkmulti
 			pt.addParameter('tol',1e-4);
 			pt.addParameter('tspan',[0 5.258]);  % hard-coded period
 			pt.addParameter('method',"NKS");
+			pt.addParameter('use_parallel',false);
 			pt.addParameter('initstate',[]);
 			parse(pt,time);
 			pt = pt.Results;
-			b.method = pt.method;
-			b.odetol = pt.tol;
+			b.solveoptions = struct('tol',pt.tol,...
+				'method',pt.method,...
+				'use_parallel',pt.use_parallel);
 			b.tspan = pt.tspan;
 
 			%% initialization
@@ -172,8 +173,8 @@ classdef blinkmulti
 			[b,M,u0,du0] = initdata(b);
 			
 			%% options
-			opt = odeset('mass',M,...
-				'reltol',b.odetol,'abstol',b.odetol,...
+			odeopt = odeset('mass',M,...
+				'reltol',b.solveoptions.tol,'abstol',b.solveoptions.tol,...
 				'initialslope',du0,...
 				'outputfcn',@(t,y,f) ode_status(b,t,y,f)   );
 			if nargin > 1
@@ -183,12 +184,12 @@ classdef blinkmulti
 			%% solve			
 			%fprintf('\n\nt = 0.0000')
 			tic
-			sol = ASode15s(b.method=="SNK",...
+			sol = ASode15s(b.solveoptions,...
 				b.region,...
 				b.tspan,...
 				u0,...
 				{b.H,b.P},...
-				1,opt);
+				1,odeopt);
 			b.solvetime = toc;
 			fprintf('\n\n')
 			
@@ -208,7 +209,7 @@ classdef blinkmulti
 			b.finalstate.dP = evalsol(b,dufinal(length(b.H)+1:end),dP);
 			
 			%% save memory
-			if b.odetol > 1e-7
+			if b.solveoptions.tol > 1e-7
 				sol.y = single(sol.y);
 				sol.idata.dif3d = single(sol.idata.dif3d);
 			end
@@ -479,7 +480,7 @@ classdef blinkmulti
 				vold = v;
 				x = chebpts(n);
 				v = chebfun2( evalfGrid(V,{x,x})' );
-				done = rank(v)==rank(vold) || norm(v-vold) > b.odetol/4*norm(v);
+				done = rank(v)==rank(vold) || norm(v-vold) > b.solveoptions.tol/4*norm(v);
 
 				if ~done && n > 300
 					warning("can't resolve solution with a chebfun")

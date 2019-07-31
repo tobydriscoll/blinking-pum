@@ -1,10 +1,7 @@
 % INPUT:
-%       PUApprox: Cell Array of PUApprox approximation
-%
+%             t: time in the ODE
 %           sol: given solution
-%
 %           rhs: rhs term. Typically from time integration method
-%
 % PUApproxArray: cell array of Trees for each solution. Each tree has
 %                interface indicies for each leaf, as well as boundary
 %                info if solution is to be 'packed'.
@@ -12,22 +9,19 @@
 %                It is expected that the patch structure is the same
 %                between different solutions. Patches with respective
 %                solutions can have different number of unknowns though.
-%
 %     NonLinOps: cell array of Nonlin ops for each leaf (for our problem,
 %                it is the blink objects).
-%
 %       hinvGak: this is the time step term used within ode15s
-%
 %             M: cell array of mass matrix
 %
 % OUTPUT:
 %          z: correction of solution
-%          J: cell array of local Jacobians
+%          l,u,p: cell arrays of local Jacobian factorizations
 %
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,l,u,p] = SNK_time_deriv_resid(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M,alpha)
+function [z,l,u,p] = SNKresidual(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M,alpha,use_par)
 
 rhs_zero = rhs==0;
 
@@ -73,12 +67,22 @@ for k=1:num_leaves
 end
 
 %parallel step
-for k=1:num_leaves
-    if notMat
-        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
-    else
-        [z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
-    end
+if use_par
+	parfor k=1:num_leaves
+		if notMat
+			[z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
+		else
+			[z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
+		end
+	end
+else
+	for k=1:num_leaves
+		if notMat
+			[z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
+		else
+			[z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
+		end
+	end
 end
 
 z = packPUvecs(z_loc,PUApproxArray);
@@ -104,7 +108,7 @@ function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hin
 %The residul is F(sol_k+z_k)
 %            sol_k(border_k)+z_k(border_k)-B_k*u
 %            (iterfacing at the zone interface)
-    function [F] = residual(z)
+    function F = residual(z)
         num_sols = length(lens_k);
         F = hinvGak*NonLinOps_k.timederiv(t,z+sol_k)-M*(z+rhs_k);
         F = mat2cell(F,lens_k);

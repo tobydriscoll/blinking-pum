@@ -11,49 +11,31 @@
 %
 % ALSO NOTE This method takes into account of boundary info is accounted
 % for by the effect if the individual trees are packed or not.
-function [ output ] = LinearResidual(PUApproxArray,J,x,alpha,sub_ind,loc_sub_ind)
+function output = NKSjacobian(PUApproxArray,J,x,alpha,use_par)
 
 if ~iscell(PUApproxArray)
     PUApproxArray = {PUApproxArray};
 end
 
-take_sub_ind = nargin>4;
-
-if take_sub_ind
-    x_temp = zeros(length(sub_ind),1);
-    x_temp(sub_ind) = x;
-    x = x_temp;
-end
-
 num_sols = length(PUApproxArray);
-
 num_leaves = length(PUApproxArray{1}.leafArray);
-
 sol_lengths = zeros(num_sols,1);
-
 for i=1:num_sols
     sol_lengths(i) = length(PUApproxArray{i});
 end
 
 x = mat2cell(x,sol_lengths);
-
 x_unpacked = x;
 
-for i=1:num_sols
-    
-    if PUApproxArray{i}.is_packed
-        
+for i=1:num_sols  
+    if PUApproxArray{i}.is_packed      
         % pull the boundry info for the packed functions. The boundary
         % info is stored within the tree itself. 
         % Set boundary to zero (This is important!)
-        x_unpacked{i} = PUApproxArray{i}.Getunpackedvalues(x{i},true);
-        
-    else
-        
-        x_unpacked{i} = x{i};
-        
-    end
-    
+        x_unpacked{i} = PUApproxArray{i}.Getunpackedvalues(x{i},true);        
+	else        
+        x_unpacked{i} = x{i};        
+	end    
 end
 
 %Take [u1;u2;v1;v2] to {[u1;u2],[v1;v2]}
@@ -63,36 +45,29 @@ x = cell2mat(x);
 z = x;
 
 %non parallel part
-for k=1:num_leaves
-    
-    z_loc = mat2cell(zeros(size(x{k})),lens{k});
-    
+for k=1:num_leaves  
+    z_loc = mat2cell(zeros(size(x{k})),lens{k});   
     for i=1:num_sols
         in_border = PUApproxArray{i}.leafArray{k}.inner_boundary;
         z_loc{i}(in_border) = alpha*PUApproxArray{i}.leafArray{k}.Binterp*x_unpacked{i};
-    end
-    
-    z{k} = cell2mat(z_loc);
-    
+	end    
+    z{k} = cell2mat(z_loc);    
 end
 
 output = x;
 
 %Parallel part
-for k=1:num_leaves
-    
-    if take_sub_ind
-        output{k}(loc_sub_ind{k}) =  J{k}(loc_sub_ind{k},loc_sub_ind{k})*x{k}(loc_sub_ind{k})-z{k}(loc_sub_ind{k});
-    else
-        output{k} =  J{k}*x{k}-z{k};
-       % output{k} = -z{k};
-    end
-    
+if use_par
+	parfor k=1:num_leaves
+		output{k} =  J{k}*x{k}-z{k};
+	end
+else
+	for k=1:num_leaves    
+		output{k} =  J{k}*x{k}-z{k};
+	end
 end
 
 %Take {[u1;u2],[v1;v2]} to [u1;u2;v1;v2]
 output = packPUvecs(output,PUApproxArray);
 
-if take_sub_ind
-    output = output(sub_ind);
 end
