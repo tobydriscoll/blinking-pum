@@ -1,7 +1,7 @@
 function varargout = ASode15s(solveoptions,ode,tspan,y0,PUApprox,interface_scale,options,varargin)
 
 DEBUG = 2;
-MAXITER = 8;
+MAXITER = 6;
 
 solver_name = 'ode15s';
 
@@ -91,20 +91,6 @@ Mtype = 1;
 % Non-negative solution components NO! We don't worry about this
 %
 idxNonNegative = odeget(options,'NonNegative',[],'fast');
-% nonNegative = ~isempty(idxNonNegative);
-% if nonNegative
-%   if Mtype == 0
-%     % Explicit ODE -- modify the derivative function
-%     [odeFcn,thresholdNonNegative] = odenonnegative(odeFcn,y0,threshold,idxNonNegative);
-%     f0 = feval(odeFcn,t0,y0,odeArgs{:});
-%     nfevals = nfevals + 1;
-%   else
-%     % Linearly implicit ODE/DAE -- ignore non-negativity constraints
-%     warning(message('MATLAB:ode15s:NonNegativeIgnoredForLinearlyImplicitSystems'));
-%     nonNegative = false;
-%     idxNonNegative = [];
-%   end
-% end
 
 % HEY! I dont think this is needed
 % Handle the Jacobian
@@ -523,29 +509,21 @@ while ~done
             tooslow = false;
             tol_g = 1e-2;
             normres = [];
-            for iter = 1:MAXITER
+            for iter = 1:MAXITER    % solve for the proposed ynew value
                 
-                %make sure signs match.
-                %R = Masstimes(PUApprox,Mtnew,psi+difkp1);
                 if use_SNK
-                    [rhs,L,U,p] = SNKresidual(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale,use_parallel);
-                    rhs_interp = NKSresidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale,use_parallel)...
-						- Masstimes(PUApprox,Mtnew,psi+difkp1);
+                    [rhs,L,U,p,interpnorm] = SNKresidual(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale,use_parallel);
+%                    rhs_interp = NKSresidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale,use_parallel)...
+%						- Masstimes(PUApprox,Mtnew,psi+difkp1);
                 else
                     rhs = NKSresidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale,use_parallel)...
 						- Masstimes(PUApprox,Mtnew,psi+difkp1);
-                    rhs_interp = rhs;
+                    interpnorm = InterfaceError(PUApprox,rhs_interp)/interface_scale;
                 end
                 
                 normres(iter) = norm(rhs);
                 resnorm = normres(iter);
-                
-                %         if DAE                          % Account for row scaling.
-                %
-                %           %rhs = scaleRHS(PUApprox,RowScale,rhs,num_sols);
-                %           %rhs = RowScale .* rhs;
-                %         end
-                
+                 
                 [lastmsg,lastid] = lastwarn('');
                 warning(warnoff);
                 
@@ -554,31 +532,24 @@ while ~done
                     tol_g(iter) = max(min(tol_g(iter-1),1e-4*(normres(iter)/normres(iter-1))^2),1e-6);
                 end
                                
-                if use_SNK
-                    
-                    %   b = BlockNKSjacobian(PUApprox,J,rhs);
-                    %   [del,~,~,~,gmhist] = gmres(@(x)NKSjacobian(PUApprox,J,x,interface_scale),b,[],tol_g(iter),100,@(u)ASPreconditionerTime(PUApprox,L,U,p,u));
-					fun = @(x)SNKjacobian(PUApprox,L,U,p,x,interface_scale,use_parallel);
-                    [del,~,~,~,gmhist] = gmres(fun,-rhs,[],tol_g(iter),300);
-                    %   [JG,J_rhs] = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
-                    %   del = JG\J_rhs;
-                    
+                if use_SNK                    
+                    if resnorm==0
+                        del = 0;  gmhist = 0;
+                    else
+                        fun = @(x)SNKjacobian(PUApprox,L,U,p,x,interface_scale,use_parallel);
+                        [del,flag,~,~,gmhist] = gmres(fun,-rhs,[],tol_g(iter),100);
+                    end
                 else
-                    
-                    %   JG = ASJacTime(PUApprox,ode,Mtnew,hinvGak,tnew,ynew,rhs);
-                    %    del = -(JG\rhs);
                     [J,L,U,p] = ComputeJacsTime(tnew,ynew,PUApprox,ode,hinvGak,Mtnew,interface_scale);
 					fun = @(x)NKSjacobian(PUApprox,J,x,interface_scale,use_parallel);
 					prec = @(u)ASPreconditionerTime(PUApprox,L,U,p,u);
-                    [del,~,~,~,gmhist] = gmres(fun,-rhs,[],tol_g(iter),100,prec);
+                    [del,flag,~,~,gmhist] = gmres(fun,-rhs,[],tol_g(iter),100,prec);
                 end
-                
-                interpnorm = InterfaceError(PUApprox,rhs_interp)/interface_scale;
-                
+                             
                 if DEBUG >= 2
                     fprintf('   GMRES iter = %d, GMRES final = %.3e, resnorm = %.3e, interpnorm = %.3e\n',...
                         length(gmhist)-1,gmhist(end),resnorm,interpnorm)
-                    if length(gmhist) > 50, keyboard, end
+                    %if length(gmhist) > 50, keyboard, end
                 end
                 
                 warning(warnstat);
@@ -594,12 +565,12 @@ while ~done
                 else
                     newnrm = norm(del .* invwt,inf);
                 end
+                              
                 difkp1 = difkp1 + del;
                 ynew = pred + difkp1;
                 
                 %&& interpnorm<inter_tol && iter>min_iter
-                if resnorm<eps || newnrm <= minnrm && interpnorm<inter_tol
-                    
+                if resnorm<eps || newnrm <= minnrm && interpnorm<inter_tol                   
                     gotynew = true;
                     break;
                 elseif iter == 1
@@ -612,7 +583,7 @@ while ~done
                     else
                         rate = 0;
                     end
-                elseif newnrm > 0.9*oldnrm
+                elseif flag || newnrm > 0.9*oldnrm
                     if iter>min_iter
                         tooslow = true;
                         break;
@@ -636,34 +607,12 @@ while ~done
                 end
                 
                 oldnrm = newnrm;
-            end                               % end of Newton loop
+            end                          % end of Newton loop for ynew
+
             nfevals = nfevals + iter;
-            nsolves = nsolves + iter;
-            
+            nsolves = nsolves + iter;           
             if tooslow
                 nfailed = nfailed + 1;
-                % Speed up the iteration by forming new linearization or reducing h.
-                %         if ~Jcurrent || ~Mcurrent
-                % %           if ~Jcurrent
-                % %             if Janalytic
-                % %               %dfdy = feval(Jac,t,y,Jargs{:});
-                % % %              dfdy = ComputeJac(PUApprox,num_sols,t,y);
-                % %             else
-                % %               f0 = feval(odeFcn,t,y,odeArgs{:});
-                % %               [dfdy,Joptions.fac,nF] = odenumjac(odeFcn, {t,y,odeArgs{:}}, f0, Joptions);
-                % %               nfevals = nfevals + nF + 1;
-                % %             end
-                % %             npds = npds + 1;
-                % %             Jcurrent = true;
-                % %           end
-                %           if ~Mcurrent
-                %             Mt = feval(Mfun,t,y,Margs{:});
-                %             Mcurrent = true;
-                %             if Mtype == 4
-                %               [dMpsidy,dMoptions.fac] = odenumjac(@odemxv, {Mfun,t,y,psi,Margs{:}}, Mt*psi, ...
-                %                                                   dMoptions);
-                %             end
-                %           end
                 if absh <= hmin
                     warning(message('MATLAB:ode15s:IntegrationTolNotMet', sprintf( '%e', t ), sprintf( '%e', hmin )));
                     solver_output = odefinalize(solver_name, sol,...
@@ -693,18 +642,6 @@ while ~done
                 if Mtype == 4
                     Miter = Miter + dMpsidy;
                 end
-                if DAE
-                    
-                    %          [RowScale,Miter] = RowScales(PUApprox,Miter,num_sols);
-                    %           RowScale = 1 ./ max(abs(Miter),[],2);
-                    %           Miter = sparse(one2neq,one2neq,RowScale) * Miter;
-                end
-                %         if issparse(Miter)
-                %           [L,U,P,Q,R] = lu(Miter);
-                %         else
-                %           [L,U,p] = lu(Miter,'vector');
-                %         end
-                ndecomps = ndecomps + 1;
                 havrate = false;
             end
         end     % end of while loop for getting ynew
@@ -718,17 +655,7 @@ while ~done
         else
             err = norm((difkp1) .* invwt,inf) * erconst(k);
         end
-        %     if nonNegative && (err <= rtol) && any(ynew(idxNonNegative)<0)
-        %       if normcontrol
-        %         errNN = norm( max(0,-ynew(idxNonNegative)) ) * invwt;
-        %       else
-        %         errNN = norm( max(0,-ynew(idxNonNegative)) ./ thresholdNonNegative, inf);
-        %       end
-        %       if errNN > rtol
-        %         err = errNN;
-        %       end
-        %     end
-        % rtol = 5e-2;
+        
         if err > rtol                       % Failed step
             nfailed = nfailed + 1;
             if absh <= hmin
@@ -781,17 +708,6 @@ while ~done
             if Mtype == 4
                 Miter = Miter + dMpsidy;
             end
-            if DAE
-                % RowScale = 1 ./ max(abs(Miter),[],2);
-                % Miter = sparse(one2neq,one2neq,RowScale) * Miter;
-            end
-            %      if issparse(Miter)
-            %        [L,U,P,Q,R] = lu(Miter);
-            %      else
-            %[L,U,p] = LUarray(PUApprox,Miter);
-            %[L,U,p] = lu(Miter,'vector');
-            %      end
-            ndecomps = ndecomps + 1;
             havrate = false;
             
         else                                % Successful step
@@ -808,14 +724,6 @@ while ~done
     end
     
     NNreset_dif = false;
-    %   if nonNegative && any(ynew(idxNonNegative) < 0)
-    %     NNidx = idxNonNegative(ynew(idxNonNegative) < 0); % logical indexing
-    %     ynew(NNidx) = 0;
-    %     if normcontrol
-    %       normynew = norm(ynew);
-    %     end
-    %     NNreset_dif = true;
-    %   end
     
     %   if haveEventFcn
     %     [te,ye,ie,valt,stop] = odezero(@ntrp15s,eventFcn,eventArgs,valt,...

@@ -21,7 +21,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,l,u,p] = SNKresidual(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M,alpha,use_par)
+function [z,l,u,p,resnorm] = SNKresidual(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M,alpha,use_par)
 
 rhs_zero = rhs==0;
 
@@ -29,13 +29,17 @@ if rhs_zero
     rhs = zeros(size(sol));
 end
 
-notMat = ~iscell(M);
 num_sols = length(PUApproxArray);
 num_leaves = length(PUApproxArray{1}.leafArray);
 sol_lengths = zeros(num_sols,1);
 for i=1:num_sols
     sol_lengths(i) = length(PUApproxArray{i});
 end
+
+if ~iscell(M)
+    M = repmat({0},1,num_leaves);
+end
+
 sol = mat2cell(sol,sol_lengths);
 sol_unpacked = sol;
 
@@ -69,23 +73,16 @@ end
 %parallel step
 if use_par
 	parfor k=1:num_leaves
-		if notMat
-			[z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
-		else
-			[z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
-		end
+        [z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
 	end
 else
 	for k=1:num_leaves
-		if notMat
-			[z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
-		else
-			[z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
-		end
+        [z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
 	end
 end
 
 z = packPUvecs(z_loc,PUApproxArray);
+resnorm = norm([resnorm{:}]);
 
 end
 

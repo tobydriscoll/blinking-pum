@@ -11,7 +11,7 @@ prob.drainvolume = 8;
 prob.supplyvolume = 8;
 
 space = [];
-space.degree = [16 16];
+space.degree = [24 24];
 space.coarsedegree = [8 8];
 space.splitdim = [2 1 2 1 2];
 
@@ -37,7 +37,7 @@ model = solve(model);
 % ylabel('relative volume change')
 
 %%
-animate(model,'drainage_8_pcl0.mp4',linspace(0,5.258,601))
+%animate(model,'drainage_8_pcl0.mp4',linspace(0,5.258,601))
 
 %%
-save drainage_8_pcl0 model
+%save drainage_8_pcl0 model
