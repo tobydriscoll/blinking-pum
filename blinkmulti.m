@@ -401,8 +401,9 @@ classdef blinkmulti
 			shg, hold on
 			
 			if nargin > 1
-				vw = VideoWriter(fname,'MPEG-4');
-				vw.FrameRate = 60;
+				vw = VideoWriter(fname,'Motion JPEG AVI');
+				vw.FrameRate = 30;
+                vw.Quality = 95;
 				open(vw);
 			end
 			

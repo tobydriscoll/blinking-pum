@@ -70,17 +70,17 @@ end
 if use_par
 	parfor k=1:num_leaves
 		if notMat
-			[z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
+			[z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
 		else
-			[z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
+			[z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
 		end
 	end
 else
 	for k=1:num_leaves
 		if notMat
-			[z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
+			[z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,0,lens{k},alpha);
 		else
-			[z_loc{k},l{k},u{k},p{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
+			[z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
 		end
 	end
 end
@@ -103,7 +103,7 @@ end
 % OUTPUT
 %           c: correction of solution
 %          Jk: local Jocabian
-function [c,l,u,p] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hinvGak,M,lens_k,alpha)
+function [c,l,u,p,resnorm] = local_inverse(sol_k,t,rhs_k,diff_k,border_k,NonLinOps_k,hinvGak,M,lens_k,alpha)
 
 %The residul is F(sol_k+z_k)
 %            sol_k(border_k)+z_k(border_k)-B_k*u
@@ -150,9 +150,12 @@ params = [30,-1,.5,0];
 tol = [1e-6 1e-6];
 
 [c,l,u,p,jac,ierr,stat] = nsoldAS(zeros(numel(sol_k),1),@residual,@jac_fun,tol,params);
+resnorm = stat(end,2);
+
 %fprintf('norm(c) = %.3e\n',norm(c))
 % a=1;
 %c = s(:,end);
+%if norm(c)==0, keyboard, end
 end
 
 

@@ -1,6 +1,6 @@
 function varargout = ASode15s(solveoptions,ode,tspan,y0,PUApprox,interface_scale,options,varargin)
 
-DEBUG = 1;
+DEBUG = 2;
 MAXITER = 8;
 
 solver_name = 'ode15s';
@@ -532,7 +532,7 @@ while ~done
                     rhs_interp = NKSresidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale,use_parallel)...
 						- Masstimes(PUApprox,Mtnew,psi+difkp1);
                 else
-                    rhs = NKSresidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale)...
+                    rhs = NKSresidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale,use_parallel)...
 						- Masstimes(PUApprox,Mtnew,psi+difkp1);
                     rhs_interp = rhs;
                 end
@@ -576,8 +576,9 @@ while ~done
                 interpnorm = InterfaceError(PUApprox,rhs_interp)/interface_scale;
                 
                 if DEBUG >= 2
-                    fprintf('   resnorm = %.3e, interpnorm = %.3e\n',resnorm,interpnorm)
-                    %keyboard
+                    fprintf('   GMRES iter = %d, GMRES final = %.3e, resnorm = %.3e, interpnorm = %.3e\n',...
+                        length(gmhist)-1,gmhist(end),resnorm,interpnorm)
+                    if length(gmhist) > 50, keyboard, end
                 end
                 
                 warning(warnstat);

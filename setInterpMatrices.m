@@ -10,7 +10,7 @@
 %    dt,t: time step and current time
 %  output:
 %     rhs: returns RHS for the theta method.
-function [] = setInterpMatrices(PUfun,coarse_too)
+function setInterpMatrices(PUfun,coarse_too)
 
 if nargin==1
     coarse_too = false;
