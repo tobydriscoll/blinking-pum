@@ -1,0 +1,8 @@
+How to run a job on caviness
+
+1. ssh to caviness.hpc.udel.edu
+2. Run "workgroup -g mathsci"
+3. Run "vpkg_require matlab"
+4. cd to the caviness directory
+5. Run "sbatch threads.qs"
+6. Get coffee
