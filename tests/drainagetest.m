@@ -37,7 +37,17 @@ model = solve(model);
 % ylabel('relative volume change')
 
 %%
-%animate(model,'drainage_8_pcl0.mp4',linspace(0,5.258,601))
+animate(model,'drainage_8_pcl0_fine.mp4',linspace(0,5.258,601))
 
 %%
-%save drainage_8_pcl0 model
+w = whos('model');
+if w.bytes > 1e9
+	message = 'too big to save';
+	save latest message
+elseif w.bytes > 500e6
+	message = 'saved in temp';
+	save latest message
+	save /tmp/drainage_8_pcl0_fine model
+else
+	save latest model
+end
