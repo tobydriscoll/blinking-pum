@@ -1,6 +1,6 @@
 function varargout = ASode15s(solveoptions,ode,tspan,y0,PUApprox,interface_scale,options,varargin)
 
-DEBUG = 2;
+DEBUG = 3;
 MAXITER = 6;
 
 solver_name = 'ode15s';
@@ -512,7 +512,7 @@ while ~done
             for iter = 1:MAXITER    % solve for the proposed ynew value
                 
                 if use_SNK
-                    [rhs,L,U,p,interpnorm] = SNKresidual(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale,use_parallel);
+                    [rhs,L,U,p,interpnorm] = SNKresidual(tnew,ynew,psi+difkp1,PUApprox,ode,hinvGak,Mtnew,interface_scale,use_parallel,DEBUG);
 %                    rhs_interp = NKSresidual(tnew,ynew,hinvGak,PUApprox,ode,interface_scale,use_parallel)...
 %						- Masstimes(PUApprox,Mtnew,psi+difkp1);
                 else
@@ -536,7 +536,7 @@ while ~done
                     if resnorm==0
                         del = 0;  gmhist = 0;
                     else
-                        fun = @(x)SNKjacobian(PUApprox,L,U,p,x,interface_scale,use_parallel);
+                        fun = @(x)SNKjacobian(PUApprox,L,U,p,x,interface_scale,use_parallel,DEBUG);
                         [del,flag,~,~,gmhist] = gmres(fun,-rhs,[],tol_g(iter),100);
                     end
                 else

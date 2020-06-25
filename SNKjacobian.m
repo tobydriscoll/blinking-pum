@@ -11,7 +11,7 @@
 %
 % ALSO NOTE This method takes into account of boundary info is accounted
 % for by the effect if the individual trees are packed or not.
-function output = SNKjacobian(PUApproxArray,L,U,p,x,alpha,use_par)
+function output = SNKjacobian(PUApproxArray,L,U,p,x,alpha,use_par,DEBUG)
 
 if ~iscell(PUApproxArray)
     PUApproxArray = {PUApproxArray};
@@ -64,12 +64,23 @@ output = x;
 
 %Parallel part
 if use_par
+	pp = gcp;
+	rb = pp.ticBytes;
+	rtic = tic;
 	parfor k=1:num_leaves
 		output{k} = U{k}\(L{k}\z{k}(p{k})) - x{k};
 	end
+	if DEBUG > 2
+		fprintf('    parallel Jacobian: time = %.3g\n',toc(rtic))
+		pp.tocBytes(rb)
+	end
 else
+	rtic = tic;
 	for k=1:num_leaves
 		output{k} = U{k}\(L{k}\z{k}(p{k})) - x{k};
+	end
+	if DEBUG > 2
+		fprintf('    serial Jacobian: time = %.3g\n',toc(rtic))
 	end
 end
 

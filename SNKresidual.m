@@ -21,7 +21,7 @@
 % NOTE sol is presumed to be ordered by solution first, then patch.
 %      For example, suppose there are two patches p1, p2 each with
 %      two solutions u1 v1, u2 v2. Then sol = [u1;u2;v1;v2].
-function [z,l,u,p,resnorm] = SNKresidual(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M,alpha,use_par)
+function [z,l,u,p,resnorm] = SNKresidual(t,sol,rhs,PUApproxArray,NonLinOps,hinvGak,M,alpha,use_par,DEBUG)
 
 rhs_zero = rhs==0;
 
@@ -72,13 +72,25 @@ end
 
 %parallel step
 if use_par
+	pp = gcp;
+	rb = pp.ticBytes;
+	rtic = tic;
 	parfor k=1:num_leaves
         [z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
 	end
+	if DEBUG > 2
+		fprintf('    parallel residual: time = %.3g\n',toc(rtic))
+		pp.tocBytes(rb)
+	end
 else
+	rtic = tic;
 	for k=1:num_leaves
         [z_loc{k},l{k},u{k},p{k},resnorm{k}] = local_inverse(sol_loc{k},t,rhs_loc{k},diff{k},border{k},NonLinOps{k},hinvGak,M{k},lens{k},alpha);
 	end
+	if DEBUG > 2
+		fprintf('    serial residual: time = %.3g\n',toc(rtic))
+	end
+
 end
 
 z = packPUvecs(z_loc,PUApproxArray);
