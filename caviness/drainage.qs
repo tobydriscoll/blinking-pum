@@ -11,14 +11,13 @@
 # cores/threads on a single node.  This includes programs with OpenMP
 # parallelism or explicit threading via the pthreads library.
 #
-# Do not alter the --nodes/--ntasks options!
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #
 # [EDIT] Indicate the number of processor cores/threads to be used
 #        by the job:
 #
-#SBATCH --cpus-per-task=20
+#SBATCH --cpus-per-task=16
 #
 # [EDIT] All jobs have memory limits imposed.  The default is 1 GB per
 #        CPU allocated to the job.  The default can be overridden either
@@ -66,7 +65,7 @@
 #        Jobs default to the default runtime limit of the chosen partition
 #        if this option is omitted.
 #
-#SBATCH --time=0-12:00:00
+#SBATCH --time=0-8:00:00
 #
 #        You can also provide a minimum acceptable runtime so the scheduler
 #        may be able to run your job sooner.  If you do not provide a
@@ -92,19 +91,19 @@
 #        for messages to get off the cluster.
 #
 #SBATCH --mail-user='driscoll@udel.edu'
-#SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT_80
+#SBATCH --mail-type=BEGIN,END,FAIL
 #
 # [EDIT] By default we DO NOT want to send the job submission environment
 #        to the compute node when the job runs.
 #
-# SBATCH --export=NONE
+#SBATCH --export=NONE
 #
 
 #
 # [EDIT] If you're not interested in how the job environment gets setup,
 #        uncomment the following.
 #
-#UD_QUIET_JOB_SETUP=YES
+# UD_QUIET_JOB_SETUP=YES
 
 #
 # [EDIT] Define a Bash function and set this variable to its
@@ -138,7 +137,7 @@
 #
 # Do standard OpenMP environment setup:
 #
-#. /opt/shared/slurm/templates/libexec/openmp.sh
+. 	/opt/shared/slurm/templates/libexec/openmp.sh
 
 #
 # [EDIT] Subsequent srun commands SHOULD inherit this script's runtime
@@ -152,5 +151,9 @@ fi
 #
 # [EDIT] Execute your OpenMP/threaded program using the srun command:
 #
+export OMP_DYNAMIC=TRUE
+unset OMP_NUM_THREADS
+
+vpkg_require matlab
 srun matlab < drainage.m
 
