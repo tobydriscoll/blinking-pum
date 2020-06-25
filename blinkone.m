@@ -29,7 +29,8 @@ classdef blinkone
 			r.lid = lid;
 			r.flux = flux;
             r.n = leaf.degs;
-			r.domain = leaf.domain;           
+			r.domain = leaf.domain; 
+            disp('one setup')
             r = setup_discretization(r,leaf);
         end
         
@@ -240,6 +241,7 @@ classdef blinkone
         function r = setup_discretization(r,leaf)
             
             % Discretization in [-1,1]^2
+            disp('chebpts')
             xc = chebpts(r.n(1),r.domain(1,:));  Dxc = diffmat(r.n(1),1,r.domain(1,:));
             yc = chebpts(r.n(2),r.domain(2,:));  Dyc = diffmat(r.n(2),1,r.domain(2,:));
             [XC,YC] = ndgrid(xc,yc);
@@ -247,6 +249,7 @@ classdef blinkone
             I = speye(prod(r.n));
 			
 			% Chain rule terms
+            disp('chain rule')
 			map = r.map;            
             dxs_dxc = map.strip.dxdx(xc);
             Dxs = diag(1./dxs_dxc)*Dxc;
@@ -270,6 +273,7 @@ classdef blinkone
             north = false(r.n);  north(:,r.n(2)) = true;
             
 			% store it all
+            disp('store')
             discr.eye = struct('x',Ix,'y',Iy,'all',I);
             discr.vec = @(U) U(:);  discr.unvec = @(u) reshape(u,r.n);
             discr.Diag = @(U) spdiags(discr.vec(U),0,prod(r.n),prod(r.n));
